@@ -1,6 +1,6 @@
 # deepseek-harness-jev
 
-[English](README.md) | 简体中文 | [中文功能与实测网站](https://luobosibing2.github.io/deepseek-harness-jev/)
+[English](README.md) | 简体中文 | [中文功能与实测网站](https://luobosibing2.github.io/dsh-jev-plugin/)
 
 **DeepSeek Harness（DSH）的原生插件：使用 Jev 或 Luna Decisions 提供判断。**
 
@@ -10,9 +10,9 @@
 
 这是独立社区项目，并非 DeepSeek 或 Jev 官方发布。当前属于早期插件，已针对 **DSH 0.1.7-rc.2** 验证；接口和模型判断都不构成正确性保证。
 
-[中文功能介绍站](https://luobosibing2.github.io/dsh-jev-plugin/)逐项说明 DSH 原生触发节点、交给 Jev 的信息，以及实际测试场景、结果和边界。
+[中文功能介绍站](https://luobosibing2.github.io/dsh-jev-plugin/)逐项说明 DSH 原生触发节点、交给判断服务的信息，以及实际测试场景、结果和边界。
 
-`codex/jev-luna-decision-backend` 工作区新增通过 OpenRouter 或 OpenAI 使用 Luna Decisions 的能力；需要构建本工作区使用，尚未包含在 GitHub `main` 安装入口中。已有 Jev 验证不能证明 Luna 的准确率或 API 可用性。
+`main` 支持 Jev，以及通过 OpenRouter 或 OpenAI 使用 Luna Decisions；每个 profile 独立保存三套连接。[2026-10-07 公开报告](docs/testing/2026-10-07-luna-decisions/README.md)区分固定协议及安装、受控真实样例与真实 DeepSeek Flash 任务。官方 OpenAI 在这些有限样例中调用成功；OpenRouter 的唯一真实诊断返回提供方访问限制的 HTTP 403 后停止。这些结果不建立通用判断准确率或稳定任务收益。
 
 ## 包含哪些功能？
 
@@ -79,7 +79,7 @@ https://github.com/luobosibing2/deepseek-harness-jev
 - 推荐 Node.js **24.11 或更高版本**；发布构建使用 Node 24.14.1 检查。
 - `PATH` 中可用的 pnpm **11.7.0**。
 - DeepSeek Harness CLI **0.1.7-rc.2**。插件固定使用对应 DSH peer 包和 Cordis **4.0.4**，不自动承诺兼容更新版本。
-- 在 DSH 中配置好主模型，以及你自己的 Jev 兼容 System One 服务和凭据。
+- 在 DSH 中配置好主模型，以及所选 Jev 兼容 System One 服务或 Luna API 的凭据。
 
 如尚未安装工具：
 
@@ -150,6 +150,7 @@ dsh --profile jev
 - **判断成功不等于执行成功。** 日志分别记录判断、采纳、许可发放和实际操作结果。
 - **日志准入保留原文入口。** 它只在工具执行后调整符合条件的模型可见文本；DSH 即时 spill、工具输出上限和之后的上下文压缩仍生效。隔离真实 profile 的一次构建将 8,510 字符日志缩短了 75.7%。一次中性措辞的 180 项测试触发了测试日志判断，但省略概率低于 0.8，因此完整保留；该次不证明测试日志已有实际缩减效果。见[工具输出准入报告](docs/reports/2026-09-27-tool-output-admission.zh-CN.md)。
 - **验证有范围。** 确定性测试证明集成流程，有限真实样例不能证明普遍语义准确率。详见[验证说明](docs/validation.md)。
+- **Luna 任务结果保留未达预期与限制。** 前两个受控审批样例返回 `unauthorized`；后来的真实任务得到 `approve` 并执行一次原生 `allowed-once` 写入。真实构建日志在原默认参数下由 8,407 缩至 2,122 码点（74.76%），五个同分文件概率则未改变排序。[双语 Luna 报告](docs/testing/2026-10-07-luna-decisions/README.md)同时记录这些结果、原文恢复和未验证功能。
 
 开启的功能会将相关任务上下文或操作内容发送到配置的判断服务。精确判断输入和回答保存在 profile 的本地插件记录中，主模型可见影响使用正常 DSH Session 记录。运行资料和凭据应保留为私有数据；公开源码历史不包含个人 QA 截图和原始会话抓取。
 

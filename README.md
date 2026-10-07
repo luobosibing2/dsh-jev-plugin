@@ -10,9 +10,9 @@ The main model continues to plan, generate answers, and call native tools. Enabl
 
 This is an independent community project, not an official DeepSeek or Jev release. It is an early-stage plugin tested with **DSH 0.1.7-rc.2**; its APIs and model judgments are not a correctness guarantee.
 
-The [Chinese feature website](https://luobosibing2.github.io/dsh-jev-plugin/) explains each DSH integration point, the information sent to Jev, and the observed test cases and limits.
+The [Chinese feature website](https://luobosibing2.github.io/dsh-jev-plugin/) explains each DSH integration point, the information sent to the judgment service, and the observed test cases and limits.
 
-The `codex/jev-luna-decision-backend` checkout adds Luna Decisions through OpenRouter or OpenAI. Build this checkout to use that support; it is not yet included in the GitHub `main` installation. Existing Jev validation results do not establish Luna accuracy or API availability.
+`main` supports Jev and Luna Decisions through OpenRouter or OpenAI, with three separate saved connections per profile. The [2026-10-07 public report](docs/testing/2026-10-07-luna-decisions/README.md) separates fixed protocol/installation checks, controlled live samples, and real DeepSeek Flash tasks. Official OpenAI calls succeeded in these limited samples; the only live OpenRouter diagnostic returned a provider-access HTTP 403 and was stopped. These results do not establish general judgment accuracy or stable task benefit.
 
 ## What is included?
 
@@ -79,7 +79,7 @@ Use the following steps when modifying or building the plugin yourself. Existing
 - Node.js **24.11 or later** is recommended; the publication build is checked on Node 24.14.1.
 - pnpm **11.7.0** available on `PATH`.
 - DeepSeek Harness CLI **0.1.7-rc.2**. The plugin pins the corresponding DSH peers and Cordis **4.0.4**; newer versions are not automatically supported.
-- A configured main-model provider in DSH, plus your own Jev-compatible System One endpoint and credentials.
+- A configured main-model provider in DSH, plus credentials for your selected Jev-compatible System One service or Luna API.
 
 If needed, install the tools:
 
@@ -150,6 +150,7 @@ Long-log and test-log admission have independent switches, both off by default. 
 - **Judgment success is not action success.** The ledger distinguishes an answer, its adoption, permission issuance, and execution results.
 - **Log admission keeps an original reference.** It changes only eligible model-visible tool text after execution; DSH's immediate spill, tool output limits, and later context compaction still apply. An isolated real-profile build reduced one 8,510-character log by 75.7%. A neutral 180-test run reached the test-log judge but stayed complete because its omit probabilities were below 0.8; that run does not establish test-log reduction effectiveness. See the [tool-output admission report](docs/reports/2026-09-27-tool-output-admission.md).
 - **Validation is scoped.** Deterministic tests establish integration. Limited real-service examples do not establish general semantic accuracy. See [validation notes](docs/validation.md).
+- **Luna task results retain misses and limits.** Two earlier controlled approval samples returned `unauthorized`; a later real task received `approve` and executed one native `allowed-once` write. A real build log decreased from 8,407 to 2,122 code points (74.76%) at the original defaults, while five tied file-ranking probabilities did not change order. The [bilingual Luna report](docs/testing/2026-10-07-luna-decisions/README.md) records both results, original-log recovery, and unverified features.
 
 Enabled features send the relevant task context or operation data to the configured judgment endpoint. Exact judgment inputs and answers are stored in the profile's local plugin records; model-visible effects use normal DSH session records. Keep runtime records and credentials private. Public source history excludes personal QA screenshots and raw session captures.
 
