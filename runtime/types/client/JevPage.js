@@ -2,6 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 /** Jev bundle settings, feature catalogue, and bounded decision-record browser. */
 import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Button, SegmentedTabs, StateDot, Switch } from '@deepseek-ai/dsh-client-ui-primitives';
+import { resolveConnectionIdentity } from "../types.js";
 import css from './JevPage.module.css';
 function featureName(feature, t) {
     if (feature.id === 'shared-findings')
@@ -365,13 +366,32 @@ function SupervisionSettings({ form, notifySuccess, t }) {
     };
     return _jsxs("section", { className: css.section, "aria-label": t('supervisionCounts'), children: [_jsx("h3", { className: css.heading, children: t('supervisionCounts') }), _jsx("p", { className: css.hint, children: t('supervisionCountsHint') }), snapshot.status === 'loading' && current === undefined && _jsx(Loading, { label: t('loading') }), snapshot.status === 'unavailable' && _jsx("p", { className: css.notice, children: t('unavailable') }), current !== undefined && _jsxs("div", { className: css.form, children: [_jsx("div", { className: css.filters, children: SUPERVISION_FIELDS.map(({ key, label }) => _jsxs("div", { className: css.field, children: [_jsx("label", { htmlFor: `jev-supervision-${key}`, children: t(label) }), _jsx("input", { id: `jev-supervision-${key}`, type: "text", inputMode: "numeric", value: draft[key], "aria-invalid": errors[key] || undefined, "aria-describedby": errors[key] ? `jev-supervision-${key}-error` : undefined, disabled: !snapshot.writable || saving, onChange: event => { edit(key, event.target.value); } }), errors[key] && _jsx("span", { id: `jev-supervision-${key}-error`, role: "alert", className: css.notice, children: t('supervisionCountInvalid') })] }, key)) }), _jsxs("div", { className: css.actions, children: [_jsx(Button, { variant: "primary", disabled: !snapshot.writable || saving || !dirty, onClick: () => { void save(); }, children: saving ? t('saving') : t('saveSupervisionCounts') }), !snapshot.writable && _jsx("span", { className: css.hint, children: t('readOnly') })] }), saveError && _jsx("p", { role: "alert", className: css.notice, children: t('supervisionCountSaveFailed') })] })] });
 }
+function connectionDraft(value) {
+    return {
+        baseUrl: value.baseUrl, model: value.model, credentialRef: value.credentialRef,
+        timeoutMs: String(value.timeoutMs), judgmentModel: value.judgmentModel ?? 'jev', lunaApi: value.lunaApi ?? 'openrouter',
+        lunaOpenRouterBaseUrl: value.lunaOpenRouterBaseUrl ?? 'https://openrouter.ai/api/alpha/decisions',
+        lunaOpenRouterCredentialRef: value.lunaOpenRouterCredentialRef ?? 'JEV_LUNA_OPENROUTER_API_KEY',
+        lunaOpenAIBaseUrl: value.lunaOpenAIBaseUrl ?? 'https://api.openai.com/v1/decisions',
+        lunaOpenAICredentialRef: value.lunaOpenAICredentialRef ?? 'JEV_LUNA_OPENAI_API_KEY',
+    };
+}
+const EMPTY_DRAFT = connectionDraft({ baseUrl: '', model: 'jev-latest', credentialRef: 'JEV_API_KEY', timeoutMs: 10000, features: {},
+    judgmentModel: 'jev', lunaApi: 'openrouter', lunaOpenRouterBaseUrl: 'https://openrouter.ai/api/alpha/decisions',
+    lunaOpenRouterCredentialRef: 'JEV_LUNA_OPENROUTER_API_KEY', lunaOpenAIBaseUrl: 'https://api.openai.com/v1/decisions',
+    lunaOpenAICredentialRef: 'JEV_LUNA_OPENAI_API_KEY' });
+function identityKey(connection) {
+    return JSON.stringify([connection.connectionId, connection.baseUrl, connection.model, connection.credentialRef, connection.timeoutMs]);
+}
 function SettingsPanel({ form, jev, notifySuccess, t }) {
     const subscribe = useCallback((listener) => form.subscribe(listener), [form]);
     const getSnapshot = useCallback(() => form.getSnapshot(), [form]);
     const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-    const [draft, setDraft] = useState({ baseUrl: '', model: '', credentialRef: 'JEV_API_KEY', timeoutMs: '30000' });
-    const editedConnection = useRef(false);
+    const [draft, setDraft] = useState(EMPTY_DRAFT);
+    const editedConnection = useRef(new Set());
     const observedConnection = useRef('');
+    const draftRef = useRef(draft);
+    draftRef.current = draft;
     const [features, setFeatures] = useState([]);
     const [featureLoading, setFeatureLoading] = useState(true);
     const [featureError, setFeatureError] = useState('');
@@ -387,122 +407,202 @@ function SettingsPanel({ form, jev, notifySuccess, t }) {
     const [probeError, setProbeError] = useState('');
     const [testing, setTesting] = useState(false);
     const probeAbort = useRef(null);
+    const alive = useRef(true);
+    const saveGeneration = useRef(0);
+    const credentialGeneration = useRef(0);
+    const keyGeneration = useRef(0);
+    const probeGeneration = useRef(0);
+    useEffect(() => {
+        alive.current = true;
+        return () => {
+            alive.current = false;
+            saveGeneration.current++;
+            credentialGeneration.current++;
+            keyGeneration.current++;
+            probeGeneration.current++;
+            probeAbort.current?.abort();
+        };
+    }, [form, jev]);
     useEffect(() => {
         if (snapshot.value === undefined)
             return;
-        const next = {
-            baseUrl: snapshot.value.baseUrl,
-            model: snapshot.value.model,
-            credentialRef: snapshot.value.credentialRef,
-            timeoutMs: String(snapshot.value.timeoutMs),
-        };
+        const next = connectionDraft(snapshot.value);
         const signature = JSON.stringify(next);
         if (signature === observedConnection.current)
             return;
         observedConnection.current = signature;
-        if (!editedConnection.current)
-            setDraft(next);
+        setDraft(previous => {
+            const merged = { ...next };
+            for (const field of editedConnection.current)
+                Object.assign(merged, { [field]: previous[field] });
+            return merged;
+        });
     }, [snapshot.value]);
+    const current = snapshot.value;
+    const dirty = current !== undefined && JSON.stringify(draft) !== JSON.stringify(connectionDraft(current));
+    useEffect(() => { if (!dirty)
+        editedConnection.current.clear(); }, [dirty]);
+    const draftValues = { ...draft, timeoutMs: Number(draft.timeoutMs), features: current?.features ?? {} };
+    const displayedConnection = resolveConnectionIdentity(draftValues);
+    const savedConnection = current === undefined ? undefined : resolveConnectionIdentity({ ...current, ...connectionDraft(current), timeoutMs: current.timeoutMs });
+    const contextKey = JSON.stringify({ draft, savedConnection, dirty, status: snapshot.status });
+    const contextRef = useRef(contextKey);
+    contextRef.current = contextKey;
     const loadFeatures = useCallback(async () => {
         setFeatureLoading(true);
         setFeatureError('');
         try {
-            setFeatures(await jev.listFeatures());
+            const next = await jev.listFeatures();
+            if (alive.current)
+                setFeatures(next);
         }
         catch {
-            setFeatureErrorLabel('featureLoadFailed');
-            setFeatureError(t('featureLoadFailed'));
+            if (alive.current) {
+                setFeatureErrorLabel('featureLoadFailed');
+                setFeatureError(t('featureLoadFailed'));
+            }
         }
         finally {
-            setFeatureLoading(false);
+            if (alive.current)
+                setFeatureLoading(false);
         }
     }, [jev, t]);
-    const loadCredential = useCallback(async () => {
-        try {
-            setCredential(await jev.getCredentialStatus());
-            setCredentialMessage('');
-        }
-        catch {
-            setCredentialMessage(t('unavailable'));
-        }
-    }, [jev, t]);
-    useEffect(() => { void loadFeatures(); void loadCredential(); return () => { probeAbort.current?.abort(); }; }, [loadFeatures, loadCredential]);
-    const current = snapshot.value;
-    const dirty = current !== undefined && (draft.baseUrl !== current.baseUrl || draft.model !== current.model ||
-        draft.credentialRef !== current.credentialRef || draft.timeoutMs !== String(current.timeoutMs));
-    useEffect(() => { if (!dirty)
-        editedConnection.current = false; }, [dirty]);
+    useEffect(() => { void loadFeatures(); }, [loadFeatures]);
+    // A completion can update only the exact saved connection still shown by this form.
+    useEffect(() => {
+        const generation = ++credentialGeneration.current;
+        keyGeneration.current++;
+        probeGeneration.current++;
+        probeAbort.current?.abort();
+        probeAbort.current = null;
+        setCredential(null);
+        setCredentialMessage('');
+        setSecret('');
+        setSecretSaving(false);
+        setProbe(null);
+        setProbeError('');
+        setTesting(false);
+        if (dirty || savedConnection === undefined || snapshot.status !== 'ready')
+            return;
+        const connection = savedConnection;
+        void jev.getCredentialStatus(connection).then(result => {
+            if (!alive.current || generation !== credentialGeneration.current || contextRef.current !== contextKey)
+                return;
+            if (identityKey(result.connection) !== identityKey(connection)) {
+                setCredentialMessage(t('connectionChanged'));
+                return;
+            }
+            setCredential(result);
+        }, () => {
+            if (alive.current && generation === credentialGeneration.current && contextRef.current === contextKey)
+                setCredentialMessage(t('unavailable'));
+        });
+    }, [contextKey, form, jev, t]);
     const editConnection = (field, value) => {
-        editedConnection.current = true;
+        editedConnection.current.add(field);
+        setSaveMessage('');
         setDraft(previous => ({ ...previous, [field]: value }));
     };
     const saveConnection = async () => {
+        const submission = { ...draft, baseUrl: draft.baseUrl.trim(), model: draft.model.trim(), credentialRef: draft.credentialRef.trim(),
+            lunaOpenRouterBaseUrl: draft.lunaOpenRouterBaseUrl.trim(), lunaOpenRouterCredentialRef: draft.lunaOpenRouterCredentialRef.trim(),
+            lunaOpenAIBaseUrl: draft.lunaOpenAIBaseUrl.trim(), lunaOpenAICredentialRef: draft.lunaOpenAICredentialRef.trim() };
         const timeoutMs = Number(draft.timeoutMs);
-        if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0) {
+        if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 300000) {
             setSaveMessage(t('invalidTimeout'));
             return;
         }
+        const generation = ++saveGeneration.current;
+        const submittedDraft = JSON.stringify(draft);
         setSaving(true);
         setSaveMessage('');
         try {
-            const accepted = await form.mutate([
-                { op: 'set', path: ['baseUrl'], value: draft.baseUrl.trim() },
-                { op: 'set', path: ['model'], value: draft.model.trim() },
-                { op: 'set', path: ['credentialRef'], value: draft.credentialRef.trim() },
-                { op: 'set', path: ['timeoutMs'], value: timeoutMs },
-            ], snapshot.revision);
-            if (accepted) {
-                notifySuccess(t('saveSuccess'));
-                editedConnection.current = false;
-                const saved = form.getSnapshot().value;
-                if (saved !== undefined)
-                    setDraft({ baseUrl: saved.baseUrl, model: saved.model, credentialRef: saved.credentialRef, timeoutMs: String(saved.timeoutMs) });
-                void loadCredential();
-            }
-            else
+            const values = { ...submission, timeoutMs };
+            const accepted = await form.mutate(Object.entries(values).map(([key, value]) => ({ op: 'set', path: [key], value })), snapshot.revision);
+            if (!alive.current || generation !== saveGeneration.current || JSON.stringify(draftRef.current) !== submittedDraft)
+                return;
+            if (!accepted) {
                 setSaveMessage(t('saveFailed'));
+                return;
+            }
+            const saved = form.getSnapshot().value;
+            if (saved === undefined || JSON.stringify(connectionDraft(saved)) !== JSON.stringify({ ...submission, timeoutMs: String(timeoutMs) })) {
+                setSaveMessage(t('connectionChanged'));
+                return;
+            }
+            editedConnection.current.clear();
+            setDraft(connectionDraft(saved));
+            notifySuccess(t('saveSuccess'));
         }
         catch {
-            setSaveMessage(t('saveFailed'));
+            if (alive.current && generation === saveGeneration.current)
+                setSaveMessage(t('saveFailed'));
         }
         finally {
-            setSaving(false);
+            if (alive.current && generation === saveGeneration.current)
+                setSaving(false);
         }
     };
     const saveKey = async () => {
-        if (!secret)
+        if (!secret || dirty || savedConnection === undefined || !credential?.writable)
             return;
+        const connection = savedConnection;
+        const capturedContext = contextKey;
+        const generation = ++keyGeneration.current;
         setSecretSaving(true);
         setCredentialMessage('');
         try {
-            setCredential(await jev.setCredential(secret));
+            const result = await jev.setCredential(connection, secret);
+            if (!alive.current || generation !== keyGeneration.current || contextRef.current !== capturedContext)
+                return;
+            if (identityKey(result.connection) !== identityKey(connection)) {
+                setCredentialMessage(t('connectionChanged'));
+                return;
+            }
+            credentialGeneration.current++;
+            setCredential(result);
             setSecret('');
             notifySuccess(t('keySaved'));
         }
         catch {
-            setCredentialMessage(t('keySaveFailed'));
+            if (alive.current && generation === keyGeneration.current && contextRef.current === capturedContext)
+                setCredentialMessage(t('keySaveFailed'));
         }
         finally {
-            setSecretSaving(false);
+            if (alive.current && generation === keyGeneration.current && contextRef.current === capturedContext)
+                setSecretSaving(false);
         }
     };
     const runProbe = async () => {
+        if (dirty || savedConnection === undefined || snapshot.status !== 'ready')
+            return;
+        const connection = savedConnection;
+        const capturedContext = contextKey;
+        const generation = ++probeGeneration.current;
         const controller = new AbortController();
         probeAbort.current = controller;
         setTesting(true);
         setProbe(null);
         setProbeError('');
         try {
-            setProbe(await jev.testConnection(controller.signal));
+            const result = await jev.testConnection(connection, controller.signal);
+            if (!alive.current || generation !== probeGeneration.current || contextRef.current !== capturedContext || controller.signal.aborted)
+                return;
+            if (identityKey(result.connection) !== identityKey(connection)) {
+                setProbeError(t('connectionChanged'));
+                return;
+            }
+            setProbe(result);
         }
         catch {
-            if (!controller.signal.aborted)
+            if (alive.current && generation === probeGeneration.current && contextRef.current === capturedContext && !controller.signal.aborted)
                 setProbeError(t('testFailed'));
         }
         finally {
             if (probeAbort.current === controller)
                 probeAbort.current = null;
-            setTesting(false);
+            if (alive.current && generation === probeGeneration.current && contextRef.current === capturedContext)
+                setTesting(false);
         }
     };
     const toggleFeature = async (id, enabled) => {
@@ -510,20 +610,26 @@ function SettingsPanel({ form, jev, notifySuccess, t }) {
         setFeatureError('');
         try {
             const accepted = await form.mutate([{ op: 'set', path: ['features', id], value: enabled }], snapshot.revision);
-            if (!accepted) {
+            if (!accepted && alive.current) {
                 setFeatureErrorLabel('featureSaveFailed');
                 setFeatureError(t('featureSaveFailed'));
             }
         }
         catch {
-            setFeatureErrorLabel('featureSaveFailed');
-            setFeatureError(t('featureSaveFailed'));
+            if (alive.current) {
+                setFeatureErrorLabel('featureSaveFailed');
+                setFeatureError(t('featureSaveFailed'));
+            }
         }
         finally {
-            setFeatureBusy('');
+            if (alive.current)
+                setFeatureBusy('');
         }
     };
-    return (_jsxs("div", { className: css.panel, children: [_jsxs("section", { className: css.section, "aria-label": t('connection'), children: [_jsx("h3", { className: css.heading, children: t('connection') }), snapshot.status === 'loading' && current === undefined && _jsx(Loading, { label: t('loading') }), snapshot.status === 'unavailable' && _jsx("p", { className: css.notice, children: t('unavailable') }), current !== undefined && _jsxs("div", { className: css.form, children: [_jsxs("div", { className: css.filters, children: [_jsxs("label", { className: css.field, children: [_jsx("span", { children: t('baseUrl') }), _jsx("input", { value: draft.baseUrl, disabled: !snapshot.writable || saving, onChange: event => { editConnection('baseUrl', event.target.value); } })] }), _jsxs("label", { className: css.field, children: [_jsx("span", { children: t('model') }), _jsx("input", { value: draft.model, disabled: !snapshot.writable || saving, onChange: event => { editConnection('model', event.target.value); } })] }), _jsxs("label", { className: css.field, children: [_jsx("span", { children: t('credentialRef') }), _jsx("input", { value: draft.credentialRef, disabled: !snapshot.writable || saving, onChange: event => { editConnection('credentialRef', event.target.value); } })] }), _jsxs("label", { className: css.field, children: [_jsx("span", { children: t('timeoutMs') }), _jsx("input", { type: "number", min: "1", step: "1", value: draft.timeoutMs, disabled: !snapshot.writable || saving, onChange: event => { editConnection('timeoutMs', event.target.value); } })] })] }), _jsxs("div", { className: css.actions, children: [_jsx(Button, { variant: "primary", disabled: !snapshot.writable || saving || !dirty, onClick: () => { void saveConnection(); }, children: saving ? t('saving') : t('saveConnection') }), !snapshot.writable && _jsx("span", { className: css.hint, children: t('readOnly') })] }), saveMessage && _jsx("p", { role: "status", className: css.notice, children: saveMessage })] }), _jsxs("div", { className: css.form, children: [_jsxs("label", { className: css.field, children: [_jsxs("span", { children: [t('apiKey'), credential !== null ? ` · ${credential.configured ? t('configured') : t('missing')}${!credential.writable ? ` · ${t('readOnly')}` : ''}` : ''] }), _jsx("input", { type: "password", autoComplete: "new-password", value: secret, disabled: !credential?.writable || secretSaving || dirty, onChange: event => { setSecret(event.target.value); } }), _jsx("span", { className: css.hint, children: t('apiKeyHint') })] }), _jsxs("div", { className: css.actions, children: [_jsx(Button, { disabled: !secret || !credential?.writable || secretSaving || dirty, onClick: () => { void saveKey(); }, children: secretSaving ? t('saving') : credential?.configured ? t('replaceKey') : t('saveKey') }), _jsx(Button, { disabled: testing || dirty || snapshot.status !== 'ready', onClick: () => { void runProbe(); }, children: testing ? t('testing') : t('testConnection') })] }), dirty && _jsx("p", { className: css.hint, children: t('saveFirst') }), credentialMessage && _jsx("p", { role: "status", className: css.notice, children: credentialMessage }), probe && _jsxs("p", { role: "status", className: probe.ok ? css.success : css.notice, children: [t(probe.ok ? 'testSucceeded' : 'testFailed'), " \u00B7 ", t('latency'), ": ", probe.latencyMs, " ms", probe.failure ? ` · ${probe.failure.code}: ${probe.failure.message}` : ''] }), probeError && _jsx("p", { role: "alert", className: css.notice, children: probeError })] })] }), _jsxs("section", { className: css.section, "aria-label": t('features'), children: [_jsxs("div", { className: css.recordHead, children: [_jsx("h3", { className: css.heading, children: t('features') }), _jsx(Button, { size: "sm", disabled: featureLoading, onClick: () => { void loadFeatures(); }, children: t('refreshFeatures') })] }), featureLoading && features.length === 0 && current !== undefined && _jsx(Loading, { label: t('loading') }), featureError && _jsxs("p", { role: "alert", className: css.notice, children: [featureError, " ", featureErrorLabel === 'featureLoadFailed' && _jsx(Button, { size: "sm", onClick: () => { void loadFeatures(); }, children: t('retry') })] }), !featureLoading && !featureError && features.length === 0 && _jsx("p", { className: css.empty, children: t('noFeatures') }), _jsx("div", { className: css.list, children: features.map(feature => {
+    const endpointField = draft.judgmentModel === 'jev' ? 'baseUrl' : draft.lunaApi === 'openrouter' ? 'lunaOpenRouterBaseUrl' : 'lunaOpenAIBaseUrl';
+    const referenceField = draft.judgmentModel === 'jev' ? 'credentialRef' : draft.lunaApi === 'openrouter' ? 'lunaOpenRouterCredentialRef' : 'lunaOpenAICredentialRef';
+    return (_jsxs("div", { className: css.panel, children: [_jsxs("section", { className: css.section, "aria-label": t('connection'), children: [_jsx("h3", { className: css.heading, children: t('connection') }), _jsx("p", { className: css.hint, children: t('connectionHint') }), snapshot.status === 'loading' && current === undefined && _jsx(Loading, { label: t('loading') }), snapshot.status === 'unavailable' && _jsx("p", { className: css.notice, children: t('unavailable') }), current !== undefined && _jsxs("div", { className: css.form, children: [_jsxs("div", { className: css.filters, children: [_jsxs("label", { className: css.field, children: [_jsx("span", { children: t('decisionModel') }), _jsxs("select", { value: draft.judgmentModel, disabled: !snapshot.writable || saving, onChange: event => { editConnection('judgmentModel', event.target.value); }, children: [_jsx("option", { value: "jev", children: t('jevModel') }), _jsx("option", { value: "luna", children: t('lunaModel') })] })] }), draft.judgmentModel === 'luna' && _jsxs("label", { className: css.field, children: [_jsx("span", { children: t('lunaApi') }), _jsxs("select", { value: draft.lunaApi, disabled: !snapshot.writable || saving, onChange: event => { editConnection('lunaApi', event.target.value); }, children: [_jsx("option", { value: "openrouter", children: t('openRouter') }), _jsx("option", { value: "openai", children: t('openAI') })] })] })] }), _jsxs("div", { className: css.filters, children: [_jsxs("label", { className: css.field, children: [_jsx("span", { children: t('baseUrl') }), _jsx("input", { value: draft[endpointField], disabled: !snapshot.writable || saving, onChange: event => { editConnection(endpointField, event.target.value); } })] }), _jsxs("label", { className: css.field, children: [_jsx("span", { children: t('model') }), _jsx("input", { "aria-label": t('model'), "aria-describedby": draft.judgmentModel === 'luna' ? 'jev-luna-model-hint' : undefined, value: draft.judgmentModel === 'jev' ? draft.model : displayedConnection.model, readOnly: draft.judgmentModel === 'luna', disabled: !snapshot.writable || saving, onChange: event => { if (draft.judgmentModel === 'jev')
+                                                    editConnection('model', event.target.value); } }), draft.judgmentModel === 'luna' && _jsx("span", { id: "jev-luna-model-hint", className: css.hint, children: t('lunaModelHint') })] }), _jsxs("label", { className: css.field, children: [_jsx("span", { children: t('credentialRef') }), _jsx("input", { value: draft[referenceField], disabled: !snapshot.writable || saving, onChange: event => { editConnection(referenceField, event.target.value); } })] }), _jsxs("label", { className: css.field, children: [_jsx("span", { children: t('timeoutMs') }), _jsx("input", { type: "number", min: "1", max: "300000", step: "1", value: draft.timeoutMs, disabled: !snapshot.writable || saving, onChange: event => { editConnection('timeoutMs', event.target.value); } })] })] }), _jsxs("div", { className: css.actions, children: [_jsx(Button, { variant: "primary", disabled: !snapshot.writable || saving || !dirty, onClick: () => { void saveConnection(); }, children: saving ? t('saving') : t('saveConnection') }), !snapshot.writable && _jsx("span", { className: css.hint, children: t('readOnly') })] }), saveMessage && _jsx("p", { role: "status", className: css.notice, children: saveMessage })] }), _jsxs("div", { className: css.form, children: [_jsxs("label", { className: css.field, children: [_jsxs("span", { children: [t('apiKey'), credential !== null ? ` · ${credential.configured ? t('configured') : t('missing')}${!credential.writable ? ` · ${t('readOnly')}` : ''}` : ''] }), _jsx("input", { "aria-label": t('apiKey'), "aria-describedby": "jev-api-key-hint", type: "password", autoComplete: "new-password", value: secret, disabled: !credential?.writable || secretSaving || dirty, onChange: event => { setSecret(event.target.value); } }), _jsx("span", { id: "jev-api-key-hint", className: css.hint, children: t('apiKeyHint') })] }), _jsxs("div", { className: css.actions, children: [_jsx(Button, { disabled: !secret || !credential?.writable || secretSaving || dirty, onClick: () => { void saveKey(); }, children: secretSaving ? t('saving') : credential?.configured ? t('replaceKey') : t('saveKey') }), _jsx(Button, { disabled: testing || dirty || snapshot.status !== 'ready', onClick: () => { void runProbe(); }, children: testing ? t('testing') : t('testConnection') })] }), _jsx("p", { className: css.hint, children: t('diagnosticHint') }), dirty && _jsx("p", { className: css.hint, children: t('saveFirst') }), credentialMessage && _jsx("p", { role: "status", className: css.notice, children: credentialMessage }), probe && _jsxs("p", { role: "status", className: probe.ok ? css.success : css.notice, children: [t(probe.ok ? 'testSucceeded' : 'testFailed'), " \u00B7 ", t('latency'), ": ", probe.latencyMs, " ms", probe.failure ? ` · ${probe.failure.code}: ${probe.failure.message}` : ''] }), probeError && _jsx("p", { role: "alert", className: css.notice, children: probeError })] })] }), _jsxs("section", { className: css.section, "aria-label": t('features'), children: [_jsxs("div", { className: css.recordHead, children: [_jsx("h3", { className: css.heading, children: t('features') }), _jsx(Button, { size: "sm", disabled: featureLoading, onClick: () => { void loadFeatures(); }, children: t('refreshFeatures') })] }), featureLoading && features.length === 0 && current !== undefined && _jsx(Loading, { label: t('loading') }), featureError && _jsxs("p", { role: "alert", className: css.notice, children: [featureError, " ", featureErrorLabel === 'featureLoadFailed' && _jsx(Button, { size: "sm", onClick: () => { void loadFeatures(); }, children: t('retry') })] }), !featureLoading && !featureError && features.length === 0 && _jsx("p", { className: css.empty, children: t('noFeatures') }), _jsx("div", { className: css.list, children: features.map(feature => {
                             const enabled = current?.features?.[feature.id] ?? feature.enabled;
                             return _jsxs("div", { className: css.feature, children: [_jsxs("div", { className: css.featureBody, children: [_jsx("span", { className: css.featureTitle, children: featureName(feature, t) }), _jsx("span", { className: css.description, children: featureDescription(feature, t) }), feature.settingsDescription && _jsx("span", { className: css.hint, children: feature.settingsDescription })] }), _jsx(Switch, { checked: enabled, label: `${enabled ? t('disable') : t('enable')} ${featureName(feature, t)}`, disabled: !snapshot.writable || featureBusy !== '', onChange: next => { void toggleFeature(feature.id, next); } })] }, feature.id);
                         }) })] })] }));
@@ -605,6 +711,6 @@ function RecordsPanel({ jev, t }) {
         }
     };
     const closeDetail = () => { detailGeneration.current++; setSelected(''); setDetail(null); setDetailError(''); setDetailLoading(false); };
-    return _jsxs("div", { className: css.panel, children: [_jsxs("section", { className: css.section, "aria-label": t('records'), children: [_jsxs("div", { className: css.filters, children: [_jsxs("label", { className: css.field, children: [_jsx("span", { children: t('feature') }), _jsx("input", { list: "jev-feature-suggestions", placeholder: t('allFeatures'), value: featureId, onChange: event => { setFeatureId(event.target.value); } }), _jsx("datalist", { id: "jev-feature-suggestions", children: features.map(feature => _jsx("option", { value: feature.id, label: featureName(feature, t) }, feature.id)) })] }), _jsxs("label", { className: css.field, children: [_jsx("span", { children: t('status') }), _jsxs("select", { value: status, onChange: event => { setStatus(event.target.value); }, children: [_jsx("option", { value: "", children: t('allStatuses') }), STATUSES.map(value => _jsx("option", { value: value, children: statusLabel(value, t) }, value))] })] }), _jsxs("label", { className: css.field, children: [_jsx("span", { children: t('sessionId') }), _jsx("input", { value: sessionId, onChange: event => { setSessionId(event.target.value); } })] })] }), _jsxs("div", { className: css.actions, children: [_jsx(Button, { variant: "primary", onClick: applyFilters, disabled: loading, children: t('applyFilters') }), _jsx(Button, { onClick: () => { void query(filter, false); }, disabled: loading, children: t('refresh') })] }), error && _jsxs("p", { role: "alert", className: css.notice, children: [error, " ", _jsx(Button, { size: "sm", onClick: () => { void query(filter, false); }, children: t('retry') })] }), loading && items.length === 0 && _jsx(Loading, { label: t('loading') }), !loading && !error && items.length === 0 && _jsx("p", { className: css.empty, children: t('noRecords') }), _jsx("div", { className: css.list, children: items.map(item => _jsxs("article", { className: css.record, children: [_jsxs("div", { className: css.recordHead, children: [_jsx("span", { className: css.featureTitle, children: item.diagnostic ? t('diagnostic') : recordFeatureName(features, item.featureId, t) }), _jsx("span", { className: css.meta, children: statusLabel(item.status, t) })] }), _jsxs("span", { className: css.meta, children: [t('time'), ": ", dateText(item.startedAt), " \u00B7 ", t('attempts'), ": ", item.attempts, item.sessionId ? ` · ${t('sessionId')}: ${item.sessionId}` : ''] }), _jsx("div", { children: _jsx(Button, { size: "sm", onClick: () => { void openDetail(item.id); }, children: t('details') }) })] }, item.id)) }), nextCursor && _jsx("div", { className: css.actions, children: _jsx(Button, { disabled: loading, onClick: () => { void query({ ...filter, cursor: nextCursor }, true); }, children: loading ? t('loading') : t('loadMore') }) })] }), selected && _jsxs("section", { className: css.section, "aria-label": t('details'), children: [_jsxs("div", { className: css.recordHead, children: [_jsx("h3", { className: css.heading, children: t('details') }), _jsx(Button, { size: "sm", onClick: closeDetail, children: t('closeDetails') })] }), detailError && _jsxs("p", { role: "alert", className: css.notice, children: [detailError, " ", _jsx(Button, { size: "sm", onClick: () => { void openDetail(selected); }, children: t('retry') })] }), detailLoading && !detail && _jsx(Loading, { label: t('loading') }), !detailLoading && !detailError && !detail && _jsx("p", { className: css.empty, children: t('noDetail') }), detail && _jsxs("div", { className: css.detail, children: [_jsxs("div", { className: css.meta, children: [t('operation'), ": ", detail.id, " \u00B7 ", t('status'), ": ", statusLabel(detail.status, t)] }), _jsx(DetailBlock, { label: t('operation'), value: detail.link }), _jsx(DetailBlock, { label: t('failure'), value: detail.failure }), _jsx("h4", { className: css.heading, children: t('attempts') }), detail.attemptRecords.map((attempt, index) => _jsxs("div", { className: css.record, children: [_jsxs("div", { className: css.meta, children: ["#", index + 1, " \u00B7 ", dateText(attempt.startedAt), " \u00B7 ", statusLabel(attempt.status, t), attempt.latencyMs !== undefined ? ` · ${t('latency')}: ${attempt.latencyMs} ms` : ''] }), _jsx(DetailBlock, { label: t('connectionIdentity'), value: attempt.connection }), _jsx(DetailBlock, { label: t('input'), value: attempt.request.state }), _jsx(DetailBlock, { label: t('questions'), value: attempt.request.questions }), _jsx(DetailBlock, { label: t('rawAnswer'), value: attempt.rawResponse }), _jsx(DetailBlock, { label: t('answer'), value: attempt.response }), _jsx(DetailBlock, { label: t('interpretation'), value: attempt.interpretation }), _jsx(DetailBlock, { label: t('failure'), value: attempt.failure }), _jsx(DetailBlock, { label: t('usage'), value: attempt.usage })] }, attempt.id)), _jsx("h4", { className: css.heading, children: t('receipts') }), detail.receipts.length === 0 ? _jsx("p", { className: css.empty, children: t('noDetail') }) : detail.receipts.map(receipt => _jsxs("div", { className: css.record, children: [_jsxs("span", { className: css.meta, children: [dateText(receipt.at), " \u00B7 ", actionStatusLabel(receipt.status, t)] }), _jsx(DetailBlock, { label: t('actualAction'), value: receipt.reason ?? receipt.id })] }, receipt.id))] })] })] });
+    return _jsxs("div", { className: css.panel, children: [_jsxs("section", { className: css.section, "aria-label": t('records'), children: [_jsxs("div", { className: css.filters, children: [_jsxs("label", { className: css.field, children: [_jsx("span", { children: t('feature') }), _jsx("input", { list: "jev-feature-suggestions", placeholder: t('allFeatures'), value: featureId, onChange: event => { setFeatureId(event.target.value); } }), _jsx("datalist", { id: "jev-feature-suggestions", children: features.map(feature => _jsx("option", { value: feature.id, label: featureName(feature, t) }, feature.id)) })] }), _jsxs("label", { className: css.field, children: [_jsx("span", { children: t('status') }), _jsxs("select", { value: status, onChange: event => { setStatus(event.target.value); }, children: [_jsx("option", { value: "", children: t('allStatuses') }), STATUSES.map(value => _jsx("option", { value: value, children: statusLabel(value, t) }, value))] })] }), _jsxs("label", { className: css.field, children: [_jsx("span", { children: t('sessionId') }), _jsx("input", { value: sessionId, onChange: event => { setSessionId(event.target.value); } })] })] }), _jsxs("div", { className: css.actions, children: [_jsx(Button, { variant: "primary", onClick: applyFilters, disabled: loading, children: t('applyFilters') }), _jsx(Button, { onClick: () => { void query(filter, false); }, disabled: loading, children: t('refresh') })] }), error && _jsxs("p", { role: "alert", className: css.notice, children: [error, " ", _jsx(Button, { size: "sm", onClick: () => { void query(filter, false); }, children: t('retry') })] }), loading && items.length === 0 && _jsx(Loading, { label: t('loading') }), !loading && !error && items.length === 0 && _jsx("p", { className: css.empty, children: t('noRecords') }), _jsx("div", { className: css.list, children: items.map(item => _jsxs("article", { className: css.record, children: [_jsxs("div", { className: css.recordHead, children: [_jsx("span", { className: css.featureTitle, children: item.diagnostic ? t('diagnostic') : recordFeatureName(features, item.featureId, t) }), _jsx("span", { className: css.meta, children: statusLabel(item.status, t) })] }), _jsxs("span", { className: css.meta, children: [t('time'), ": ", dateText(item.startedAt), " \u00B7 ", t('attempts'), ": ", item.attempts, item.sessionId ? ` · ${t('sessionId')}: ${item.sessionId}` : ''] }), _jsx("div", { children: _jsx(Button, { size: "sm", onClick: () => { void openDetail(item.id); }, children: t('details') }) })] }, item.id)) }), nextCursor && _jsx("div", { className: css.actions, children: _jsx(Button, { disabled: loading, onClick: () => { void query({ ...filter, cursor: nextCursor }, true); }, children: loading ? t('loading') : t('loadMore') }) })] }), selected && _jsxs("section", { className: css.section, "aria-label": t('details'), children: [_jsxs("div", { className: css.recordHead, children: [_jsx("h3", { className: css.heading, children: t('details') }), _jsx(Button, { size: "sm", onClick: closeDetail, children: t('closeDetails') })] }), detailError && _jsxs("p", { role: "alert", className: css.notice, children: [detailError, " ", _jsx(Button, { size: "sm", onClick: () => { void openDetail(selected); }, children: t('retry') })] }), detailLoading && !detail && _jsx(Loading, { label: t('loading') }), !detailLoading && !detailError && !detail && _jsx("p", { className: css.empty, children: t('noDetail') }), detail && _jsxs("div", { className: css.detail, children: [_jsxs("div", { className: css.meta, children: [t('operation'), ": ", detail.id, " \u00B7 ", t('status'), ": ", statusLabel(detail.status, t)] }), _jsx(DetailBlock, { label: t('operation'), value: detail.link }), _jsx(DetailBlock, { label: t('failure'), value: detail.failure }), _jsx("h4", { className: css.heading, children: t('attempts') }), detail.attemptRecords.map((attempt, index) => _jsxs("div", { className: css.record, children: [_jsxs("div", { className: css.meta, children: ["#", index + 1, " \u00B7 ", dateText(attempt.startedAt), " \u00B7 ", statusLabel(attempt.status, t), attempt.latencyMs !== undefined ? ` · ${t('latency')}: ${attempt.latencyMs} ms` : ''] }), _jsx(DetailBlock, { label: t('connectionIdentity'), value: attempt.connection }), _jsx(DetailBlock, { label: t('input'), value: attempt.request.state }), _jsx(DetailBlock, { label: t('questions'), value: attempt.request.questions }), _jsx(DetailBlock, { label: t('rawAnswer'), value: attempt.rawResponse }), _jsx(DetailBlock, { label: t('answer'), value: attempt.response }), _jsx(DetailBlock, { label: t('interpretation'), value: attempt.interpretation }), _jsx(DetailBlock, { label: t('failure'), value: attempt.failure }), _jsx(DetailBlock, { label: t('usage'), value: attempt.usage }), attempt.usageComplete === false && _jsx("p", { className: css.hint, children: t('usageIncomplete') }), attempt.networkRecords !== undefined && _jsxs("div", { className: css.detail, children: [_jsx("h4", { className: css.heading, children: t('providerRequests') }), attempt.networkRecords.map(packet => _jsxs("div", { className: css.record, children: [_jsxs("span", { className: css.meta, children: [packet.id, " \u00B7 ", statusLabel(packet.status, t), packet.httpStatus !== undefined ? ` · HTTP ${packet.httpStatus}` : ''] }), _jsx(DetailBlock, { label: t('questionIds'), value: packet.questionIds }), _jsx(DetailBlock, { label: t('requestBody'), value: packet.requestBody }), _jsx(DetailBlock, { label: t('reportedModel'), value: packet.returnedModel }), _jsx(DetailBlock, { label: t('requestId'), value: packet.requestId }), packet.rawResponseText !== undefined && _jsxs("div", { className: css.detailBlock, children: [_jsx("span", { className: css.detailLabel, children: t('rawAnswer') }), _jsx("pre", { className: css.code, children: packet.rawResponseText })] }), packet.rawResponseText === undefined && _jsx(DetailBlock, { label: t('rawAnswer'), value: packet.rawResponse }), _jsx(DetailBlock, { label: t('usage'), value: packet.usage }), _jsx(DetailBlock, { label: t('failure'), value: packet.failure })] }, packet.id))] })] }, attempt.id)), _jsx("h4", { className: css.heading, children: t('receipts') }), detail.receipts.length === 0 ? _jsx("p", { className: css.empty, children: t('noDetail') }) : detail.receipts.map(receipt => _jsxs("div", { className: css.record, children: [_jsxs("span", { className: css.meta, children: [dateText(receipt.at), " \u00B7 ", actionStatusLabel(receipt.status, t)] }), _jsx(DetailBlock, { label: t('actualAction'), value: receipt.reason ?? receipt.id })] }, receipt.id))] })] })] });
 }
 //# sourceMappingURL=JevPage.js.map

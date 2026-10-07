@@ -1,3 +1,4 @@
+import { clientConfig } from './client-fixtures.ts'
 /** Independent feature switch owns the stage tab's lifetime. */
 
 import { describe, expect, it, vi } from 'vitest'
@@ -7,7 +8,7 @@ import { watchStageView } from '../src/client/stage-registration.ts'
 
 function form() {
   let snapshot: ConfigFormSnapshot<JevConfigValues> = {
-    status: 'ready', value: { baseUrl: '', model: '', credentialRef: '', timeoutMs: 30000, features: {} },
+    status: 'ready', value: clientConfig({ baseUrl: '', model: '', credentialRef: '' }),
     base: {}, user: {}, revision: 1, writable: true, mode: 'host',
   }
   const listeners = new Set<() => void>()

@@ -2,15 +2,17 @@
 
 English | [简体中文](README.zh-CN.md) | [中文功能与实测网站](https://luobosibing2.github.io/dsh-jev-plugin/)
 
-**Native DeepSeek Harness (DSH) plugin integrating TypeSafe Jev as a System One decision layer.**
+**Native DeepSeek Harness (DSH) plugin with Jev or Luna Decisions as its judgment model.**
 
 `deepseek-harness-jev` connects [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) to [Jev by TypeSafe AI](https://typesafe.ai/) for agent skill and file selection, task supervision, shared-finding corrections, tool-output filtering, single-operation approval assistance, and historical stage navigation. Its 12 features are individually configurable from one Jev settings page and are all disabled by default.
 
-The main model continues to plan, generate answers, and call native tools. The plugin automatically invokes enabled Jev judgments at DSH extension points for skill catalogs, agent lifecycle, tool results, and approvals, then applies results according to each feature. DSH configures the main model; Jev has a separate connection. Integration uses public Cordis / DSH plugin APIs without modifying the host source.
+The main model continues to plan, generate answers, and call native tools. Enabled features use the saved Jev or Luna Decisions connection at DSH extension points for skill catalogs, agent lifecycle, tool results, and approvals, then apply results according to each feature. DSH configures the main model separately. Integration uses public Cordis / DSH plugin APIs without modifying the host source.
 
 This is an independent community project, not an official DeepSeek or Jev release. It is an early-stage plugin tested with **DSH 0.1.7-rc.2**; its APIs and model judgments are not a correctness guarantee.
 
-The [Chinese feature website](https://luobosibing2.github.io/dsh-jev-plugin/) explains each DSH integration point, the information sent to Jev, and the observed test cases and limits.
+The [Chinese feature website](https://luobosibing2.github.io/dsh-jev-plugin/) explains each DSH integration point, the information sent to the judgment service, and the observed test cases and limits.
+
+`main` supports Jev and Luna Decisions through OpenRouter or OpenAI, with three separate saved connections per profile. The [2026-10-07 public report](docs/testing/2026-10-07-luna-decisions/README.md) separates fixed protocol/installation checks, controlled live samples, and real DeepSeek Flash tasks. Official OpenAI calls succeeded in these limited samples; the only live OpenRouter diagnostic returned a provider-access HTTP 403 and was stopped. These results do not establish general judgment accuracy or stable task benefit.
 
 ## What is included?
 
@@ -77,7 +79,7 @@ Use the following steps when modifying or building the plugin yourself. Existing
 - Node.js **24.11 or later** is recommended; the publication build is checked on Node 24.14.1.
 - pnpm **11.7.0** available on `PATH`.
 - DeepSeek Harness CLI **0.1.7-rc.2**. The plugin pins the corresponding DSH peers and Cordis **4.0.4**; newer versions are not automatically supported.
-- A configured main-model provider in DSH, plus your own Jev-compatible System One endpoint and credentials.
+- A configured main-model provider in DSH, plus credentials for your selected Jev-compatible System One service or Luna API.
 
 If needed, install the tools:
 
@@ -114,17 +116,28 @@ The first command creates the Web profile without launching it. Adding a plugin 
 
 Open the authenticated Web address printed by DSH. Configure your main model through DSH, then open the plugin's **Jev** page.
 
-## Configure Jev
+## Configure the judgment connection
 
-1. Set the full System One endpoint, for example `https://api.typesafe.ai/v1/systemone`.
-2. Set the model, for example `jev-latest`.
-3. Choose a DSH credential reference, save the connection, and save your API key using the page's credential control. Do not put a key in source files or a repository URL.
-4. Review the timeout, then enable only the features you need.
-5. Inspect **Decision records** for input, answers, attempts, and actual adoption or execution receipts.
+1. Open **Jev → Settings and features**, then select **Jev** or **Luna Decisions** under **Judgment model**. Luna also exposes **OpenRouter** or **OpenAI** under **Luna API**.
+2. Check the full request address and credential reference. Jev retains your saved custom address and model; Luna uses the fixed model for its selected API.
+3. Save the connection, then save its API key through the credential control. Each connection has its own saved address and credential reference. Do not put a key in source files or a repository URL.
+4. Select **Test connection** to send fixed Choice, Score, and Noul questions. A successful test means all three answers passed protocol validation; it does not establish task quality.
+5. Enable only the features you need. All enabled features use the saved judgment connection; changing models does not change feature switches, thresholds, counts, or the shared timeout.
+6. Inspect **Decision records** for the attempt's connection, provider-reported model, sent requests, raw provider responses, normalized answers, known usage, and action receipts.
 
-The main agent's provider and the Jev judgment connection are separate. A credential marked “configured” is not a successful connectivity test. Connection tests and enabled judgments make requests to your provider.
+| Connection | Default full request address | Request model | Default credential reference |
+| --- | --- | --- | --- |
+| Jev | Your existing System One address, for example `https://api.typesafe.ai/v1/systemone` | Your existing model, for example `jev-latest` | Your existing reference, initially `JEV_API_KEY` |
+| Luna / OpenRouter | `https://openrouter.ai/api/alpha/decisions` | `openai/gpt-6-luna-decisions` | `JEV_LUNA_OPENROUTER_API_KEY` |
+| Luna / OpenAI | `https://api.openai.com/v1/decisions` | `gpt-6-luna` | `JEV_LUNA_OPENAI_API_KEY` |
 
-Selection defaults are 5 skill summaries, at most 40 glob matches eligible for ranking, and 12 displayed ranked paths. A larger glob skips Jev rather than silently judging only the first 40. Supervision defaults are a drift check every 6 completed model steps and a pause after 3 native goal rounds without progress. These values can be changed without enabling the features.
+The two Luna model IDs name the specified Luna Decisions capability in different APIs. The selected API determines the protocol, including OpenAI's `predicate` representation of Noul; editing the hostname does not change the protocol. Legal custom endpoints use that selected protocol. Switching back restores each saved connection, and old profiles default to Jev without replacing their values.
+
+Credential status shows existence and write access, never the saved key. “Configured” does not mean connectivity succeeded. Save an edited connection before changing its key or testing it; a changed connection cannot accept a stale key write or display an old diagnostic as its result. A successful key replacement clears the input. Reading, editing, or saving settings sends no model request.
+
+Requests use the connection saved when an attempt starts. A later switch applies to new attempts and explicit retries. Failures do not automatically fall back to another model or API. OpenRouter requests above 200 questions are split without dropping questions; all batches share the original timeout and complete before a business answer is delivered. Partial failures retain their actual packets and known usage. See the [package reference](packages/jev/README.md#judgment-connections) for configuration and lifecycle details.
+
+Selection defaults are 5 skill summaries, at most 40 glob matches eligible for ranking, and 12 displayed ranked paths. A larger glob skips judgment ranking rather than silently judging only the first 40. Supervision defaults are a drift check every 6 completed model steps and a pause after 3 native goal rounds without progress. These values can be changed without enabling the features.
 
 Long-log and test-log admission have independent switches, both off by default. Generic command logs start at 6,000 Unicode code points and recognized test logs at 4,000. The default omit-probability threshold is 0.8 and the judgment wait limit is 4 seconds. The settings page exposes these and the other admission budgets without enabling either feature.
 
@@ -137,6 +150,7 @@ Long-log and test-log admission have independent switches, both off by default. 
 - **Judgment success is not action success.** The ledger distinguishes an answer, its adoption, permission issuance, and execution results.
 - **Log admission keeps an original reference.** It changes only eligible model-visible tool text after execution; DSH's immediate spill, tool output limits, and later context compaction still apply. An isolated real-profile build reduced one 8,510-character log by 75.7%. A neutral 180-test run reached the test-log judge but stayed complete because its omit probabilities were below 0.8; that run does not establish test-log reduction effectiveness. See the [tool-output admission report](docs/reports/2026-09-27-tool-output-admission.md).
 - **Validation is scoped.** Deterministic tests establish integration. Limited real-service examples do not establish general semantic accuracy. See [validation notes](docs/validation.md).
+- **Luna task results retain misses and limits.** Two earlier controlled approval samples returned `unauthorized`; a later real task received `approve` and executed one native `allowed-once` write. A real build log decreased from 8,407 to 2,122 code points (74.76%) at the original defaults, while five tied file-ranking probabilities did not change order. The [bilingual Luna report](docs/testing/2026-10-07-luna-decisions/README.md) records both results, original-log recovery, and unverified features.
 
 Enabled features send the relevant task context or operation data to the configured judgment endpoint. Exact judgment inputs and answers are stored in the profile's local plugin records; model-visible effects use normal DSH session records. Keep runtime records and credentials private. Public source history excludes personal QA screenshots and raw session captures.
 

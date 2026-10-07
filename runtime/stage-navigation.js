@@ -1,4 +1,4 @@
-import { n as JevError } from "./types-s51osKhy.js";
+import { n as JevError } from "./types-DlDvN-jH.js";
 import s from "@deepseek-ai/schemastery";
 import { credentialRef } from "@deepseek-ai/dsh-credentials";
 import { createHash, randomUUID } from "node:crypto";
@@ -324,6 +324,11 @@ const recordSchema = z.object({
 	model: z.string().optional(),
 	configuredModel: z.string().optional(),
 	operationId: z.string().optional(),
+	connectionId: z.enum([
+		"jev",
+		"luna-openrouter",
+		"luna-openai"
+	]).optional(),
 	recordId: z.string().optional(),
 	failure: z.object({
 		code: z.string(),
@@ -391,7 +396,7 @@ function latest(records) {
 	return records.toSorted((a, b) => b.revision - a.revision)[0];
 }
 function summary(records, fingerprint, unavailable) {
-	const selected = latest(records.filter((record) => record.sourceFingerprint === fingerprint)) ?? latest(records.filter((record) => record.status === "succeeded"));
+	const selected = latest(records.filter((record) => record.sourceFingerprint === fingerprint)) ?? latest(records.filter((record) => record.status === "succeeded")) ?? latest(records);
 	if (selected === void 0) return unavailable === void 0 ? { status: "unanalysed" } : {
 		status: "unavailable",
 		failure: {
@@ -409,6 +414,7 @@ function summary(records, fingerprint, unavailable) {
 		...selected.probabilities === void 0 ? {} : { probabilities: selected.probabilities },
 		...selected.model === void 0 ? {} : { model: selected.model },
 		...selected.configuredModel === void 0 ? {} : { configuredModel: selected.configuredModel },
+		...selected.connectionId === void 0 ? {} : { connectionId: selected.connectionId },
 		...selected.operationId === void 0 ? {} : { operationId: selected.operationId },
 		...selected.failure === void 0 ? {} : { failure: selected.failure },
 		...selected.updatedAt === void 0 ? {} : { updatedAt: selected.updatedAt },
@@ -420,6 +426,7 @@ function summary(records, fingerprint, unavailable) {
 			...previous.probabilities === void 0 ? {} : { probabilities: previous.probabilities },
 			...previous.model === void 0 ? {} : { model: previous.model },
 			...previous.configuredModel === void 0 ? {} : { configuredModel: previous.configuredModel },
+			...previous.connectionId === void 0 ? {} : { connectionId: previous.connectionId },
 			...previous.updatedAt === void 0 ? {} : { updatedAt: previous.updatedAt }
 		} }
 	};
@@ -447,16 +454,32 @@ var StageNavigationManager = class {
 			concurrency: this.config.concurrency.get()
 		};
 	}
-	async secrets() {
-		let value;
-		try {
-			value = (await this.ctx.credentials.resolve(credentialRef(this.ctx.jev.stageConnectionIdentity().credentialRef)))?.value;
-		} catch {
-			throw new JevError("CREDENTIAL_UNAVAILABLE", "Jev credential could not be checked for stage input redaction");
+	async preparation(signal) {
+		for (;;) {
+			signal.throwIfAborted();
+			const connections = this.ctx.jev.stageConnections();
+			const connection = this.ctx.jev.judgmentConnectionIdentity();
+			const identity = this.identity();
+			const refs = [...new Set(connections.map((item) => item.credentialRef))];
+			const secrets = [];
+			for (const ref of refs) {
+				let value;
+				try {
+					value = (await this.ctx.credentials.resolve(credentialRef(ref)))?.value;
+				} catch {
+					throw new JevError("CREDENTIAL_UNAVAILABLE", "Judgment credentials could not be checked for stage input redaction");
+				}
+				signal.throwIfAborted();
+				if (value === void 0) continue;
+				if (value.length < 4) throw new JevError("CREDENTIAL_UNSAFE", "A judgment credential is too short for safe stage input redaction");
+				secrets.push(value);
+			}
+			if (JSON.stringify(connections) === JSON.stringify(this.ctx.jev.stageConnections()) && identity === this.identity()) return {
+				secrets,
+				identity,
+				connection
+			};
 		}
-		if (value === void 0) return [];
-		if (value.length < 4) throw new JevError("CREDENTIAL_UNSAFE", "Jev credential is too short for safe stage input redaction");
-		return [value];
 	}
 	identity() {
 		return JSON.stringify(this.ctx.jev.stageConnectionIdentity());
@@ -497,8 +520,7 @@ var StageNavigationManager = class {
 	async read(sessionId, signal) {
 		const source = await this.source(sessionId, signal);
 		const records = this.store.forSession(sessionId);
-		const secrets = await this.secrets();
-		const identity = this.identity();
+		const { secrets, identity } = await this.preparation(signal);
 		const settings = this.settings();
 		const turns = source.turns.map((turn) => ({
 			...turn,
@@ -550,7 +572,11 @@ var StageNavigationManager = class {
 			status: recordId === step.analysis.recordId ? step.analysis.status : record.status,
 			...attempt?.request === void 0 ? {} : { request: attempt.request },
 			...attempt?.response === void 0 ? {} : { response: attempt.response },
-			...attempt?.rawResponse === void 0 ? {} : { rawResponse: attempt.rawResponse }
+			...attempt?.rawResponse === void 0 ? {} : { rawResponse: attempt.rawResponse },
+			...attempt?.connection === void 0 ? {} : { connection: attempt.connection },
+			...attempt?.networkRecords === void 0 ? {} : { networkRecords: attempt.networkRecords },
+			...attempt?.usage === void 0 ? {} : { usage: attempt.usage },
+			...attempt?.usageComplete === void 0 ? {} : { usageComplete: attempt.usageComplete }
 		};
 	}
 	/** Freeze one explicit user-selected scope; duplicate clicks share its active batch. */
@@ -580,9 +606,8 @@ var StageNavigationManager = class {
 		const selectedTurn = request.scope.kind === "turn" ? request.scope.turn : void 0;
 		const selected = selectedTurn !== void 0 ? snapshot.turns.filter((turn) => turn.turn === selectedTurn) : request.scope.kind === "all" ? snapshot.turns.filter((turn) => turn.endSeq !== void 0) : [];
 		if (selected.length === 0 || selected.some((turn) => turn.endSeq === void 0)) throw new JevError("INVALID_SCOPE", "Select one ended turn or all ended turns");
-		const secrets = await this.secrets();
+		const { secrets, identity } = await this.preparation(controller.signal);
 		if (controller.signal.aborted || this.stopping || !this.ctx.jev.isFeatureEnabled("stage-navigation")) throw new JevError("CANCELLED", "Stage analysis was cancelled before dispatch");
-		const identity = this.identity();
 		const settings = this.settings();
 		const tasks = [];
 		for (const turn of selected) for (const step of turn.steps) {
@@ -634,11 +659,13 @@ var StageNavigationManager = class {
 		const source = await this.source(sessionId, signal);
 		const step = source.turns.flatMap((turn) => turn.steps).find((item) => item.id === stepId);
 		if (step === void 0) return void 0;
-		return buildStageInput(source.turns, step, this.settings(), this.identity(), await this.secrets()).fingerprint;
+		const { secrets, identity } = await this.preparation(signal);
+		return buildStageInput(source.turns, step, this.settings(), identity, secrets).fingerprint;
 	}
 	async classify(batch, task) {
 		const { step } = task;
-		const fresh = buildStageInput(batch.sourceTurns, step, this.settings(), this.identity(), await this.secrets());
+		const prepared = await this.preparation(batch.controller.signal);
+		const fresh = buildStageInput(batch.sourceTurns, step, this.settings(), prepared.identity, prepared.secrets);
 		if (fresh.kind === "unavailable") return "failed";
 		task.input = fresh;
 		const input = fresh;
@@ -665,6 +692,7 @@ var StageNavigationManager = class {
 		const outcome = await this.ctx.jev.judgeOnce({
 			featureId: FEATURE,
 			signal: batch.controller.signal,
+			connection: prepared.connection,
 			link: {
 				sessionId: batch.state.sessionId,
 				stepId: step.id,
@@ -680,9 +708,10 @@ var StageNavigationManager = class {
 		if (outcome.kind === "ok") {
 			const answer = outcome.response.answers.find((item) => item.id === "stage");
 			if (answer?.kind !== "choice") throw new JevError("INVALID_RESPONSE", "Jev did not return a stage choice");
-			const raw = (await this.ctx.jev.getRecord(outcome.operationId))?.attemptRecords.find((item) => item.id === outcome.attemptId)?.rawResponse;
+			const attempt = (await this.ctx.jev.getRecord(outcome.operationId))?.attemptRecords.find((item) => item.id === outcome.attemptId);
+			const raw = attempt?.rawResponse;
 			const rawModel = raw !== void 0 && raw !== null && typeof raw === "object" ? Object.entries(raw).find(([key]) => key === "model")?.[1] : void 0;
-			const returnedModel = typeof rawModel === "string" ? rawModel : void 0;
+			const returnedModel = attempt?.networkRecords?.at(-1)?.returnedModel ?? (typeof rawModel === "string" ? rawModel : void 0);
 			const successful = {
 				...record,
 				status: "succeeded",
@@ -690,7 +719,8 @@ var StageNavigationManager = class {
 				...answer.confidence === void 0 ? {} : { confidence: answer.confidence },
 				...answer.probabilities === void 0 ? {} : { probabilities: answer.probabilities },
 				...returnedModel === void 0 ? {} : { model: returnedModel },
-				configuredModel: this.ctx.jev.stageConnectionIdentity().model,
+				configuredModel: attempt?.connection.model ?? prepared.connection.model,
+				...attempt?.connection.connectionId === void 0 ? {} : { connectionId: attempt.connection.connectionId },
 				operationId: outcome.operationId,
 				updatedAt
 			};

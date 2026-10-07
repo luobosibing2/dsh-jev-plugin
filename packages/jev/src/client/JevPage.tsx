@@ -9,29 +9,23 @@ import type { SelectionConfigValues } from '../selection-types.ts'
 import type { OutputAdmissionConfigValues } from '../output-admission-types.ts'
 import type { StageNavigationConfigValues } from '../stage-types.ts'
 import type {
-  JevActionStatus, JevCredentialStatus, JevFeatureView, JevProbeResult, JevRecordDetail,
+  JevActionStatus, JevConfigValues, JevConnectionIdentity, JevCredentialStatus, JevFeatureView, JevProbeResult, JevRecordDetail,
   JevRecordFilter, JevRecordPage, JevRecordStatus, JevRecordSummary,
 } from '../types.ts'
+import { resolveConnectionIdentity } from '../types.ts'
 import type { JevLocaleKey } from './locales.ts'
 import css from './JevPage.module.css'
 
-/** Settings section exposed by the Jev Host plugin. */
-export interface JevConfigValues {
-  baseUrl: string
-  model: string
-  credentialRef: string
-  timeoutMs: number
-  features: Record<string, boolean>
-}
+export type { JevConfigValues } from '../types.ts'
 
 /** Browser calls provided by the Jev Remote namespace. */
 export interface JevPageRemote {
   listFeatures(): Promise<JevFeatureView[]>
   listRecords(filter: JevRecordFilter): Promise<JevRecordPage>
   getRecord(id: string): Promise<JevRecordDetail | null>
-  testConnection(signal: AbortSignal): Promise<JevProbeResult>
-  getCredentialStatus(): Promise<JevCredentialStatus>
-  setCredential(value: string): Promise<JevCredentialStatus>
+  testConnection(connection: JevConnectionIdentity, signal: AbortSignal): Promise<JevProbeResult>
+  getCredentialStatus(connection: JevConnectionIdentity): Promise<JevCredentialStatus>
+  setCredential(connection: JevConnectionIdentity, value: string): Promise<JevCredentialStatus>
 }
 
 /** Data and commands injected by the bundle registration. */
@@ -461,13 +455,37 @@ function SupervisionSettings({ form, notifySuccess, t }: {
   </section>
 }
 
+type ConnectionDraft = Omit<JevConfigValues, 'features' | 'timeoutMs'> & { timeoutMs: string }
+
+function connectionDraft(value: JevConfigValues): ConnectionDraft {
+  return {
+    baseUrl: value.baseUrl, model: value.model, credentialRef: value.credentialRef,
+    timeoutMs: String(value.timeoutMs), judgmentModel: value.judgmentModel ?? 'jev', lunaApi: value.lunaApi ?? 'openrouter',
+    lunaOpenRouterBaseUrl: value.lunaOpenRouterBaseUrl ?? 'https://openrouter.ai/api/alpha/decisions',
+    lunaOpenRouterCredentialRef: value.lunaOpenRouterCredentialRef ?? 'JEV_LUNA_OPENROUTER_API_KEY',
+    lunaOpenAIBaseUrl: value.lunaOpenAIBaseUrl ?? 'https://api.openai.com/v1/decisions',
+    lunaOpenAICredentialRef: value.lunaOpenAICredentialRef ?? 'JEV_LUNA_OPENAI_API_KEY',
+  }
+}
+
+const EMPTY_DRAFT = connectionDraft({ baseUrl: '', model: 'jev-latest', credentialRef: 'JEV_API_KEY', timeoutMs: 10000, features: {},
+  judgmentModel: 'jev', lunaApi: 'openrouter', lunaOpenRouterBaseUrl: 'https://openrouter.ai/api/alpha/decisions',
+  lunaOpenRouterCredentialRef: 'JEV_LUNA_OPENROUTER_API_KEY', lunaOpenAIBaseUrl: 'https://api.openai.com/v1/decisions',
+  lunaOpenAICredentialRef: 'JEV_LUNA_OPENAI_API_KEY' })
+
+function identityKey(connection: JevConnectionIdentity): string {
+  return JSON.stringify([connection.connectionId, connection.baseUrl, connection.model, connection.credentialRef, connection.timeoutMs])
+}
+
 function SettingsPanel({ form, jev, notifySuccess, t }: PanelProps) {
   const subscribe = useCallback((listener: () => void) => form.subscribe(listener), [form])
   const getSnapshot = useCallback(() => form.getSnapshot(), [form])
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
-  const [draft, setDraft] = useState({ baseUrl: '', model: '', credentialRef: 'JEV_API_KEY', timeoutMs: '30000' })
-  const editedConnection = useRef(false)
+  const [draft, setDraft] = useState<ConnectionDraft>(EMPTY_DRAFT)
+  const editedConnection = useRef(new Set<keyof ConnectionDraft>())
   const observedConnection = useRef('')
+  const draftRef = useRef(draft)
+  draftRef.current = draft
   const [features, setFeatures] = useState<readonly JevFeatureView[]>([])
   const [featureLoading, setFeatureLoading] = useState(true)
   const [featureError, setFeatureError] = useState('')
@@ -483,93 +501,157 @@ function SettingsPanel({ form, jev, notifySuccess, t }: PanelProps) {
   const [probeError, setProbeError] = useState('')
   const [testing, setTesting] = useState(false)
   const probeAbort = useRef<AbortController | null>(null)
+  const alive = useRef(true)
+  const saveGeneration = useRef(0)
+  const credentialGeneration = useRef(0)
+  const keyGeneration = useRef(0)
+  const probeGeneration = useRef(0)
+
+  useEffect(() => {
+    alive.current = true
+    return () => {
+      alive.current = false
+      saveGeneration.current++
+      credentialGeneration.current++
+      keyGeneration.current++
+      probeGeneration.current++
+      probeAbort.current?.abort()
+    }
+  }, [form, jev])
 
   useEffect(() => {
     if (snapshot.value === undefined) return
-    const next = {
-      baseUrl: snapshot.value.baseUrl,
-      model: snapshot.value.model,
-      credentialRef: snapshot.value.credentialRef,
-      timeoutMs: String(snapshot.value.timeoutMs),
-    }
+    const next = connectionDraft(snapshot.value)
     const signature = JSON.stringify(next)
     if (signature === observedConnection.current) return
     observedConnection.current = signature
-    if (!editedConnection.current) setDraft(next)
+    setDraft(previous => {
+      const merged = { ...next }
+      for (const field of editedConnection.current) Object.assign(merged, { [field]: previous[field] })
+      return merged
+    })
   }, [snapshot.value])
+
+  const current = snapshot.value
+  const dirty = current !== undefined && JSON.stringify(draft) !== JSON.stringify(connectionDraft(current))
+  useEffect(() => { if (!dirty) editedConnection.current.clear() }, [dirty])
+  const draftValues: JevConfigValues = { ...draft, timeoutMs: Number(draft.timeoutMs), features: current?.features ?? {} }
+  const displayedConnection = resolveConnectionIdentity(draftValues)
+  const savedConnection = current === undefined ? undefined : resolveConnectionIdentity({ ...current, ...connectionDraft(current), timeoutMs: current.timeoutMs })
+  const contextKey = JSON.stringify({ draft, savedConnection, dirty, status: snapshot.status })
+  const contextRef = useRef(contextKey)
+  contextRef.current = contextKey
 
   const loadFeatures = useCallback(async () => {
     setFeatureLoading(true)
     setFeatureError('')
-    try { setFeatures(await jev.listFeatures()) }
-    catch { setFeatureErrorLabel('featureLoadFailed'); setFeatureError(t('featureLoadFailed')) }
-    finally { setFeatureLoading(false) }
+    try { const next = await jev.listFeatures(); if (alive.current) setFeatures(next) }
+    catch { if (alive.current) { setFeatureErrorLabel('featureLoadFailed'); setFeatureError(t('featureLoadFailed')) } }
+    finally { if (alive.current) setFeatureLoading(false) }
   }, [jev, t])
+  useEffect(() => { void loadFeatures() }, [loadFeatures])
 
-  const loadCredential = useCallback(async () => {
-    try { setCredential(await jev.getCredentialStatus()); setCredentialMessage('') }
-    catch { setCredentialMessage(t('unavailable')) }
-  }, [jev, t])
+  // A completion can update only the exact saved connection still shown by this form.
+  useEffect(() => {
+    const generation = ++credentialGeneration.current
+    keyGeneration.current++
+    probeGeneration.current++
+    probeAbort.current?.abort()
+    probeAbort.current = null
+    setCredential(null)
+    setCredentialMessage('')
+    setSecret('')
+    setSecretSaving(false)
+    setProbe(null)
+    setProbeError('')
+    setTesting(false)
+    if (dirty || savedConnection === undefined || snapshot.status !== 'ready') return
+    const connection = savedConnection
+    void jev.getCredentialStatus(connection).then(result => {
+      if (!alive.current || generation !== credentialGeneration.current || contextRef.current !== contextKey) return
+      if (identityKey(result.connection) !== identityKey(connection)) { setCredentialMessage(t('connectionChanged')); return }
+      setCredential(result)
+    }, () => {
+      if (alive.current && generation === credentialGeneration.current && contextRef.current === contextKey) setCredentialMessage(t('unavailable'))
+    })
+  }, [contextKey, form, jev, t])
 
-  useEffect(() => { void loadFeatures(); void loadCredential(); return () => { probeAbort.current?.abort() } }, [loadFeatures, loadCredential])
-
-  const current = snapshot.value
-  const dirty = current !== undefined && (
-    draft.baseUrl !== current.baseUrl || draft.model !== current.model ||
-    draft.credentialRef !== current.credentialRef || draft.timeoutMs !== String(current.timeoutMs)
-  )
-
-  useEffect(() => { if (!dirty) editedConnection.current = false }, [dirty])
-
-  const editConnection = (field: keyof typeof draft, value: string) => {
-    editedConnection.current = true
+  const editConnection = <K extends keyof ConnectionDraft>(field: K, value: ConnectionDraft[K]) => {
+    editedConnection.current.add(field)
+    setSaveMessage('')
     setDraft(previous => ({ ...previous, [field]: value }))
   }
 
   const saveConnection = async () => {
+    const submission = { ...draft, baseUrl: draft.baseUrl.trim(), model: draft.model.trim(), credentialRef: draft.credentialRef.trim(),
+      lunaOpenRouterBaseUrl: draft.lunaOpenRouterBaseUrl.trim(), lunaOpenRouterCredentialRef: draft.lunaOpenRouterCredentialRef.trim(),
+      lunaOpenAIBaseUrl: draft.lunaOpenAIBaseUrl.trim(), lunaOpenAICredentialRef: draft.lunaOpenAICredentialRef.trim() }
     const timeoutMs = Number(draft.timeoutMs)
-    if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0) { setSaveMessage(t('invalidTimeout')); return }
+    if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 300000) { setSaveMessage(t('invalidTimeout')); return }
+    const generation = ++saveGeneration.current
+    const submittedDraft = JSON.stringify(draft)
     setSaving(true)
     setSaveMessage('')
     try {
-      const accepted = await form.mutate([
-        { op: 'set', path: ['baseUrl'], value: draft.baseUrl.trim() },
-        { op: 'set', path: ['model'], value: draft.model.trim() },
-        { op: 'set', path: ['credentialRef'], value: draft.credentialRef.trim() },
-        { op: 'set', path: ['timeoutMs'], value: timeoutMs },
-      ], snapshot.revision)
-      if (accepted) {
-        notifySuccess(t('saveSuccess'))
-        editedConnection.current = false
-        const saved = form.getSnapshot().value
-        if (saved !== undefined) setDraft({ baseUrl: saved.baseUrl, model: saved.model, credentialRef: saved.credentialRef, timeoutMs: String(saved.timeoutMs) })
-        void loadCredential()
-      } else setSaveMessage(t('saveFailed'))
-    } catch { setSaveMessage(t('saveFailed')) }
-    finally { setSaving(false) }
+      const values = { ...submission, timeoutMs }
+      const accepted = await form.mutate(Object.entries(values).map(([key, value]) => ({ op: 'set' as const, path: [key], value })), snapshot.revision)
+      if (!alive.current || generation !== saveGeneration.current || JSON.stringify(draftRef.current) !== submittedDraft) return
+      if (!accepted) { setSaveMessage(t('saveFailed')); return }
+      const saved = form.getSnapshot().value
+      if (saved === undefined || JSON.stringify(connectionDraft(saved)) !== JSON.stringify({ ...submission, timeoutMs: String(timeoutMs) })) {
+        setSaveMessage(t('connectionChanged'))
+        return
+      }
+      editedConnection.current.clear()
+      setDraft(connectionDraft(saved))
+      notifySuccess(t('saveSuccess'))
+    } catch { if (alive.current && generation === saveGeneration.current) setSaveMessage(t('saveFailed')) }
+    finally { if (alive.current && generation === saveGeneration.current) setSaving(false) }
   }
 
   const saveKey = async () => {
-    if (!secret) return
+    if (!secret || dirty || savedConnection === undefined || !credential?.writable) return
+    const connection = savedConnection
+    const capturedContext = contextKey
+    const generation = ++keyGeneration.current
     setSecretSaving(true)
     setCredentialMessage('')
     try {
-      setCredential(await jev.setCredential(secret))
+      const result = await jev.setCredential(connection, secret)
+      if (!alive.current || generation !== keyGeneration.current || contextRef.current !== capturedContext) return
+      if (identityKey(result.connection) !== identityKey(connection)) { setCredentialMessage(t('connectionChanged')); return }
+      credentialGeneration.current++
+      setCredential(result)
       setSecret('')
       notifySuccess(t('keySaved'))
-    } catch { setCredentialMessage(t('keySaveFailed')) }
-    finally { setSecretSaving(false) }
+    } catch {
+      if (alive.current && generation === keyGeneration.current && contextRef.current === capturedContext) setCredentialMessage(t('keySaveFailed'))
+    } finally {
+      if (alive.current && generation === keyGeneration.current && contextRef.current === capturedContext) setSecretSaving(false)
+    }
   }
 
   const runProbe = async () => {
+    if (dirty || savedConnection === undefined || snapshot.status !== 'ready') return
+    const connection = savedConnection
+    const capturedContext = contextKey
+    const generation = ++probeGeneration.current
     const controller = new AbortController()
     probeAbort.current = controller
     setTesting(true)
     setProbe(null)
     setProbeError('')
-    try { setProbe(await jev.testConnection(controller.signal)) }
-    catch { if (!controller.signal.aborted) setProbeError(t('testFailed')) }
-    finally { if (probeAbort.current === controller) probeAbort.current = null; setTesting(false) }
+    try {
+      const result = await jev.testConnection(connection, controller.signal)
+      if (!alive.current || generation !== probeGeneration.current || contextRef.current !== capturedContext || controller.signal.aborted) return
+      if (identityKey(result.connection) !== identityKey(connection)) { setProbeError(t('connectionChanged')); return }
+      setProbe(result)
+    } catch {
+      if (alive.current && generation === probeGeneration.current && contextRef.current === capturedContext && !controller.signal.aborted) setProbeError(t('testFailed'))
+    } finally {
+      if (probeAbort.current === controller) probeAbort.current = null
+      if (alive.current && generation === probeGeneration.current && contextRef.current === capturedContext) setTesting(false)
+    }
   }
 
   const toggleFeature = async (id: string, enabled: boolean) => {
@@ -577,30 +659,38 @@ function SettingsPanel({ form, jev, notifySuccess, t }: PanelProps) {
     setFeatureError('')
     try {
       const accepted = await form.mutate([{ op: 'set', path: ['features', id], value: enabled }], snapshot.revision)
-      if (!accepted) { setFeatureErrorLabel('featureSaveFailed'); setFeatureError(t('featureSaveFailed')) }
-    } catch { setFeatureErrorLabel('featureSaveFailed'); setFeatureError(t('featureSaveFailed')) }
-    finally { setFeatureBusy('') }
+      if (!accepted && alive.current) { setFeatureErrorLabel('featureSaveFailed'); setFeatureError(t('featureSaveFailed')) }
+    } catch { if (alive.current) { setFeatureErrorLabel('featureSaveFailed'); setFeatureError(t('featureSaveFailed')) } }
+    finally { if (alive.current) setFeatureBusy('') }
   }
 
+  const endpointField = draft.judgmentModel === 'jev' ? 'baseUrl' : draft.lunaApi === 'openrouter' ? 'lunaOpenRouterBaseUrl' : 'lunaOpenAIBaseUrl'
+  const referenceField = draft.judgmentModel === 'jev' ? 'credentialRef' : draft.lunaApi === 'openrouter' ? 'lunaOpenRouterCredentialRef' : 'lunaOpenAICredentialRef'
   return (
     <div className={css.panel}>
       <section className={css.section} aria-label={t('connection')}>
         <h3 className={css.heading}>{t('connection')}</h3>
+        <p className={css.hint}>{t('connectionHint')}</p>
         {snapshot.status === 'loading' && current === undefined && <Loading label={t('loading')} />}
         {snapshot.status === 'unavailable' && <p className={css.notice}>{t('unavailable')}</p>}
         {current !== undefined && <div className={css.form}>
           <div className={css.filters}>
-            <label className={css.field}><span>{t('baseUrl')}</span><input value={draft.baseUrl} disabled={!snapshot.writable || saving} onChange={event => { editConnection('baseUrl', event.target.value) }} /></label>
-            <label className={css.field}><span>{t('model')}</span><input value={draft.model} disabled={!snapshot.writable || saving} onChange={event => { editConnection('model', event.target.value) }} /></label>
-            <label className={css.field}><span>{t('credentialRef')}</span><input value={draft.credentialRef} disabled={!snapshot.writable || saving} onChange={event => { editConnection('credentialRef', event.target.value) }} /></label>
-            <label className={css.field}><span>{t('timeoutMs')}</span><input type="number" min="1" step="1" value={draft.timeoutMs} disabled={!snapshot.writable || saving} onChange={event => { editConnection('timeoutMs', event.target.value) }} /></label>
+            <label className={css.field}><span>{t('decisionModel')}</span><select value={draft.judgmentModel} disabled={!snapshot.writable || saving} onChange={event => { editConnection('judgmentModel', event.target.value as JevConfigValues['judgmentModel']) }}><option value="jev">{t('jevModel')}</option><option value="luna">{t('lunaModel')}</option></select></label>
+            {draft.judgmentModel === 'luna' && <label className={css.field}><span>{t('lunaApi')}</span><select value={draft.lunaApi} disabled={!snapshot.writable || saving} onChange={event => { editConnection('lunaApi', event.target.value as JevConfigValues['lunaApi']) }}><option value="openrouter">{t('openRouter')}</option><option value="openai">{t('openAI')}</option></select></label>}
+          </div>
+          <div className={css.filters}>
+            <label className={css.field}><span>{t('baseUrl')}</span><input value={draft[endpointField]} disabled={!snapshot.writable || saving} onChange={event => { editConnection(endpointField, event.target.value) }} /></label>
+            <label className={css.field}><span>{t('model')}</span><input aria-label={t('model')} aria-describedby={draft.judgmentModel === 'luna' ? 'jev-luna-model-hint' : undefined} value={draft.judgmentModel === 'jev' ? draft.model : displayedConnection.model} readOnly={draft.judgmentModel === 'luna'} disabled={!snapshot.writable || saving} onChange={event => { if (draft.judgmentModel === 'jev') editConnection('model', event.target.value) }} />{draft.judgmentModel === 'luna' && <span id="jev-luna-model-hint" className={css.hint}>{t('lunaModelHint')}</span>}</label>
+            <label className={css.field}><span>{t('credentialRef')}</span><input value={draft[referenceField]} disabled={!snapshot.writable || saving} onChange={event => { editConnection(referenceField, event.target.value) }} /></label>
+            <label className={css.field}><span>{t('timeoutMs')}</span><input type="number" min="1" max="300000" step="1" value={draft.timeoutMs} disabled={!snapshot.writable || saving} onChange={event => { editConnection('timeoutMs', event.target.value) }} /></label>
           </div>
           <div className={css.actions}><Button variant="primary" disabled={!snapshot.writable || saving || !dirty} onClick={() => { void saveConnection() }}>{saving ? t('saving') : t('saveConnection')}</Button>{!snapshot.writable && <span className={css.hint}>{t('readOnly')}</span>}</div>
           {saveMessage && <p role="status" className={css.notice}>{saveMessage}</p>}
         </div>}
         <div className={css.form}>
-          <label className={css.field}><span>{t('apiKey')}{credential !== null ? ` · ${credential.configured ? t('configured') : t('missing')}${!credential.writable ? ` · ${t('readOnly')}` : ''}` : ''}</span><input type="password" autoComplete="new-password" value={secret} disabled={!credential?.writable || secretSaving || dirty} onChange={event => { setSecret(event.target.value) }} /><span className={css.hint}>{t('apiKeyHint')}</span></label>
+          <label className={css.field}><span>{t('apiKey')}{credential !== null ? ` · ${credential.configured ? t('configured') : t('missing')}${!credential.writable ? ` · ${t('readOnly')}` : ''}` : ''}</span><input aria-label={t('apiKey')} aria-describedby="jev-api-key-hint" type="password" autoComplete="new-password" value={secret} disabled={!credential?.writable || secretSaving || dirty} onChange={event => { setSecret(event.target.value) }} /><span id="jev-api-key-hint" className={css.hint}>{t('apiKeyHint')}</span></label>
           <div className={css.actions}><Button disabled={!secret || !credential?.writable || secretSaving || dirty} onClick={() => { void saveKey() }}>{secretSaving ? t('saving') : credential?.configured ? t('replaceKey') : t('saveKey')}</Button><Button disabled={testing || dirty || snapshot.status !== 'ready'} onClick={() => { void runProbe() }}>{testing ? t('testing') : t('testConnection')}</Button></div>
+          <p className={css.hint}>{t('diagnosticHint')}</p>
           {dirty && <p className={css.hint}>{t('saveFirst')}</p>}
           {credentialMessage && <p role="status" className={css.notice}>{credentialMessage}</p>}
           {probe && <p role="status" className={probe.ok ? css.success : css.notice}>{t(probe.ok ? 'testSucceeded' : 'testFailed')} · {t('latency')}: {probe.latencyMs} ms{probe.failure ? ` · ${probe.failure.code}: ${probe.failure.message}` : ''}</p>}
@@ -723,6 +813,21 @@ function RecordsPanel({ jev, t }: RecordsProps) {
           <DetailBlock label={t('interpretation')} value={attempt.interpretation} />
           <DetailBlock label={t('failure')} value={attempt.failure} />
           <DetailBlock label={t('usage')} value={attempt.usage} />
+          {attempt.usageComplete === false && <p className={css.hint}>{t('usageIncomplete')}</p>}
+          {attempt.networkRecords !== undefined && <div className={css.detail}>
+            <h4 className={css.heading}>{t('providerRequests')}</h4>
+            {attempt.networkRecords.map(packet => <div className={css.record} key={packet.id}>
+              <span className={css.meta}>{packet.id} · {statusLabel(packet.status, t)}{packet.httpStatus !== undefined ? ` · HTTP ${packet.httpStatus}` : ''}</span>
+              <DetailBlock label={t('questionIds')} value={packet.questionIds} />
+              <DetailBlock label={t('requestBody')} value={packet.requestBody} />
+              <DetailBlock label={t('reportedModel')} value={packet.returnedModel} />
+              <DetailBlock label={t('requestId')} value={packet.requestId} />
+              {packet.rawResponseText !== undefined && <div className={css.detailBlock}><span className={css.detailLabel}>{t('rawAnswer')}</span><pre className={css.code}>{packet.rawResponseText}</pre></div>}
+              {packet.rawResponseText === undefined && <DetailBlock label={t('rawAnswer')} value={packet.rawResponse} />}
+              <DetailBlock label={t('usage')} value={packet.usage} />
+              <DetailBlock label={t('failure')} value={packet.failure} />
+            </div>)}
+          </div>}
         </div>)}
         <h4 className={css.heading}>{t('receipts')}</h4>
         {detail.receipts.length === 0 ? <p className={css.empty}>{t('noDetail')}</p> : detail.receipts.map(receipt => <div className={css.record} key={receipt.id}><span className={css.meta}>{dateText(receipt.at)} · {actionStatusLabel(receipt.status, t)}</span><DetailBlock label={t('actualAction')} value={receipt.reason ?? receipt.id} /></div>)}

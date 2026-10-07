@@ -25,9 +25,9 @@ export function jevPageRemote(remote: JevWireRemote): JevPageRemote {
     listFeatures: async () => unwrap(await remote.listFeatures()),
     listRecords: async filter => unwrap(await remote.listRecords(filter)),
     getRecord: async id => unwrap(await remote.getRecord(id)),
-    testConnection: async signal => unwrap(await remote.testConnection(signal)),
-    getCredentialStatus: async () => unwrap(await remote.getCredentialStatus()),
-    setCredential: async value => unwrap(await remote.setCredential(value)),
+    testConnection: async (connection, signal) => unwrap(await remote.testConnection(connection, signal)),
+    getCredentialStatus: async connection => unwrap(await remote.getCredentialStatus(connection)),
+    setCredential: async (connection, value) => unwrap(await remote.setCredential(connection, value)),
   }
 }
 

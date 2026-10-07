@@ -12,6 +12,7 @@ on:
       - docs/testing/2026-10-01-glob-ranking/**
       - docs/testing/2026-10-02-completion-skill/**
       - docs/testing/2026-10-05-completion-recovery/**
+      - docs/testing/2026-10-07-luna-decisions/**
       - bench/selection/**
       - bench/completion_skill/**
       - docs/reports/2026-09-27-tool-output-admission.zh-CN.md

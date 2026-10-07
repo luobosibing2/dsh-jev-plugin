@@ -9,6 +9,7 @@ import AgentRegistry from '@deepseek-ai/dsh-agent'
 import SessionController from '@deepseek-ai/dsh-api-session-controller'
 import LlmRuntime, { createAssistantMessage, createToolResultMessage, createUserMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
 import SessionStore, { Session, SessionId } from '@deepseek-ai/dsh-session'
+import type { SessionEvent } from '@deepseek-ai/dsh-session'
 import JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
 import SessionQueryEngine from '@deepseek-ai/dsh-session-query'
@@ -17,7 +18,13 @@ import { JsonStorageBackend } from '@deepseek-ai/dsh-storage-json'
 import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
 import UserQuestions from '@deepseek-ai/dsh-user-questions'
 import JevService from '../src/index.ts'
+import type { Config as JevConfig } from '../src/index.ts'
+import type { JevConfigValues } from '../src/types.ts'
+import { createVolatile, updateVolatile } from '@deepseek-ai/cosmokit'
 import * as StageNavigation from '../src/stage-navigation.ts'
+import { buildStageInput, STAGE_RULE_VERSION } from '../src/stage-input.ts'
+import { stageStoreSpec } from '../src/stage-store.ts'
+import { assembleStageHistory } from '../src/stage-history.ts'
 
 class ColdQuery extends SessionQueryEngine {
   override searchSessions(): Promise<never> { return Promise.reject(new Error('Search is outside this fixture')) }
@@ -34,7 +41,7 @@ afterEach(async () => {
   if (failures.length > 0) throw new AggregateError(failures, 'Stage integration cleanup failed')
 })
 
-async function persistedSession(root: string): Promise<{ id: string; cursor: number }> {
+async function persistedSession(root: string, userText = 'Review the stage fixture. Fake secret: sk-0123456789abcdefghijklmnopqrstuvwxyz'): Promise<{ id: string; cursor: number }> {
   const context = new Context()
   await context.plugin(JsonlPersistence, { root: join(root, 'sessions') })
   const id = SessionId('stage-integration-cold')
@@ -51,7 +58,7 @@ async function persistedSession(root: string): Promise<{ id: string; cursor: num
   session.append('turn/start', { turn: 1 })
   session.append('step/start', { turn: 1, step: 1 })
   session.append('user/message', createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text',
-    text: 'Review the stage fixture. Fake secret: sk-0123456789abcdefghijklmnopqrstuvwxyz',
+    text: userText,
   }] }), { surfaceOp: 'append' })
   emit(1, 1, [
     ...Array.from({ length: 17 }, (_, index) => ({ type: 'reasoning' as const, text: `STAGE_T1S1 Think ${index + 1}` })),
@@ -89,7 +96,7 @@ async function persistedSession(root: string): Promise<{ id: string; cursor: num
   return { id, cursor: session.seq - 1 }
 }
 
-async function host(root: string, endpoint: string): Promise<{ ctx: Context; controller: SessionController }> {
+async function host(root: string, endpoint: string, options: { config?: Partial<JevConfigValues>; resolve?: (ref: string) => Promise<{ value: string; source: string } | undefined>; beforeStages?: (ctx: Context) => Promise<void> } = {}): Promise<{ ctx: Context; controller: SessionController; config: JevConfig }> {
   const ctx = new Context()
   cleanups.push(() => ctx.fiber.dispose())
   await ctx.plugin(SessionStore)
@@ -104,18 +111,19 @@ async function host(root: string, endpoint: string): Promise<{ ctx: Context; con
   ctx.provide('storageDomain', new DomainFacility(ctx, { backend: 'json' }))
   ctx.provide('profileContext', { dir: join(root, 'profile') } as never)
   ctx.provide('settings', { configure: () => () => {} } as never)
-  ctx.provide('credentials', { resolve: async () => ({ value: 'localhost-stage-fixture', source: 'fixture' }) } as never)
+  ctx.provide('credentials', { resolve: options.resolve ?? (async () => ({ value: 'localhost-stage-fixture', source: 'fixture' })) } as never)
   ctx.provide('typert', { lookups: { configure: () => () => {} }, contexts: { configureHost: () => () => {} } } as never)
   ctx.provide('agentDefaultModel', { currentSelection: () => ({ provider: 'fixture', model: 'fixture' }) } as never)
   ctx.provide('attachments', { imageLimits: {}, admitPromptContent: async (content: unknown[]) => content } as never)
   ctx.provide('fileUploads', { registerAgentResolver: () => () => {}, resolve: () => undefined,
     bindPrompt: () => ({ commit: () => {}, [Symbol.dispose]: () => {} }), retirePrompt: () => {} } as never)
   const controller = new SessionController(ctx, { nativeOpen: false })
-  await ctx.plugin(JevService, { baseUrl: endpoint, model: 'stage-fixture', credentialRef: 'STAGE_FIXTURE_KEY',
-    timeoutMs: 10_000, features: { 'stage-navigation': true } })
+  const jevFiber = await ctx.plugin(JevService, { baseUrl: endpoint, model: 'stage-fixture', credentialRef: 'STAGE_FIXTURE_KEY',
+    timeoutMs: 10_000, features: { 'stage-navigation': true }, ...options.config })
   const loaderExport = (StageNavigation as typeof StageNavigation & { default?: typeof StageNavigation.apply }).default ?? StageNavigation
+  await options.beforeStages?.(ctx)
   await ctx.plugin(loaderExport)
-  return { ctx, controller }
+  return { ctx, controller, config: jevFiber.config as JevConfig }
 }
 
 it('uses the pinned native history page and persists one Jev result per complete cold step', async () => {
@@ -204,4 +212,141 @@ it('stops a multi-step batch when the localhost service reports exhausted quota'
     expect(snapshot.batch?.status).toBe('failed')
   })
   expect(requests).toBe(1)
+})
+
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>(done => { resolve = done })
+  return { promise, resolve }
+}
+
+async function stageFixture(onRequest?: (wire: object, number: number) => Promise<void>) {
+  const calls: object[] = []
+  const errors: unknown[] = []
+  const server = createServer(async (request, response) => {
+    try {
+      const chunks: Buffer[] = []
+      for await (const chunk of request) chunks.push(Buffer.from(chunk))
+      const wire = JSON.parse(Buffer.concat(chunks).toString()) as { questions: Record<string, { criteria: Record<string, string> }> | { name: string; choices: { value: string }[] }[] }
+      calls.push(wire)
+      await onRequest?.(wire, calls.length)
+      const native = Array.isArray(wire.questions)
+      const values = native ? (wire.questions as { choices: { value: string }[] }[])[0]!.choices.map(choice => choice.value)
+        : Object.keys((wire.questions as Record<string, { criteria: Record<string, string> }>).stage!.criteria)
+      const choice = 'implementation'
+      const probabilities = Object.fromEntries(values.map(value => [value, value === choice ? 0.7 : 0.3 / (values.length - 1)]))
+      const answer = native ? { answers: [{ name: 'stage', type: 'choice', choice, confidence: 0.7,
+        probabilities: values.map(value => ({ value, probability: probabilities[value] })) }], model: 'stage-official-returned' }
+        : { answers: { stage: { type: 'choice', choice, confidence: 0.7, probabilities } }, model: 'stage-router-returned' }
+      response.writeHead(200, { 'content-type': 'application/json' })
+      response.end(JSON.stringify(answer))
+    } catch (error) {
+      errors.push(error)
+      response.writeHead(500)
+      response.end('{}')
+    }
+  })
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+  cleanups.push(async () => { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())) })
+  const address = server.address()
+  if (address === null || typeof address === 'string') throw new Error('Fixture server did not bind')
+  return { calls, errors, endpoint: `http://127.0.0.1:${address.port}/decisions` }
+}
+
+async function stageRoot() {
+  const dir = await mkdtemp(join(tmpdir(), 'jev-stage-luna-'))
+  cleanups.push(() => rm(dir, { recursive: true, force: true }))
+  await mkdir(join(dir, 'workspace'))
+  return dir
+}
+
+it('reuses an existing Jev fingerprint unchanged, marks it stale for Luna, and restores reuse when switched back', async () => {
+  const dir = await stageRoot()
+  const seeded = await persistedSession(dir)
+  const http = await stageFixture()
+  const legacyIdentity = { baseUrl: http.endpoint, model: 'stage-fixture', credentialRef: 'STAGE_FIXTURE_KEY', timeoutMs: 10_000 }
+  const { ctx, config } = await host(dir, http.endpoint, { config: { lunaOpenRouterBaseUrl: http.endpoint }, beforeStages: async ctx => {
+    const observation = await ctx.sessionQuery.observeSession(SessionId(seeded.id), { projectionMode: 'none' })
+    const turns = assembleStageHistory(seeded.id, observation.events as readonly SessionEvent[])
+    observation[Symbol.dispose]()
+    const step = turns[0]!.steps[0]!
+    const input = buildStageInput(turns, step, { previousSteps: 2, previousChars: 700, maxRequestChars: 48_000, concurrency: 1 }, JSON.stringify(legacyIdentity), ['localhost-stage-fixture'])
+    const domain = await ctx.storageDomain.open(stageStoreSpec(join(dir, 'profile')))
+    try {
+      await domain.table('records').put('legacy-stage', { id: 'legacy-stage', sessionId: seeded.id, stepId: step.id, revision: 1,
+        sourceFingerprint: input.fingerprint, ruleVersion: STAGE_RULE_VERSION, status: 'succeeded', label: 'implementation', model: 'old-actual-jev' })
+    } finally { await domain.close() }
+  } })
+  const signal = new AbortController().signal
+  const source = await ctx.jev.getStageNavigation(seeded.id, signal)
+  expect(ctx.jev.stageConnectionIdentity()).toEqual(legacyIdentity)
+  expect(JSON.stringify(ctx.jev.stageConnectionIdentity())).toBe(JSON.stringify(legacyIdentity))
+  expect((await ctx.jev.getStageNavigation(seeded.id, signal)).turns[0]?.steps[0]?.analysis.status).toBe('succeeded')
+  updateVolatile(config.judgmentModel, createVolatile('luna'))
+  expect((await ctx.jev.getStageNavigation(seeded.id, signal)).turns[0]?.steps[0]?.analysis).toMatchObject({ status: 'stale', model: 'old-actual-jev' })
+  updateVolatile(config.judgmentModel, createVolatile('jev'))
+  expect((await ctx.jev.getStageNavigation(seeded.id, signal)).turns[0]?.steps[0]?.analysis.status).toBe('succeeded')
+  expect(http.calls).toHaveLength(0)
+  expect(http.errors).toEqual([])
+})
+
+it('redacts every saved connection credential before native dispatch and keeps original history untouched', async () => {
+  const dir = await stageRoot()
+  const secrets = { STAGE_FIXTURE_KEY: 'legacy-secret-fixture', JEV_LUNA_OPENROUTER_API_KEY: 'router-secret-fixture', JEV_LUNA_OPENAI_API_KEY: 'official-secret-fixture' }
+  const seeded = await persistedSession(dir, `Please review. ${Object.values(secrets).join(' and ')}.`)
+  const http = await stageFixture()
+  const { ctx } = await host(dir, http.endpoint, { config: { judgmentModel: 'luna', lunaApi: 'openai', lunaOpenAIBaseUrl: http.endpoint },
+    resolve: async ref => ({ value: secrets[ref as keyof typeof secrets], source: 'fixture' }) })
+  const signal = new AbortController().signal
+  const source = await ctx.jev.getStageNavigation(seeded.id, signal)
+  for (const secret of Object.values(secrets)) expect(JSON.stringify(source.turns)).toContain(secret)
+  await ctx.jev.startStageAnalysis({ sessionId: seeded.id, scope: { kind: 'turn', turn: 1 }, mode: 'missing' })
+  await vi.waitFor(async () => { expect((await ctx.jev.getStageNavigation(seeded.id, signal)).batch?.status).toBe('completed') })
+  const snapshot = await ctx.jev.getStageNavigation(seeded.id, signal)
+  expect(snapshot.turns[0]?.steps[0]?.analysis).toMatchObject({ status: 'succeeded', connectionId: 'luna-openai', configuredModel: 'gpt-6-luna', model: 'stage-official-returned' })
+  const detail = await ctx.jev.getStageAnalysisRecord(seeded.id, source.turns[0]!.steps[0]!.id)
+  expect(detail?.connection).toMatchObject({ connectionId: 'luna-openai', model: 'gpt-6-luna' })
+  expect(detail?.networkRecords?.[0]?.requestBody).toMatchObject({ model: 'gpt-6-luna', questions: [{ type: 'choice' }] })
+  for (const secret of Object.values(secrets)) {
+    expect(JSON.stringify(http.calls)).not.toContain(secret)
+    expect(JSON.stringify(detail)).not.toContain(secret)
+    expect(JSON.stringify(snapshot.turns)).toContain(secret)
+  }
+  expect(http.calls).toHaveLength(2)
+  expect(http.errors).toEqual([])
+})
+
+it('does not dispatch historical input when an unselected connection credential cannot be checked', async () => {
+  const dir = await stageRoot()
+  const seeded = await persistedSession(dir)
+  const http = await stageFixture()
+  const { ctx } = await host(dir, http.endpoint, { resolve: async ref => {
+    if (ref === 'JEV_LUNA_OPENAI_API_KEY') throw new Error('Dummy credential read failure')
+    return { value: 'safe-stage-fixture-key', source: 'fixture' }
+  } })
+  await expect(ctx.jev.startStageAnalysis({ sessionId: seeded.id, scope: { kind: 'turn', turn: 1 }, mode: 'missing' })).rejects.toMatchObject({ code: 'CREDENTIAL_UNAVAILABLE' })
+  expect(http.calls).toHaveLength(0)
+})
+
+it('associates an in-flight stage with its old channel and prepares the following step for the new saved channel', async () => {
+  const dir = await stageRoot()
+  const seeded = await persistedSession(dir)
+  const entered = deferred<void>()
+  const held = deferred<void>()
+  const http = await stageFixture(async (_wire, number) => { if (number === 1) { entered.resolve(); await held.promise } })
+  const { ctx, config } = await host(dir, http.endpoint, { config: { judgmentModel: 'luna', lunaApi: 'openrouter', lunaOpenRouterBaseUrl: http.endpoint, lunaOpenAIBaseUrl: http.endpoint } })
+  await ctx.jev.startStageAnalysis({ sessionId: seeded.id, scope: { kind: 'turn', turn: 1 }, mode: 'missing' })
+  await entered.promise
+  updateVolatile(config.lunaApi, createVolatile('openai'))
+  held.resolve()
+  const signal = new AbortController().signal
+  await vi.waitFor(async () => { expect((await ctx.jev.getStageNavigation(seeded.id, signal)).batch?.status).toBe('completed') })
+  const snapshot = await ctx.jev.getStageNavigation(seeded.id, signal)
+  expect(snapshot.batch).toMatchObject({ completed: 1, failed: 1 })
+  const first = await ctx.jev.getStageAnalysisRecord(seeded.id, snapshot.turns[0]!.steps[0]!.id)
+  const second = await ctx.jev.getStageAnalysisRecord(seeded.id, snapshot.turns[0]!.steps[1]!.id)
+  expect(first).toMatchObject({ status: 'stale', failure: { code: 'NOT_ADOPTED' }, connection: { connectionId: 'luna-openrouter' } })
+  expect(second).toMatchObject({ status: 'succeeded', connectionId: 'luna-openai', connection: { connectionId: 'luna-openai' }, configuredModel: 'gpt-6-luna' })
+  expect(http.calls).toMatchObject([{ model: 'openai/gpt-6-luna-decisions' }, { model: 'gpt-6-luna' }])
+  expect(http.errors).toEqual([])
 })

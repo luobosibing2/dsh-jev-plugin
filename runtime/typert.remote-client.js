@@ -9,8 +9,23 @@ let _dsh_jev_plugin_jev_cancelStageAnalysis_parameter_0$schema$value
 const _dsh_jev_plugin_jev_cancelStageAnalysis_parameter_0$schema = () => (_dsh_jev_plugin_jev_cancelStageAnalysis_parameter_0$schema$value ??= z.string())
 let _dsh_jev_plugin_jev_cancelStageAnalysis_result$schema$value
 const _dsh_jev_plugin_jev_cancelStageAnalysis_result$schema = () => (_dsh_jev_plugin_jev_cancelStageAnalysis_result$schema$value ??= z.void())
+let _dsh_jev_plugin_jev_getCredentialStatus_parameter_0$schema$value
+const _dsh_jev_plugin_jev_getCredentialStatus_parameter_0$schema = () => (_dsh_jev_plugin_jev_getCredentialStatus_parameter_0$schema$value ??= z.object({
+  'connectionId': z.union([z.literal("jev"), z.literal("luna-openrouter"), z.literal("luna-openai")]),
+  'baseUrl': z.string(),
+  'model': z.string(),
+  'credentialRef': z.string(),
+  'timeoutMs': z.number(),
+}))
 let _dsh_jev_plugin_jev_getCredentialStatus_result$schema$value
 const _dsh_jev_plugin_jev_getCredentialStatus_result$schema = () => (_dsh_jev_plugin_jev_getCredentialStatus_result$schema$value ??= z.object({
+  'connection': z.object({
+  'connectionId': z.union([z.literal("jev"), z.literal("luna-openrouter"), z.literal("luna-openai")]),
+  'baseUrl': z.string(),
+  'model': z.string(),
+  'credentialRef': z.string(),
+  'timeoutMs': z.number(),
+}),
   'configured': z.boolean(),
   'writable': z.boolean(),
   'source': z.union([z.undefined(), z.string()]).optional(),
@@ -34,6 +49,7 @@ const _dsh_jev_plugin_jev_getRecord_result$schema = () => (_dsh_jev_plugin_jev_g
   'baseUrl': z.string(),
   'model': z.string(),
   'credentialRef': z.string(),
+  'connectionId': z.union([z.undefined(), z.literal("jev"), z.literal("luna-openrouter"), z.literal("luna-openai")]).optional(),
 }),
   'request': z.object({
   'state': z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => JsonRemoteCodec$schema())), z.record(z.string(), z.lazy(() => JsonRemoteCodec$schema())).readonly()]),
@@ -97,6 +113,29 @@ const _dsh_jev_plugin_jev_getRecord_result$schema = () => (_dsh_jev_plugin_jev_g
   'inputTokens': z.union([z.undefined(), z.number()]).optional(),
   'outputTokens': z.union([z.undefined(), z.number()]).optional(),
 })]).optional(),
+  'networkRecords': z.union([z.undefined(), z.array(z.object({
+  'id': z.string(),
+  'questionIds': z.array(z.string()),
+  'requestBody': z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => JsonRemoteCodec$schema())), z.record(z.string(), z.lazy(() => JsonRemoteCodec$schema())).readonly()]),
+  'startedAt': z.string(),
+  'dispatchedAt': z.union([z.undefined(), z.string()]).optional(),
+  'settledAt': z.union([z.undefined(), z.string()]).optional(),
+  'status': z.union([z.literal("pending"), z.literal("succeeded"), z.literal("failed")]),
+  'httpStatus': z.union([z.undefined(), z.number()]).optional(),
+  'rawResponseText': z.union([z.undefined(), z.string()]).optional(),
+  'rawResponse': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => JsonRemoteCodec$schema())), z.record(z.string(), z.lazy(() => JsonRemoteCodec$schema())).readonly()]).optional(),
+  'returnedModel': z.union([z.undefined(), z.string()]).optional(),
+  'requestId': z.union([z.undefined(), z.string()]).optional(),
+  'usage': z.union([z.undefined(), z.object({
+  'inputTokens': z.union([z.undefined(), z.number()]).optional(),
+  'outputTokens': z.union([z.undefined(), z.number()]).optional(),
+})]).optional(),
+  'failure': z.union([z.undefined(), z.object({
+  'code': z.string(),
+  'message': z.string(),
+})]).optional(),
+}))]).optional(),
+  'usageComplete': z.union([z.undefined(), z.literal(false), z.literal(true)]).optional(),
 })),
   'receipts': z.array(z.object({
   'id': z.string(),
@@ -181,12 +220,46 @@ const _dsh_jev_plugin_jev_getStageAnalysisRecord_result$schema = () => (_dsh_jev
 })])),
 })]).optional(),
   'rawResponse': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => JsonRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => JsonRemoteCodec$schema2())).readonly()]).optional(),
+  'connection': z.union([z.undefined(), z.object({
+  'baseUrl': z.string(),
+  'model': z.string(),
+  'credentialRef': z.string(),
+  'connectionId': z.union([z.undefined(), z.literal("jev"), z.literal("luna-openrouter"), z.literal("luna-openai")]).optional(),
+})]).optional(),
+  'networkRecords': z.union([z.undefined(), z.array(z.object({
+  'id': z.string(),
+  'questionIds': z.array(z.string()),
+  'requestBody': z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => JsonRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => JsonRemoteCodec$schema2())).readonly()]),
+  'startedAt': z.string(),
+  'dispatchedAt': z.union([z.undefined(), z.string()]).optional(),
+  'settledAt': z.union([z.undefined(), z.string()]).optional(),
+  'status': z.union([z.literal("pending"), z.literal("succeeded"), z.literal("failed")]),
+  'httpStatus': z.union([z.undefined(), z.number()]).optional(),
+  'rawResponseText': z.union([z.undefined(), z.string()]).optional(),
+  'rawResponse': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => JsonRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => JsonRemoteCodec$schema2())).readonly()]).optional(),
+  'returnedModel': z.union([z.undefined(), z.string()]).optional(),
+  'requestId': z.union([z.undefined(), z.string()]).optional(),
+  'usage': z.union([z.undefined(), z.object({
+  'inputTokens': z.union([z.undefined(), z.number()]).optional(),
+  'outputTokens': z.union([z.undefined(), z.number()]).optional(),
+})]).optional(),
+  'failure': z.union([z.undefined(), z.object({
+  'code': z.string(),
+  'message': z.string(),
+})]).optional(),
+}))]).optional(),
+  'usage': z.union([z.undefined(), z.object({
+  'inputTokens': z.union([z.undefined(), z.number()]).optional(),
+  'outputTokens': z.union([z.undefined(), z.number()]).optional(),
+})]).optional(),
+  'usageComplete': z.union([z.undefined(), z.literal(false), z.literal(true)]).optional(),
   'status': z.union([z.literal("pending"), z.literal("succeeded"), z.literal("failed"), z.literal("cancelled"), z.literal("interrupted"), z.literal("unanalysed"), z.literal("stale"), z.literal("unavailable")]),
   'label': z.union([z.undefined(), z.literal("input_parsing"), z.literal("problem_understanding"), z.literal("solution_planning"), z.literal("implementation"), z.literal("review_validation"), z.literal("delivery_finalization"), z.literal("mixed"), z.literal("unknown")]).optional(),
   'confidence': z.union([z.undefined(), z.number()]).optional(),
   'probabilities': z.union([z.undefined(), z.record(z.string(), z.number())]).optional(),
   'model': z.union([z.undefined(), z.string()]).optional(),
   'configuredModel': z.union([z.undefined(), z.string()]).optional(),
+  'connectionId': z.union([z.undefined(), z.literal("jev"), z.literal("luna-openrouter"), z.literal("luna-openai")]).optional(),
   'recordId': z.union([z.undefined(), z.string()]).optional(),
   'operationId': z.union([z.undefined(), z.string()]).optional(),
   'failure': z.union([z.undefined(), z.object({
@@ -202,6 +275,7 @@ const _dsh_jev_plugin_jev_getStageAnalysisRecord_result$schema = () => (_dsh_jev
   'probabilities': z.union([z.undefined(), z.record(z.string(), z.number())]).optional(),
   'model': z.union([z.undefined(), z.string()]).optional(),
   'configuredModel': z.union([z.undefined(), z.string()]).optional(),
+  'connectionId': z.union([z.undefined(), z.literal("jev"), z.literal("luna-openrouter"), z.literal("luna-openai")]).optional(),
   'updatedAt': z.union([z.undefined(), z.string()]).optional(),
 })]).optional(),
 })]))
@@ -463,6 +537,7 @@ const _dsh_jev_plugin_jev_getStageNavigation_result$schema = () => (_dsh_jev_plu
   'probabilities': z.union([z.undefined(), z.record(z.string(), z.number())]).optional(),
   'model': z.union([z.undefined(), z.string()]).optional(),
   'configuredModel': z.union([z.undefined(), z.string()]).optional(),
+  'connectionId': z.union([z.undefined(), z.literal("jev"), z.literal("luna-openrouter"), z.literal("luna-openai")]).optional(),
   'recordId': z.union([z.undefined(), z.string()]).optional(),
   'operationId': z.union([z.undefined(), z.string()]).optional(),
   'failure': z.union([z.undefined(), z.object({
@@ -478,6 +553,7 @@ const _dsh_jev_plugin_jev_getStageNavigation_result$schema = () => (_dsh_jev_plu
   'probabilities': z.union([z.undefined(), z.record(z.string(), z.number())]).optional(),
   'model': z.union([z.undefined(), z.string()]).optional(),
   'configuredModel': z.union([z.undefined(), z.string()]).optional(),
+  'connectionId': z.union([z.undefined(), z.literal("jev"), z.literal("luna-openrouter"), z.literal("luna-openai")]).optional(),
   'updatedAt': z.union([z.undefined(), z.string()]).optional(),
 })]).optional(),
 }),
@@ -529,9 +605,24 @@ const _dsh_jev_plugin_jev_listRecords_result$schema = () => (_dsh_jev_plugin_jev
   'nextCursor': z.union([z.undefined(), z.string()]).optional(),
 }))
 let _dsh_jev_plugin_jev_setCredential_parameter_0$schema$value
-const _dsh_jev_plugin_jev_setCredential_parameter_0$schema = () => (_dsh_jev_plugin_jev_setCredential_parameter_0$schema$value ??= z.string())
+const _dsh_jev_plugin_jev_setCredential_parameter_0$schema = () => (_dsh_jev_plugin_jev_setCredential_parameter_0$schema$value ??= z.object({
+  'connectionId': z.union([z.literal("jev"), z.literal("luna-openrouter"), z.literal("luna-openai")]),
+  'baseUrl': z.string(),
+  'model': z.string(),
+  'credentialRef': z.string(),
+  'timeoutMs': z.number(),
+}))
+let _dsh_jev_plugin_jev_setCredential_parameter_1$schema$value
+const _dsh_jev_plugin_jev_setCredential_parameter_1$schema = () => (_dsh_jev_plugin_jev_setCredential_parameter_1$schema$value ??= z.string())
 let _dsh_jev_plugin_jev_setCredential_result$schema$value
 const _dsh_jev_plugin_jev_setCredential_result$schema = () => (_dsh_jev_plugin_jev_setCredential_result$schema$value ??= z.object({
+  'connection': z.object({
+  'connectionId': z.union([z.literal("jev"), z.literal("luna-openrouter"), z.literal("luna-openai")]),
+  'baseUrl': z.string(),
+  'model': z.string(),
+  'credentialRef': z.string(),
+  'timeoutMs': z.number(),
+}),
   'configured': z.boolean(),
   'writable': z.boolean(),
   'source': z.union([z.undefined(), z.string()]).optional(),
@@ -561,8 +652,23 @@ const _dsh_jev_plugin_jev_startStageAnalysis_result$schema = () => (_dsh_jev_plu
   'message': z.string(),
 })]).optional(),
 }))
+let _dsh_jev_plugin_jev_testConnection_parameter_0$schema$value
+const _dsh_jev_plugin_jev_testConnection_parameter_0$schema = () => (_dsh_jev_plugin_jev_testConnection_parameter_0$schema$value ??= z.object({
+  'connectionId': z.union([z.literal("jev"), z.literal("luna-openrouter"), z.literal("luna-openai")]),
+  'baseUrl': z.string(),
+  'model': z.string(),
+  'credentialRef': z.string(),
+  'timeoutMs': z.number(),
+}))
 let _dsh_jev_plugin_jev_testConnection_result$schema$value
 const _dsh_jev_plugin_jev_testConnection_result$schema = () => (_dsh_jev_plugin_jev_testConnection_result$schema$value ??= z.object({
+  'connection': z.object({
+  'connectionId': z.union([z.literal("jev"), z.literal("luna-openrouter"), z.literal("luna-openai")]),
+  'baseUrl': z.string(),
+  'model': z.string(),
+  'credentialRef': z.string(),
+  'timeoutMs': z.number(),
+}),
   'ok': z.boolean(),
   'latencyMs': z.number(),
   'recordId': z.string(),
@@ -598,7 +704,7 @@ export const TYPERT_REMOTE = {
         typeSymbol: '@dsh-jev/plugin#jev/cancelStageAnalysis:result',
         create: _dsh_jev_plugin_jev_cancelStageAnalysis_result$schema,
       },
-      sourceLocation: {"file":"packages/jev/src/index.ts","line":205,"column":3},
+      sourceLocation: {"file":"packages/jev/src/index.ts","line":218,"column":3},
     },
     {
       id: '@dsh-jev/plugin#jev/getCredentialStatus',
@@ -607,13 +713,23 @@ export const TYPERT_REMOTE = {
       method: 'getCredentialStatus',
       invocation: { kind: 'direct' },
       parameters: [
+        {
+          name: 'connection',
+          wire: 'connection',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@dsh-jev/plugin/types#JevConnectionIdentity',
+            create: _dsh_jev_plugin_jev_getCredentialStatus_parameter_0$schema,
+          },
+        },
       ],
       result: {
         mode: 'strict',
         typeSymbol: '@dsh-jev/plugin/types#JevCredentialStatus',
         create: _dsh_jev_plugin_jev_getCredentialStatus_result$schema,
       },
-      sourceLocation: {"file":"packages/jev/src/index.ts","line":215,"column":9},
+      sourceLocation: {"file":"packages/jev/src/index.ts","line":228,"column":9},
     },
     {
       id: '@dsh-jev/plugin#jev/getRecord',
@@ -638,7 +754,7 @@ export const TYPERT_REMOTE = {
         typeSymbol: '@dsh-jev/plugin#jev/getRecord:result',
         create: _dsh_jev_plugin_jev_getRecord_result$schema,
       },
-      sourceLocation: {"file":"packages/jev/src/index.ts","line":177,"column":9},
+      sourceLocation: {"file":"packages/jev/src/index.ts","line":190,"column":9},
     },
     {
       id: '@dsh-jev/plugin#jev/getStageAnalysisRecord',
@@ -684,7 +800,7 @@ export const TYPERT_REMOTE = {
         typeSymbol: '@dsh-jev/plugin#jev/getStageAnalysisRecord:result',
         create: _dsh_jev_plugin_jev_getStageAnalysisRecord_result$schema,
       },
-      sourceLocation: {"file":"packages/jev/src/index.ts","line":209,"column":3},
+      sourceLocation: {"file":"packages/jev/src/index.ts","line":222,"column":3},
     },
     {
       id: '@dsh-jev/plugin#jev/getStageNavigation',
@@ -710,7 +826,7 @@ export const TYPERT_REMOTE = {
         typeSymbol: '@dsh-jev/plugin/stage-types#StageNavigationSnapshot',
         create: _dsh_jev_plugin_jev_getStageNavigation_result$schema,
       },
-      sourceLocation: {"file":"packages/jev/src/index.ts","line":193,"column":3},
+      sourceLocation: {"file":"packages/jev/src/index.ts","line":206,"column":3},
     },
     {
       id: '@dsh-jev/plugin#jev/listFeatures',
@@ -725,7 +841,7 @@ export const TYPERT_REMOTE = {
         typeSymbol: '@dsh-jev/plugin#jev/listFeatures:result',
         create: _dsh_jev_plugin_jev_listFeatures_result$schema,
       },
-      sourceLocation: {"file":"packages/jev/src/index.ts","line":161,"column":9},
+      sourceLocation: {"file":"packages/jev/src/index.ts","line":174,"column":9},
     },
     {
       id: '@dsh-jev/plugin#jev/listRecords',
@@ -750,7 +866,7 @@ export const TYPERT_REMOTE = {
         typeSymbol: '@dsh-jev/plugin/types#JevRecordPage',
         create: _dsh_jev_plugin_jev_listRecords_result$schema,
       },
-      sourceLocation: {"file":"packages/jev/src/index.ts","line":168,"column":9},
+      sourceLocation: {"file":"packages/jev/src/index.ts","line":181,"column":9},
     },
     {
       id: '@dsh-jev/plugin#jev/setCredential',
@@ -760,13 +876,23 @@ export const TYPERT_REMOTE = {
       invocation: { kind: 'direct' },
       parameters: [
         {
+          name: 'connection',
+          wire: 'connection',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@dsh-jev/plugin/types#JevConnectionIdentity',
+            create: _dsh_jev_plugin_jev_setCredential_parameter_0$schema,
+          },
+        },
+        {
           name: 'value',
           wire: 'value',
           source: 'json',
           codec: {
             mode: 'strict',
             typeSymbol: '@dsh-jev/plugin#jev/setCredential:value',
-            create: _dsh_jev_plugin_jev_setCredential_parameter_0$schema,
+            create: _dsh_jev_plugin_jev_setCredential_parameter_1$schema,
           },
         },
       ],
@@ -775,7 +901,7 @@ export const TYPERT_REMOTE = {
         typeSymbol: '@dsh-jev/plugin/types#JevCredentialStatus',
         create: _dsh_jev_plugin_jev_setCredential_result$schema,
       },
-      sourceLocation: {"file":"packages/jev/src/index.ts","line":222,"column":9},
+      sourceLocation: {"file":"packages/jev/src/index.ts","line":236,"column":9},
     },
     {
       id: '@dsh-jev/plugin#jev/startStageAnalysis',
@@ -800,7 +926,7 @@ export const TYPERT_REMOTE = {
         typeSymbol: '@dsh-jev/plugin/stage-types#StageBatchState',
         create: _dsh_jev_plugin_jev_startStageAnalysis_result$schema,
       },
-      sourceLocation: {"file":"packages/jev/src/index.ts","line":199,"column":3},
+      sourceLocation: {"file":"packages/jev/src/index.ts","line":212,"column":3},
     },
     {
       id: '@dsh-jev/plugin#jev/testConnection',
@@ -809,6 +935,16 @@ export const TYPERT_REMOTE = {
       method: 'testConnection',
       invocation: { kind: 'direct' },
       parameters: [
+        {
+          name: 'connection',
+          wire: 'connection',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@dsh-jev/plugin/types#JevConnectionIdentity',
+            create: _dsh_jev_plugin_jev_testConnection_parameter_0$schema,
+          },
+        },
       ],
       cancellation: { parameter: 'signal' },
       result: {
@@ -816,7 +952,7 @@ export const TYPERT_REMOTE = {
         typeSymbol: '@dsh-jev/plugin/types#JevProbeResult',
         create: _dsh_jev_plugin_jev_testConnection_result$schema,
       },
-      sourceLocation: {"file":"packages/jev/src/index.ts","line":230,"column":9},
+      sourceLocation: {"file":"packages/jev/src/index.ts","line":246,"column":9},
     },
   ],
 }

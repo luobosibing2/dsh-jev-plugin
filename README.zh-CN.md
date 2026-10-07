@@ -1,16 +1,18 @@
 # deepseek-harness-jev
 
-[English](README.md) | 简体中文 | [中文功能与实测网站](https://luobosibing2.github.io/deepseek-harness-jev/)
+[English](README.md) | 简体中文 | [中文功能与实测网站](https://luobosibing2.github.io/dsh-jev-plugin/)
 
-**DeepSeek Harness（DSH）的原生 Jev 插件：按需接入 TypeSafe Jev / System One 判断。**
+**DeepSeek Harness（DSH）的原生插件：使用 Jev 或 Luna Decisions 提供判断。**
 
 `deepseek-harness-jev` 将 [DeepSeek Harness（DSH）](https://github.com/deepseek-ai/deepseek-harness) 与 [TypeSafe AI 的 Jev](https://typesafe.ai/) 连接起来，为 Agent 提供技能与文件选择、任务监督、共享发现纠正、工具日志筛选、单次操作审批和历史轨迹阶段导航。12 项功能可在同一个 Jev 设置页分别开启，默认全部关闭。
 
-主模型继续负责规划、生成回答和调用原生工具；插件在 DSH 的技能目录、Agent 生命周期、工具结果与审批等扩展点自动发起已启用的 Jev 判断，再按对应功能应用结果。主模型由 DSH 配置，Jev 连接单独配置。接入基于公开的 Cordis / DSH 插件接口，无需修改宿主源码。
+主模型继续负责规划、生成回答和调用原生工具；已启用功能在 DSH 的技能目录、Agent 生命周期、工具结果与审批等扩展点使用已保存的 Jev 或 Luna Decisions 连接，再按对应功能应用结果。主模型由 DSH 单独配置。接入基于公开的 Cordis / DSH 插件接口，无需修改宿主源码。
 
 这是独立社区项目，并非 DeepSeek 或 Jev 官方发布。当前属于早期插件，已针对 **DSH 0.1.7-rc.2** 验证；接口和模型判断都不构成正确性保证。
 
-[中文功能介绍站](https://luobosibing2.github.io/dsh-jev-plugin/)逐项说明 DSH 原生触发节点、交给 Jev 的信息，以及实际测试场景、结果和边界。
+[中文功能介绍站](https://luobosibing2.github.io/dsh-jev-plugin/)逐项说明 DSH 原生触发节点、交给判断服务的信息，以及实际测试场景、结果和边界。
+
+`main` 支持 Jev，以及通过 OpenRouter 或 OpenAI 使用 Luna Decisions；每个 profile 独立保存三套连接。[2026-10-07 公开报告](docs/testing/2026-10-07-luna-decisions/README.md)区分固定协议及安装、受控真实样例与真实 DeepSeek Flash 任务。官方 OpenAI 在这些有限样例中调用成功；OpenRouter 的唯一真实诊断返回提供方访问限制的 HTTP 403 后停止。这些结果不建立通用判断准确率或稳定任务收益。
 
 ## 包含哪些功能？
 
@@ -77,7 +79,7 @@ https://github.com/luobosibing2/deepseek-harness-jev
 - 推荐 Node.js **24.11 或更高版本**；发布构建使用 Node 24.14.1 检查。
 - `PATH` 中可用的 pnpm **11.7.0**。
 - DeepSeek Harness CLI **0.1.7-rc.2**。插件固定使用对应 DSH peer 包和 Cordis **4.0.4**，不自动承诺兼容更新版本。
-- 在 DSH 中配置好主模型，以及你自己的 Jev 兼容 System One 服务和凭据。
+- 在 DSH 中配置好主模型，以及所选 Jev 兼容 System One 服务或 Luna API 的凭据。
 
 如尚未安装工具：
 
@@ -114,17 +116,28 @@ dsh --profile jev
 
 打开 DSH 输出的认证访问地址。在 DSH 中配置主模型，然后进入插件的 **Jev** 页面。
 
-## 配置 Jev
+## 配置判断连接
 
-1. 填写完整 System One 地址，例如 `https://api.typesafe.ai/v1/systemone`。
-2. 填写模型，例如 `jev-latest`。
-3. 指定 DSH 凭据引用，保存连接，再通过页面的凭据控件保存 API Key。不要把密钥写入源码或仓库 URL。
-4. 检查超时时间，只开启需要的功能。
-5. 在“判断记录”中查看输入、答案、尝试次数，以及实际采纳或执行回执。
+1. 打开 **Jev → 设置与功能**，在**判断模型**中选择 **Jev** 或 **Luna Decisions**；Luna 还可在 **Luna API** 中选择 **OpenRouter** 或 **OpenAI**。
+2. 检查完整请求地址和凭据引用。Jev 保留原自定义地址和模型；Luna 使用对应 API 的固定模型标识。
+3. 保存连接，再通过凭据控件保存 API Key。每套连接分别保存地址和凭据引用，不要把密钥写入源码或仓库 URL。
+4. 点击**测试连接**，发送固定 Choice、Score、Noul 问题。通过表示三类回答均完成协议校验，不表示实际任务判断质量。
+5. 只开启需要的功能。所有已启用功能使用已保存判断连接；切换模型不会改变功能开关、阈值、数量参数或共用超时。
+6. 在**判断记录**中核对本次连接、提供方返回模型、实际请求、原始响应、统一答案、已知用量和动作回执。
 
-主 Agent 的模型连接与 Jev 判断连接分别配置。凭据显示“已配置”不等于连接测试成功；连接测试和已启用的判断会向服务方发送请求。
+| 连接 | 默认完整请求地址 | 请求模型 | 默认凭据引用 |
+| --- | --- | --- | --- |
+| Jev | 原 System One 地址，例如 `https://api.typesafe.ai/v1/systemone` | 原模型，例如 `jev-latest` | 原引用，初始为 `JEV_API_KEY` |
+| Luna / OpenRouter | `https://openrouter.ai/api/alpha/decisions` | `openai/gpt-6-luna-decisions` | `JEV_LUNA_OPENROUTER_API_KEY` |
+| Luna / OpenAI | `https://api.openai.com/v1/decisions` | `gpt-6-luna` | `JEV_LUNA_OPENAI_API_KEY` |
 
-选择功能默认取 5 个技能摘要，最多对 40 个 glob 命中排序，展示 12 条路径。超过上限时直接跳过 Jev，不会悄悄只判断前 40 个。监督功能默认每 6 个完成的模型步骤检查一次跑偏，连续 3 个原生目标轮次无进展则暂停。这些参数可调整，保存参数不会自动开启功能。
+两个 Luna 模型 ID 是指定 Luna Decisions 能力在不同 API 中的命名。所选 API 决定协议，包括 OpenAI 将 Noul 表示为 `predicate`；修改域名不会改变协议。合法自定义端点仍使用所选协议。切回后可恢复各套已保存连接，旧 profile 默认选择 Jev 并保留原值。
+
+凭据状态只显示是否存在和可写，不读回密钥；“已配置”不表示连接测试通过。编辑后须先保存连接，再写入密钥或测试；连接改变后，旧密钥写入会被拒绝，旧诊断也不能成为新连接的结果。成功替换密钥后清空输入。读取、编辑和保存设置均不发送模型请求。
+
+每次尝试使用开始时已保存的连接；之后的切换用于新尝试和人工重试。故障不会自动转向其他模型或 API。OpenRouter 超过 200 题时完整分批，所有批次共用原超时，全部完成后才向业务交付答案；部分失败仍保留实际网络数据和已知用量。配置及生命周期详情见[包参考](packages/jev/README.md#judgment-connections)。
+
+选择功能默认取 5 个技能摘要，最多对 40 个 glob 命中排序，展示 12 条路径。超过上限时直接跳过判断排序，不会悄悄只判断前 40 个。监督功能默认每 6 个完成的模型步骤检查一次跑偏，连续 3 个原生目标轮次无进展则暂停。这些参数可调整，保存参数不会自动开启功能。
 
 通用长日志准入和测试日志准入有独立开关，均默认关闭。命令日志从 6,000 个 Unicode 码点、可识别测试日志从 4,000 个码点开始处理；默认省略概率门槛为 0.8，判断最多等待 4 秒。设置页可调整这些及其他准入预算，保存预算不会开启功能。
 
@@ -137,6 +150,7 @@ dsh --profile jev
 - **判断成功不等于执行成功。** 日志分别记录判断、采纳、许可发放和实际操作结果。
 - **日志准入保留原文入口。** 它只在工具执行后调整符合条件的模型可见文本；DSH 即时 spill、工具输出上限和之后的上下文压缩仍生效。隔离真实 profile 的一次构建将 8,510 字符日志缩短了 75.7%。一次中性措辞的 180 项测试触发了测试日志判断，但省略概率低于 0.8，因此完整保留；该次不证明测试日志已有实际缩减效果。见[工具输出准入报告](docs/reports/2026-09-27-tool-output-admission.zh-CN.md)。
 - **验证有范围。** 确定性测试证明集成流程，有限真实样例不能证明普遍语义准确率。详见[验证说明](docs/validation.md)。
+- **Luna 任务结果保留未达预期与限制。** 前两个受控审批样例返回 `unauthorized`；后来的真实任务得到 `approve` 并执行一次原生 `allowed-once` 写入。真实构建日志在原默认参数下由 8,407 缩至 2,122 码点（74.76%），五个同分文件概率则未改变排序。[双语 Luna 报告](docs/testing/2026-10-07-luna-decisions/README.md)同时记录这些结果、原文恢复和未验证功能。
 
 开启的功能会将相关任务上下文或操作内容发送到配置的判断服务。精确判断输入和回答保存在 profile 的本地插件记录中，主模型可见影响使用正常 DSH Session 记录。运行资料和凭据应保留为私有数据；公开源码历史不包含个人 QA 截图和原始会话抓取。
 

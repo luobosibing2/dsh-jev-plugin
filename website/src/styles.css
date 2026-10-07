@@ -115,6 +115,12 @@ a { color: inherit; text-underline-offset: 3px; }
 .mechanism__steps dd { margin: 0; color: var(--ink); font-size: 14px; line-height: 1.75; }
 .mechanism__refs { margin: 13px 0 0; color: var(--muted); font-size: 12px; }
 .mechanism__refs a { display: inline-block; margin-left: 8px; color: var(--teal); }
+.connection-table-wrap { max-width: 100%; overflow-x: auto; margin-block: 23px; }
+.connection-table { width: 100%; min-width: 540px; border-collapse: collapse; font-size: 13px; }
+.connection-table caption { padding-bottom: 10px; color: var(--muted); text-align: left; }
+.connection-table th, .connection-table td { padding: 12px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.connection-table th { color: var(--teal); font-weight: 650; }
+.connection-table code { font: 12px/1.65 var(--mono), var(--font); overflow-wrap: anywhere; }
 .case-list { border-top: 1px solid var(--line); }
 .case { padding: 39px 0 43px; border-bottom: 1px solid var(--line); }
 .case__kind { color: var(--teal); font-size: 12px; font-weight: 650; }

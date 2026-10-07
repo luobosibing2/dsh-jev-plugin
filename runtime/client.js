@@ -5634,8 +5634,31 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		const _dsh_jev_plugin_jev_cancelStageAnalysis_parameter_0$schema = () => _dsh_jev_plugin_jev_cancelStageAnalysis_parameter_0$schema$value ??= string();
 		let _dsh_jev_plugin_jev_cancelStageAnalysis_result$schema$value;
 		const _dsh_jev_plugin_jev_cancelStageAnalysis_result$schema = () => _dsh_jev_plugin_jev_cancelStageAnalysis_result$schema$value ??= _void();
+		let _dsh_jev_plugin_jev_getCredentialStatus_parameter_0$schema$value;
+		const _dsh_jev_plugin_jev_getCredentialStatus_parameter_0$schema = () => _dsh_jev_plugin_jev_getCredentialStatus_parameter_0$schema$value ??= object({
+			"connectionId": union([
+				literal("jev"),
+				literal("luna-openrouter"),
+				literal("luna-openai")
+			]),
+			"baseUrl": string(),
+			"model": string(),
+			"credentialRef": string(),
+			"timeoutMs": number()
+		});
 		let _dsh_jev_plugin_jev_getCredentialStatus_result$schema$value;
 		const _dsh_jev_plugin_jev_getCredentialStatus_result$schema = () => _dsh_jev_plugin_jev_getCredentialStatus_result$schema$value ??= object({
+			"connection": object({
+				"connectionId": union([
+					literal("jev"),
+					literal("luna-openrouter"),
+					literal("luna-openai")
+				]),
+				"baseUrl": string(),
+				"model": string(),
+				"credentialRef": string(),
+				"timeoutMs": number()
+			}),
 			"configured": boolean(),
 			"writable": boolean(),
 			"source": union([_undefined(), string()]).optional()
@@ -5658,7 +5681,13 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				"connection": object({
 					"baseUrl": string(),
 					"model": string(),
-					"credentialRef": string()
+					"credentialRef": string(),
+					"connectionId": union([
+						_undefined(),
+						literal("jev"),
+						literal("luna-openrouter"),
+						literal("luna-openai")
+					]).optional()
 				}),
 				"request": object({
 					"state": union([
@@ -5924,7 +5953,55 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				"usage": union([_undefined(), object({
 					"inputTokens": union([_undefined(), number()]).optional(),
 					"outputTokens": union([_undefined(), number()]).optional()
-				})]).optional()
+				})]).optional(),
+				"networkRecords": union([_undefined(), array(object({
+					"id": string(),
+					"questionIds": array(string()),
+					"requestBody": union([
+						literal(null),
+						string(),
+						number(),
+						literal(false),
+						literal(true),
+						array(lazy(() => JsonRemoteCodec$schema())),
+						record(string(), lazy(() => JsonRemoteCodec$schema())).readonly()
+					]),
+					"startedAt": string(),
+					"dispatchedAt": union([_undefined(), string()]).optional(),
+					"settledAt": union([_undefined(), string()]).optional(),
+					"status": union([
+						literal("pending"),
+						literal("succeeded"),
+						literal("failed")
+					]),
+					"httpStatus": union([_undefined(), number()]).optional(),
+					"rawResponseText": union([_undefined(), string()]).optional(),
+					"rawResponse": union([
+						_undefined(),
+						literal(null),
+						string(),
+						number(),
+						literal(false),
+						literal(true),
+						array(lazy(() => JsonRemoteCodec$schema())),
+						record(string(), lazy(() => JsonRemoteCodec$schema())).readonly()
+					]).optional(),
+					"returnedModel": union([_undefined(), string()]).optional(),
+					"requestId": union([_undefined(), string()]).optional(),
+					"usage": union([_undefined(), object({
+						"inputTokens": union([_undefined(), number()]).optional(),
+						"outputTokens": union([_undefined(), number()]).optional()
+					})]).optional(),
+					"failure": union([_undefined(), object({
+						"code": string(),
+						"message": string()
+					})]).optional()
+				}))]).optional(),
+				"usageComplete": union([
+					_undefined(),
+					literal(false),
+					literal(true)
+				]).optional()
 			})),
 			"receipts": array(object({
 				"id": string(),
@@ -6227,6 +6304,69 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				array(lazy(() => JsonRemoteCodec$schema2())),
 				record(string(), lazy(() => JsonRemoteCodec$schema2())).readonly()
 			]).optional(),
+			"connection": union([_undefined(), object({
+				"baseUrl": string(),
+				"model": string(),
+				"credentialRef": string(),
+				"connectionId": union([
+					_undefined(),
+					literal("jev"),
+					literal("luna-openrouter"),
+					literal("luna-openai")
+				]).optional()
+			})]).optional(),
+			"networkRecords": union([_undefined(), array(object({
+				"id": string(),
+				"questionIds": array(string()),
+				"requestBody": union([
+					literal(null),
+					string(),
+					number(),
+					literal(false),
+					literal(true),
+					array(lazy(() => JsonRemoteCodec$schema2())),
+					record(string(), lazy(() => JsonRemoteCodec$schema2())).readonly()
+				]),
+				"startedAt": string(),
+				"dispatchedAt": union([_undefined(), string()]).optional(),
+				"settledAt": union([_undefined(), string()]).optional(),
+				"status": union([
+					literal("pending"),
+					literal("succeeded"),
+					literal("failed")
+				]),
+				"httpStatus": union([_undefined(), number()]).optional(),
+				"rawResponseText": union([_undefined(), string()]).optional(),
+				"rawResponse": union([
+					_undefined(),
+					literal(null),
+					string(),
+					number(),
+					literal(false),
+					literal(true),
+					array(lazy(() => JsonRemoteCodec$schema2())),
+					record(string(), lazy(() => JsonRemoteCodec$schema2())).readonly()
+				]).optional(),
+				"returnedModel": union([_undefined(), string()]).optional(),
+				"requestId": union([_undefined(), string()]).optional(),
+				"usage": union([_undefined(), object({
+					"inputTokens": union([_undefined(), number()]).optional(),
+					"outputTokens": union([_undefined(), number()]).optional()
+				})]).optional(),
+				"failure": union([_undefined(), object({
+					"code": string(),
+					"message": string()
+				})]).optional()
+			}))]).optional(),
+			"usage": union([_undefined(), object({
+				"inputTokens": union([_undefined(), number()]).optional(),
+				"outputTokens": union([_undefined(), number()]).optional()
+			})]).optional(),
+			"usageComplete": union([
+				_undefined(),
+				literal(false),
+				literal(true)
+			]).optional(),
 			"status": union([
 				literal("pending"),
 				literal("succeeded"),
@@ -6252,6 +6392,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			"probabilities": union([_undefined(), record(string(), number())]).optional(),
 			"model": union([_undefined(), string()]).optional(),
 			"configuredModel": union([_undefined(), string()]).optional(),
+			"connectionId": union([
+				_undefined(),
+				literal("jev"),
+				literal("luna-openrouter"),
+				literal("luna-openai")
+			]).optional(),
 			"recordId": union([_undefined(), string()]).optional(),
 			"operationId": union([_undefined(), string()]).optional(),
 			"failure": union([_undefined(), object({
@@ -6276,6 +6422,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				"probabilities": union([_undefined(), record(string(), number())]).optional(),
 				"model": union([_undefined(), string()]).optional(),
 				"configuredModel": union([_undefined(), string()]).optional(),
+				"connectionId": union([
+					_undefined(),
+					literal("jev"),
+					literal("luna-openrouter"),
+					literal("luna-openai")
+				]).optional(),
 				"updatedAt": union([_undefined(), string()]).optional()
 			})]).optional()
 		})]);
@@ -6610,6 +6762,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						"probabilities": union([_undefined(), record(string(), number())]).optional(),
 						"model": union([_undefined(), string()]).optional(),
 						"configuredModel": union([_undefined(), string()]).optional(),
+						"connectionId": union([
+							_undefined(),
+							literal("jev"),
+							literal("luna-openrouter"),
+							literal("luna-openai")
+						]).optional(),
 						"recordId": union([_undefined(), string()]).optional(),
 						"operationId": union([_undefined(), string()]).optional(),
 						"failure": union([_undefined(), object({
@@ -6634,6 +6792,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 							"probabilities": union([_undefined(), record(string(), number())]).optional(),
 							"model": union([_undefined(), string()]).optional(),
 							"configuredModel": union([_undefined(), string()]).optional(),
+							"connectionId": union([
+								_undefined(),
+								literal("jev"),
+								literal("luna-openrouter"),
+								literal("luna-openai")
+							]).optional(),
 							"updatedAt": union([_undefined(), string()]).optional()
 						})]).optional()
 					})
@@ -6713,9 +6877,32 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			"nextCursor": union([_undefined(), string()]).optional()
 		});
 		let _dsh_jev_plugin_jev_setCredential_parameter_0$schema$value;
-		const _dsh_jev_plugin_jev_setCredential_parameter_0$schema = () => _dsh_jev_plugin_jev_setCredential_parameter_0$schema$value ??= string();
+		const _dsh_jev_plugin_jev_setCredential_parameter_0$schema = () => _dsh_jev_plugin_jev_setCredential_parameter_0$schema$value ??= object({
+			"connectionId": union([
+				literal("jev"),
+				literal("luna-openrouter"),
+				literal("luna-openai")
+			]),
+			"baseUrl": string(),
+			"model": string(),
+			"credentialRef": string(),
+			"timeoutMs": number()
+		});
+		let _dsh_jev_plugin_jev_setCredential_parameter_1$schema$value;
+		const _dsh_jev_plugin_jev_setCredential_parameter_1$schema = () => _dsh_jev_plugin_jev_setCredential_parameter_1$schema$value ??= string();
 		let _dsh_jev_plugin_jev_setCredential_result$schema$value;
 		const _dsh_jev_plugin_jev_setCredential_result$schema = () => _dsh_jev_plugin_jev_setCredential_result$schema$value ??= object({
+			"connection": object({
+				"connectionId": union([
+					literal("jev"),
+					literal("luna-openrouter"),
+					literal("luna-openai")
+				]),
+				"baseUrl": string(),
+				"model": string(),
+				"credentialRef": string(),
+				"timeoutMs": number()
+			}),
 			"configured": boolean(),
 			"writable": boolean(),
 			"source": union([_undefined(), string()]).optional()
@@ -6752,8 +6939,31 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				"message": string()
 			})]).optional()
 		});
+		let _dsh_jev_plugin_jev_testConnection_parameter_0$schema$value;
+		const _dsh_jev_plugin_jev_testConnection_parameter_0$schema = () => _dsh_jev_plugin_jev_testConnection_parameter_0$schema$value ??= object({
+			"connectionId": union([
+				literal("jev"),
+				literal("luna-openrouter"),
+				literal("luna-openai")
+			]),
+			"baseUrl": string(),
+			"model": string(),
+			"credentialRef": string(),
+			"timeoutMs": number()
+		});
 		let _dsh_jev_plugin_jev_testConnection_result$schema$value;
 		const _dsh_jev_plugin_jev_testConnection_result$schema = () => _dsh_jev_plugin_jev_testConnection_result$schema$value ??= object({
+			"connection": object({
+				"connectionId": union([
+					literal("jev"),
+					literal("luna-openrouter"),
+					literal("luna-openai")
+				]),
+				"baseUrl": string(),
+				"model": string(),
+				"credentialRef": string(),
+				"timeoutMs": number()
+			}),
 			"ok": boolean(),
 			"latencyMs": number(),
 			"recordId": string(),
@@ -6788,7 +6998,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 205,
+						"line": 218,
 						"column": 3
 					}
 				},
@@ -6798,7 +7008,16 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					namespace: "jev",
 					method: "getCredentialStatus",
 					invocation: { kind: "direct" },
-					parameters: [],
+					parameters: [{
+						name: "connection",
+						wire: "connection",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@dsh-jev/plugin/types#JevConnectionIdentity",
+							create: _dsh_jev_plugin_jev_getCredentialStatus_parameter_0$schema
+						}
+					}],
 					result: {
 						mode: "strict",
 						typeSymbol: "@dsh-jev/plugin/types#JevCredentialStatus",
@@ -6806,7 +7025,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 215,
+						"line": 228,
 						"column": 9
 					}
 				},
@@ -6833,7 +7052,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 177,
+						"line": 190,
 						"column": 9
 					}
 				},
@@ -6883,7 +7102,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 209,
+						"line": 222,
 						"column": 3
 					}
 				},
@@ -6911,7 +7130,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 193,
+						"line": 206,
 						"column": 3
 					}
 				},
@@ -6929,7 +7148,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 161,
+						"line": 174,
 						"column": 9
 					}
 				},
@@ -6956,7 +7175,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 168,
+						"line": 181,
 						"column": 9
 					}
 				},
@@ -6967,13 +7186,22 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					method: "setCredential",
 					invocation: { kind: "direct" },
 					parameters: [{
+						name: "connection",
+						wire: "connection",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@dsh-jev/plugin/types#JevConnectionIdentity",
+							create: _dsh_jev_plugin_jev_setCredential_parameter_0$schema
+						}
+					}, {
 						name: "value",
 						wire: "value",
 						source: "json",
 						codec: {
 							mode: "strict",
 							typeSymbol: "@dsh-jev/plugin#jev/setCredential:value",
-							create: _dsh_jev_plugin_jev_setCredential_parameter_0$schema
+							create: _dsh_jev_plugin_jev_setCredential_parameter_1$schema
 						}
 					}],
 					result: {
@@ -6983,7 +7211,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 222,
+						"line": 236,
 						"column": 9
 					}
 				},
@@ -7010,7 +7238,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 199,
+						"line": 212,
 						"column": 3
 					}
 				},
@@ -7020,7 +7248,16 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					namespace: "jev",
 					method: "testConnection",
 					invocation: { kind: "direct" },
-					parameters: [],
+					parameters: [{
+						name: "connection",
+						wire: "connection",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@dsh-jev/plugin/types#JevConnectionIdentity",
+							create: _dsh_jev_plugin_jev_testConnection_parameter_0$schema
+						}
+					}],
 					cancellation: { parameter: "signal" },
 					result: {
 						mode: "strict",
@@ -7029,12 +7266,31 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 230,
+						"line": 246,
 						"column": 9
 					}
 				}
 			]
 		};
+		//#endregion
+		//#region src/types.ts
+		/** Resolve the explicitly selected protocol; custom URLs do not change its identity. */
+		function resolveConnectionIdentity(values, id) {
+			const connectionId = id ?? (values.judgmentModel === "luna" ? `luna-${values.lunaApi}` : "jev");
+			const baseUrl = connectionId === "jev" ? values.baseUrl : connectionId === "luna-openrouter" ? values.lunaOpenRouterBaseUrl : values.lunaOpenAIBaseUrl;
+			let safeUrl = "";
+			try {
+				const url = new URL(baseUrl.trim());
+				if ((url.protocol === "https:" || url.protocol === "http:") && !url.username && !url.password && !url.search && !url.hash) safeUrl = url.toString();
+			} catch {}
+			return {
+				connectionId,
+				baseUrl: safeUrl,
+				model: connectionId === "jev" ? values.model.trim() : connectionId === "luna-openrouter" ? "openai/gpt-6-luna-decisions" : "gpt-6-luna",
+				credentialRef: (connectionId === "jev" ? values.credentialRef : connectionId === "luna-openrouter" ? values.lunaOpenRouterCredentialRef : values.lunaOpenAICredentialRef).trim(),
+				timeoutMs: values.timeoutMs
+			};
+		}
 		//#endregion
 //#region jev-css:JevPage.module.css
 		const tag$1 = "@dsh-jev/plugin/src/client/JevPage.module.css";
@@ -7042,38 +7298,38 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			const element = document.createElement("style");
 			element.dataset.plugin = "@dsh-jev/plugin";
 			element.dataset.pluginCss = tag$1;
-			element.textContent = ".BSQV6q_page{min-width:0;color:var(--dsw-alias-label-primary);flex-direction:column;gap:24px;padding:12px 0 24px;font-size:13px;line-height:20px;display:flex}.BSQV6q_tabs{max-width:420px}.BSQV6q_panel,.BSQV6q_section,.BSQV6q_form,.BSQV6q_list,.BSQV6q_record,.BSQV6q_detail,.BSQV6q_featureBody{flex-direction:column;display:flex}.BSQV6q_panel{gap:24px}.BSQV6q_section{gap:12px}.BSQV6q_form{gap:14px}.BSQV6q_list,.BSQV6q_record{gap:8px}.BSQV6q_detail{gap:12px}.BSQV6q_featureBody{gap:2px;min-width:0}.BSQV6q_heading{margin:0;font-size:14px;font-weight:500;line-height:22px}.BSQV6q_row,.BSQV6q_toolbar,.BSQV6q_feature,.BSQV6q_recordHead,.BSQV6q_filters,.BSQV6q_actions{align-items:center;gap:12px;display:flex}.BSQV6q_feature,.BSQV6q_recordHead{justify-content:space-between}.BSQV6q_feature,.BSQV6q_record{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);padding:12px}.BSQV6q_featureTitle{font-weight:500}.BSQV6q_description,.BSQV6q_hint,.BSQV6q_meta,.BSQV6q_empty{color:var(--dsw-alias-label-secondary)}.BSQV6q_description,.BSQV6q_hint,.BSQV6q_meta,.BSQV6q_empty,.BSQV6q_notice{margin:0}.BSQV6q_hint{font-size:12px}.BSQV6q_empty{padding:12px 0}.BSQV6q_loading{justify-content:center;align-items:center;min-height:80px;display:flex}.BSQV6q_toolbar,.BSQV6q_actions{flex-wrap:wrap}.BSQV6q_filters{flex-wrap:wrap;align-items:end}.BSQV6q_field{flex-direction:column;flex:160px;gap:6px;min-width:0;display:flex}.BSQV6q_field>span:first-child,.BSQV6q_field>label{font-weight:500}.BSQV6q_field input,.BSQV6q_field select{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);width:100%;min-height:36px;color:var(--dsw-alias-label-primary);font:inherit;padding:6px 10px}.BSQV6q_field input:focus-visible,.BSQV6q_field select:focus-visible{outline:var(--dsw-focus-ring-width)solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:1px}.BSQV6q_field input[aria-invalid=true]{border-color:var(--dsw-alias-state-error-primary)}.BSQV6q_notice{color:var(--dsw-alias-state-error-primary);font-size:13px}.BSQV6q_success{color:var(--dsw-alias-state-success-primary)}.BSQV6q_code{border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);white-space:pre-wrap;overflow-wrap:anywhere;margin:0;padding:10px;font-size:12px;line-height:18px;overflow:auto}.BSQV6q_detailBlock{flex-direction:column;gap:6px;display:flex}.BSQV6q_detailLabel{font-weight:500}@media (width<=600px){.BSQV6q_feature,.BSQV6q_recordHead{flex-direction:column;align-items:flex-start}.BSQV6q_filters>.BSQV6q_field{flex-basis:100%}}";
+			element.textContent = ".x0XTMa_page{min-width:0;color:var(--dsw-alias-label-primary);flex-direction:column;gap:24px;padding:12px 0 24px;font-size:13px;line-height:20px;display:flex}.x0XTMa_tabs{max-width:420px}.x0XTMa_panel,.x0XTMa_section,.x0XTMa_form,.x0XTMa_list,.x0XTMa_record,.x0XTMa_detail,.x0XTMa_featureBody{flex-direction:column;display:flex}.x0XTMa_panel{gap:24px}.x0XTMa_section{gap:12px}.x0XTMa_form{gap:14px}.x0XTMa_list,.x0XTMa_record{gap:8px}.x0XTMa_detail{gap:12px}.x0XTMa_featureBody{gap:2px;min-width:0}.x0XTMa_heading{margin:0;font-size:14px;font-weight:500;line-height:22px}.x0XTMa_row,.x0XTMa_toolbar,.x0XTMa_feature,.x0XTMa_recordHead,.x0XTMa_filters,.x0XTMa_actions{align-items:center;gap:12px;display:flex}.x0XTMa_feature,.x0XTMa_recordHead{justify-content:space-between}.x0XTMa_feature,.x0XTMa_record{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);padding:12px}.x0XTMa_featureTitle{font-weight:500}.x0XTMa_description,.x0XTMa_hint,.x0XTMa_meta,.x0XTMa_empty{color:var(--dsw-alias-label-secondary)}.x0XTMa_description,.x0XTMa_hint,.x0XTMa_meta,.x0XTMa_empty,.x0XTMa_notice{margin:0}.x0XTMa_hint{font-size:12px}.x0XTMa_empty{padding:12px 0}.x0XTMa_loading{justify-content:center;align-items:center;min-height:80px;display:flex}.x0XTMa_toolbar,.x0XTMa_actions{flex-wrap:wrap}.x0XTMa_filters{flex-wrap:wrap;align-items:end}.x0XTMa_field{flex-direction:column;flex:160px;gap:6px;min-width:0;display:flex}.x0XTMa_field>span:first-child,.x0XTMa_field>label{font-weight:500}.x0XTMa_field input,.x0XTMa_field select{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);width:100%;min-height:36px;color:var(--dsw-alias-label-primary);font:inherit;padding:6px 10px}.x0XTMa_field input:focus-visible,.x0XTMa_field select:focus-visible{outline:var(--dsw-focus-ring-width)solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:1px}.x0XTMa_field input[aria-invalid=true]{border-color:var(--dsw-alias-state-error-primary)}.x0XTMa_notice{color:var(--dsw-alias-state-error-primary);font-size:13px}.x0XTMa_success{color:var(--dsw-alias-state-success-primary)}.x0XTMa_code{border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);white-space:pre-wrap;overflow-wrap:anywhere;margin:0;padding:10px;font-size:12px;line-height:18px;overflow:auto}.x0XTMa_detailBlock{flex-direction:column;gap:6px;display:flex}.x0XTMa_detailLabel{font-weight:500}@media (width<=600px){.x0XTMa_feature,.x0XTMa_recordHead{flex-direction:column;align-items:flex-start}.x0XTMa_filters>.x0XTMa_field{flex-basis:100%}}";
 			document.head.appendChild(element);
 		}
 		var JevPage_module_css_default = {
-			"code": "BSQV6q_code",
-			"panel": "BSQV6q_panel",
-			"record": "BSQV6q_record",
-			"featureBody": "BSQV6q_featureBody",
-			"featureTitle": "BSQV6q_featureTitle",
-			"loading": "BSQV6q_loading",
-			"filters": "BSQV6q_filters",
-			"success": "BSQV6q_success",
-			"row": "BSQV6q_row",
-			"detailLabel": "BSQV6q_detailLabel",
-			"detailBlock": "BSQV6q_detailBlock",
-			"toolbar": "BSQV6q_toolbar",
-			"detail": "BSQV6q_detail",
-			"heading": "BSQV6q_heading",
-			"form": "BSQV6q_form",
-			"page": "BSQV6q_page",
-			"hint": "BSQV6q_hint",
-			"notice": "BSQV6q_notice",
-			"section": "BSQV6q_section",
-			"meta": "BSQV6q_meta",
-			"actions": "BSQV6q_actions",
-			"feature": "BSQV6q_feature",
-			"tabs": "BSQV6q_tabs",
-			"recordHead": "BSQV6q_recordHead",
-			"description": "BSQV6q_description",
-			"empty": "BSQV6q_empty",
-			"field": "BSQV6q_field",
-			"list": "BSQV6q_list"
+			"featureTitle": "x0XTMa_featureTitle",
+			"section": "x0XTMa_section",
+			"featureBody": "x0XTMa_featureBody",
+			"actions": "x0XTMa_actions",
+			"hint": "x0XTMa_hint",
+			"detail": "x0XTMa_detail",
+			"loading": "x0XTMa_loading",
+			"page": "x0XTMa_page",
+			"row": "x0XTMa_row",
+			"panel": "x0XTMa_panel",
+			"description": "x0XTMa_description",
+			"empty": "x0XTMa_empty",
+			"field": "x0XTMa_field",
+			"tabs": "x0XTMa_tabs",
+			"detailBlock": "x0XTMa_detailBlock",
+			"detailLabel": "x0XTMa_detailLabel",
+			"notice": "x0XTMa_notice",
+			"success": "x0XTMa_success",
+			"feature": "x0XTMa_feature",
+			"code": "x0XTMa_code",
+			"filters": "x0XTMa_filters",
+			"heading": "x0XTMa_heading",
+			"meta": "x0XTMa_meta",
+			"recordHead": "x0XTMa_recordHead",
+			"list": "x0XTMa_list",
+			"form": "x0XTMa_form",
+			"record": "x0XTMa_record",
+			"toolbar": "x0XTMa_toolbar"
 		};
 		//#endregion
 		//#region src/client/JevPage.tsx
@@ -7908,18 +8164,51 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				]
 			});
 		}
+		function connectionDraft(value) {
+			return {
+				baseUrl: value.baseUrl,
+				model: value.model,
+				credentialRef: value.credentialRef,
+				timeoutMs: String(value.timeoutMs),
+				judgmentModel: value.judgmentModel ?? "jev",
+				lunaApi: value.lunaApi ?? "openrouter",
+				lunaOpenRouterBaseUrl: value.lunaOpenRouterBaseUrl ?? "https://openrouter.ai/api/alpha/decisions",
+				lunaOpenRouterCredentialRef: value.lunaOpenRouterCredentialRef ?? "JEV_LUNA_OPENROUTER_API_KEY",
+				lunaOpenAIBaseUrl: value.lunaOpenAIBaseUrl ?? "https://api.openai.com/v1/decisions",
+				lunaOpenAICredentialRef: value.lunaOpenAICredentialRef ?? "JEV_LUNA_OPENAI_API_KEY"
+			};
+		}
+		const EMPTY_DRAFT = connectionDraft({
+			baseUrl: "",
+			model: "jev-latest",
+			credentialRef: "JEV_API_KEY",
+			timeoutMs: 1e4,
+			features: {},
+			judgmentModel: "jev",
+			lunaApi: "openrouter",
+			lunaOpenRouterBaseUrl: "https://openrouter.ai/api/alpha/decisions",
+			lunaOpenRouterCredentialRef: "JEV_LUNA_OPENROUTER_API_KEY",
+			lunaOpenAIBaseUrl: "https://api.openai.com/v1/decisions",
+			lunaOpenAICredentialRef: "JEV_LUNA_OPENAI_API_KEY"
+		});
+		function identityKey(connection) {
+			return JSON.stringify([
+				connection.connectionId,
+				connection.baseUrl,
+				connection.model,
+				connection.credentialRef,
+				connection.timeoutMs
+			]);
+		}
 		function SettingsPanel({ form, jev, notifySuccess, t }) {
 			const subscribe = (0, react.useCallback)((listener) => form.subscribe(listener), [form]);
 			const getSnapshot = (0, react.useCallback)(() => form.getSnapshot(), [form]);
 			const snapshot = (0, react.useSyncExternalStore)(subscribe, getSnapshot, getSnapshot);
-			const [draft, setDraft] = (0, react.useState)({
-				baseUrl: "",
-				model: "",
-				credentialRef: "JEV_API_KEY",
-				timeoutMs: "30000"
-			});
-			const editedConnection = (0, react.useRef)(false);
+			const [draft, setDraft] = (0, react.useState)(EMPTY_DRAFT);
+			const editedConnection = (0, react.useRef)(/* @__PURE__ */ new Set());
 			const observedConnection = (0, react.useRef)("");
+			const draftRef = (0, react.useRef)(draft);
+			draftRef.current = draft;
 			const [features, setFeatures] = (0, react.useState)([]);
 			const [featureLoading, setFeatureLoading] = (0, react.useState)(true);
 			const [featureError, setFeatureError] = (0, react.useState)("");
@@ -7935,133 +8224,213 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			const [probeError, setProbeError] = (0, react.useState)("");
 			const [testing, setTesting] = (0, react.useState)(false);
 			const probeAbort = (0, react.useRef)(null);
+			const alive = (0, react.useRef)(true);
+			const saveGeneration = (0, react.useRef)(0);
+			const credentialGeneration = (0, react.useRef)(0);
+			const keyGeneration = (0, react.useRef)(0);
+			const probeGeneration = (0, react.useRef)(0);
+			(0, react.useEffect)(() => {
+				alive.current = true;
+				return () => {
+					alive.current = false;
+					saveGeneration.current++;
+					credentialGeneration.current++;
+					keyGeneration.current++;
+					probeGeneration.current++;
+					probeAbort.current?.abort();
+				};
+			}, [form, jev]);
 			(0, react.useEffect)(() => {
 				if (snapshot.value === void 0) return;
-				const next = {
-					baseUrl: snapshot.value.baseUrl,
-					model: snapshot.value.model,
-					credentialRef: snapshot.value.credentialRef,
-					timeoutMs: String(snapshot.value.timeoutMs)
-				};
+				const next = connectionDraft(snapshot.value);
 				const signature = JSON.stringify(next);
 				if (signature === observedConnection.current) return;
 				observedConnection.current = signature;
-				if (!editedConnection.current) setDraft(next);
+				setDraft((previous) => {
+					const merged = { ...next };
+					for (const field of editedConnection.current) Object.assign(merged, { [field]: previous[field] });
+					return merged;
+				});
 			}, [snapshot.value]);
+			const current = snapshot.value;
+			const dirty = current !== void 0 && JSON.stringify(draft) !== JSON.stringify(connectionDraft(current));
+			(0, react.useEffect)(() => {
+				if (!dirty) editedConnection.current.clear();
+			}, [dirty]);
+			const displayedConnection = resolveConnectionIdentity({
+				...draft,
+				timeoutMs: Number(draft.timeoutMs),
+				features: current?.features ?? {}
+			});
+			const savedConnection = current === void 0 ? void 0 : resolveConnectionIdentity({
+				...current,
+				...connectionDraft(current),
+				timeoutMs: current.timeoutMs
+			});
+			const contextKey = JSON.stringify({
+				draft,
+				savedConnection,
+				dirty,
+				status: snapshot.status
+			});
+			const contextRef = (0, react.useRef)(contextKey);
+			contextRef.current = contextKey;
 			const loadFeatures = (0, react.useCallback)(async () => {
 				setFeatureLoading(true);
 				setFeatureError("");
 				try {
-					setFeatures(await jev.listFeatures());
+					const next = await jev.listFeatures();
+					if (alive.current) setFeatures(next);
 				} catch {
-					setFeatureErrorLabel("featureLoadFailed");
-					setFeatureError(t("featureLoadFailed"));
+					if (alive.current) {
+						setFeatureErrorLabel("featureLoadFailed");
+						setFeatureError(t("featureLoadFailed"));
+					}
 				} finally {
-					setFeatureLoading(false);
-				}
-			}, [jev, t]);
-			const loadCredential = (0, react.useCallback)(async () => {
-				try {
-					setCredential(await jev.getCredentialStatus());
-					setCredentialMessage("");
-				} catch {
-					setCredentialMessage(t("unavailable"));
+					if (alive.current) setFeatureLoading(false);
 				}
 			}, [jev, t]);
 			(0, react.useEffect)(() => {
 				loadFeatures();
-				loadCredential();
-				return () => {
-					probeAbort.current?.abort();
-				};
-			}, [loadFeatures, loadCredential]);
-			const current = snapshot.value;
-			const dirty = current !== void 0 && (draft.baseUrl !== current.baseUrl || draft.model !== current.model || draft.credentialRef !== current.credentialRef || draft.timeoutMs !== String(current.timeoutMs));
+			}, [loadFeatures]);
 			(0, react.useEffect)(() => {
-				if (!dirty) editedConnection.current = false;
-			}, [dirty]);
+				const generation = ++credentialGeneration.current;
+				keyGeneration.current++;
+				probeGeneration.current++;
+				probeAbort.current?.abort();
+				probeAbort.current = null;
+				setCredential(null);
+				setCredentialMessage("");
+				setSecret("");
+				setSecretSaving(false);
+				setProbe(null);
+				setProbeError("");
+				setTesting(false);
+				if (dirty || savedConnection === void 0 || snapshot.status !== "ready") return;
+				const connection = savedConnection;
+				jev.getCredentialStatus(connection).then((result) => {
+					if (!alive.current || generation !== credentialGeneration.current || contextRef.current !== contextKey) return;
+					if (identityKey(result.connection) !== identityKey(connection)) {
+						setCredentialMessage(t("connectionChanged"));
+						return;
+					}
+					setCredential(result);
+				}, () => {
+					if (alive.current && generation === credentialGeneration.current && contextRef.current === contextKey) setCredentialMessage(t("unavailable"));
+				});
+			}, [
+				contextKey,
+				form,
+				jev,
+				t
+			]);
 			const editConnection = (field, value) => {
-				editedConnection.current = true;
+				editedConnection.current.add(field);
+				setSaveMessage("");
 				setDraft((previous) => ({
 					...previous,
 					[field]: value
 				}));
 			};
 			const saveConnection = async () => {
+				const submission = {
+					...draft,
+					baseUrl: draft.baseUrl.trim(),
+					model: draft.model.trim(),
+					credentialRef: draft.credentialRef.trim(),
+					lunaOpenRouterBaseUrl: draft.lunaOpenRouterBaseUrl.trim(),
+					lunaOpenRouterCredentialRef: draft.lunaOpenRouterCredentialRef.trim(),
+					lunaOpenAIBaseUrl: draft.lunaOpenAIBaseUrl.trim(),
+					lunaOpenAICredentialRef: draft.lunaOpenAICredentialRef.trim()
+				};
 				const timeoutMs = Number(draft.timeoutMs);
-				if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0) {
+				if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 3e5) {
 					setSaveMessage(t("invalidTimeout"));
 					return;
 				}
+				const generation = ++saveGeneration.current;
+				const submittedDraft = JSON.stringify(draft);
 				setSaving(true);
 				setSaveMessage("");
 				try {
-					if (await form.mutate([
-						{
-							op: "set",
-							path: ["baseUrl"],
-							value: draft.baseUrl.trim()
-						},
-						{
-							op: "set",
-							path: ["model"],
-							value: draft.model.trim()
-						},
-						{
-							op: "set",
-							path: ["credentialRef"],
-							value: draft.credentialRef.trim()
-						},
-						{
-							op: "set",
-							path: ["timeoutMs"],
-							value: timeoutMs
-						}
-					], snapshot.revision)) {
-						notifySuccess(t("saveSuccess"));
-						editedConnection.current = false;
-						const saved = form.getSnapshot().value;
-						if (saved !== void 0) setDraft({
-							baseUrl: saved.baseUrl,
-							model: saved.model,
-							credentialRef: saved.credentialRef,
-							timeoutMs: String(saved.timeoutMs)
-						});
-						loadCredential();
-					} else setSaveMessage(t("saveFailed"));
+					const values = {
+						...submission,
+						timeoutMs
+					};
+					const accepted = await form.mutate(Object.entries(values).map(([key, value]) => ({
+						op: "set",
+						path: [key],
+						value
+					})), snapshot.revision);
+					if (!alive.current || generation !== saveGeneration.current || JSON.stringify(draftRef.current) !== submittedDraft) return;
+					if (!accepted) {
+						setSaveMessage(t("saveFailed"));
+						return;
+					}
+					const saved = form.getSnapshot().value;
+					if (saved === void 0 || JSON.stringify(connectionDraft(saved)) !== JSON.stringify({
+						...submission,
+						timeoutMs: String(timeoutMs)
+					})) {
+						setSaveMessage(t("connectionChanged"));
+						return;
+					}
+					editedConnection.current.clear();
+					setDraft(connectionDraft(saved));
+					notifySuccess(t("saveSuccess"));
 				} catch {
-					setSaveMessage(t("saveFailed"));
+					if (alive.current && generation === saveGeneration.current) setSaveMessage(t("saveFailed"));
 				} finally {
-					setSaving(false);
+					if (alive.current && generation === saveGeneration.current) setSaving(false);
 				}
 			};
 			const saveKey = async () => {
-				if (!secret) return;
+				if (!secret || dirty || savedConnection === void 0 || !credential?.writable) return;
+				const connection = savedConnection;
+				const capturedContext = contextKey;
+				const generation = ++keyGeneration.current;
 				setSecretSaving(true);
 				setCredentialMessage("");
 				try {
-					setCredential(await jev.setCredential(secret));
+					const result = await jev.setCredential(connection, secret);
+					if (!alive.current || generation !== keyGeneration.current || contextRef.current !== capturedContext) return;
+					if (identityKey(result.connection) !== identityKey(connection)) {
+						setCredentialMessage(t("connectionChanged"));
+						return;
+					}
+					credentialGeneration.current++;
+					setCredential(result);
 					setSecret("");
 					notifySuccess(t("keySaved"));
 				} catch {
-					setCredentialMessage(t("keySaveFailed"));
+					if (alive.current && generation === keyGeneration.current && contextRef.current === capturedContext) setCredentialMessage(t("keySaveFailed"));
 				} finally {
-					setSecretSaving(false);
+					if (alive.current && generation === keyGeneration.current && contextRef.current === capturedContext) setSecretSaving(false);
 				}
 			};
 			const runProbe = async () => {
+				if (dirty || savedConnection === void 0 || snapshot.status !== "ready") return;
+				const connection = savedConnection;
+				const capturedContext = contextKey;
+				const generation = ++probeGeneration.current;
 				const controller = new AbortController();
 				probeAbort.current = controller;
 				setTesting(true);
 				setProbe(null);
 				setProbeError("");
 				try {
-					setProbe(await jev.testConnection(controller.signal));
+					const result = await jev.testConnection(connection, controller.signal);
+					if (!alive.current || generation !== probeGeneration.current || contextRef.current !== capturedContext || controller.signal.aborted) return;
+					if (identityKey(result.connection) !== identityKey(connection)) {
+						setProbeError(t("connectionChanged"));
+						return;
+					}
+					setProbe(result);
 				} catch {
-					if (!controller.signal.aborted) setProbeError(t("testFailed"));
+					if (alive.current && generation === probeGeneration.current && contextRef.current === capturedContext && !controller.signal.aborted) setProbeError(t("testFailed"));
 				} finally {
 					if (probeAbort.current === controller) probeAbort.current = null;
-					setTesting(false);
+					if (alive.current && generation === probeGeneration.current && contextRef.current === capturedContext) setTesting(false);
 				}
 			};
 			const toggleFeature = async (id, enabled) => {
@@ -8072,17 +8441,21 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						op: "set",
 						path: ["features", id],
 						value: enabled
-					}], snapshot.revision)) {
+					}], snapshot.revision) && alive.current) {
 						setFeatureErrorLabel("featureSaveFailed");
 						setFeatureError(t("featureSaveFailed"));
 					}
 				} catch {
-					setFeatureErrorLabel("featureSaveFailed");
-					setFeatureError(t("featureSaveFailed"));
+					if (alive.current) {
+						setFeatureErrorLabel("featureSaveFailed");
+						setFeatureError(t("featureSaveFailed"));
+					}
 				} finally {
-					setFeatureBusy("");
+					if (alive.current) setFeatureBusy("");
 				}
 			};
+			const endpointField = draft.judgmentModel === "jev" ? "baseUrl" : draft.lunaApi === "openrouter" ? "lunaOpenRouterBaseUrl" : "lunaOpenAIBaseUrl";
+			const referenceField = draft.judgmentModel === "jev" ? "credentialRef" : draft.lunaApi === "openrouter" ? "lunaOpenRouterCredentialRef" : "lunaOpenAICredentialRef";
 			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
 				className: JevPage_module_css_default.panel,
 				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
@@ -8092,6 +8465,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h3", {
 							className: JevPage_module_css_default.heading,
 							children: t("connection")
+						}),
+						/* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+							className: JevPage_module_css_default.hint,
+							children: t("connectionHint")
 						}),
 						snapshot.status === "loading" && current === void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Loading, { label: t("loading") }),
 						snapshot.status === "unavailable" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
@@ -8103,34 +8480,81 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 							children: [
 								/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
 									className: JevPage_module_css_default.filters,
+									children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("label", {
+										className: JevPage_module_css_default.field,
+										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: t("decisionModel") }), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("select", {
+											value: draft.judgmentModel,
+											disabled: !snapshot.writable || saving,
+											onChange: (event) => {
+												editConnection("judgmentModel", event.target.value);
+											},
+											children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("option", {
+												value: "jev",
+												children: t("jevModel")
+											}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("option", {
+												value: "luna",
+												children: t("lunaModel")
+											})]
+										})]
+									}), draft.judgmentModel === "luna" && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("label", {
+										className: JevPage_module_css_default.field,
+										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: t("lunaApi") }), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("select", {
+											value: draft.lunaApi,
+											disabled: !snapshot.writable || saving,
+											onChange: (event) => {
+												editConnection("lunaApi", event.target.value);
+											},
+											children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("option", {
+												value: "openrouter",
+												children: t("openRouter")
+											}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("option", {
+												value: "openai",
+												children: t("openAI")
+											})]
+										})]
+									})]
+								}),
+								/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+									className: JevPage_module_css_default.filters,
 									children: [
 										/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("label", {
 											className: JevPage_module_css_default.field,
 											children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: t("baseUrl") }), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("input", {
-												value: draft.baseUrl,
+												value: draft[endpointField],
 												disabled: !snapshot.writable || saving,
 												onChange: (event) => {
-													editConnection("baseUrl", event.target.value);
+													editConnection(endpointField, event.target.value);
 												}
 											})]
 										}),
 										/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("label", {
 											className: JevPage_module_css_default.field,
-											children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: t("model") }), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("input", {
-												value: draft.model,
-												disabled: !snapshot.writable || saving,
-												onChange: (event) => {
-													editConnection("model", event.target.value);
-												}
-											})]
+											children: [
+												/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: t("model") }),
+												/* @__PURE__ */ (0, react_jsx_runtime.jsx)("input", {
+													"aria-label": t("model"),
+													"aria-describedby": draft.judgmentModel === "luna" ? "jev-luna-model-hint" : void 0,
+													value: draft.judgmentModel === "jev" ? draft.model : displayedConnection.model,
+													readOnly: draft.judgmentModel === "luna",
+													disabled: !snapshot.writable || saving,
+													onChange: (event) => {
+														if (draft.judgmentModel === "jev") editConnection("model", event.target.value);
+													}
+												}),
+												draft.judgmentModel === "luna" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+													id: "jev-luna-model-hint",
+													className: JevPage_module_css_default.hint,
+													children: t("lunaModelHint")
+												})
+											]
 										}),
 										/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("label", {
 											className: JevPage_module_css_default.field,
 											children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: t("credentialRef") }), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("input", {
-												value: draft.credentialRef,
+												value: draft[referenceField],
 												disabled: !snapshot.writable || saving,
 												onChange: (event) => {
-													editConnection("credentialRef", event.target.value);
+													editConnection(referenceField, event.target.value);
 												}
 											})]
 										}),
@@ -8139,6 +8563,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 											children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: t("timeoutMs") }), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("input", {
 												type: "number",
 												min: "1",
+												max: "300000",
 												step: "1",
 												value: draft.timeoutMs,
 												disabled: !snapshot.writable || saving,
@@ -8178,6 +8603,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 									children: [
 										/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", { children: [t("apiKey"), credential !== null ? ` · ${credential.configured ? t("configured") : t("missing")}${!credential.writable ? ` · ${t("readOnly")}` : ""}` : ""] }),
 										/* @__PURE__ */ (0, react_jsx_runtime.jsx)("input", {
+											"aria-label": t("apiKey"),
+											"aria-describedby": "jev-api-key-hint",
 											type: "password",
 											autoComplete: "new-password",
 											value: secret,
@@ -8187,6 +8614,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 											}
 										}),
 										/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+											id: "jev-api-key-hint",
 											className: JevPage_module_css_default.hint,
 											children: t("apiKeyHint")
 										})
@@ -8207,6 +8635,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 										},
 										children: testing ? t("testing") : t("testConnection")
 									})]
+								}),
+								/* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+									className: JevPage_module_css_default.hint,
+									children: t("diagnosticHint")
 								}),
 								dirty && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
 									className: JevPage_module_css_default.hint,
@@ -8637,6 +9069,68 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 										/* @__PURE__ */ (0, react_jsx_runtime.jsx)(DetailBlock, {
 											label: t("usage"),
 											value: attempt.usage
+										}),
+										attempt.usageComplete === false && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+											className: JevPage_module_css_default.hint,
+											children: t("usageIncomplete")
+										}),
+										attempt.networkRecords !== void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+											className: JevPage_module_css_default.detail,
+											children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h4", {
+												className: JevPage_module_css_default.heading,
+												children: t("providerRequests")
+											}), attempt.networkRecords.map((packet) => /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+												className: JevPage_module_css_default.record,
+												children: [
+													/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+														className: JevPage_module_css_default.meta,
+														children: [
+															packet.id,
+															" · ",
+															statusLabel(packet.status, t),
+															packet.httpStatus !== void 0 ? ` · HTTP ${packet.httpStatus}` : ""
+														]
+													}),
+													/* @__PURE__ */ (0, react_jsx_runtime.jsx)(DetailBlock, {
+														label: t("questionIds"),
+														value: packet.questionIds
+													}),
+													/* @__PURE__ */ (0, react_jsx_runtime.jsx)(DetailBlock, {
+														label: t("requestBody"),
+														value: packet.requestBody
+													}),
+													/* @__PURE__ */ (0, react_jsx_runtime.jsx)(DetailBlock, {
+														label: t("reportedModel"),
+														value: packet.returnedModel
+													}),
+													/* @__PURE__ */ (0, react_jsx_runtime.jsx)(DetailBlock, {
+														label: t("requestId"),
+														value: packet.requestId
+													}),
+													packet.rawResponseText !== void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+														className: JevPage_module_css_default.detailBlock,
+														children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+															className: JevPage_module_css_default.detailLabel,
+															children: t("rawAnswer")
+														}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("pre", {
+															className: JevPage_module_css_default.code,
+															children: packet.rawResponseText
+														})]
+													}),
+													packet.rawResponseText === void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(DetailBlock, {
+														label: t("rawAnswer"),
+														value: packet.rawResponse
+													}),
+													/* @__PURE__ */ (0, react_jsx_runtime.jsx)(DetailBlock, {
+														label: t("usage"),
+														value: packet.usage
+													}),
+													/* @__PURE__ */ (0, react_jsx_runtime.jsx)(DetailBlock, {
+														label: t("failure"),
+														value: packet.failure
+													})
+												]
+											}, packet.id))]
 										})
 									]
 								}, attempt.id)),
@@ -8739,56 +9233,56 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			const element = document.createElement("style");
 			element.dataset.plugin = "@dsh-jev/plugin";
 			element.dataset.pluginCss = tag;
-			element.textContent = ".gq3JWG_page{width:100%;height:calc(var(--dsh-conversation-viewport-height,100dvh) - var(--dsh-composer-height,152px));box-sizing:border-box;min-width:0;min-height:0;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-1);flex-direction:column;font-size:13px;line-height:20px;display:flex;overflow:hidden}.gq3JWG_toolbar{border-bottom:1px solid var(--dsw-alias-border-l3);flex-wrap:wrap;align-items:center;gap:8px 14px;padding:12px 20px;display:flex}.gq3JWG_toolbar h2,.gq3JWG_navigation h3,.gq3JWG_reader h3,.gq3JWG_reader h4,.gq3JWG_toolSection h4{margin:0;font-size:14px;font-weight:500;line-height:22px}.gq3JWG_toolbarActions{flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto;display:flex}.gq3JWG_scopeHint{color:var(--dsw-alias-label-secondary);flex-basis:100%;margin:0;font-size:12px}.gq3JWG_notice,.gq3JWG_progress,.gq3JWG_error{margin:0;font-size:12px}.gq3JWG_notice,.gq3JWG_progress{color:var(--dsw-alias-label-secondary)}.gq3JWG_error{color:var(--dsw-alias-state-error-primary)}.gq3JWG_mobileToggle{display:none}.gq3JWG_layout{flex:1;grid-template-columns:minmax(230px,275px) minmax(0,1fr);min-height:0;display:grid;overflow:hidden}.gq3JWG_navigation,.gq3JWG_reader{overscroll-behavior:contain;scrollbar-gutter:stable;min-height:0;overflow:auto}.gq3JWG_navigation{border-right:1px solid var(--dsw-alias-border-l3);background:var(--dsw-alias-bg-layer-2);padding:16px 12px 24px}.gq3JWG_navigation h3{padding:0 7px 12px}.gq3JWG_turnItem{margin-bottom:10px}.gq3JWG_turnButton,.gq3JWG_segmentButton,.gq3JWG_gapButton{border-radius:var(--dsw-radius-sm);width:100%;color:var(--dsw-alias-label-primary);text-align:left;font:inherit;cursor:pointer;background:0 0;border:1px solid #0000;flex-direction:column;align-items:flex-start;gap:3px;display:flex}.gq3JWG_turnButton{padding:8px}.gq3JWG_turnButton>span{-webkit-line-clamp:2;overflow-wrap:anywhere;-webkit-box-orient:vertical;display:-webkit-box;overflow:hidden}.gq3JWG_turnButton small,.gq3JWG_segmentButton small,.gq3JWG_gapButton small{color:var(--dsw-alias-label-secondary);font-size:12px}.gq3JWG_activeTurn,.gq3JWG_activeSegment{background:var(--dsw-alias-bg-layer-1);border-color:var(--dsw-alias-border-l3)}.gq3JWG_segments{border-left:1px solid var(--dsw-alias-border-l3);margin-left:13px;padding-left:8px}.gq3JWG_segmentButton,.gq3JWG_gapButton{margin:3px 0;padding:6px 8px}.gq3JWG_segmentButton{border-left:2px solid var(--dsw-alias-state-business-primary)}.gq3JWG_gapButton{color:var(--dsw-alias-label-secondary)}.gq3JWG_turnButton:hover,.gq3JWG_segmentButton:hover,.gq3JWG_gapButton:hover{background:var(--dsw-alias-bg-layer-1)}.gq3JWG_reader{padding:18px 22px 32px}.gq3JWG_readerInner{width:100%;max-width:1120px;margin:0 auto}.gq3JWG_readerHeader,.gq3JWG_readerHeading,.gq3JWG_stepHead,.gq3JWG_statusLine{flex-wrap:wrap;align-items:baseline;gap:7px 14px;display:flex}.gq3JWG_readerHeader{justify-content:space-between;margin-bottom:14px}.gq3JWG_readerHeading{justify-content:space-between;margin:20px 0 10px}.gq3JWG_request{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-2);padding:12px 14px}.gq3JWG_request h4{margin-bottom:8px}.gq3JWG_request details{margin-top:8px}.gq3JWG_search{color:var(--dsw-alias-label-secondary);align-items:center;gap:8px;display:flex}.gq3JWG_search input{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);width:220px;min-width:0;min-height:34px;color:var(--dsw-alias-label-primary);font:inherit;padding:5px 8px}.gq3JWG_textButton{color:var(--dsw-alias-state-business-primary);font:inherit;cursor:pointer;background:0 0;border:0;padding:2px 0}.gq3JWG_stepCard{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-2);margin:10px 0;padding:13px 14px}.gq3JWG_inSegment{border-left:3px solid var(--dsw-alias-state-business-primary)}.gq3JWG_focused{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}.gq3JWG_stepHead{margin-bottom:5px}.gq3JWG_stepNumber{font-weight:500}.gq3JWG_stageLabel{color:var(--dsw-alias-state-business-primary)}.gq3JWG_statusLine{margin:6px 0;font-size:12px}.gq3JWG_muted{color:var(--dsw-alias-label-secondary)}.gq3JWG_blocks{flex-direction:column;gap:6px;margin:12px 0;display:flex}.gq3JWG_message{border-top:1px solid var(--dsw-alias-border-l3);padding:8px 0}.gq3JWG_block,.gq3JWG_tool{min-width:0}.gq3JWG_blockLabel{margin:8px 0 5px;font-weight:500;display:block}.gq3JWG_sourceText{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0;font:12px/18px ui-monospace,SFMono-Regular,monospace}.gq3JWG_block>.gq3JWG_sourceText,.gq3JWG_block>details .gq3JWG_sourceText,.gq3JWG_toolBody .gq3JWG_sourceText,.gq3JWG_detailPanel .gq3JWG_sourceText{border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);padding:9px}.gq3JWG_toolSection{border-top:1px solid var(--dsw-alias-border-l3);margin-top:13px;padding-top:11px}.gq3JWG_toolSection h4{font-size:13px}.gq3JWG_tool{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);margin-top:7px;padding:7px 9px}.gq3JWG_tool summary{flex-wrap:wrap;gap:12px;display:flex}.gq3JWG_toolBody{padding-top:8px}.gq3JWG_analysisSection{border-top:1px solid var(--dsw-alias-border-l3);margin-top:12px;padding-top:9px}.gq3JWG_previousResult{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);color:var(--dsw-alias-label-secondary);flex-wrap:wrap;gap:4px 12px;margin-top:9px;padding:9px;font-size:12px;display:flex}.gq3JWG_detailPanel{padding-top:8px}.gq3JWG_empty{color:var(--dsw-alias-label-secondary);text-align:center;padding:30px 15px}.gq3JWG_loading{flex:1;justify-content:center;align-items:center;display:flex}.gq3JWG_page button:focus-visible,.gq3JWG_page input:focus-visible,.gq3JWG_page summary:focus-visible{outline:var(--dsw-focus-ring-width)solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}@media (width<=760px){.gq3JWG_toolbar{padding:10px 14px}.gq3JWG_mobileToggle{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);font:inherit;cursor:pointer;padding:5px 8px;display:inline-block}.gq3JWG_layout{flex-direction:column;display:flex}.gq3JWG_navigation{border-right:0;border-bottom:1px solid var(--dsw-alias-border-l3);flex:none;max-height:34%;padding:12px 12px 18px}.gq3JWG_navigationClosed{display:none}.gq3JWG_reader{flex:1;padding:14px 14px 22px}.gq3JWG_search{width:100%}.gq3JWG_search input{flex:1;width:auto}}";
+			element.textContent = ".aTrdKG_page{width:100%;height:calc(var(--dsh-conversation-viewport-height,100dvh) - var(--dsh-composer-height,152px));box-sizing:border-box;min-width:0;min-height:0;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-1);flex-direction:column;font-size:13px;line-height:20px;display:flex;overflow:hidden}.aTrdKG_toolbar{border-bottom:1px solid var(--dsw-alias-border-l3);flex-wrap:wrap;align-items:center;gap:8px 14px;padding:12px 20px;display:flex}.aTrdKG_toolbar h2,.aTrdKG_navigation h3,.aTrdKG_reader h3,.aTrdKG_reader h4,.aTrdKG_toolSection h4{margin:0;font-size:14px;font-weight:500;line-height:22px}.aTrdKG_toolbarActions{flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto;display:flex}.aTrdKG_scopeHint{color:var(--dsw-alias-label-secondary);flex-basis:100%;margin:0;font-size:12px}.aTrdKG_notice,.aTrdKG_progress,.aTrdKG_error{margin:0;font-size:12px}.aTrdKG_notice,.aTrdKG_progress{color:var(--dsw-alias-label-secondary)}.aTrdKG_error{color:var(--dsw-alias-state-error-primary)}.aTrdKG_mobileToggle{display:none}.aTrdKG_layout{flex:1;grid-template-columns:minmax(230px,275px) minmax(0,1fr);min-height:0;display:grid;overflow:hidden}.aTrdKG_navigation,.aTrdKG_reader{overscroll-behavior:contain;scrollbar-gutter:stable;min-height:0;overflow:auto}.aTrdKG_navigation{border-right:1px solid var(--dsw-alias-border-l3);background:var(--dsw-alias-bg-layer-2);padding:16px 12px 24px}.aTrdKG_navigation h3{padding:0 7px 12px}.aTrdKG_turnItem{margin-bottom:10px}.aTrdKG_turnButton,.aTrdKG_segmentButton,.aTrdKG_gapButton{border-radius:var(--dsw-radius-sm);width:100%;color:var(--dsw-alias-label-primary);text-align:left;font:inherit;cursor:pointer;background:0 0;border:1px solid #0000;flex-direction:column;align-items:flex-start;gap:3px;display:flex}.aTrdKG_turnButton{padding:8px}.aTrdKG_turnButton>span{-webkit-line-clamp:2;overflow-wrap:anywhere;-webkit-box-orient:vertical;display:-webkit-box;overflow:hidden}.aTrdKG_turnButton small,.aTrdKG_segmentButton small,.aTrdKG_gapButton small{color:var(--dsw-alias-label-secondary);font-size:12px}.aTrdKG_activeTurn,.aTrdKG_activeSegment{background:var(--dsw-alias-bg-layer-1);border-color:var(--dsw-alias-border-l3)}.aTrdKG_segments{border-left:1px solid var(--dsw-alias-border-l3);margin-left:13px;padding-left:8px}.aTrdKG_segmentButton,.aTrdKG_gapButton{margin:3px 0;padding:6px 8px}.aTrdKG_segmentButton{border-left:2px solid var(--dsw-alias-state-business-primary)}.aTrdKG_gapButton{color:var(--dsw-alias-label-secondary)}.aTrdKG_turnButton:hover,.aTrdKG_segmentButton:hover,.aTrdKG_gapButton:hover{background:var(--dsw-alias-bg-layer-1)}.aTrdKG_reader{padding:18px 22px 32px}.aTrdKG_readerInner{width:100%;max-width:1120px;margin:0 auto}.aTrdKG_readerHeader,.aTrdKG_readerHeading,.aTrdKG_stepHead,.aTrdKG_statusLine{flex-wrap:wrap;align-items:baseline;gap:7px 14px;display:flex}.aTrdKG_readerHeader{justify-content:space-between;margin-bottom:14px}.aTrdKG_readerHeading{justify-content:space-between;margin:20px 0 10px}.aTrdKG_request{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-2);padding:12px 14px}.aTrdKG_request h4{margin-bottom:8px}.aTrdKG_request details{margin-top:8px}.aTrdKG_search{color:var(--dsw-alias-label-secondary);align-items:center;gap:8px;display:flex}.aTrdKG_search input{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);width:220px;min-width:0;min-height:34px;color:var(--dsw-alias-label-primary);font:inherit;padding:5px 8px}.aTrdKG_textButton{color:var(--dsw-alias-state-business-primary);font:inherit;cursor:pointer;background:0 0;border:0;padding:2px 0}.aTrdKG_stepCard{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-2);margin:10px 0;padding:13px 14px}.aTrdKG_inSegment{border-left:3px solid var(--dsw-alias-state-business-primary)}.aTrdKG_focused{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}.aTrdKG_stepHead{margin-bottom:5px}.aTrdKG_stepNumber{font-weight:500}.aTrdKG_stageLabel{color:var(--dsw-alias-state-business-primary)}.aTrdKG_statusLine{margin:6px 0;font-size:12px}.aTrdKG_muted{color:var(--dsw-alias-label-secondary)}.aTrdKG_blocks{flex-direction:column;gap:6px;margin:12px 0;display:flex}.aTrdKG_message{border-top:1px solid var(--dsw-alias-border-l3);padding:8px 0}.aTrdKG_block,.aTrdKG_tool{min-width:0}.aTrdKG_blockLabel{margin:8px 0 5px;font-weight:500;display:block}.aTrdKG_sourceText{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0;font:12px/18px ui-monospace,SFMono-Regular,monospace}.aTrdKG_block>.aTrdKG_sourceText,.aTrdKG_block>details .aTrdKG_sourceText,.aTrdKG_toolBody .aTrdKG_sourceText,.aTrdKG_detailPanel .aTrdKG_sourceText{border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);padding:9px}.aTrdKG_toolSection{border-top:1px solid var(--dsw-alias-border-l3);margin-top:13px;padding-top:11px}.aTrdKG_toolSection h4{font-size:13px}.aTrdKG_tool{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);margin-top:7px;padding:7px 9px}.aTrdKG_tool summary{flex-wrap:wrap;gap:12px;display:flex}.aTrdKG_toolBody{padding-top:8px}.aTrdKG_analysisSection{border-top:1px solid var(--dsw-alias-border-l3);margin-top:12px;padding-top:9px}.aTrdKG_previousResult{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);color:var(--dsw-alias-label-secondary);flex-wrap:wrap;gap:4px 12px;margin-top:9px;padding:9px;font-size:12px;display:flex}.aTrdKG_detailPanel{padding-top:8px}.aTrdKG_empty{color:var(--dsw-alias-label-secondary);text-align:center;padding:30px 15px}.aTrdKG_loading{flex:1;justify-content:center;align-items:center;display:flex}.aTrdKG_page button:focus-visible,.aTrdKG_page input:focus-visible,.aTrdKG_page summary:focus-visible{outline:var(--dsw-focus-ring-width)solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}@media (width<=760px){.aTrdKG_toolbar{padding:10px 14px}.aTrdKG_mobileToggle{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);font:inherit;cursor:pointer;padding:5px 8px;display:inline-block}.aTrdKG_layout{flex-direction:column;display:flex}.aTrdKG_navigation{border-right:0;border-bottom:1px solid var(--dsw-alias-border-l3);flex:none;max-height:34%;padding:12px 12px 18px}.aTrdKG_navigationClosed{display:none}.aTrdKG_reader{flex:1;padding:14px 14px 22px}.aTrdKG_search{width:100%}.aTrdKG_search input{flex:1;width:auto}}";
 			document.head.appendChild(element);
 		}
 		var StageNavigation_module_css_default = {
-			"segmentButton": "gq3JWG_segmentButton",
-			"textButton": "gq3JWG_textButton",
-			"toolbar": "gq3JWG_toolbar",
-			"toolSection": "gq3JWG_toolSection",
-			"navigation": "gq3JWG_navigation",
-			"segments": "gq3JWG_segments",
-			"blocks": "gq3JWG_blocks",
-			"muted": "gq3JWG_muted",
-			"mobileToggle": "gq3JWG_mobileToggle",
-			"error": "gq3JWG_error",
-			"stepHead": "gq3JWG_stepHead",
-			"readerHeader": "gq3JWG_readerHeader",
-			"readerHeading": "gq3JWG_readerHeading",
-			"block": "gq3JWG_block",
-			"toolBody": "gq3JWG_toolBody",
-			"empty": "gq3JWG_empty",
-			"stageLabel": "gq3JWG_stageLabel",
-			"sourceText": "gq3JWG_sourceText",
-			"stepCard": "gq3JWG_stepCard",
-			"analysisSection": "gq3JWG_analysisSection",
-			"layout": "gq3JWG_layout",
-			"turnItem": "gq3JWG_turnItem",
-			"navigationClosed": "gq3JWG_navigationClosed",
-			"request": "gq3JWG_request",
-			"previousResult": "gq3JWG_previousResult",
-			"search": "gq3JWG_search",
-			"turnButton": "gq3JWG_turnButton",
-			"tool": "gq3JWG_tool",
-			"page": "gq3JWG_page",
-			"activeTurn": "gq3JWG_activeTurn",
-			"progress": "gq3JWG_progress",
-			"activeSegment": "gq3JWG_activeSegment",
-			"scopeHint": "gq3JWG_scopeHint",
-			"gapButton": "gq3JWG_gapButton",
-			"stepNumber": "gq3JWG_stepNumber",
-			"message": "gq3JWG_message",
-			"reader": "gq3JWG_reader",
-			"statusLine": "gq3JWG_statusLine",
-			"toolbarActions": "gq3JWG_toolbarActions",
-			"blockLabel": "gq3JWG_blockLabel",
-			"inSegment": "gq3JWG_inSegment",
-			"loading": "gq3JWG_loading",
-			"detailPanel": "gq3JWG_detailPanel",
-			"readerInner": "gq3JWG_readerInner",
-			"focused": "gq3JWG_focused",
-			"notice": "gq3JWG_notice"
+			"readerHeading": "aTrdKG_readerHeading",
+			"textButton": "aTrdKG_textButton",
+			"muted": "aTrdKG_muted",
+			"navigationClosed": "aTrdKG_navigationClosed",
+			"stepCard": "aTrdKG_stepCard",
+			"stepNumber": "aTrdKG_stepNumber",
+			"statusLine": "aTrdKG_statusLine",
+			"search": "aTrdKG_search",
+			"loading": "aTrdKG_loading",
+			"stepHead": "aTrdKG_stepHead",
+			"layout": "aTrdKG_layout",
+			"toolbarActions": "aTrdKG_toolbarActions",
+			"turnItem": "aTrdKG_turnItem",
+			"turnButton": "aTrdKG_turnButton",
+			"request": "aTrdKG_request",
+			"blockLabel": "aTrdKG_blockLabel",
+			"scopeHint": "aTrdKG_scopeHint",
+			"page": "aTrdKG_page",
+			"stageLabel": "aTrdKG_stageLabel",
+			"readerHeader": "aTrdKG_readerHeader",
+			"message": "aTrdKG_message",
+			"activeTurn": "aTrdKG_activeTurn",
+			"readerInner": "aTrdKG_readerInner",
+			"blocks": "aTrdKG_blocks",
+			"segments": "aTrdKG_segments",
+			"tool": "aTrdKG_tool",
+			"navigation": "aTrdKG_navigation",
+			"block": "aTrdKG_block",
+			"mobileToggle": "aTrdKG_mobileToggle",
+			"error": "aTrdKG_error",
+			"sourceText": "aTrdKG_sourceText",
+			"reader": "aTrdKG_reader",
+			"notice": "aTrdKG_notice",
+			"toolBody": "aTrdKG_toolBody",
+			"segmentButton": "aTrdKG_segmentButton",
+			"inSegment": "aTrdKG_inSegment",
+			"detailPanel": "aTrdKG_detailPanel",
+			"activeSegment": "aTrdKG_activeSegment",
+			"toolbar": "aTrdKG_toolbar",
+			"gapButton": "aTrdKG_gapButton",
+			"focused": "aTrdKG_focused",
+			"analysisSection": "aTrdKG_analysisSection",
+			"previousResult": "aTrdKG_previousResult",
+			"empty": "aTrdKG_empty",
+			"progress": "aTrdKG_progress",
+			"toolSection": "aTrdKG_toolSection"
 		};
 		//#endregion
 		//#region src/client/StageNavigation.tsx
@@ -8802,6 +9296,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			delivery_finalization: "stageDeliveryFinalization",
 			mixed: "stageMixed",
 			unknown: "stageUnknown"
+		};
+		const CONNECTION_KEYS = {
+			jev: "connectionJev",
+			"luna-openrouter": "connectionLunaOpenRouter",
+			"luna-openai": "connectionLunaOpenAI"
 		};
 		function format(value) {
 			if (typeof value === "string") return value;
@@ -8970,6 +9469,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 								": ",
 								t(analysis.status)
 							] }),
+							analysis.connectionId !== void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", { children: [
+								t("connection"),
+								": ",
+								t(CONNECTION_KEYS[analysis.connectionId])
+							] }),
 							analysis.configuredModel && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", { children: [
 								t("configuredModel"),
 								": ",
@@ -9037,6 +9541,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 								t("configuredModel"),
 								": ",
 								analysis.previousResult.configuredModel
+							] }),
+							analysis.previousResult.connectionId !== void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", { children: [
+								t("connection"),
+								": ",
+								t(CONNECTION_KEYS[analysis.previousResult.connectionId])
 							] }),
 							/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", { children: [
 								t("model"),
@@ -9161,6 +9670,13 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 											detail.ruleVersion
 										]
 									}),
+									detail.connection !== void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+										className: StageNavigation_module_css_default.blockLabel,
+										children: t("connection")
+									}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("pre", {
+										className: StageNavigation_module_css_default.sourceText,
+										children: format(detail.connection)
+									})] }),
 									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
 										className: StageNavigation_module_css_default.blockLabel,
 										children: t("requestSent")
@@ -9184,6 +9700,17 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("pre", {
 										className: StageNavigation_module_css_default.sourceText,
 										children: detail.response === void 0 ? t("notProvided") : format(detail.response)
+									}),
+									detail.networkRecords !== void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+										className: StageNavigation_module_css_default.blockLabel,
+										children: t("providerRequests")
+									}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("pre", {
+										className: StageNavigation_module_css_default.sourceText,
+										children: format(detail.networkRecords)
+									})] }),
+									detail.usageComplete === false && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+										className: StageNavigation_module_css_default.muted,
+										children: t("usageIncomplete")
 									})
 								] })
 							]
@@ -9706,6 +10233,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		//#endregion
 		//#region src/client/stage-locales.ts
 		const stageEn = {
+			connection: "Judgment connection",
+			connectionJev: "Jev",
+			connectionLunaOpenRouter: "Luna Decisions / OpenRouter",
+			connectionLunaOpenAI: "Luna Decisions / OpenAI",
+			providerRequests: "Actual provider requests and responses",
+			usageIncomplete: "Reported usage is incomplete.",
 			title: "Stage navigation",
 			navigation: "Turns and stages",
 			showNavigation: "Show navigation",
@@ -9733,14 +10266,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			cancelFailed: "Could not cancel analysis.",
 			scopeTurn: "Selected completed turn",
 			scopeAll: "All completed turns",
-			scopeHint: "Only recorded step material is sent to Jev. Input is redacted; the original Session is unchanged.",
+			scopeHint: "Only recorded step material is sent to the selected judgment connection. Input is redacted; the original Session is unchanged.",
 			pendingCount: "Eligible steps",
 			batchProgress: "Analysis progress",
 			missingTurnCount: "Missing in this turn",
 			missingAllCount: "Missing in this session",
 			retryTurnCount: "Retryable in this turn",
 			refreshTurnCount: "Reanalysis in this turn",
-			refreshWarning: "Reanalysis makes new Jev requests",
+			refreshWarning: "Reanalysis makes new judgment requests",
 			stageInputParsing: "Input parsing",
 			stageProblemUnderstanding: "Problem understanding",
 			stageSolutionPlanning: "Solution planning",
@@ -9772,7 +10305,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			missingResult: "No result recorded",
 			notDispatched: "Call was not dispatched",
 			attempts: "Attempts and retries",
-			analysis: "Jev classification",
+			analysis: "Stage classification",
 			analysisStatus: "Classification status",
 			confidence: "Confidence",
 			probabilities: "Probabilities",
@@ -9782,11 +10315,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			details: "Classification input and response",
 			closeDetails: "Close details",
 			detailFailed: "Could not load the classification record.",
-			requestSent: "Redacted input sent to Jev",
+			requestSent: "Redacted judgment input",
 			previousSavedResult: "Previous saved result",
 			viewPreviousRecord: "View previous record",
 			rawResponse: "Raw response",
-			parsedResponse: "Validated response",
+			parsedResponse: "Normalized answer",
 			redactionNote: "Classification input is redacted before it is sent and saved. Source records below remain original.",
 			uncalibrated: "Uncalibrated signal",
 			sourceStep: "Source step",
@@ -9803,6 +10336,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			forked: "Fork boundary"
 		};
 		const stageZh = {
+			connection: "判断连接",
+			connectionJev: "Jev",
+			connectionLunaOpenRouter: "Luna Decisions / OpenRouter",
+			connectionLunaOpenAI: "Luna Decisions / OpenAI",
+			providerRequests: "实际提供方请求与响应",
+			usageIncomplete: "服务报告用量不完整",
 			title: "阶段导航",
 			navigation: "轮次与阶段",
 			showNavigation: "展开导航",
@@ -9830,14 +10369,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			cancelFailed: "无法取消分析",
 			scopeTurn: "选中的已结束轮",
 			scopeAll: "本会话全部已结束轮",
-			scopeHint: "只向 Jev 发送已记录的步骤材料；输入先脱敏，原始 Session 不变",
+			scopeHint: "只向所选判断连接发送已记录的步骤材料；输入先脱敏，原始 Session 不变",
 			pendingCount: "可处理步骤",
 			batchProgress: "分析进度",
 			missingTurnCount: "本轮待补齐",
 			missingAllCount: "本会话待补齐",
 			retryTurnCount: "本轮可重试",
 			refreshTurnCount: "本轮可重分析",
-			refreshWarning: "重分析将再次调用 Jev",
+			refreshWarning: "重分析将再次发起判断请求",
 			stageInputParsing: "输入解析",
 			stageProblemUnderstanding: "问题理解澄清",
 			stageSolutionPlanning: "方案规划",
@@ -9869,7 +10408,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			missingResult: "未记录返回",
 			notDispatched: "工具调用未派发",
 			attempts: "尝试与重试",
-			analysis: "Jev 阶段分类",
+			analysis: "阶段分类",
 			analysisStatus: "分类状态",
 			confidence: "Confidence",
 			probabilities: "Probabilities",
@@ -9879,11 +10418,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			details: "分类输入与返回",
 			closeDetails: "收起详情",
 			detailFailed: "无法读取分类记录",
-			requestSent: "实际发送给 Jev 的脱敏输入",
+			requestSent: "脱敏判断输入",
 			previousSavedResult: "之前保存的有效结果",
 			viewPreviousRecord: "查看旧记录",
 			rawResponse: "原始回答",
-			parsedResponse: "已校验回答",
+			parsedResponse: "统一答案",
 			redactionNote: "分类输入在发送和保存前已脱敏；下方来源记录保持原文",
 			uncalibrated: "未经校准",
 			sourceStep: "来源步骤",
@@ -9917,6 +10456,22 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			model: "Model",
 			credentialRef: "Credential reference",
 			timeoutMs: "Timeout (ms)",
+			decisionModel: "Judgment model",
+			jevModel: "Jev",
+			lunaModel: "Luna Decisions",
+			lunaApi: "Luna API",
+			openRouter: "OpenRouter",
+			openAI: "OpenAI",
+			lunaModelHint: "This API uses the fixed Luna Decisions model shown above.",
+			connectionHint: "All enabled features use the saved judgment connection. The main agent model is configured separately in DSH.",
+			diagnosticHint: "Test the saved connection with fixed Choice, Score, and Noul questions. No task content is sent.",
+			connectionChanged: "The connection changed. Refresh its saved settings before retrying.",
+			providerRequests: "Provider requests",
+			requestBody: "Sent request",
+			questionIds: "Question IDs",
+			reportedModel: "Reported model",
+			requestId: "Provider request ID",
+			usageIncomplete: "Usage is incomplete; some requests did not report usage.",
 			apiKey: "API key",
 			apiKeyHint: "Saved in Host credentials. This field never shows the saved key.",
 			configured: "Configured",
@@ -9929,12 +10484,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			saving: "Saving…",
 			saveFailed: "Could not save these settings.",
 			saveSuccess: "Connection settings saved.",
-			invalidTimeout: "Enter a positive timeout in milliseconds.",
+			invalidTimeout: "Enter a whole number from 1 to 300,000 milliseconds.",
 			selectionCounts: "Selection counts",
 			skillSummaryCount: "Skill summaries shown",
-			fileRankingMaximum: "Maximum glob files for Jev ranking",
+			fileRankingMaximum: "Maximum glob files for judgment ranking",
 			rankedPathCount: "Ranked paths shown",
-			selectionCountsHint: "If glob finds more files than the ranking maximum, Jev is skipped and the original glob result is returned.",
+			selectionCountsHint: "If glob finds more files than the ranking maximum, judgment ranking is skipped and the original glob result is returned.",
 			selectionCountInvalid: "Enter a positive whole number.",
 			saveSelectionCounts: "Save selection counts",
 			selectionCountSaved: "Selection counts saved.",
@@ -9973,7 +10528,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			previousSteps: "Prior steps in context",
 			previousChars: "Characters per prior step",
 			stageMaxRequestChars: "Maximum complete request characters",
-			stageConcurrency: "Concurrent Jev requests",
+			stageConcurrency: "Concurrent judgment requests",
 			stageInvalid: "Enter a whole number within the allowed range.",
 			saveStageSettings: "Save stage limits",
 			stageSaved: "Stage limits saved.",
@@ -9981,7 +10536,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			replaceKey: "Replace key",
 			saveKey: "Save key",
 			keySaved: "Key saved.",
-			keySaveFailed: "Could not save the key.",
+			keySaveFailed: "Could not save the key. Refresh the saved connection before retrying.",
 			testConnection: "Test connection",
 			testing: "Testing…",
 			testSucceeded: "Connection test passed.",
@@ -10009,7 +10564,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			receipts: "Action receipts",
 			input: "Input state",
 			questions: "Questions",
-			answer: "Validated answer",
+			answer: "Normalized answer",
 			rawAnswer: "Raw response",
 			connectionIdentity: "Connection",
 			usage: "Reported usage",
@@ -10050,6 +10605,22 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			model: "模型",
 			credentialRef: "凭据引用",
 			timeoutMs: "超时（毫秒）",
+			decisionModel: "判断模型",
+			jevModel: "Jev",
+			lunaModel: "Luna Decisions",
+			lunaApi: "Luna API",
+			openRouter: "OpenRouter",
+			openAI: "OpenAI",
+			lunaModelHint: "此 API 使用上方显示的固定 Luna Decisions 模型",
+			connectionHint: "已启用功能共用已保存的判断连接；主 Agent 模型在 DSH 中单独配置",
+			diagnosticHint: "用固定 Choice、Score、Noul 问题测试已保存连接，不发送用户任务内容",
+			connectionChanged: "连接已改变，请刷新已保存设置后重试",
+			providerRequests: "提供方请求",
+			requestBody: "实际发送请求",
+			questionIds: "问题 ID",
+			reportedModel: "返回模型",
+			requestId: "提供方请求 ID",
+			usageIncomplete: "用量不完整，部分请求未报告用量",
 			apiKey: "API 密钥",
 			apiKeyHint: "写入宿主凭据；这里不会读回已保存的密钥",
 			configured: "已配置",
@@ -10062,12 +10633,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			saving: "保存中…",
 			saveFailed: "无法保存这些设置",
 			saveSuccess: "连接设置已保存",
-			invalidTimeout: "请输入正整数毫秒数",
+			invalidTimeout: "请输入 1 到 300,000 之间的整数毫秒数",
 			selectionCounts: "筛选数量",
 			skillSummaryCount: "展示的技能摘要数",
-			fileRankingMaximum: "Jev 排序最大文件数",
+			fileRankingMaximum: "判断排序最大文件数",
 			rankedPathCount: "展示的已排序路径数",
-			selectionCountsHint: "glob 匹配文件数超过排序上限时，跳过 Jev，直接返回原 glob 结果",
+			selectionCountsHint: "glob 匹配文件数超过排序上限时，跳过判断排序，直接返回原 glob 结果",
 			selectionCountInvalid: "请输入正整数",
 			saveSelectionCounts: "保存筛选数量",
 			selectionCountSaved: "筛选数量已保存",
@@ -10106,7 +10677,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			previousSteps: "纳入上下文的前序步骤数",
 			previousChars: "每个前序步骤的字符数",
 			stageMaxRequestChars: "完整请求字符上限",
-			stageConcurrency: "同时发起的 Jev 请求数",
+			stageConcurrency: "同时发起的判断请求数",
 			stageInvalid: "请输入允许范围内的整数",
 			saveStageSettings: "保存阶段预算",
 			stageSaved: "阶段预算已保存",
@@ -10114,7 +10685,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			replaceKey: "替换密钥",
 			saveKey: "保存密钥",
 			keySaved: "密钥已保存",
-			keySaveFailed: "无法保存密钥",
+			keySaveFailed: "无法保存密钥，请刷新已保存连接后重试",
 			testConnection: "测试连接",
 			testing: "测试中…",
 			testSucceeded: "连接测试通过",
@@ -10142,7 +10713,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			receipts: "动作回执",
 			input: "输入状态",
 			questions: "问题",
-			answer: "已校验回答",
+			answer: "统一答案",
 			rawAnswer: "原始响应",
 			connectionIdentity: "连接身份",
 			usage: "服务报告用量",
@@ -10183,9 +10754,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				listFeatures: async () => unwrap(await remote.listFeatures()),
 				listRecords: async (filter) => unwrap(await remote.listRecords(filter)),
 				getRecord: async (id) => unwrap(await remote.getRecord(id)),
-				testConnection: async (signal) => unwrap(await remote.testConnection(signal)),
-				getCredentialStatus: async () => unwrap(await remote.getCredentialStatus()),
-				setCredential: async (value) => unwrap(await remote.setCredential(value))
+				testConnection: async (connection, signal) => unwrap(await remote.testConnection(connection, signal)),
+				getCredentialStatus: async (connection) => unwrap(await remote.getCredentialStatus(connection)),
+				setCredential: async (connection, value) => unwrap(await remote.setCredential(connection, value))
 			};
 		}
 		/** Adapt the Session stage commands while retaining their Host authorization. */

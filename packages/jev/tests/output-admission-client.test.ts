@@ -6,6 +6,7 @@ import type { ButtonHTMLAttributes } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ConfigForm, ConfigFormSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
 import { JevPage, type JevConfigValues, type JevPageRemote } from '../src/client/JevPage.tsx'
+import { clientConfig } from './client-fixtures.ts'
 import { en, type JevLocaleKey } from '../src/client/locales.ts'
 import type { OutputAdmissionConfigValues } from '../src/output-admission-types.ts'
 
@@ -66,16 +67,16 @@ function remoteStub(): JevPageRemote {
       { id: 'test-log-admission', name: 'Test log noise removal', description: 'Test logs', enabled: false },
     ]),
     listRecords: vi.fn(async () => ({ items: [] })), getRecord: vi.fn(async () => null),
-    testConnection: vi.fn(async () => ({ ok: true, latencyMs: 1, recordId: 'fixture-probe' })),
-    getCredentialStatus: vi.fn(async () => ({ configured: false, writable: true })),
-    setCredential: vi.fn(async () => ({ configured: true, writable: true })),
+    testConnection: vi.fn(async connection => ({ connection, ok: true, latencyMs: 1, recordId: 'fixture-probe' })),
+    getCredentialStatus: vi.fn(async connection => ({ connection, configured: false, writable: true })),
+    setCredential: vi.fn(async connection => ({ connection, configured: true, writable: true })),
   }
 }
 
 function setup(accept = true) {
-  const publicForm = formStub<JevConfigValues>({
+  const publicForm = formStub<JevConfigValues>(clientConfig({
     baseUrl: 'https://fixture.invalid', model: 'fixture', credentialRef: 'FIXTURE_KEY', timeoutMs: 10000, features: {},
-  })
+  }))
   const outputForm = formStub(limits, accept)
   const notifySuccess = vi.fn()
   render(React.createElement(JevPage, { view: 'page', form: publicForm.form, outputAdmissionForm: outputForm.form,
