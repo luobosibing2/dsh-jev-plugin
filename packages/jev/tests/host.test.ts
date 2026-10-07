@@ -12,8 +12,9 @@ import { JsonStorageBackend } from '@deepseek-ai/dsh-storage-json'
 import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
 import UserQuestionService from '@deepseek-ai/dsh-user-questions'
 import JevService, { Config, JevError } from '../src/index.ts'
-import { JevLedger } from '../src/ledger.ts'
-import type { JevRequest } from '../src/types.ts'
+import { JevLedger, ledgerSpec } from '../src/ledger.ts'
+import type { JevConfigValues, JevRequest } from '../src/types.ts'
+import { routerRequest } from './fixtures/decisions-request.ts'
 
 const request: JevRequest = {
   state: {},
@@ -35,7 +36,7 @@ const valid = {
   usage: { input_tokens: 17, output_tokens: 5 },
 }
 
-type Reply = object | (() => Promise<object>)
+type Reply = object | ((body: Record<string, unknown>) => Promise<object>)
 
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => {
@@ -46,14 +47,25 @@ afterEach(async () => {
   if (failures.length) throw new AggregateError(failures, 'Jev fixture cleanup failed')
 })
 
-async function fixture(replies: Reply[]) {
+async function fixture(replies: Reply[], validate?: (body: Record<string, unknown>) => void) {
   const received: object[] = []
+  const authorizations: (string | undefined)[] = []
+  const validationErrors: unknown[] = []
   const server = createServer(async (request: IncomingMessage, response: ServerResponse) => {
     const chunks: Buffer[] = []
     for await (const chunk of request) chunks.push(Buffer.from(chunk))
-    received.push(JSON.parse(Buffer.concat(chunks).toString('utf8')) as object)
+    const requestBody = JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>
+    received.push(requestBody)
+    authorizations.push(request.headers.authorization)
+    try { validate?.(requestBody) }
+    catch (error) {
+      validationErrors.push(error)
+      response.writeHead(400, { 'content-type': 'application/json' })
+      response.end('{}')
+      return
+    }
     const reply = replies.shift()
-    const body = typeof reply === 'function' ? await reply() : reply
+    const body = typeof reply === 'function' ? await reply(requestBody) : reply
     response.writeHead(200, { 'content-type': 'application/json' })
     response.end(JSON.stringify(body ?? valid))
   })
@@ -61,10 +73,11 @@ async function fixture(replies: Reply[]) {
   const address = server.address()
   if (address === null || typeof address === 'string') throw new Error('HTTP fixture did not bind an ephemeral port')
   cleanups.push(async () => { await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())) })
-  return { url: `http://127.0.0.1:${address.port}/v1/systemone`, received }
+  return { url: `http://127.0.0.1:${address.port}/v1/systemone`, received, authorizations, validationErrors }
 }
 
-async function setup(options: { root: string; profile: string; url: string; enabled?: boolean; timeoutMs?: number }) {
+async function setup(options: { root: string; profile: string; url: string; enabled?: boolean; timeoutMs?: number; config?: Partial<JevConfigValues>;
+  credentials?: { resolve?: (ref: string) => Promise<{ value: string; source: string } | undefined>; describe?: () => Promise<{ configured: boolean; writable: boolean; source?: string }>; set?: (ref: string, value: string) => Promise<void> } }) {
   const ctx = new Context()
   await ctx.plugin(Storage)
   await ctx.plugin(LlmRuntime)
@@ -80,10 +93,12 @@ async function setup(options: { root: string; profile: string; url: string; enab
     resolve: async () => ({ value: 'local-fixture-key', source: 'fixture' }),
     describe: async () => ({ configured: true, writable: true, source: 'fixture' }),
     set: async () => {},
+    ...options.credentials,
   } as never)
   const jevFiber = await ctx.plugin(JevService, {
     baseUrl: options.url, model: 'jev-local', credentialRef: 'JEV_TEST_KEY', timeoutMs: options.timeoutMs ?? 10_000,
     features: { fixture: options.enabled ?? true },
+    ...options.config,
   })
   const agent = { id: 'fixture-session', session: { id: 'fixture-session', header: { delegationDepth: 0 } } } as Agent
   ctx.agents.enter(agent, undefined)
@@ -97,7 +112,7 @@ async function setup(options: { root: string; profile: string; url: string; enab
     await backend.close()
   }
   cleanups.push(dispose)
-  return { ctx, agent, dispose, jevFiber, features: jevFiber.config.features as Volatile<Record<string, boolean>> }
+  return { ctx, agent, dispose, jevFiber, config: jevFiber.config as Config, features: jevFiber.config.features as Volatile<Record<string, boolean>> }
 }
 
 async function root() {
@@ -105,6 +120,266 @@ async function root() {
   cleanups.push(() => rm(path, { recursive: true, force: true }))
   return path
 }
+
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>(done => { resolve = done })
+  return { promise, resolve }
+}
+
+function manyQuestions(count: number): JevRequest {
+  return { state: { full: ['shared', null, { count }] }, questions: Array.from({ length: count }, (_, index) => ({ id: `q-${index}`, kind: 'noul' as const, prompt: `Question ${index}` })) }
+}
+
+function systemAnswers(body: Record<string, unknown>, usage: object = { input_tokens: 7, output_tokens: 2 }) {
+  return { model: 'returned-luna-router', answers: Object.fromEntries(Object.keys(body.questions as object).map(id => [id, { type: 'noul', noul: 0.8 }])), usage }
+}
+
+const nativeValid = { model: 'returned-luna-official', extra: { unknown: ['retained'] }, answers: [
+  { type: 'predicate', name: 'ready', probability: 0.8 },
+  { type: 'choice', name: 'route', choice: 'left', confidence: 0.7, probabilities: [{ value: 'left', probability: 0.7 }, { value: 'right', probability: 0.3 }] },
+  { type: 'score', name: 'risk', score: 1.5, confidence: 0.9, probabilities: [{ value: 0, label: '0', probability: 0.1 }, { value: 1, label: '1', probability: 0.4 }, { value: 2, label: '2', probability: 0.5 }] },
+], usage: { input_tokens: 12 } }
+
+describe('saved Luna channels, complete attempts and original-response history', () => {
+  it.each([200, 201, 401])('covers all %i OpenRouter questions once and persists each actual exchange', async count => {
+    const path = await root()
+    const batches = Math.ceil(count / 200)
+    const http = await fixture(Array.from({ length: batches }, () => async body => systemAnswers(body)), body => { routerRequest.parse(body) })
+    const { ctx } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'), url: '', config: {
+      judgmentModel: 'luna', lunaApi: 'openrouter', lunaOpenRouterBaseUrl: http.url,
+    } })
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+    const input = manyQuestions(count)
+    const result = await ctx.jev.judgeOnce({ featureId: 'fixture', link: {}, refresh: () => input })
+    expect(result.kind).toBe('ok')
+    if (result.kind !== 'ok') throw new Error('Expected complete local result')
+    expect(result.response.answers.map(answer => answer.id)).toEqual(input.questions.map(question => question.id))
+    expect(http.received).toHaveLength(batches)
+    expect(http.received).toEqual(Array.from({ length: batches }, (_, index) => ({ model: 'openai/gpt-6-luna-decisions', state: input.state,
+      questions: Object.fromEntries(input.questions.slice(index * 200, (index + 1) * 200).map(question => [question.id, { type: 'noul', instructions: question.prompt }])) })))
+    const attempt = (await ctx.jev.getRecord(result.operationId))!.attemptRecords[0]!
+    expect(attempt.connection.connectionId).toBe('luna-openrouter')
+    expect(attempt.networkRecords).toHaveLength(batches)
+    expect(attempt.networkRecords!.map(record => record.questionIds).flat()).toEqual(input.questions.map(question => question.id))
+    expect(attempt.usage).toEqual({ inputTokens: batches * 7, outputTokens: batches * 2 })
+    expect(attempt.usageComplete).toBe(true)
+    expect(attempt.networkRecords!.every(record => record.returnedModel === 'returned-luna-router')).toBe(true)
+    expect(attempt.networkRecords!.every(record => record.rawResponseText === JSON.stringify(record.rawResponse))).toBe(true)
+    expect(http.validationErrors).toEqual([])
+  })
+
+  it('sends scalar state and missing descriptions through a strict OpenRouter HTTP fixture and replays them from the original business input', async () => {
+    const path = await root()
+    const http = await fixture([valid], body => { routerRequest.parse(body) })
+    const { ctx } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'), url: '', config: { judgmentModel: 'luna', lunaOpenRouterBaseUrl: http.url } })
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+    const input: JevRequest = { state: false, questions: [request.questions[0]!,
+      { id: 'risk', kind: 'score', prompt: ['exact rubric instruction'], levels: [null, 'middle', null] },
+      { id: 'ready', kind: 'noul', prompt: { original: 'ready condition' }, criteria: { true: null, false: ['not ready'] } },
+    ] }
+    const result = await ctx.jev.judgeOnce({ featureId: 'fixture', link: {}, refresh: () => input })
+    expect(result.kind).toBe('ok')
+    expect(http.validationErrors).toEqual([])
+    expect(http.received[0]).toMatchObject({ state: 'false', questions: {
+      risk: { criteria: ['', 'middle', ''] }, ready: { instructions: { instructions: { original: 'ready condition' }, criteria: { true: null, false: ['not ready'] } } },
+    } })
+    expect((await ctx.jev.getRecord(result.operationId!))?.attemptRecords[0]?.request).toEqual(input)
+  })
+
+  it('retains known partial usage and no adoptable answers after a second batch fails', async () => {
+    const path = await root()
+    const http = await fixture([async body => systemAnswers(body, { input_tokens: 13 }), { answers: {}, usage: { output_tokens: 4 } }])
+    const { ctx } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'), url: '', config: { judgmentModel: 'luna', lunaOpenRouterBaseUrl: http.url } })
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+    const result = await ctx.jev.judgeOnce({ featureId: 'fixture', link: {}, refresh: () => manyQuestions(401) })
+    expect(result).toMatchObject({ kind: 'failed', failure: { code: 'INVALID_RESPONSE' } })
+    expect(http.received).toHaveLength(2)
+    const attempt = (await ctx.jev.getRecord(result.operationId!))!.attemptRecords[0]!
+    expect(attempt.response).toBeUndefined()
+    expect(attempt.usage).toEqual({ inputTokens: 13, outputTokens: 4 })
+    expect(attempt.usageComplete).toBe(false)
+    expect(attempt.networkRecords?.map(record => record.status)).toEqual(['succeeded', 'failed'])
+  })
+
+  it('shares one deadline across batches and stops before a third request', async () => {
+    const path = await root()
+    const held = deferred<object>()
+    const entered = deferred<void>()
+    const http = await fixture([async body => systemAnswers(body), async () => { entered.resolve(); return held.promise }])
+    cleanups.push(async () => { held.resolve({ answers: {} }) })
+    const { ctx } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'), url: '', timeoutMs: 150, config: { judgmentModel: 'luna', lunaOpenRouterBaseUrl: http.url } })
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+    const deadline = new AbortController()
+    const clock = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(deadline.signal)
+    try {
+      const resultPromise = ctx.jev.judgeOnce({ featureId: 'fixture', link: {}, refresh: () => manyQuestions(401) })
+      await entered.promise
+      expect(clock).toHaveBeenCalledExactlyOnceWith(150)
+      deadline.abort()
+      const result = await resultPromise
+      expect(result).toMatchObject({ kind: 'failed', failure: { code: 'TIMEOUT' } })
+      expect(http.received).toHaveLength(2)
+      const attempt = (await ctx.jev.getRecord(result.operationId!))!.attemptRecords[0]!
+      expect(attempt.response).toBeUndefined()
+      expect(attempt.usage).toEqual({ inputTokens: 7, outputTokens: 2 })
+      expect(attempt.usageComplete).toBe(false)
+    } finally { clock.mockRestore(); held.resolve({ answers: {} }) }
+  })
+
+  it('freezes the channel and authentication for all batches, then uses the newly saved connection', async () => {
+    const path = await root()
+    const entered = deferred<void>()
+    const held = deferred<void>()
+    const router = await fixture([async body => { entered.resolve(); await held.promise; return systemAnswers(body) }, async body => systemAnswers(body)])
+    const official = await fixture([nativeValid])
+    let key = 'first-fixture-key'
+    const { ctx, config } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'), url: '', config: {
+      judgmentModel: 'luna', lunaOpenRouterBaseUrl: router.url, lunaOpenAIBaseUrl: official.url,
+    }, credentials: { resolve: async () => ({ value: key, source: 'fixture' }) } })
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+    const pending = ctx.jev.judgeOnce({ featureId: 'fixture', link: {}, refresh: () => manyQuestions(201) })
+    await entered.promise
+    updateVolatile(config.lunaApi, createVolatile('openai'))
+    key = 'new-fixture-key'
+    held.resolve()
+    const first = await pending
+    expect(first.kind).toBe('ok')
+    expect(router.authorizations).toEqual(['Bearer first-fixture-key', 'Bearer first-fixture-key'])
+    expect(official.received).toHaveLength(0)
+    expect((await ctx.jev.getRecord(first.operationId!))?.attemptRecords[0]?.connection).toMatchObject({ connectionId: 'luna-openrouter' })
+    const next = await ctx.jev.judgeOnce({ featureId: 'fixture', link: {}, refresh: () => request })
+    expect(next.kind).toBe('ok')
+    expect(official.authorizations).toEqual(['Bearer new-fixture-key'])
+    expect(official.received[0]).toMatchObject({ model: 'gpt-6-luna', input: '{}', questions: [{ type: 'choice' }, { type: 'score' }, { type: 'predicate' }] })
+  })
+
+  it('reopens native raw arrays and rejects a modified raw probability with an unchanged saved answer', async () => {
+    const path = await root()
+    const http = await fixture([nativeValid])
+    const options = { root: join(path, 'storage'), profile: join(path, 'profile'), url: '', config: { judgmentModel: 'luna' as const, lunaApi: 'openai' as const, lunaOpenAIBaseUrl: http.url } }
+    const first = await setup(options)
+    first.ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+    const result = await first.ctx.jev.judgeOnce({ featureId: 'fixture', link: {}, refresh: () => request })
+    expect(result.kind).toBe('ok')
+    const detail = (await first.ctx.jev.getRecord(result.operationId!))!
+    expect(detail.attemptRecords[0]?.rawResponse).toEqual(nativeValid)
+    expect(detail.attemptRecords[0]?.usage).toEqual({ inputTokens: 12 })
+    expect(detail.attemptRecords[0]?.usageComplete).toBe(false)
+    await first.dispose()
+    const second = await setup(options)
+    expect((await second.ctx.jev.getRecord(detail.id))?.attemptRecords[0]?.response).toEqual(detail.attemptRecords[0]?.response)
+    const schema = ledgerSpec(options.profile).tables.operations.valueSchema
+    expect(schema.safeParse(detail).success).toBe(true)
+    const changed = structuredClone(detail)
+    const raw = changed.attemptRecords[0]!.networkRecords![0]!.rawResponse as typeof nativeValid
+    raw.answers[0]!.probability = 0.1
+    changed.attemptRecords[0]!.networkRecords![0]!.rawResponseText = JSON.stringify(raw)
+    changed.attemptRecords[0]!.rawResponse = raw
+    expect(schema.safeParse(changed).success).toBe(false)
+  })
+
+  it.each([
+    { usage: { input_tokens: 12 }, expectedUsage: { inputTokens: 12 }, complete: false },
+    { usage: { input_tokens: 7, output_tokens: 3 }, expectedUsage: { inputTokens: 7, outputTokens: 3 }, complete: true },
+  ])('retains a refusal and its reported usage completeness $complete without adopting other answers', async ({ usage, expectedUsage, complete }) => {
+    const path = await root()
+    const refused = { ...nativeValid, usage, answers: [{ type: 'refusal', name: 'ready' }, ...nativeValid.answers.slice(1)] }
+    const http = await fixture([refused])
+    const { ctx } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'), url: http.url, config: { judgmentModel: 'luna', lunaApi: 'openai', lunaOpenAIBaseUrl: http.url } })
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+    const result = await ctx.jev.judgeOnce({ featureId: 'fixture', link: {}, refresh: () => request })
+    expect(result).toMatchObject({ kind: 'failed', failure: { code: 'REFUSAL' } })
+    expect(http.received).toHaveLength(1)
+    expect((await ctx.jev.getRecord(result.operationId!))?.attemptRecords[0]).toMatchObject({ rawResponse: refused, usage: expectedUsage, usageComplete: complete })
+    expect((await ctx.jev.getRecord(result.operationId!))?.attemptRecords[0]?.response).toBeUndefined()
+  })
+
+  it('marks usage incomplete when two fully reported OpenRouter packets fail before the third expected packet', async () => {
+    const path = await root()
+    const http = await fixture([async body => systemAnswers(body), { answers: {}, usage: { input_tokens: 7, output_tokens: 3 } }])
+    const { ctx } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'), url: '', config: { judgmentModel: 'luna', lunaOpenRouterBaseUrl: http.url } })
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+    const result = await ctx.jev.judgeOnce({ featureId: 'fixture', link: {}, refresh: () => manyQuestions(401) })
+    expect(result).toMatchObject({ kind: 'failed', failure: { code: 'INVALID_RESPONSE' } })
+    expect(http.received).toHaveLength(2)
+    const attempt = (await ctx.jev.getRecord(result.operationId!))!.attemptRecords[0]!
+    expect(attempt.response).toBeUndefined()
+    expect(attempt.usage).toEqual({ inputTokens: 14, outputTokens: 5 })
+    expect(attempt.usageComplete).toBe(false)
+  })
+
+  it('rejects stale credential actions and keeps awaited status and writes associated with the original reference', async () => {
+    const path = await root()
+    const http = await fixture([])
+    const gate = deferred<void>()
+    const entered = deferred<void>()
+    const writes: { ref: string; value: string }[] = []
+    const { ctx, config } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'), url: http.url, credentials: {
+      set: async (ref, value) => { writes.push({ ref, value }); entered.resolve(); await gate.promise },
+    } })
+    const original = ctx.jev.judgmentConnectionIdentity()
+    expect((await ctx.jev.getCredentialStatus(original)).connection).toEqual(original)
+    const pending = ctx.jev.setCredential(original, 'dummy-new-key')
+    await entered.promise
+    updateVolatile(config.credentialRef, createVolatile('NEW_JEV_REF'))
+    gate.resolve()
+    expect((await pending).connection).toEqual(original)
+    expect(writes).toEqual([{ ref: 'JEV_TEST_KEY', value: 'dummy-new-key' }])
+    await expect(ctx.jev.setCredential(original, 'stale-key')).rejects.toMatchObject({ code: 'CONNECTION_CHANGED' })
+    await expect(ctx.jev.getCredentialStatus(original)).rejects.toMatchObject({ code: 'CONNECTION_CHANGED' })
+    await expect(ctx.jev.testConnection(original, new AbortController().signal)).rejects.toMatchObject({ code: 'CONNECTION_CHANGED' })
+    expect(writes).toHaveLength(1)
+    expect(http.received).toHaveLength(0)
+  })
+
+  it('returns a late probe with its captured connection and rejects any incomplete three-kind response', async () => {
+    const path = await root()
+    const entered = deferred<void>()
+    const held = deferred<object>()
+    const http = await fixture([async () => { entered.resolve(); return held.promise }, { answers: { ready: { noul: 1 } } }])
+    const { ctx, config } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'), url: http.url, config: { lunaOpenRouterBaseUrl: http.url } })
+    const original = ctx.jev.judgmentConnectionIdentity()
+    const pending = ctx.jev.testConnection(original, new AbortController().signal)
+    await entered.promise
+    updateVolatile(config.judgmentModel, createVolatile('luna'))
+    held.resolve(valid)
+    expect(await pending).toMatchObject({ ok: true, connection: original })
+    const failed = await ctx.jev.testConnection(ctx.jev.judgmentConnectionIdentity(), new AbortController().signal)
+    expect(failed).toMatchObject({ ok: false, connection: { connectionId: 'luna-openrouter' }, failure: { code: 'INVALID_RESPONSE' } })
+    expect(http.received).toHaveLength(2)
+  })
+
+  it('settles a prepared request without dispatch when cancellation arrives during its durable input write', async () => {
+    const path = await root()
+    const http = await fixture([valid])
+    const { ctx } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'), url: http.url })
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+    const entered = deferred<void>()
+    const gate = deferred<void>()
+    const controller = new AbortController()
+    const original = JevLedger.prototype.saveNetwork
+    let calls = 0
+    const writing = vi.spyOn(JevLedger.prototype, 'saveNetwork').mockImplementation(async function (operationId, attemptId, records) {
+      await original.call(this, operationId, attemptId, records)
+      if (++calls === 1) { entered.resolve(); await gate.promise }
+    })
+    try {
+      const pending = ctx.jev.judgeOnce({ featureId: 'fixture', link: {}, refresh: () => request, signal: controller.signal })
+      await entered.promise
+      controller.abort()
+      gate.resolve()
+      const result = await pending
+      expect(result.kind).toBe('cancelled')
+      expect(http.received).toHaveLength(0)
+      const exchange = (await ctx.jev.getRecord(result.operationId!))?.attemptRecords[0]?.networkRecords?.[0]
+      expect(exchange).toMatchObject({ status: 'failed', failure: { code: 'ABORTED' } })
+      expect(exchange?.settledAt).toEqual(expect.any(String))
+      expect(exchange?.dispatchedAt).toBeUndefined()
+      expect(exchange?.httpStatus).toBeUndefined()
+    } finally { gate.resolve(); writing.mockRestore() }
+  })
+})
 
 describe('Jev Host through Cordis, LlmRuntime, JSON storage, and local HTTP', () => {
   it('rejects secret-bearing or malformed connection settings at configuration validation', () => {
@@ -325,11 +600,11 @@ describe('Jev Host through Cordis, LlmRuntime, JSON storage, and local HTTP', ()
 
   it('runs a fixed diagnostic while every business feature is disabled', async () => {
     const path = await root()
-    const http = await fixture([{ answers: { ready: { noul: 0.9 } } }])
+    const http = await fixture([valid])
     const profile = join(path, 'profile')
     const storage = join(path, 'storage')
     const { ctx, dispose } = await setup({ root: storage, profile, url: http.url, enabled: false })
-    const result = await ctx.jev.testConnection(new AbortController().signal)
+    const result = await ctx.jev.testConnection(ctx.jev.judgmentConnectionIdentity(), new AbortController().signal)
     expect(result.ok).toBe(true)
     expect(http.received[0]).toMatchObject({ state: { diagnostic: 'jev-connection-test' }, questions: { ready: { type: 'noul' } } })
     expect(await ctx.jev.getRecord(result.recordId)).toMatchObject({ diagnostic: true, status: 'succeeded' })
@@ -354,14 +629,20 @@ describe('Jev Host through Cordis, LlmRuntime, JSON storage, and local HTTP', ()
     const http = await fixture([() => { entered?.(); return answer }])
     const { ctx, agent } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'), url: http.url, timeoutMs: 30 })
     ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
-    const pending = ctx.jev.judge({ featureId: 'fixture', link: {}, agent, refresh: () => request })
-    await sent
-    await expect(pending).rejects.toMatchObject({ code: 'NO_INTERFACE' })
-    release?.(valid)
-    expect(http.received).toHaveLength(1)
-    expect((await ctx.jev.listRecords({})).items[0]?.status).toBe('failed')
-    const id = (await ctx.jev.listRecords({})).items[0]?.id
-    if (id !== undefined) expect((await ctx.jev.getRecord(id))?.attemptRecords[0]?.failure?.code).toBe('TIMEOUT')
+    const deadline = new AbortController()
+    const clock = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(deadline.signal)
+    try {
+      const pending = ctx.jev.judge({ featureId: 'fixture', link: {}, agent, refresh: () => request })
+        .then(result => ({ result, error: undefined }), error => ({ result: undefined, error }))
+      await sent
+      expect(clock).toHaveBeenCalledExactlyOnceWith(30)
+      deadline.abort()
+      expect((await pending).error).toMatchObject({ code: 'NO_INTERFACE' })
+      expect(http.received).toHaveLength(1)
+      expect((await ctx.jev.listRecords({})).items[0]?.status).toBe('failed')
+      const id = (await ctx.jev.listRecords({})).items[0]?.id
+      if (id !== undefined) expect((await ctx.jev.getRecord(id))?.attemptRecords[0]?.failure?.code).toBe('TIMEOUT')
+    } finally { clock.mockRestore(); release?.(valid) }
   })
 
   it('drains a waiting operation on Host disposal and persists cancellation', async () => {

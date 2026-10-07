@@ -89,6 +89,7 @@ function parseWireResponse(raw, request) {
 	for (const question of request.questions) {
 		const value = answers[question.id];
 		if (!record(value)) throw new TypeError(`Jev answer ${question.id} is missing`);
+		if (value.type === "refusal" || value.refusal !== void 0) throw new DecisionResponseError("REFUSAL", "Decision provider refused a question");
 		if (value.type !== void 0 && value.type !== question.kind) throw new TypeError(`Jev answer ${question.id} has the wrong type`);
 		const confidence = value.confidence;
 		if (confidence !== void 0 && !probability$1(confidence)) throw new TypeError(`Jev answer ${question.id} has invalid confidence`);
@@ -126,21 +127,219 @@ function parseWireResponse(raw, request) {
 			});
 		}
 	}
-	let usage;
-	if (raw.usage !== void 0 && raw.usage !== null) {
-		if (!record(raw.usage)) throw new TypeError("Jev usage is invalid");
-		const inputTokens = raw.usage.input_tokens;
-		const outputTokens = raw.usage.output_tokens;
-		if (inputTokens !== void 0 && (typeof inputTokens !== "number" || !Number.isSafeInteger(inputTokens) || inputTokens < 0) || outputTokens !== void 0 && (typeof outputTokens !== "number" || !Number.isSafeInteger(outputTokens) || outputTokens < 0)) throw new TypeError("Jev usage counts are invalid");
-		usage = {
-			...inputTokens === void 0 ? {} : { inputTokens: Number(inputTokens) },
-			...outputTokens === void 0 ? {} : { outputTokens: Number(outputTokens) }
-		};
-	}
+	const usage = parseUsage(raw);
 	return {
 		response: { answers: parsed },
 		...usage === void 0 ? {} : { usage },
 		raw
+	};
+}
+/** A provider rejection is a failed attempt, never a business answer. */
+var DecisionResponseError = class extends TypeError {
+	code;
+	constructor(code, message) {
+		super(message);
+		this.code = code;
+	}
+};
+function text(value) {
+	return typeof value === "string" ? value : JSON.stringify(value);
+}
+/** Encode complete business input for the explicitly selected Decisions protocol. */
+function protocolBody(connectionId, model, request) {
+	if (connectionId === "jev") return wireBody(model, request);
+	if (connectionId === "luna-openrouter") {
+		validateRequest(request);
+		return {
+			model,
+			state: typeof request.state === "string" || request.state !== null && typeof request.state === "object" ? request.state : JSON.stringify(request.state),
+			questions: Object.fromEntries(request.questions.map((question) => {
+				if (question.kind === "score") return [question.id, {
+					type: "score",
+					instructions: question.prompt,
+					criteria: question.levels.map((level) => level ?? "")
+				}];
+				if (question.kind === "noul" && question.criteria !== void 0 && (question.criteria.true === null || question.criteria.true === void 0 || question.criteria.false === null || question.criteria.false === void 0)) return [question.id, {
+					type: "noul",
+					instructions: {
+						instructions: question.prompt,
+						criteria: question.criteria
+					}
+				}];
+				return [question.id, wireQuestion(question)];
+			}))
+		};
+	}
+	validateRequest(request);
+	return {
+		model,
+		input: text(request.state),
+		questions: request.questions.map((question) => {
+			const common = {
+				name: question.id,
+				instructions: text(question.prompt)
+			};
+			switch (question.kind) {
+				case "choice": return {
+					...common,
+					type: "choice",
+					choices: question.options.map((option) => ({
+						value: option.id,
+						...option.description === null || option.description === "" ? {} : { description: text(option.description) }
+					}))
+				};
+				case "score": return {
+					...common,
+					type: "score",
+					levels: question.levels.map((level, index) => ({
+						label: String(index),
+						...level === null || level === "" ? {} : { description: text(level) }
+					}))
+				};
+				case "noul": return {
+					...common,
+					type: "predicate",
+					instructions: question.criteria === void 0 ? common.instructions : JSON.stringify({
+						instructions: question.prompt,
+						criteria: question.criteria
+					})
+				};
+			}
+		})
+	};
+}
+/** Read known counts independently of answer validation so refusals retain usage. */
+function knownUsage(raw) {
+	if (!record(raw) || !record(raw.usage)) return void 0;
+	const inputTokens = raw.usage.input_tokens;
+	const outputTokens = raw.usage.output_tokens;
+	const count = (value) => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+	if (!count(inputTokens) && !count(outputTokens)) return void 0;
+	return {
+		...count(inputTokens) ? { inputTokens } : {},
+		...count(outputTokens) ? { outputTokens } : {}
+	};
+}
+function parseUsage(raw) {
+	if (raw.usage === void 0 || raw.usage === null) return void 0;
+	if (!record(raw.usage)) throw new TypeError("Decision usage is invalid");
+	for (const key of ["input_tokens", "output_tokens"]) {
+		const value = raw.usage[key];
+		if (value !== void 0 && (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0)) throw new TypeError("Decision usage count is invalid");
+	}
+	return knownUsage(raw) ?? {};
+}
+function nativeProbabilities(value, question) {
+	if (!Array.isArray(value)) throw new TypeError("Decision probabilities are missing");
+	const allowed = question.kind === "choice" ? question.options.map((option) => option.id) : question.levels.map((_, index) => String(index));
+	const result = {};
+	for (const item of value) {
+		if (!record(item) || !probability$1(item.probability) || (question.kind === "choice" ? typeof item.value !== "string" : typeof item.value !== "number" || !Number.isInteger(item.value) || typeof item.label !== "string")) throw new TypeError("Decision probability item is invalid");
+		const key = String(item.value);
+		if (!allowed.includes(key) || Object.hasOwn(result, key)) throw new TypeError("Decision probability identity is invalid");
+		Object.defineProperty(result, key, {
+			value: item.probability,
+			enumerable: true,
+			configurable: true,
+			writable: true
+		});
+	}
+	if (Object.keys(result).length !== allowed.length) throw new TypeError("Decision probabilities are incomplete");
+	return Object.fromEntries(allowed.map((key) => [key, result[key]]));
+}
+/** Decode the provider's original response directly into the existing business answers. */
+function parseProtocolResponse(raw, request, connectionId = "jev") {
+	if (connectionId !== "luna-openai") return parseWireResponse(raw, request);
+	if (!json(raw) || !record(raw) || !Array.isArray(raw.answers)) throw new TypeError("Decision response has no answers array");
+	if (raw.answers.length !== request.questions.length) throw new TypeError("Decision response has missing or extra answers");
+	const byName = /* @__PURE__ */ new Map();
+	for (const value of raw.answers) {
+		if (!record(value)) throw new TypeError("Decision answer identity is invalid");
+		if (value.type === "refusal") throw new DecisionResponseError("REFUSAL", "Decision provider refused a question");
+		if (typeof value.name !== "string" || byName.has(value.name)) throw new TypeError("Decision answer identity is invalid");
+		byName.set(value.name, value);
+	}
+	const answers = request.questions.map((question) => {
+		const value = byName.get(question.id);
+		if (value === void 0 || value.type !== (question.kind === "noul" ? "predicate" : question.kind)) throw new TypeError("Decision answer type or identity is invalid");
+		if (value.confidence !== void 0 && !probability$1(value.confidence)) throw new TypeError("Decision confidence is invalid");
+		const signals = {
+			...value.confidence === void 0 ? {} : { confidence: value.confidence },
+			...value.legend === void 0 ? {} : { legend: value.legend }
+		};
+		if (question.kind === "noul") {
+			if (!probability$1(value.probability)) throw new TypeError("Decision predicate probability is invalid");
+			return {
+				id: question.id,
+				kind: "noul",
+				probability: value.probability,
+				...signals
+			};
+		}
+		if (!probability$1(value.confidence)) throw new TypeError("Decision confidence is missing");
+		const probabilities = nativeProbabilities(value.probabilities, question);
+		if (question.kind === "choice") {
+			if (typeof value.choice !== "string" || !question.options.some((option) => option.id === value.choice)) throw new TypeError("Decision choice is unknown");
+			return {
+				id: question.id,
+				kind: "choice",
+				optionId: value.choice,
+				probabilities,
+				...signals
+			};
+		}
+		if (typeof value.score !== "number" || !Number.isFinite(value.score) || value.score < 0 || value.score > question.levels.length - 1) throw new TypeError("Decision score is outside its rubric");
+		return {
+			id: question.id,
+			kind: "score",
+			value: value.score,
+			probabilities,
+			...signals
+		};
+	});
+	const usage = parseUsage(raw);
+	return {
+		response: { answers },
+		raw,
+		...usage === void 0 ? {} : { usage }
+	};
+}
+/** Reconstruct one complete attempt from its actual network responses in original question order. */
+function replayNetworkResponses(request, records, connectionId) {
+	const answers = /* @__PURE__ */ new Map();
+	for (const exchange of records) {
+		if (exchange.status !== "succeeded" || exchange.rawResponse === void 0) throw new TypeError("Decision network request did not succeed");
+		const questions = exchange.questionIds.map((id) => {
+			const question = request.questions.find((item) => item.id === id);
+			if (question === void 0 || answers.has(id)) throw new TypeError("Decision network question identity is invalid");
+			return question;
+		});
+		if (new Set(exchange.questionIds).size !== exchange.questionIds.length) throw new TypeError("Decision network question identity is duplicated");
+		const part = {
+			state: request.state,
+			questions
+		};
+		if (JSON.stringify(protocolBody(connectionId, exchange.requestBody.model ?? "", part)) !== JSON.stringify(exchange.requestBody)) throw new TypeError("Decision network input differs from business input");
+		if (exchange.rawResponseText !== void 0 && JSON.stringify(JSON.parse(exchange.rawResponseText)) !== JSON.stringify(exchange.rawResponse)) throw new TypeError("Decision raw response differs from original text");
+		for (const answer of parseProtocolResponse(exchange.rawResponse, part, connectionId).response.answers) answers.set(answer.id, answer);
+	}
+	if (answers.size !== request.questions.length) throw new TypeError("Decision network answers are incomplete");
+	return { answers: request.questions.map((question) => answers.get(question.id)) };
+}
+/** Sum only observed counts; completeness requires every expected request and both counts. */
+function aggregateUsage(records, complete) {
+	let inputTokens;
+	let outputTokens;
+	for (const record of records) {
+		if (record.usage?.inputTokens !== void 0) inputTokens = (inputTokens ?? 0) + record.usage.inputTokens;
+		if (record.usage?.outputTokens !== void 0) outputTokens = (outputTokens ?? 0) + record.usage.outputTokens;
+	}
+	return {
+		...inputTokens === void 0 && outputTokens === void 0 ? {} : { usage: {
+			...inputTokens === void 0 ? {} : { inputTokens },
+			...outputTokens === void 0 ? {} : { outputTokens }
+		} },
+		usageComplete: complete && records.length > 0 && records.every((record) => record.usage?.inputTokens !== void 0 && record.usage.outputTokens !== void 0)
 	};
 }
 function parseProbabilities(value, allowed, id) {
@@ -158,12 +357,15 @@ const JEV_PROVIDER = "jev-system-one";
 /** The adapter never advertises a chat model and rejects calls lacking a service-issued nonce. */
 var JevAdapter = class extends LlmAdapter {
 	pending = /* @__PURE__ */ new Map();
-	issue(request, connection, canStart) {
+	issue(request, connection, canStart, record) {
 		const nonce = randomUUID();
+		const records = [];
 		this.pending.set(nonce, {
 			request,
 			connection,
-			canStart
+			canStart,
+			record,
+			records
 		});
 		return {
 			envelope: JSON.stringify({
@@ -172,6 +374,7 @@ var JevAdapter = class extends LlmAdapter {
 				state: request.state,
 				questions: request.questions
 			}),
+			records,
 			release: () => {
 				this.pending.delete(nonce);
 			}
@@ -182,34 +385,42 @@ var JevAdapter = class extends LlmAdapter {
 		const call = this.pending.get(nonce);
 		if (call === void 0 || options.model !== call.connection.model || JSON.stringify(request) !== JSON.stringify(call.request)) throw new LlmError("Jev accepts only issued typed judgments", "UNSUPPORTED_OPTION");
 		const { connection } = call;
-		if (call.canStart?.() === false) throw new LlmError("Jev feature was disabled before dispatch", "FEATURE_DISABLED");
-		const response = await fetch(connection.baseUrl, {
-			method: "POST",
-			headers: {
-				...attributionHeaders(),
-				authorization: `Bearer ${connection.apiKey}`,
-				"content-type": "application/json",
-				accept: "application/json"
-			},
-			body: JSON.stringify(wireBody(connection.model, request)),
-			signal: options.signal
-		}).catch((error) => {
-			if (options.signal?.aborted) throw new LlmError("Jev request was cancelled or timed out", "ABORTED");
-			throw new LlmError("Jev service could not be reached", "NETWORK", { cause: error });
-		});
-		if (!response.ok) {
-			const code = response.status === 401 || response.status === 403 ? "AUTH" : response.status === 402 ? "PAYMENT_REQUIRED" : response.status === 429 ? "RATE_LIMIT" : response.status >= 500 ? "SERVER" : "BAD_REQUEST";
-			throw new LlmError(`Jev service returned HTTP ${response.status}`, code, { status: response.status });
+		const limit = connection.connectionId === "luna-openrouter" ? 200 : request.questions.length;
+		for (let offset = 0; offset < request.questions.length; offset += limit) {
+			if (options.signal?.aborted) throw new LlmError("Decision request was cancelled or timed out", "ABORTED");
+			if (call.canStart?.() === false) throw new LlmError("Decision feature was disabled before dispatch", "FEATURE_DISABLED");
+			const part = {
+				state: request.state,
+				questions: request.questions.slice(offset, offset + limit)
+			};
+			const exchange = {
+				id: randomUUID(),
+				questionIds: part.questions.map((question) => question.id),
+				requestBody: protocolBody(connection.connectionId, connection.model, part),
+				startedAt: (/* @__PURE__ */ new Date()).toISOString(),
+				status: "pending"
+			};
+			call.records.push(exchange);
+			await this.save(call);
+			try {
+				if (options.signal?.aborted) throw new LlmError("Decision request was cancelled or timed out", "ABORTED");
+				if (call.canStart?.() === false) throw new LlmError("Decision feature was disabled before dispatch", "FEATURE_DISABLED");
+				exchange.dispatchedAt = (/* @__PURE__ */ new Date()).toISOString();
+				await this.exchange(exchange, part, connection, options.signal);
+				exchange.status = "succeeded";
+			} catch (error) {
+				exchange.status = "failed";
+				exchange.failure = {
+					code: error instanceof LlmError ? error.code : "INVALID_RESPONSE",
+					message: "Decision network request failed"
+				};
+				throw error;
+			} finally {
+				exchange.settledAt = (/* @__PURE__ */ new Date()).toISOString();
+				await this.save(call);
+			}
 		}
-		const raw = await response.text();
-		if (raw.length > 2e6) throw new LlmError("Jev response exceeds 2 MB", "INVALID_RESPONSE");
-		let json;
-		try {
-			json = JSON.parse(raw);
-		} catch {
-			throw new LlmError("Jev response is not JSON", "INVALID_RESPONSE");
-		}
-		const text = JSON.stringify(json);
+		const text = JSON.stringify(call.records.map((record) => record.rawResponse));
 		yield {
 			type: "block-start",
 			index: 0,
@@ -232,6 +443,58 @@ var JevAdapter = class extends LlmAdapter {
 			type: "finish",
 			reason: { kind: "stop" }
 		};
+	}
+	async save(call) {
+		try {
+			await call.record?.(call.records);
+		} catch (error) {
+			throw new LlmError("Decision network record could not be saved", "LOG_WRITE_FAILED", { cause: error });
+		}
+	}
+	async exchange(exchange, part, connection, signal) {
+		const response = await fetch(connection.baseUrl, {
+			method: "POST",
+			headers: {
+				...attributionHeaders(),
+				authorization: `Bearer ${connection.apiKey}`,
+				"content-type": "application/json",
+				accept: "application/json"
+			},
+			body: JSON.stringify(exchange.requestBody),
+			signal,
+			redirect: "error"
+		}).catch((error) => {
+			if (signal?.aborted) throw new LlmError("Jev request was cancelled or timed out", "ABORTED");
+			throw new LlmError("Jev service could not be reached", "NETWORK", { cause: error });
+		});
+		exchange.httpStatus = response.status;
+		const requestId = response.headers.get("x-request-id");
+		if (requestId !== null) exchange.requestId = requestId;
+		const raw = await response.text().catch((error) => {
+			throw new LlmError("Decision response could not be read", signal?.aborted ? "ABORTED" : "NETWORK", { cause: error });
+		});
+		if (raw.length > 2e6) throw new LlmError("Jev response exceeds 2 MB", "INVALID_RESPONSE");
+		exchange.rawResponseText = raw;
+		try {
+			const parsed = JSON.parse(raw);
+			if (parsed !== void 0) {
+				exchange.rawResponse = parsed;
+				exchange.usage = knownUsage(parsed);
+				if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+					if ("model" in parsed && typeof parsed.model === "string") exchange.returnedModel = parsed.model;
+					if (exchange.requestId === void 0 && "id" in parsed && typeof parsed.id === "string") exchange.requestId = parsed.id;
+				}
+			}
+		} catch {}
+		if (!response.ok) {
+			const code = response.status === 401 || response.status === 403 ? "AUTH" : response.status === 402 ? "PAYMENT_REQUIRED" : response.status === 429 ? "RATE_LIMIT" : response.status >= 500 ? "SERVER" : "BAD_REQUEST";
+			throw new LlmError(`Jev service returned HTTP ${response.status}`, code, { status: response.status });
+		}
+		try {
+			parseProtocolResponse(exchange.rawResponse, part, connection.connectionId);
+		} catch (error) {
+			throw new LlmError("Decision answer failed complete type validation", error instanceof DecisionResponseError ? error.code : "INVALID_RESPONSE");
+		}
 	}
 	envelope(options) {
 		if (options.provider !== "jev-system-one" || options.system !== void 0 || options.tools !== void 0 || options.temperature !== void 0 || options.stop !== void 0 || options.maxTokens !== void 0 || options.reasoningEffort !== void 0 || options.messages.length !== 1) throw new LlmError("Jev is not a chat model", "UNSUPPORTED_OPTION");
@@ -357,6 +620,34 @@ const actionStatusSchema = z.enum([
 	"execution-failed",
 	"observed"
 ]);
+const failureSchema = z.object({
+	code: nonempty,
+	message: nonempty
+});
+const usageSchema = z.object({
+	inputTokens: z.number().int().nonnegative().optional(),
+	outputTokens: z.number().int().nonnegative().optional()
+});
+const networkSchema = z.object({
+	id: nonempty,
+	questionIds: z.array(nonempty).min(1),
+	requestBody: jsonSchema,
+	startedAt: nonempty,
+	dispatchedAt: nonempty.optional(),
+	settledAt: nonempty.optional(),
+	status: z.enum([
+		"pending",
+		"succeeded",
+		"failed"
+	]),
+	httpStatus: z.number().int().optional(),
+	rawResponseText: z.string().optional(),
+	rawResponse: jsonSchema.optional(),
+	returnedModel: z.string().optional(),
+	requestId: z.string().optional(),
+	usage: usageSchema.optional(),
+	failure: failureSchema.optional()
+});
 const attemptSchema = z.object({
 	id: nonempty,
 	startedAt: nonempty,
@@ -373,7 +664,12 @@ const attemptSchema = z.object({
 			}
 		}),
 		model: z.string(),
-		credentialRef: z.string().regex(/^(?:$|[A-Za-z_][A-Za-z0-9_]*)$/)
+		credentialRef: z.string().regex(/^(?:$|[A-Za-z_][A-Za-z0-9_]*)$/),
+		connectionId: z.enum([
+			"jev",
+			"luna-openrouter",
+			"luna-openai"
+		]).optional()
 	}),
 	request: requestSchema,
 	status: statusSchema,
@@ -383,14 +679,10 @@ const attemptSchema = z.object({
 		usable: z.boolean(),
 		reason: z.string().optional()
 	}).optional(),
-	failure: z.object({
-		code: nonempty,
-		message: nonempty
-	}).optional(),
-	usage: z.object({
-		inputTokens: z.number().int().nonnegative().optional(),
-		outputTokens: z.number().int().nonnegative().optional()
-	}).optional()
+	failure: failureSchema.optional(),
+	usage: usageSchema.optional(),
+	networkRecords: z.array(networkSchema).optional(),
+	usageComplete: z.boolean().optional()
 });
 const detailSchema = z.object({
 	id: nonempty,
@@ -426,7 +718,7 @@ const detailSchema = z.object({
 	});
 	for (const attempt of detail.attemptRecords) {
 		if (attempt.status !== "succeeded") continue;
-		if (attempt.rawResponse === void 0 || attempt.response === void 0) {
+		if (attempt.rawResponse === void 0 && attempt.networkRecords === void 0 || attempt.response === void 0) {
 			issue.addIssue({
 				code: "custom",
 				message: "successful attempt lacks response"
@@ -434,11 +726,17 @@ const detailSchema = z.object({
 			continue;
 		}
 		try {
-			const parsed = parseWireResponse(attempt.rawResponse, attempt.request);
-			if (JSON.stringify(parsed.response) !== JSON.stringify(attempt.response)) issue.addIssue({
+			const response = attempt.networkRecords === void 0 ? parseProtocolResponse(attempt.rawResponse, attempt.request, attempt.connection.connectionId).response : replayNetworkResponses(attempt.request, attempt.networkRecords, attempt.connection.connectionId ?? "jev");
+			if (JSON.stringify(response) !== JSON.stringify(attempt.response)) issue.addIssue({
 				code: "custom",
 				message: "stored response differs from raw answer"
 			});
+			if (attempt.networkRecords !== void 0) {
+				if (attempt.networkRecords.some((record) => !isRecord(record.requestBody) || record.requestBody.model !== attempt.connection.model)) throw new Error("Network model differs from connection");
+				if (attempt.rawResponse !== void 0 && (attempt.networkRecords.length !== 1 || JSON.stringify(attempt.rawResponse) !== JSON.stringify(attempt.networkRecords[0]?.rawResponse))) throw new Error("Attempt raw response differs from network response");
+				const aggregate = aggregateUsage(attempt.networkRecords, true);
+				if (JSON.stringify(aggregate.usage) !== JSON.stringify(attempt.usage) || aggregate.usageComplete !== attempt.usageComplete) throw new Error("Attempt usage differs from network usage");
+			}
 		} catch {
 			issue.addIssue({
 				code: "custom",
@@ -574,6 +872,16 @@ var JevLedger = class JevLedger {
 		}));
 		return attempt;
 	}
+	/** Persist each network input before dispatch and each response before the next batch. */
+	async saveNetwork(operationId, attemptId, networkRecords) {
+		await this.domain.table("operations").update(operationId, (current) => ({
+			...current,
+			attemptRecords: current.attemptRecords.map((attempt) => attempt.id === attemptId ? {
+				...attempt,
+				networkRecords
+			} : attempt)
+		}));
+	}
 	async settleAttempt(operationId, attemptId, patch) {
 		const at = (/* @__PURE__ */ new Date()).toISOString();
 		await this.domain.table("operations").update(operationId, (current) => {
@@ -649,6 +957,26 @@ var JevLedger = class JevLedger {
 	}
 };
 //#endregion
+//#region packages/jev/lib/types/types.js
+/** Public Jev judgment, operation, and safe Remote data types. */
+/** Resolve the explicitly selected protocol; custom URLs do not change its identity. */
+function resolveConnectionIdentity(values, id) {
+	const connectionId = id ?? (values.judgmentModel === "luna" ? `luna-${values.lunaApi}` : "jev");
+	const baseUrl = connectionId === "jev" ? values.baseUrl : connectionId === "luna-openrouter" ? values.lunaOpenRouterBaseUrl : values.lunaOpenAIBaseUrl;
+	let safeUrl = "";
+	try {
+		const url = new URL(baseUrl.trim());
+		if ((url.protocol === "https:" || url.protocol === "http:") && !url.username && !url.password && !url.search && !url.hash) safeUrl = url.toString();
+	} catch {}
+	return {
+		connectionId,
+		baseUrl: safeUrl,
+		model: connectionId === "jev" ? values.model.trim() : connectionId === "luna-openrouter" ? "openai/gpt-6-luna-decisions" : "gpt-6-luna",
+		credentialRef: (connectionId === "jev" ? values.credentialRef : connectionId === "luna-openrouter" ? values.lunaOpenRouterCredentialRef : values.lunaOpenAICredentialRef).trim(),
+		timeoutMs: values.timeoutMs
+	};
+}
+//#endregion
 //#region packages/jev/lib/types/index.js
 /** Jev common Host service and typed consumer API. */
 var __runInitializers = function(thisArg, initializers, value) {
@@ -700,11 +1028,35 @@ var JevError = class extends Error {
 };
 const PROBE = {
 	state: { diagnostic: "jev-connection-test" },
-	questions: [{
-		id: "ready",
-		kind: "noul",
-		prompt: "Is this a fixed connection diagnostic?"
-	}]
+	questions: [
+		{
+			id: "route",
+			kind: "choice",
+			prompt: "Choose the diagnostic option.",
+			options: [{
+				id: "left",
+				description: "Diagnostic option left"
+			}, {
+				id: "right",
+				description: "Diagnostic option right"
+			}]
+		},
+		{
+			id: "risk",
+			kind: "score",
+			prompt: "Score this fixed diagnostic on the supplied levels.",
+			levels: [
+				"low",
+				"medium",
+				"high"
+			]
+		},
+		{
+			id: "ready",
+			kind: "noul",
+			prompt: "Is this a fixed connection diagnostic?"
+		}
+	]
 };
 /** Validated live configuration presented through DSH settings. */
 const Config = s.object({
@@ -712,7 +1064,13 @@ const Config = s.object({
 	model: s.string().pattern(/^[^\s]+$/).default("jev-latest").volatile(),
 	credentialRef: s.string().pattern(/^[A-Za-z_][A-Za-z0-9_]*$/).default("JEV_API_KEY").volatile(),
 	timeoutMs: s.number().step(1).min(1).max(3e5).default(1e4).volatile(),
-	features: s.dict(s.boolean()).default({}).volatile()
+	features: s.dict(s.boolean()).default({}).volatile(),
+	judgmentModel: s.union(["jev", "luna"]).default("jev").volatile(),
+	lunaApi: s.union(["openrouter", "openai"]).default("openrouter").volatile(),
+	lunaOpenRouterBaseUrl: s.string().pattern(/^(?:$|https?:\/\/(?:\[[0-9a-fA-F:]+\]|[A-Za-z0-9.-]+)(?::[0-9]{1,5})?(?:\/[^?#\s]*)?)$/).default("https://openrouter.ai/api/alpha/decisions").volatile(),
+	lunaOpenRouterCredentialRef: s.string().pattern(/^[A-Za-z_][A-Za-z0-9_]*$/).default("JEV_LUNA_OPENROUTER_API_KEY").volatile(),
+	lunaOpenAIBaseUrl: s.string().pattern(/^(?:$|https?:\/\/(?:\[[0-9a-fA-F:]+\]|[A-Za-z0-9.-]+)(?::[0-9]{1,5})?(?:\/[^?#\s]*)?)$/).default("https://api.openai.com/v1/decisions").volatile(),
+	lunaOpenAICredentialRef: s.string().pattern(/^[A-Za-z_][A-Za-z0-9_]*$/).default("JEV_LUNA_OPENAI_API_KEY").volatile()
 });
 function safeFailure(error) {
 	if (error instanceof JevError) return {
@@ -729,7 +1087,10 @@ function safeFailure(error) {
 			"BAD_REQUEST",
 			"NETWORK",
 			"ABORTED",
-			"TIMEOUT"
+			"TIMEOUT",
+			"REFUSAL",
+			"INVALID_RESPONSE",
+			"FEATURE_DISABLED"
 		].includes(code)) return {
 			code,
 			message: `Jev ${code.toLowerCase().replaceAll("_", " ")}`
@@ -981,36 +1342,47 @@ let JevService = (() => {
 			return this.stages().cancel(batchId);
 		}
 		/** Load exact persisted input and raw Jev answer for one selected step. */
-		getStageAnalysisRecord(sessionId, stepId) {
-			return this.stages().detail(sessionId, stepId);
+		getStageAnalysisRecord(sessionId, stepId, recordId) {
+			return this.stages().detail(sessionId, stepId, recordId);
 		}
 		/** Report credential presence, source, and writability without its value. */
-		async getCredentialStatus() {
-			const info = await this.ctx.credentials.describe(credentialRef(this.config.credentialRef.get()));
+		async getCredentialStatus(connection) {
+			const identity = this.savedConnection(connection);
+			const info = await this.ctx.credentials.describe(credentialRef(identity.credentialRef));
 			return {
+				connection: identity,
 				configured: info.configured,
 				writable: info.writable,
 				...info.source === void 0 ? {} : { source: info.source }
 			};
 		}
 		/** Save or replace the current profile's configured credential reference. */
-		async setCredential(value) {
+		async setCredential(connection, value) {
 			if (value.trim().length === 0) throw new JevError("INVALID_CREDENTIAL", "Jev key must not be blank");
-			await this.ctx.credentials.set(credentialRef(this.config.credentialRef.get()), value.trim());
-			return this.getCredentialStatus();
+			const identity = this.savedConnection(connection);
+			await this.ctx.credentials.set(credentialRef(identity.credentialRef), value.trim());
+			const info = await this.ctx.credentials.describe(credentialRef(identity.credentialRef));
+			return {
+				connection: identity,
+				configured: info.configured,
+				writable: info.writable,
+				...info.source === void 0 ? {} : { source: info.source }
+			};
 		}
 		/** Run one fixed diagnostic without a business feature or user state. */
-		async testConnection(signal) {
+		async testConnection(connection, signal) {
+			const identity = this.savedConnection(connection, true);
 			return this.runActive(signal, async (lifetime) => {
 				const started = Date.now();
 				const operation = await this.records().create("diagnostic", {}, true);
 				try {
-					const result = await this.tryOnce(operation.id, PROBE, void 0, lifetime);
+					const result = await this.tryOnce(operation.id, PROBE, void 0, lifetime, void 0, identity);
 					if (lifetime.aborted) await this.records().setStatus(operation.id, "cancelled");
 					return {
 						ok: result.ok,
 						latencyMs: Date.now() - started,
 						recordId: operation.id,
+						connection: identity,
 						...result.ok ? {} : { failure: result.failure }
 					};
 				} catch (error) {
@@ -1035,7 +1407,7 @@ let JevService = (() => {
 					if (lifetime.aborted) return this.cancel(operation.id);
 					const request = await this.untilAbort(Promise.resolve(options.refresh(lifetime)), lifetime);
 					validateRequest(request);
-					const attempted = await this.tryOnce(operation.id, request, options.interpret, lifetime, options.featureId);
+					const attempted = await this.tryOnce(operation.id, request, options.interpret, lifetime, options.featureId, options.connection);
 					if (lifetime.aborted) return this.cancel(operation.id);
 					if (!attempted.ok) return {
 						kind: "failed",
@@ -1215,27 +1587,55 @@ let JevService = (() => {
 				throw new JevError("NO_INTERFACE", "Jev requires an available Web question interface to continue");
 			}
 		}
-		connectionIdentity() {
-			const baseUrl = this.config.baseUrl.get().trim();
-			const model = this.config.model.get().trim();
-			const ref = this.config.credentialRef.get().trim();
-			let safeUrl = "";
-			try {
-				const url = new URL(baseUrl);
-				if ((url.protocol === "https:" || url.protocol === "http:") && !url.username && !url.password && !url.search && !url.hash) safeUrl = url.toString();
-			} catch {}
+		configValues() {
 			return {
-				baseUrl: safeUrl,
-				model,
-				credentialRef: ref,
-				timeoutMs: this.config.timeoutMs.get()
+				baseUrl: this.config.baseUrl.get(),
+				model: this.config.model.get(),
+				credentialRef: this.config.credentialRef.get(),
+				timeoutMs: this.config.timeoutMs.get(),
+				features: this.config.features.get(),
+				judgmentModel: this.config.judgmentModel.get(),
+				lunaApi: this.config.lunaApi.get(),
+				lunaOpenRouterBaseUrl: this.config.lunaOpenRouterBaseUrl.get(),
+				lunaOpenRouterCredentialRef: this.config.lunaOpenRouterCredentialRef.get(),
+				lunaOpenAIBaseUrl: this.config.lunaOpenAIBaseUrl.get(),
+				lunaOpenAICredentialRef: this.config.lunaOpenAICredentialRef.get()
 			};
+		}
+		connectionIdentity(id) {
+			return resolveConnectionIdentity(this.configValues(), id);
+		}
+		savedConnection(expected, active = false) {
+			if (![
+				"jev",
+				"luna-openrouter",
+				"luna-openai"
+			].includes(expected.connectionId)) throw new JevError("CONNECTION_CHANGED", "Refresh the saved judgment connection");
+			const identity = this.connectionIdentity(active ? void 0 : expected.connectionId);
+			if (expected.connectionId !== identity.connectionId || expected.baseUrl !== identity.baseUrl || expected.model !== identity.model || expected.credentialRef !== identity.credentialRef || expected.timeoutMs !== identity.timeoutMs) throw new JevError("CONNECTION_CHANGED", "The saved judgment connection changed; refresh before continuing");
+			return identity;
 		}
 		/** Stable non-secret connection settings used to decide whether an old stage result is current. */
 		stageConnectionIdentity() {
+			const { connectionId, ...legacy } = this.connectionIdentity();
+			return connectionId === "jev" ? legacy : {
+				...legacy,
+				connectionId
+			};
+		}
+		/** All saved references must be checked before historical input is released to a provider. */
+		stageConnections() {
+			return [
+				"jev",
+				"luna-openrouter",
+				"luna-openai"
+			].map((id) => this.connectionIdentity(id));
+		}
+		/** Current saved connection without authentication values. */
+		judgmentConnectionIdentity() {
 			return this.connectionIdentity();
 		}
-		async tryOnce(operationId, request, interpret, outerSignal, featureId) {
+		async tryOnce(operationId, request, interpret, outerSignal, featureId, expectedConnection) {
 			let snapshot;
 			try {
 				snapshot = JSON.parse(JSON.stringify(request));
@@ -1243,28 +1643,32 @@ let JevService = (() => {
 			} catch {
 				throw new JevError("INVALID_INPUT", "Jev request must contain valid JSON state and questions");
 			}
-			const identity = this.connectionIdentity();
+			const identity = expectedConnection === void 0 ? this.connectionIdentity() : this.savedConnection(expectedConnection, true);
 			const attempt = await this.records().startAttempt(operationId, snapshot, {
 				baseUrl: identity.baseUrl,
 				model: identity.model,
-				credentialRef: identity.credentialRef
+				credentialRef: identity.credentialRef,
+				connectionId: identity.connectionId
 			}).catch(() => {
 				throw new JevError("LOG_WRITE_FAILED", "Jev input could not be saved; no request was sent");
 			});
 			let rawResponse;
 			let response;
+			let networkRecords = [];
 			let usage;
+			let usageComplete = false;
+			const timeout = AbortSignal.timeout(identity.timeoutMs);
+			const signal = AbortSignal.any([timeout, ...outerSignal === void 0 ? [] : [outerSignal]]);
 			try {
 				if (!identity.baseUrl || !identity.model || !identity.credentialRef) throw new JevError("CONNECTION_MISSING", "Jev service address, model, or credential reference is missing");
-				const key = await this.ctx.credentials.resolve(credentialRef(identity.credentialRef));
+				const key = await this.untilAbort(this.ctx.credentials.resolve(credentialRef(identity.credentialRef)), signal);
 				if (key === void 0) throw new JevError("CREDENTIAL_MISSING", "Jev credential is not configured");
 				const connection = {
 					...identity,
 					apiKey: key.value
 				};
-				const issued = this.adapter.issue(snapshot, connection, featureId === void 0 ? void 0 : () => this.isEnabled(featureId));
-				const timeout = AbortSignal.timeout(identity.timeoutMs);
-				const signal = AbortSignal.any([timeout, ...outerSignal === void 0 ? [] : [outerSignal]]);
+				const issued = this.adapter.issue(snapshot, connection, featureId === void 0 ? void 0 : () => this.isEnabled(featureId), (records) => this.records().saveNetwork(operationId, attempt.id, records));
+				networkRecords = issued.records;
 				try {
 					let text;
 					let finished = false;
@@ -1289,11 +1693,11 @@ let JevService = (() => {
 					}
 					if (!finished || text === void 0) throw new JevError("INVALID_RESPONSE", "Jev returned no answer");
 					try {
-						const raw = JSON.parse(text);
-						rawResponse = raw;
-						const parsed = parseWireResponse(raw, snapshot);
-						response = parsed.response;
-						usage = parsed.usage;
+						response = replayNetworkResponses(snapshot, networkRecords, identity.connectionId);
+						rawResponse = networkRecords.length === 1 ? networkRecords[0]?.rawResponse : void 0;
+						const aggregated = aggregateUsage(networkRecords, true);
+						usage = aggregated.usage;
+						usageComplete = aggregated.usageComplete;
 					} catch {
 						throw new JevError("INVALID_RESPONSE", "Jev answer failed complete type validation");
 					}
@@ -1308,6 +1712,8 @@ let JevService = (() => {
 						rawResponse,
 						response,
 						usage,
+						usageComplete,
+						networkRecords,
 						interpretation,
 						failure: {
 							code: "UNDETERMINED",
@@ -1330,6 +1736,8 @@ let JevService = (() => {
 					rawResponse,
 					response,
 					usage,
+					usageComplete,
+					networkRecords,
 					interpretation
 				}).catch(() => {
 					throw new JevError("LOG_WRITE_FAILED", "Jev result could not be saved");
@@ -1341,11 +1749,25 @@ let JevService = (() => {
 				};
 			} catch (error) {
 				if (error instanceof JevError && error.code === "LOG_WRITE_FAILED") throw error;
-				const failure = safeFailure(error);
+				const failure = outerSignal?.aborted ? {
+					code: "CANCELLED",
+					message: "Jev operation was cancelled"
+				} : timeout.aborted ? {
+					code: "TIMEOUT",
+					message: "Jev request timed out"
+				} : safeFailure(error);
+				rawResponse = networkRecords.length === 1 ? networkRecords[0]?.rawResponse : void 0;
+				const expectedPackets = identity.connectionId === "luna-openrouter" ? Math.ceil(snapshot.questions.length / 200) : 1;
+				const receivedAll = networkRecords.length === expectedPackets && networkRecords.every((record) => record.dispatchedAt !== void 0 && record.rawResponseText !== void 0);
+				const aggregate = aggregateUsage(networkRecords, receivedAll);
+				usage = aggregate.usage;
+				usageComplete = aggregate.usageComplete;
 				await this.records().settleAttempt(operationId, attempt.id, {
 					status: failure.code === "CANCELLED" ? "cancelled" : "failed",
 					...rawResponse === void 0 ? {} : { rawResponse },
 					...usage === void 0 ? {} : { usage },
+					usageComplete,
+					networkRecords,
 					failure
 				}).catch(() => {
 					throw new JevError("LOG_WRITE_FAILED", "Jev result could not be saved");

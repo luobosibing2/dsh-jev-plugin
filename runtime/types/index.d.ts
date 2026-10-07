@@ -5,7 +5,7 @@ import { TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol';
 import type { Agent } from '@deepseek-ai/dsh-agent/types';
 import type { StageNavigationManager } from './stage-navigation.ts';
 import type { StageAnalysisRecord, StageAnalysisRequest, StageBatchState, StageNavigationSnapshot } from './stage-types.ts';
-import type { JevActionReceipt, JevCredentialStatus, JevFeatureDefinition, JevFeatureView, JevOperationLink, JevProbeResult, JevRecordDetail, JevRecordFilter, JevRecordPage, JevRequest, JevResponse } from './types.ts';
+import type { JevActionReceipt, JevCredentialStatus, JevFeatureDefinition, JevFeatureView, JevOperationLink, JevProbeResult, JevRecordDetail, JevRecordFilter, JevRecordPage, JevRequest, JevResponse, JevConfigValues, JevConnectionId, JevConnectionIdentity } from './types.ts';
 export type * from './types.ts';
 export type * from './stage-types.ts';
 export { JEV_PROVIDER } from './adapter.ts';
@@ -16,14 +16,14 @@ export interface Config {
     credentialRef: Volatile<string>;
     timeoutMs: Volatile<number>;
     features: Volatile<Record<string, boolean>>;
+    judgmentModel: Volatile<'jev' | 'luna'>;
+    lunaApi: Volatile<'openrouter' | 'openai'>;
+    lunaOpenRouterBaseUrl: Volatile<string>;
+    lunaOpenRouterCredentialRef: Volatile<string>;
+    lunaOpenAIBaseUrl: Volatile<string>;
+    lunaOpenAICredentialRef: Volatile<string>;
 }
-interface ConfigValues {
-    baseUrl: string;
-    model: string;
-    credentialRef: string;
-    timeoutMs: number;
-    features: Record<string, boolean>;
-}
+type ConfigValues = JevConfigValues;
 /** A consumer refreshes this input for every manual attempt. */
 export interface JevJudgeOptions {
     featureId: string;
@@ -47,6 +47,7 @@ export interface JevJudgeOptions {
 /** Single-attempt consumers may read historical data without a running Agent. */
 export type JevJudgeOnceOptions = Omit<JevJudgeOptions, 'agent'> & {
     agent?: Agent;
+    connection?: JevConnectionIdentity;
 };
 /** A completed judgment is safe to consider only while `kind` is `ok`. */
 export type JevJudgeResult = {
@@ -87,7 +88,7 @@ export declare const Config: s<ConfigValues, Config>;
 export declare class JevService extends TypertRemoteService {
     private readonly config;
     static inject: string[];
-    static Config: s<ConfigValues, Config>;
+    static Config: s<JevConfigValues, Config>;
     private readonly adapter;
     private readonly features;
     private ledger?;
@@ -119,11 +120,11 @@ export declare class JevService extends TypertRemoteService {
     /** Load exact persisted input and raw Jev answer for one selected step. */
     getStageAnalysisRecord(sessionId: string, stepId: string, recordId?: string): Promise<StageAnalysisRecord | null>;
     /** Report credential presence, source, and writability without its value. */
-    getCredentialStatus(): Promise<JevCredentialStatus>;
+    getCredentialStatus(connection: JevConnectionIdentity): Promise<JevCredentialStatus>;
     /** Save or replace the current profile's configured credential reference. */
-    setCredential(value: string): Promise<JevCredentialStatus>;
+    setCredential(connection: JevConnectionIdentity, value: string): Promise<JevCredentialStatus>;
     /** Run one fixed diagnostic without a business feature or user state. */
-    testConnection(signal: AbortSignal): Promise<JevProbeResult>;
+    testConnection(connection: JevConnectionIdentity, signal: AbortSignal): Promise<JevProbeResult>;
     /** Judge one dependent operation; only a human retry invokes `refresh` again. */
     judge(options: JevJudgeOptions): Promise<JevJudgeResult>;
     /** Make one logged attempt without human waiting or automatic retry. Only `ok` permits adoption. */
@@ -138,14 +139,17 @@ export declare class JevService extends TypertRemoteService {
     /** Observe committed feature-setting changes synchronously; the consumer owns the disposer. */
     onFeatureStateChange(listener: (features: Readonly<Record<string, boolean>>) => void): () => void;
     private ask;
+    private configValues;
     private connectionIdentity;
+    private savedConnection;
     /** Stable non-secret connection settings used to decide whether an old stage result is current. */
-    stageConnectionIdentity(): {
-        baseUrl: string;
-        model: string;
-        credentialRef: string;
-        timeoutMs: number;
+    stageConnectionIdentity(): Omit<JevConnectionIdentity, 'connectionId'> & {
+        connectionId?: JevConnectionId;
     };
+    /** All saved references must be checked before historical input is released to a provider. */
+    stageConnections(): readonly JevConnectionIdentity[];
+    /** Current saved connection without authentication values. */
+    judgmentConnectionIdentity(): JevConnectionIdentity;
     private tryOnce;
     /** Record interrupted input without a model call, human question, or attempt; stable message links are idempotent. */
     recordInterrupted(featureId: string, link: JevOperationLink): Promise<JevRecordDetail>;

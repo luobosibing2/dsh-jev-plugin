@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /** Jev page behavior at the Host configuration and Remote seams. */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 import type { ButtonHTMLAttributes } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -11,7 +11,8 @@ import { en, zh, type JevLocaleKey } from '../src/client/locales.ts'
 import type { SupervisionConfigValues } from '../src/supervision-types.ts'
 import type { SelectionConfigValues } from '../src/selection-types.ts'
 import type { StageNavigationConfigValues } from '../src/stage-types.ts'
-import type { JevRecordDetail, JevRecordSummary } from '../src/types.ts'
+import { resolveConnectionIdentity, type JevCredentialStatus, type JevProbeResult, type JevRecordDetail, type JevRecordSummary } from '../src/types.ts'
+import { clientConfig } from './client-fixtures.ts'
 
 // The published primitive barrel imports optional DSH libraries that the Host
 // module table supplies at runtime. These narrow atoms keep component tests
@@ -23,12 +24,12 @@ vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => ({
   Switch: ({ checked, onChange, label, disabled }: { checked: boolean; onChange: (value: boolean) => void; label: string; disabled?: boolean }) => <button type="button" role="switch" aria-label={label} aria-checked={checked} disabled={disabled} onClick={() => { onChange(!checked) }} />,
 }))
 
-afterEach(() => { document.body.innerHTML = '' })
+afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
-function formStub(accept = true) {
+function formStub(accept = true, initial = clientConfig()) {
   let snapshot: ConfigFormSnapshot<JevConfigValues> = {
     status: 'ready',
-    value: { baseUrl: 'https://example.invalid', model: 'test-model', credentialRef: 'JEV_API_KEY', timeoutMs: 30000, features: {} },
+    value: structuredClone(initial),
     base: {}, user: {}, revision: 1, writable: true, mode: 'host',
   }
   const listeners = new Set<() => void>()
@@ -51,7 +52,7 @@ function formStub(accept = true) {
     set: async () => false,
     unset: async () => false,
   }
-  return { form, mutate }
+  return { form, mutate, update: (changes: Partial<JevConfigValues>) => { snapshot = { ...snapshot, value: { ...snapshot.value!, ...changes }, revision: snapshot.revision! + 1 }; for (const listener of listeners) listener() } }
 }
 
 function selectionFormStub(options: { accept?: boolean; initial?: SelectionConfigValues; loading?: boolean } = {}) {
@@ -123,9 +124,9 @@ function remoteStub(): JevPageRemote {
     listFeatures: vi.fn(async () => []),
     listRecords: vi.fn(async () => ({ items: [] })),
     getRecord: vi.fn(async () => null),
-    testConnection: vi.fn(async () => ({ ok: true, latencyMs: 18, recordId: 'probe-1' })),
-    getCredentialStatus: vi.fn(async () => ({ configured: true, writable: true, source: 'file' })),
-    setCredential: vi.fn(async () => ({ configured: true, writable: true, source: 'file' })),
+    testConnection: vi.fn(async connection => ({ connection, ok: true, latencyMs: 18, recordId: 'probe-1' })),
+    getCredentialStatus: vi.fn(async connection => ({ connection, configured: true, writable: true, source: 'file' })),
+    setCredential: vi.fn(async connection => ({ connection, configured: true, writable: true, source: 'file' })),
   }
 }
 
@@ -181,7 +182,7 @@ describe('Jev bundle page', () => {
 
     fireEvent.change(screen.getByLabelText(new RegExp(en.apiKey)), { target: { value: 'new-secret' } })
     fireEvent.click(screen.getByRole('button', { name: en.replaceKey }))
-    await waitFor(() => { expect(jev.setCredential).toHaveBeenCalledWith('new-secret') })
+    await waitFor(() => { expect(jev.setCredential).toHaveBeenCalledWith(resolveConnectionIdentity(form.getSnapshot().value!), 'new-secret') })
     expect(screen.queryByDisplayValue('new-secret')).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: en.testConnection }))
@@ -299,7 +300,7 @@ describe('Jev selection counts', () => {
     expect(en.selectionCountsHint).toContain('more files')
     expect(en.selectionCountsHint).toContain('original glob result')
     expect(zh.selectionCountsHint).toContain('超过排序上限')
-    expect(zh.selectionCountsHint).toContain('跳过 Jev')
+    expect(zh.selectionCountsHint).toContain('跳过判断排序')
     expect(en.rankedPathCount).toBe('Ranked paths shown')
     expect(zh.rankedPathCount).toBe('展示的已排序路径数')
   })
@@ -413,4 +414,235 @@ describe('Jev supervision settings', () => {
     expect((screen.getByLabelText(en.noProgressRounds) as HTMLInputElement).value).toBe('4')
     expect((await screen.findByRole('switch', { name: 'Disable completion-check' })).getAttribute('aria-checked')).toBe('true')
   })
+})
+
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>(done => { resolve = done })
+  return { promise, resolve }
+}
+
+function selectedInput(label: string): HTMLInputElement { return screen.getByLabelText(label) as HTMLInputElement }
+
+function selectLuna(api: 'openrouter' | 'openai') {
+  fireEvent.change(screen.getByLabelText(en.decisionModel), { target: { value: 'luna' } })
+  fireEvent.change(screen.getByLabelText(en.lunaApi), { target: { value: api } })
+}
+
+describe('saved Jev and Luna connections', () => {
+  it('defaults a legacy configuration to Jev while retaining its custom values', async () => {
+    const legacy = clientConfig({ baseUrl: 'https://legacy.invalid/systemone', model: 'custom-jev', credentialRef: 'LEGACY_KEY', timeoutMs: 12345 })
+    for (const field of ['judgmentModel', 'lunaApi', 'lunaOpenRouterBaseUrl', 'lunaOpenRouterCredentialRef', 'lunaOpenAIBaseUrl', 'lunaOpenAICredentialRef']) Reflect.deleteProperty(legacy, field)
+    const { form } = formStub(true, legacy)
+    const jev = remoteStub()
+    renderPage(form, jev)
+    await waitFor(() => { expect(jev.getCredentialStatus).toHaveBeenCalledTimes(1) })
+    expect(selectedInput(en.decisionModel).value).toBe('jev')
+    expect(selectedInput(en.baseUrl).value).toBe(legacy.baseUrl)
+    expect(selectedInput(en.model).value).toBe('custom-jev')
+    expect(selectedInput(en.timeoutMs).value).toBe('12345')
+    selectLuna('openrouter')
+    expect(selectedInput(en.baseUrl).value).toBe('https://openrouter.ai/api/alpha/decisions')
+    expect(selectedInput(en.credentialRef).value).toBe('JEV_LUNA_OPENROUTER_API_KEY')
+    expect(selectedInput(en.model).readOnly).toBe(true)
+    expect(selectedInput(en.model).value).toBe('openai/gpt-6-luna-decisions')
+    expect(jev.testConnection).not.toHaveBeenCalled()
+    expect(jev.setCredential).not.toHaveBeenCalled()
+  })
+
+  it('saves and restores all three connections without changing feature switches or shared limits', async () => {
+    const initial = clientConfig({ features: { example: true, 'test-log-admission': false }, timeoutMs: 24000 })
+    const { form, mutate } = formStub(true, initial)
+    const selection = selectionFormStub({ initial: { skillLimit: 8, fileCandidates: 77, fileLimit: 19 } })
+    const jev = remoteStub()
+    renderPage(form, jev, selection.form)
+    await screen.findByText(en.noFeatures)
+    for (const api of ['openrouter', 'openai'] as const) {
+      selectLuna(api)
+      fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: `https://${api}.invalid/decisions` } })
+      fireEvent.change(screen.getByLabelText(en.credentialRef), { target: { value: `${api.toUpperCase()}_JUDGE_KEY` } })
+      fireEvent.click(screen.getByRole('button', { name: en.saveConnection }))
+      await waitFor(() => { expect(form.getSnapshot().value?.lunaApi).toBe(api); expect((screen.getByRole('button', { name: en.saveConnection }) as HTMLButtonElement).disabled).toBe(true) })
+      await waitFor(() => { expect(jev.getCredentialStatus).toHaveBeenCalledWith(resolveConnectionIdentity(form.getSnapshot().value!)) })
+      expect(selectedInput(en.model).value).toBe(api === 'openrouter' ? 'openai/gpt-6-luna-decisions' : 'gpt-6-luna')
+    }
+    fireEvent.change(screen.getByLabelText(en.decisionModel), { target: { value: 'jev' } })
+    expect(selectedInput(en.baseUrl).value).toBe(initial.baseUrl)
+    expect(selectedInput(en.model).value).toBe(initial.model)
+    fireEvent.click(screen.getByRole('button', { name: en.saveConnection }))
+    await waitFor(() => { expect(form.getSnapshot().value?.judgmentModel).toBe('jev') })
+    expect(form.getSnapshot().value).toMatchObject({ features: initial.features, timeoutMs: 24000,
+      lunaOpenRouterBaseUrl: 'https://openrouter.invalid/decisions', lunaOpenRouterCredentialRef: 'OPENROUTER_JUDGE_KEY',
+      lunaOpenAIBaseUrl: 'https://openai.invalid/decisions', lunaOpenAICredentialRef: 'OPENAI_JUDGE_KEY' })
+    expect(mutate.mock.calls.every(([ops]) => ops.every(op => op.path[0] !== 'features'))).toBe(true)
+    expect(selectedInput(en.skillSummaryCount).value).toBe('8')
+    expect(selectedInput(en.fileRankingMaximum).value).toBe('77')
+    expect(selectedInput(en.rankedPathCount).value).toBe('19')
+    expect(selection.mutate).not.toHaveBeenCalled()
+    expect(jev.testConnection).not.toHaveBeenCalled()
+    expect(jev.setCredential).not.toHaveBeenCalled()
+  })
+
+  it('keeps a refused connection draft and blocks unsaved key writes and diagnostics', async () => {
+    const { form } = formStub(false)
+    const jev = remoteStub()
+    renderPage(form, jev)
+    await screen.findByText(en.noFeatures)
+    selectLuna('openai')
+    fireEvent.change(screen.getByLabelText(en.credentialRef), { target: { value: 'DRAFT_KEY' } })
+    fireEvent.click(screen.getByRole('button', { name: en.saveConnection }))
+    expect(await screen.findByText(en.saveFailed)).toBeTruthy()
+    expect(selectedInput(en.lunaApi).value).toBe('openai')
+    expect(selectedInput(en.credentialRef).value).toBe('DRAFT_KEY')
+    expect(form.getSnapshot().value?.judgmentModel).toBe('jev')
+    expect((screen.getByRole('button', { name: en.testConnection }) as HTMLButtonElement).disabled).toBe(true)
+    expect(selectedInput(en.apiKey).disabled).toBe(true)
+    expect(jev.testConnection).not.toHaveBeenCalled()
+    expect(jev.setCredential).not.toHaveBeenCalled()
+  })
+
+  it('ignores a late credential status from a previous channel', async () => {
+    const { form, update } = formStub()
+    const oldConnection = resolveConnectionIdentity(form.getSnapshot().value!)
+    const pending = deferred<JevCredentialStatus>()
+    const jev = remoteStub()
+    jev.getCredentialStatus = vi.fn(async connection => connection.connectionId === 'jev' ? pending.promise : { connection, configured: false, writable: true })
+    renderPage(form, jev)
+    await waitFor(() => { expect(jev.getCredentialStatus).toHaveBeenCalledWith(oldConnection) })
+    act(() => { update({ judgmentModel: 'luna', lunaApi: 'openai' }) })
+    await screen.findByText(new RegExp(en.missing))
+    await act(async () => { pending.resolve({ connection: oldConnection, configured: true, writable: false }); await pending.promise })
+    expect(screen.queryByText(new RegExp(en.configured))).toBeNull()
+    expect(selectedInput(en.apiKey).disabled).toBe(false)
+    expect(selectedInput(en.model).value).toBe('gpt-6-luna')
+  })
+
+  it.each([
+    { judgmentModel: 'luna' as const, lunaApi: 'openai' as const },
+    { credentialRef: 'CHANGED_JEV_KEY' },
+  ])('keeps new input after a late key completion when saved settings change: %j', async changes => {
+    const { form, update } = formStub()
+    const oldConnection = resolveConnectionIdentity(form.getSnapshot().value!)
+    const pending = deferred<JevCredentialStatus>()
+    const jev = remoteStub()
+    jev.setCredential = vi.fn(async () => pending.promise)
+    renderPage(form, jev)
+    await screen.findByText(new RegExp(en.configured))
+    fireEvent.change(screen.getByLabelText(new RegExp(en.apiKey)), { target: { value: 'old-input' } })
+    fireEvent.click(screen.getByRole('button', { name: en.replaceKey }))
+    await waitFor(() => { expect(jev.setCredential).toHaveBeenCalledWith(oldConnection, 'old-input') })
+    act(() => { update(changes) })
+    await screen.findByText(new RegExp(en.configured))
+    fireEvent.change(screen.getByLabelText(new RegExp(en.apiKey)), { target: { value: 'new-input' } })
+    await act(async () => { pending.resolve({ connection: oldConnection, configured: true, writable: true }); await pending.promise })
+    expect(screen.getByDisplayValue('new-input')).toBeTruthy()
+    expect(jev.setCredential).toHaveBeenCalledTimes(1)
+  })
+
+  it('aborts an old probe and retains the new channel result after the old response arrives', async () => {
+    const { form, update } = formStub(true, clientConfig({ judgmentModel: 'luna' }))
+    const oldConnection = resolveConnectionIdentity(form.getSnapshot().value!)
+    const pending = deferred<JevProbeResult>()
+    const jev = remoteStub()
+    jev.testConnection = vi.fn(async connection => connection.connectionId === 'luna-openrouter' ? pending.promise : { connection, ok: true, latencyMs: 57, recordId: 'new-probe' })
+    renderPage(form, jev)
+    await screen.findByText(en.noFeatures)
+    fireEvent.click(screen.getByRole('button', { name: en.testConnection }))
+    await waitFor(() => { expect(jev.testConnection).toHaveBeenCalledTimes(1) })
+    const oldSignal = vi.mocked(jev.testConnection).mock.calls[0]![1]
+    act(() => { update({ lunaApi: 'openai' }) })
+    await waitFor(() => { expect(oldSignal.aborted).toBe(true); expect(selectedInput(en.model).value).toBe('gpt-6-luna') })
+    fireEvent.click(screen.getByRole('button', { name: en.testConnection }))
+    await screen.findByText(/57 ms/)
+    await act(async () => { pending.resolve({ connection: oldConnection, ok: true, latencyMs: 999, recordId: 'old-probe' }); await pending.promise })
+    expect(screen.queryByText(/999 ms/)).toBeNull()
+    expect(screen.getByText(/57 ms/)).toBeTruthy()
+    expect(jev.testConnection).toHaveBeenLastCalledWith(resolveConnectionIdentity(form.getSnapshot().value!), expect.any(AbortSignal))
+  })
+
+  it('rejects a result with a different saved identity and retains the replacement input', async () => {
+    const { form } = formStub()
+    const jev = remoteStub()
+    const notifySuccess = vi.fn()
+    jev.setCredential = vi.fn(async connection => ({ connection: { ...connection, credentialRef: 'OTHER_REF' }, configured: true, writable: true }))
+    renderPage(form, jev, undefined, notifySuccess)
+    await screen.findByText(new RegExp(en.configured))
+    fireEvent.change(screen.getByLabelText(new RegExp(en.apiKey)), { target: { value: 'replacement' } })
+    fireEvent.click(screen.getByRole('button', { name: en.replaceKey }))
+    await screen.findByText(en.connectionChanged)
+    expect(screen.getByDisplayValue('replacement')).toBeTruthy()
+    expect(notifySuccess).not.toHaveBeenCalled()
+  })
+
+  it('retains a draft when a late accepted save no longer matches the current saved settings', async () => {
+    const { form, mutate, update } = formStub()
+    const pending = deferred<boolean>()
+    mutate.mockImplementationOnce(async () => pending.promise)
+    const jev = remoteStub()
+    renderPage(form, jev)
+    await screen.findByText(en.noFeatures)
+    fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://draft.invalid' } })
+    fireEvent.click(screen.getByRole('button', { name: en.saveConnection }))
+    await waitFor(() => { expect(mutate).toHaveBeenCalledTimes(1) })
+    act(() => { update({ baseUrl: 'https://elsewhere.invalid' }) })
+    await act(async () => { pending.resolve(true); await pending.promise })
+    expect(await screen.findByText(en.connectionChanged)).toBeTruthy()
+    expect(selectedInput(en.baseUrl).value).toBe('https://draft.invalid')
+    expect(form.getSnapshot().value?.baseUrl).toBe('https://elsewhere.invalid')
+  })
+
+  it('localizes both Luna selectors and the fixed model explanation in Chinese', async () => {
+    const { form } = formStub(true, clientConfig({ judgmentModel: 'luna', lunaApi: 'openai' }))
+    render(<JevPage view="page" form={form} jev={remoteStub()} notifySuccess={() => {}} t={(key: JevLocaleKey) => zh[key]} />)
+    expect(await screen.findByText(zh.noFeatures)).toBeTruthy()
+    expect(selectedInput(zh.decisionModel).value).toBe('luna')
+    expect(selectedInput(zh.lunaApi).value).toBe('openai')
+    expect(screen.getByText(zh.lunaModelHint)).toBeTruthy()
+    expect(screen.getByText(zh.diagnosticHint)).toBeTruthy()
+    expect(Object.keys(en).sort()).toEqual(Object.keys(zh).sort())
+  })
+
+  it('shows actual provider packets separately from normalized answers and retains legacy records', async () => {
+    const { form } = formStub()
+    const jev = remoteStub()
+    const raw = { id: 'official-request', model: 'gpt-6-luna-reported', answers: [{ name: 'ready', type: 'predicate', probability: 0.8 }] }
+    const record: JevRecordDetail = {
+      id: 'luna-record', featureId: 'example', diagnostic: true, status: 'succeeded', startedAt: '2026-10-07T00:00:00Z', updatedAt: '2026-10-07T00:00:01Z', attempts: 2,
+      link: {}, receipts: [], attemptRecords: [
+        { id: 'legacy', startedAt: '2026-09-26T00:00:00Z', status: 'failed', connection: { baseUrl: 'https://legacy.invalid', model: 'legacy-model', credentialRef: 'LEGACY_REF' }, request: { state: {}, questions: [] } },
+        { id: 'official', startedAt: '2026-10-07T00:00:00Z', status: 'succeeded', connection: { connectionId: 'luna-openai', baseUrl: 'https://api.openai.com/v1/decisions', model: 'gpt-6-luna', credentialRef: 'LUNA_REF' },
+          request: { state: { original: 'full-input' }, questions: [{ id: 'ready', kind: 'noul', prompt: 'Ready?' }] }, rawResponse: raw,
+          response: { answers: [{ id: 'ready', kind: 'noul', probability: 0.8 }] }, usageComplete: false,
+          networkRecords: [{ id: 'packet-1', questionIds: ['ready'], startedAt: '2026-10-07T00:00:00Z', status: 'succeeded', httpStatus: 200,
+            requestBody: { input: '{"original":"full-input"}', questions: [{ name: 'ready', type: 'predicate', instruction: 'Ready?' }] }, rawResponse: raw, rawResponseText: JSON.stringify(raw), returnedModel: raw.model, requestId: raw.id, usage: { inputTokens: 12 } }],
+        },
+      ],
+    }
+    jev.listRecords = vi.fn(async () => ({ items: [record] }))
+    jev.getRecord = vi.fn(async () => record)
+    renderPage(form, jev)
+    fireEvent.click(screen.getByRole('tab', { name: en.records }))
+    fireEvent.click(await screen.findByRole('button', { name: en.details }))
+    await screen.findByText(en.providerRequests)
+    expect(screen.getByText(JSON.stringify(raw))).toBeTruthy()
+    expect(screen.getByText(en.usageIncomplete)).toBeTruthy()
+    expect(screen.getByText(en.requestBody).nextElementSibling?.textContent).toContain('"type": "predicate"')
+    expect(screen.getByText(en.answer).nextElementSibling?.textContent).toContain('"kind": "noul"')
+    expect(screen.getByText(en.reportedModel).nextElementSibling?.textContent).toContain('gpt-6-luna-reported')
+    expect(screen.getAllByText(en.connectionIdentity)[0]?.nextElementSibling?.textContent).toContain('legacy-model')
+    expect(screen.getAllByText(en.connectionIdentity)[0]?.nextElementSibling?.textContent).not.toContain('connectionId')
+  })
+})
+
+it('keeps edited fields while accepting a new saved value for an unedited hidden connection', async () => {
+  const { form, update } = formStub()
+  const jev = remoteStub()
+  renderPage(form, jev)
+  await screen.findByText(en.noFeatures)
+  fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://jev-draft.invalid' } })
+  act(() => { update({ lunaOpenAIBaseUrl: 'https://latest-official.invalid/decisions' }) })
+  expect(selectedInput(en.baseUrl).value).toBe('https://jev-draft.invalid')
+  fireEvent.click(screen.getByRole('button', { name: en.saveConnection }))
+  await waitFor(() => { expect(form.getSnapshot().value?.baseUrl).toBe('https://jev-draft.invalid') })
+  expect(form.getSnapshot().value?.lunaOpenAIBaseUrl).toBe('https://latest-official.invalid/decisions')
 })

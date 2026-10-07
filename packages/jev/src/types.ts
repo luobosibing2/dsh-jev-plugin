@@ -16,6 +16,71 @@ export type JevAnswer =
 export interface JevRequest { state: Json; questions: readonly JevQuestion[] }
 export interface JevResponse { answers: readonly JevAnswer[] }
 
+export type JevJudgmentModel = 'jev' | 'luna'
+export type JevLunaApi = 'openrouter' | 'openai'
+export type JevConnectionId = 'jev' | 'luna-openrouter' | 'luna-openai'
+
+/** Profile settings contain credential references, never authentication values. */
+export interface JevConfigValues {
+  baseUrl: string
+  model: string
+  credentialRef: string
+  timeoutMs: number
+  features: Record<string, boolean>
+  judgmentModel: JevJudgmentModel
+  lunaApi: JevLunaApi
+  lunaOpenRouterBaseUrl: string
+  lunaOpenRouterCredentialRef: string
+  lunaOpenAIBaseUrl: string
+  lunaOpenAICredentialRef: string
+}
+
+/** A saved connection identity used to associate asynchronous Remote results. */
+export interface JevConnectionIdentity {
+  connectionId: JevConnectionId
+  baseUrl: string
+  model: string
+  credentialRef: string
+  timeoutMs: number
+}
+
+/** Resolve the explicitly selected protocol; custom URLs do not change its identity. */
+export function resolveConnectionIdentity(values: JevConfigValues, id?: JevConnectionId): JevConnectionIdentity {
+  const connectionId = id ?? (values.judgmentModel === 'luna' ? `luna-${values.lunaApi}` : 'jev')
+  const baseUrl = connectionId === 'jev' ? values.baseUrl
+    : connectionId === 'luna-openrouter' ? values.lunaOpenRouterBaseUrl : values.lunaOpenAIBaseUrl
+  let safeUrl = ''
+  try {
+    const url = new URL(baseUrl.trim())
+    if ((url.protocol === 'https:' || url.protocol === 'http:') && !url.username && !url.password && !url.search && !url.hash) safeUrl = url.toString()
+  } catch { /* An unconfigured address has no dispatchable URL. */ }
+  return { connectionId, baseUrl: safeUrl,
+    model: connectionId === 'jev' ? values.model.trim() : connectionId === 'luna-openrouter' ? 'openai/gpt-6-luna-decisions' : 'gpt-6-luna',
+    credentialRef: (connectionId === 'jev' ? values.credentialRef
+      : connectionId === 'luna-openrouter' ? values.lunaOpenRouterCredentialRef : values.lunaOpenAICredentialRef).trim(),
+    timeoutMs: values.timeoutMs }
+}
+
+export interface JevUsage { inputTokens?: number; outputTokens?: number }
+
+/** One prepared HTTP request and its outcome, without headers or authentication values. */
+export interface JevNetworkRecord {
+  id: string
+  questionIds: readonly string[]
+  requestBody: Json
+  startedAt: string
+  dispatchedAt?: string
+  settledAt?: string
+  status: 'pending' | 'succeeded' | 'failed'
+  httpStatus?: number
+  rawResponseText?: string
+  rawResponse?: Json
+  returnedModel?: string
+  requestId?: string
+  usage?: JevUsage
+  failure?: { code: string; message: string }
+}
+
 export interface JevFeatureDefinition {
   id: string
   name: string
@@ -47,14 +112,16 @@ export interface JevAttemptRecord {
   startedAt: string
   settledAt?: string
   latencyMs?: number
-  connection: { baseUrl: string; model: string; credentialRef: string }
+  connection: { baseUrl: string; model: string; credentialRef: string; connectionId?: JevConnectionId }
   request: JevRequest
   status: JevRecordStatus
   rawResponse?: Json
   response?: JevResponse
   interpretation?: { usable: boolean; reason?: string }
   failure?: { code: string; message: string }
-  usage?: { inputTokens?: number; outputTokens?: number }
+  usage?: JevUsage
+  networkRecords?: readonly JevNetworkRecord[]
+  usageComplete?: boolean
 }
 
 export interface JevRecordSummary {
@@ -86,5 +153,5 @@ export interface JevRecordFilter {
 
 export interface JevRecordPage { items: readonly JevRecordSummary[]; nextCursor?: string }
 
-export interface JevCredentialStatus { configured: boolean; writable: boolean; source?: string }
-export interface JevProbeResult { ok: boolean; latencyMs: number; recordId: string; failure?: { code: string; message: string } }
+export interface JevCredentialStatus { connection: JevConnectionIdentity; configured: boolean; writable: boolean; source?: string }
+export interface JevProbeResult { connection: JevConnectionIdentity; ok: boolean; latencyMs: number; recordId: string; failure?: { code: string; message: string } }

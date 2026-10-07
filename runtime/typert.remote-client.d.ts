@@ -4,32 +4,32 @@ import type {
   TypertRemoteContribution,
 } from '@deepseek-ai/dsh-typert-protocol'
 import type { StageAnalysisRecord, StageAnalysisRequest, StageBatchState, StageNavigationSnapshot } from '@dsh-jev/plugin/stage-types'
-import type { JevCredentialStatus, JevFeatureView, JevProbeResult, JevRecordDetail, JevRecordFilter, JevRecordPage } from '@dsh-jev/plugin/types'
+import type { JevConnectionIdentity, JevCredentialStatus, JevFeatureView, JevProbeResult, JevRecordDetail, JevRecordFilter, JevRecordPage } from '@dsh-jev/plugin/types'
 
 declare module '@deepseek-ai/dsh-typert-protocol' {
   interface TypertRemoteNamespace$6a6576 {
     cancelStageAnalysis: (batchId: string) => Promise<RemoteResult<void>>
-    getCredentialStatus: () => Promise<RemoteResult<JevCredentialStatus>>
+    getCredentialStatus: (connection: JevConnectionIdentity) => Promise<RemoteResult<JevCredentialStatus>>
     getRecord: (id: string) => Promise<RemoteResult<JevRecordDetail | null>>
     getStageAnalysisRecord: (sessionId: string, stepId: string, recordId?: string) => Promise<RemoteResult<StageAnalysisRecord | null>>
     getStageNavigation: (sessionId: string, signal?: AbortSignal) => Promise<RemoteResult<StageNavigationSnapshot>>
     listFeatures: () => Promise<RemoteResult<JevFeatureView[]>>
     listRecords: (filter: JevRecordFilter) => Promise<RemoteResult<JevRecordPage>>
-    setCredential: (value: string) => Promise<RemoteResult<JevCredentialStatus>>
+    setCredential: (connection: JevConnectionIdentity, value: string) => Promise<RemoteResult<JevCredentialStatus>>
     startStageAnalysis: (request: StageAnalysisRequest) => Promise<RemoteResult<StageBatchState>>
-    testConnection: (signal?: AbortSignal) => Promise<RemoteResult<JevProbeResult>>
+    testConnection: (connection: JevConnectionIdentity, signal?: AbortSignal) => Promise<RemoteResult<JevProbeResult>>
   }
   interface TypertRemoteMap {
     'jev/cancelStageAnalysis': (batchId: string) => Promise<RemoteResult<void>>
-    'jev/getCredentialStatus': () => Promise<RemoteResult<JevCredentialStatus>>
+    'jev/getCredentialStatus': (connection: JevConnectionIdentity) => Promise<RemoteResult<JevCredentialStatus>>
     'jev/getRecord': (id: string) => Promise<RemoteResult<JevRecordDetail | null>>
     'jev/getStageAnalysisRecord': (sessionId: string, stepId: string, recordId?: string) => Promise<RemoteResult<StageAnalysisRecord | null>>
     'jev/getStageNavigation': (sessionId: string, signal?: AbortSignal) => Promise<RemoteResult<StageNavigationSnapshot>>
     'jev/listFeatures': () => Promise<RemoteResult<JevFeatureView[]>>
     'jev/listRecords': (filter: JevRecordFilter) => Promise<RemoteResult<JevRecordPage>>
-    'jev/setCredential': (value: string) => Promise<RemoteResult<JevCredentialStatus>>
+    'jev/setCredential': (connection: JevConnectionIdentity, value: string) => Promise<RemoteResult<JevCredentialStatus>>
     'jev/startStageAnalysis': (request: StageAnalysisRequest) => Promise<RemoteResult<StageBatchState>>
-    'jev/testConnection': (signal?: AbortSignal) => Promise<RemoteResult<JevProbeResult>>
+    'jev/testConnection': (connection: JevConnectionIdentity, signal?: AbortSignal) => Promise<RemoteResult<JevProbeResult>>
   }
   interface TypertRemoteNamespaceMap {
     'jev': TypertRemoteNamespace$6a6576

@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { RemoteError, type RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
 import { jevPageRemote, jevStageRemote, type JevWireRemote } from '../src/client/remote-adapter.ts'
 import type { StageNavigationSnapshot, StageBatchState, StageAnalysisRecord } from '../src/stage-types.ts'
+import { resolveConnectionIdentity } from '../src/types.ts'
+import { clientConfig } from './client-fixtures.ts'
 import type {
   JevCredentialStatus, JevFeatureView, JevProbeResult, JevRecordDetail, JevRecordPage,
 } from '../src/types.ts'
@@ -18,8 +20,9 @@ const detail: JevRecordDetail = {
   startedAt: '2026-09-26T00:00:00.000Z', updatedAt: '2026-09-26T00:00:01.000Z',
   attempts: 1, link: {}, attemptRecords: [], receipts: [],
 }
-const credential: JevCredentialStatus = { configured: true, writable: false, source: 'environment' }
-const probe: JevProbeResult = { ok: true, latencyMs: 12, recordId: 'probe' }
+const connection = resolveConnectionIdentity(clientConfig({ judgmentModel: 'luna', lunaApi: 'openai' }))
+const credential: JevCredentialStatus = { connection, configured: true, writable: false, source: 'environment' }
+const probe: JevProbeResult = { connection, ok: true, latencyMs: 12, recordId: 'probe' }
 const stageSnapshot: StageNavigationSnapshot = { sessionId: 'session-1', cursor: 0, featureEnabled: true, turns: [] }
 const batch: StageBatchState = { id: 'batch-1', sessionId: 'session-1', status: 'completed', total: 0, completed: 0, failed: 0, cancelled: 0 }
 
@@ -48,13 +51,14 @@ describe('Jev Remote page adapter', () => {
     expect(await adapted.listFeatures()).toBe(features)
     expect(await adapted.listRecords(filter)).toBe(page)
     expect(await adapted.getRecord('record')).toBe(detail)
-    expect(await adapted.testConnection(signal)).toBe(probe)
-    expect(await adapted.getCredentialStatus()).toBe(credential)
-    expect(await adapted.setCredential('new-secret')).toBe(credential)
+    expect(await adapted.testConnection(connection, signal)).toBe(probe)
+    expect(await adapted.getCredentialStatus(connection)).toBe(credential)
+    expect(await adapted.setCredential(connection, 'new-secret')).toBe(credential)
     expect(remote.listRecords).toHaveBeenCalledWith(filter)
     expect(remote.getRecord).toHaveBeenCalledWith('record')
-    expect(remote.testConnection).toHaveBeenCalledWith(signal)
-    expect(remote.setCredential).toHaveBeenCalledWith('new-secret')
+    expect(remote.testConnection).toHaveBeenCalledWith(connection, signal)
+    expect(remote.getCredentialStatus).toHaveBeenCalledWith(connection)
+    expect(remote.setCredential).toHaveBeenCalledWith(connection, 'new-secret')
   })
 
   it('rejects every Remote failure branch before it reaches page data', async () => {
@@ -76,9 +80,9 @@ describe('Jev Remote page adapter', () => {
     await expect(adapted.listFeatures()).rejects.toBe(error)
     await expect(adapted.listRecords({ limit: 25 })).rejects.toBe(error)
     await expect(adapted.getRecord('record')).rejects.toBe(error)
-    await expect(adapted.testConnection(new AbortController().signal)).rejects.toBe(error)
-    await expect(adapted.getCredentialStatus()).rejects.toBe(error)
-    await expect(adapted.setCredential('new-secret')).rejects.toBe(error)
+    await expect(adapted.testConnection(connection, new AbortController().signal)).rejects.toBe(error)
+    await expect(adapted.getCredentialStatus(connection)).rejects.toBe(error)
+    await expect(adapted.setCredential(connection, 'new-secret')).rejects.toBe(error)
     const stage = jevStageRemote(remote)
     await expect(stage.getStageNavigation('session-1', new AbortController().signal)).rejects.toBe(error)
     await expect(stage.startStageAnalysis({ sessionId: 'session-1', scope: { kind: 'all' }, mode: 'missing' })).rejects.toBe(error)

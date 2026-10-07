@@ -1,5 +1,5 @@
 import { type Domain } from '@deepseek-ai/dsh-storage-domain';
-import type { JevActionReceipt, JevAttemptRecord, JevOperationLink, JevRecordDetail, JevRecordFilter, JevRecordPage, JevRecordStatus, JevRequest } from './types.ts';
+import type { JevActionReceipt, JevAttemptRecord, JevOperationLink, JevRecordDetail, JevNetworkRecord, JevRecordFilter, JevRecordPage, JevRecordStatus, JevRequest } from './types.ts';
 /** Profile directory identity is part of the domain name even when a backend is shared. */
 export declare function ledgerSpec(profileDir: string): {
     name: string;
@@ -26,7 +26,9 @@ export declare class JevLedger {
     createInterrupted(featureId: string, link: JevOperationLink): Promise<JevRecordDetail>;
     get(id: string): JevRecordDetail | null;
     startAttempt(operationId: string, request: JevRequest, connection: JevAttemptRecord['connection']): Promise<JevAttemptRecord>;
-    settleAttempt(operationId: string, attemptId: string, patch: Pick<JevAttemptRecord, 'status' | 'response' | 'rawResponse' | 'failure' | 'usage' | 'interpretation'>): Promise<void>;
+    /** Persist each network input before dispatch and each response before the next batch. */
+    saveNetwork(operationId: string, attemptId: string, networkRecords: readonly JevNetworkRecord[]): Promise<void>;
+    settleAttempt(operationId: string, attemptId: string, patch: Pick<JevAttemptRecord, 'status' | 'response' | 'rawResponse' | 'failure' | 'usage' | 'usageComplete' | 'networkRecords' | 'interpretation'>): Promise<void>;
     setStatus(operationId: string, status: JevRecordStatus): Promise<void>;
     /** Preserve a pre-attempt or ledger-stage failure without inventing an HTTP attempt. */
     failOperation(operationId: string, failure: {

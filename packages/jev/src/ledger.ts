@@ -3,10 +3,10 @@ import { createHash, randomUUID } from 'node:crypto'
 import { defineDomain, domainTable, type Domain } from '@deepseek-ai/dsh-storage-domain'
 import { z } from 'zod'
 import { validateRequest } from './wire.ts'
-import { parseWireResponse } from './wire.ts'
+import { aggregateUsage, parseProtocolResponse, replayNetworkResponses } from './wire.ts'
 import type {
   JevActionReceipt, JevAttemptRecord, JevInput, JevOperationLink, JevRecordDetail,
-  JevRecordFilter, JevRecordPage, JevRecordStatus, JevRequest, Json,
+  JevNetworkRecord, JevRecordFilter, JevRecordPage, JevRecordStatus, JevRequest, Json,
 } from './types.ts'
 
 const STATUS = new Set<JevRecordStatus>(['pending', 'waiting', 'succeeded', 'failed', 'cancelled', 'interrupted'])
@@ -52,6 +52,14 @@ const answerSchema = z.discriminatedUnion('kind', [
 ])
 const statusSchema = z.enum(['pending', 'waiting', 'succeeded', 'failed', 'cancelled', 'interrupted'])
 const actionStatusSchema = z.enum(['unconfirmed', 'not-adopted', 'cancelled', 'executed', 'execution-failed', 'observed'])
+const failureSchema = z.object({ code: nonempty, message: nonempty })
+const usageSchema = z.object({ inputTokens: z.number().int().nonnegative().optional(), outputTokens: z.number().int().nonnegative().optional() })
+const networkSchema = z.object({
+  id: nonempty, questionIds: z.array(nonempty).min(1), requestBody: jsonSchema,
+  startedAt: nonempty, dispatchedAt: nonempty.optional(), settledAt: nonempty.optional(), status: z.enum(['pending', 'succeeded', 'failed']),
+  httpStatus: z.number().int().optional(), rawResponseText: z.string().optional(), rawResponse: jsonSchema.optional(),
+  returnedModel: z.string().optional(), requestId: z.string().optional(), usage: usageSchema.optional(), failure: failureSchema.optional(),
+})
 const attemptSchema = z.object({
   id: nonempty, startedAt: nonempty, settledAt: nonempty.optional(), latencyMs: z.number().nonnegative().optional(),
   connection: z.object({
@@ -64,12 +72,12 @@ const attemptSchema = z.object({
       } catch { return false }
     }),
     model: z.string(), credentialRef: z.string().regex(/^(?:$|[A-Za-z_][A-Za-z0-9_]*)$/),
+    connectionId: z.enum(['jev', 'luna-openrouter', 'luna-openai']).optional(),
   }),
   request: requestSchema, status: statusSchema,
   rawResponse: jsonSchema.optional(), response: z.object({ answers: z.array(answerSchema) }).optional(),
   interpretation: z.object({ usable: z.boolean(), reason: z.string().optional() }).optional(),
-  failure: z.object({ code: nonempty, message: nonempty }).optional(),
-  usage: z.object({ inputTokens: z.number().int().nonnegative().optional(), outputTokens: z.number().int().nonnegative().optional() }).optional(),
+  failure: failureSchema.optional(), usage: usageSchema.optional(), networkRecords: z.array(networkSchema).optional(), usageComplete: z.boolean().optional(),
 })
 const detailSchema: z.ZodType<JevRecordDetail> = z.object({
   id: nonempty, featureId: nonempty, sessionId: nonempty.optional(),
@@ -85,14 +93,23 @@ const detailSchema: z.ZodType<JevRecordDetail> = z.object({
   }
   for (const attempt of detail.attemptRecords) {
     if (attempt.status !== 'succeeded') continue
-    if (attempt.rawResponse === undefined || attempt.response === undefined) {
+    if ((attempt.rawResponse === undefined && attempt.networkRecords === undefined) || attempt.response === undefined) {
       issue.addIssue({ code: 'custom', message: 'successful attempt lacks response' })
       continue
     }
     try {
-      const parsed = parseWireResponse(attempt.rawResponse, attempt.request)
-      if (JSON.stringify(parsed.response) !== JSON.stringify(attempt.response)) {
+      const response = attempt.networkRecords === undefined
+        ? parseProtocolResponse(attempt.rawResponse, attempt.request, attempt.connection.connectionId).response
+        : replayNetworkResponses(attempt.request, attempt.networkRecords, attempt.connection.connectionId ?? 'jev')
+      if (JSON.stringify(response) !== JSON.stringify(attempt.response)) {
         issue.addIssue({ code: 'custom', message: 'stored response differs from raw answer' })
+      }
+      if (attempt.networkRecords !== undefined) {
+        if (attempt.networkRecords.some(record => !isRecord(record.requestBody) || record.requestBody.model !== attempt.connection.model)) throw new Error('Network model differs from connection')
+        if (attempt.rawResponse !== undefined && (attempt.networkRecords.length !== 1
+          || JSON.stringify(attempt.rawResponse) !== JSON.stringify(attempt.networkRecords[0]?.rawResponse))) throw new Error('Attempt raw response differs from network response')
+        const aggregate = aggregateUsage(attempt.networkRecords, true)
+        if (JSON.stringify(aggregate.usage) !== JSON.stringify(attempt.usage) || aggregate.usageComplete !== attempt.usageComplete) throw new Error('Attempt usage differs from network usage')
       }
     } catch {
       issue.addIssue({ code: 'custom', message: 'successful attempt has invalid raw answer' })
@@ -194,7 +211,14 @@ export class JevLedger {
     return attempt
   }
 
-  async settleAttempt(operationId: string, attemptId: string, patch: Pick<JevAttemptRecord, 'status' | 'response' | 'rawResponse' | 'failure' | 'usage' | 'interpretation'>): Promise<void> {
+  /** Persist each network input before dispatch and each response before the next batch. */
+  async saveNetwork(operationId: string, attemptId: string, networkRecords: readonly JevNetworkRecord[]): Promise<void> {
+    await this.domain.table('operations').update(operationId, current => ({ ...current,
+      attemptRecords: current.attemptRecords.map(attempt => attempt.id === attemptId ? { ...attempt, networkRecords } : attempt),
+    }))
+  }
+
+  async settleAttempt(operationId: string, attemptId: string, patch: Pick<JevAttemptRecord, 'status' | 'response' | 'rawResponse' | 'failure' | 'usage' | 'usageComplete' | 'networkRecords' | 'interpretation'>): Promise<void> {
     const at = new Date().toISOString()
     await this.domain.table('operations').update(operationId, current => {
       if (!current.attemptRecords.some(attempt => attempt.id === attemptId)) throw new Error('Jev attempt not found')
