@@ -1,7 +1,7 @@
 /** Dedicated System One adapter used only by JevService's typed one-shot calls. */
 import { randomUUID } from 'node:crypto';
 import { LlmAdapter, LlmError, attributionHeaders } from '@deepseek-ai/dsh-llm';
-import { DecisionResponseError, knownUsage, parseProtocolResponse, protocolBody, validateRequest } from "./wire.js";
+import { DecisionResponseError, isJson, knownUsage, parseProtocolResponse, protocolBody, validateRequest } from "./wire.js";
 export const JEV_PROVIDER = 'jev-system-one';
 /** The adapter never advertises a chat model and rejects calls lacking a service-issued nonce. */
 export class JevAdapter extends LlmAdapter {
@@ -98,8 +98,7 @@ export class JevAdapter extends LlmAdapter {
         exchange.rawResponseText = raw;
         try {
             const parsed = JSON.parse(raw);
-            if (parsed !== undefined) {
-                // JSON.parse receives provider JSON text; the decoder validates all finite JSON values.
+            if (isJson(parsed)) {
                 exchange.rawResponse = parsed;
                 exchange.usage = knownUsage(parsed);
                 if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
@@ -110,7 +109,7 @@ export class JevAdapter extends LlmAdapter {
                 }
             }
         }
-        catch { /* The original non-JSON body remains available on the failed exchange. */ }
+        catch { /* The original body remains available even when it is not finite JSON. */ }
         if (!response.ok) {
             const code = response.status === 401 || response.status === 403 ? 'AUTH'
                 : response.status === 402 ? 'PAYMENT_REQUIRED'
