@@ -1,24 +1,25 @@
 function record(value) {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
-function json(value) {
+/** A parsed response may contain overflowing numbers, including in nested metadata. */
+export function isJson(value) {
     if (value === null || typeof value === 'string' || typeof value === 'boolean')
         return true;
     if (typeof value === 'number')
         return Number.isFinite(value);
     if (Array.isArray(value))
-        return value.every(json);
-    return record(value) && Object.values(value).every(json);
+        return value.every(isJson);
+    return record(value) && Object.values(value).every(isJson);
 }
 function input(value) {
-    return typeof value === 'string' || (json(value) && value !== null && typeof value === 'object');
+    return typeof value === 'string' || (isJson(value) && value !== null && typeof value === 'object');
 }
 function probability(value) {
     return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
 }
 /** Reject invalid questions before a ledger write or model call. */
 export function validateRequest(request) {
-    if (!json(request.state))
+    if (!isJson(request.state))
         throw new TypeError('Jev state must be JSON');
     if (!Array.isArray(request.questions) || request.questions.length === 0)
         throw new TypeError('Jev needs at least one question');
@@ -81,7 +82,7 @@ function wireQuestion(question) {
 }
 /** Parse every answer, including optional probabilities and service signals, or reject the whole request. */
 export function parseWireResponse(raw, request) {
-    if (!json(raw) || !record(raw) || !record(raw.answers))
+    if (!isJson(raw) || !record(raw) || !record(raw.answers))
         throw new TypeError('Jev response has no answers object');
     const answers = raw.answers;
     if (Object.keys(answers).length !== request.questions.length)
@@ -213,7 +214,7 @@ function nativeProbabilities(value, question) {
 export function parseProtocolResponse(raw, request, connectionId = 'jev') {
     if (connectionId !== 'luna-openai')
         return parseWireResponse(raw, request);
-    if (!json(raw) || !record(raw) || !Array.isArray(raw.answers))
+    if (!isJson(raw) || !record(raw) || !Array.isArray(raw.answers))
         throw new TypeError('Decision response has no answers array');
     if (raw.answers.length !== request.questions.length)
         throw new TypeError('Decision response has missing or extra answers');

@@ -36,7 +36,7 @@ const valid = {
   usage: { input_tokens: 17, output_tokens: 5 },
 }
 
-type Reply = object | ((body: Record<string, unknown>) => Promise<object>)
+type Reply = object | string | ((body: Record<string, unknown>) => Promise<object>)
 
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => {
@@ -47,7 +47,7 @@ afterEach(async () => {
   if (failures.length) throw new AggregateError(failures, 'Jev fixture cleanup failed')
 })
 
-async function fixture(replies: Reply[], validate?: (body: Record<string, unknown>) => void) {
+async function fixture(replies: Reply[], validate?: (body: Record<string, unknown>) => void, status = 200) {
   const received: object[] = []
   const authorizations: (string | undefined)[] = []
   const validationErrors: unknown[] = []
@@ -66,8 +66,8 @@ async function fixture(replies: Reply[], validate?: (body: Record<string, unknow
     }
     const reply = replies.shift()
     const body = typeof reply === 'function' ? await reply(requestBody) : reply
-    response.writeHead(200, { 'content-type': 'application/json' })
-    response.end(JSON.stringify(body ?? valid))
+    response.writeHead(status, { 'content-type': 'application/json' })
+    response.end(typeof body === 'string' ? body : JSON.stringify(body ?? valid))
   })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
   const address = server.address()
@@ -140,6 +140,120 @@ const nativeValid = { model: 'returned-luna-official', extra: { unknown: ['retai
   { type: 'choice', name: 'route', choice: 'left', confidence: 0.7, probabilities: [{ value: 'left', probability: 0.7 }, { value: 'right', probability: 0.3 }] },
   { type: 'score', name: 'risk', score: 1.5, confidence: 0.9, probabilities: [{ value: 0, label: '0', probability: 0.1 }, { value: 1, label: '1', probability: 0.4 }, { value: 2, label: '2', probability: 0.5 }] },
 ], usage: { input_tokens: 12 } }
+
+const channels = [
+  { connectionId: 'jev', config: {}, valid },
+  { connectionId: 'luna-openrouter', config: { judgmentModel: 'luna', lunaApi: 'openrouter' }, valid },
+  { connectionId: 'luna-openai', config: { judgmentModel: 'luna', lunaApi: 'openai' }, valid: nativeValid },
+] as const
+
+// Literal overflow must reach JSON.parse unchanged: JSON.stringify(Infinity) would send null.
+function overflowMetadata(body: object): string {
+  return `${JSON.stringify(body).slice(0, -1)},"metadata":{"nested":[{"overflow":1e400}]}}`
+}
+
+describe.each(channels)('non-finite provider JSON on $connectionId', channel => {
+  async function connect(http: Awaited<ReturnType<typeof fixture>>) {
+    const path = await root()
+    const options = { root: join(path, 'storage'), profile: join(path, 'profile'), url: http.url,
+      config: { ...channel.config, lunaOpenRouterBaseUrl: http.url, lunaOpenAIBaseUrl: http.url } }
+    return { ...await setup(options), options }
+  }
+
+  it.each([
+    { name: 'top-level overflow', raw: '1e400' },
+    { name: 'nested negative overflow', raw: '{"answers":{"ready":{"noul":-1e400}}}' },
+    { name: 'overflow in metadata alongside valid answers', raw: overflowMetadata(channel.valid) },
+  ])('settles a background $name as INVALID_RESPONSE and retains the exact text', async ({ raw }) => {
+    const http = await fixture([raw])
+    const { ctx } = await connect(http)
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+    const result = await ctx.jev.judgeOnce({ featureId: 'fixture', link: {}, refresh: () => request })
+    expect(result).toMatchObject({ kind: 'failed', failure: { code: 'INVALID_RESPONSE' } })
+    const detail = (await ctx.jev.getRecord(result.operationId!))!
+    expect(detail).toMatchObject({ status: 'failed', attempts: 1 })
+    const attempt = detail.attemptRecords[0]!
+    expect(attempt).toMatchObject({ status: 'failed', settledAt: expect.any(String), failure: { code: 'INVALID_RESPONSE' } })
+    expect(attempt.response).toBeUndefined()
+    expect(attempt.rawResponse).toBeUndefined()
+    expect(attempt.networkRecords).toHaveLength(1)
+    expect(attempt.networkRecords![0]).toMatchObject({ status: 'failed', httpStatus: 200, settledAt: expect.any(String),
+      rawResponseText: raw, failure: { code: 'INVALID_RESPONSE' } })
+    expect(attempt.networkRecords![0]!.rawResponse).toBeUndefined()
+    expect(http.received).toHaveLength(1)
+  })
+
+  it.each([
+    { status: 400, code: 'BAD_REQUEST' }, { status: 401, code: 'AUTH' }, { status: 403, code: 'AUTH' },
+    { status: 402, code: 'PAYMENT_REQUIRED' }, { status: 429, code: 'RATE_LIMIT' }, { status: 503, code: 'SERVER' },
+  ])('preserves HTTP $status classification despite nested overflow', async ({ status, code }) => {
+    const raw = overflowMetadata(channel.valid)
+    const http = await fixture([raw], undefined, status)
+    const { ctx } = await connect(http)
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+    const result = await ctx.jev.judgeOnce({ featureId: 'fixture', link: {}, refresh: () => request })
+    expect(result).toMatchObject({ kind: 'failed', failure: { code } })
+    const detail = (await ctx.jev.getRecord(result.operationId!))!
+    expect(detail).toMatchObject({ status: 'failed' })
+    expect(detail.attemptRecords[0]).toMatchObject({ status: 'failed', settledAt: expect.any(String), failure: { code } })
+    expect(detail.attemptRecords[0]!.networkRecords![0]).toMatchObject({ status: 'failed', httpStatus: status,
+      rawResponseText: raw, settledAt: expect.any(String), failure: { code } })
+    expect(detail.attemptRecords[0]!.networkRecords![0]!.rawResponse).toBeUndefined()
+  })
+
+  it('settles a diagnostic through schema-checked network writes and retains it after reopening storage', async () => {
+    const raw = overflowMetadata(channel.valid)
+    const http = await fixture([raw])
+    const { ctx, dispose, options } = await connect(http)
+    const schema = ledgerSpec(options.profile).tables.operations.valueSchema
+    const original = JevLedger.prototype.saveNetwork
+    // Enforce the actual ledger schema at the write boundary as well as on reload.
+    const writing = vi.spyOn(JevLedger.prototype, 'saveNetwork').mockImplementation(async function (operationId, attemptId, records) {
+      const current = this.get(operationId)!
+      schema.parse({ ...current, attemptRecords: current.attemptRecords.map(attempt =>
+        attempt.id === attemptId ? { ...attempt, networkRecords: records } : attempt) })
+      await original.call(this, operationId, attemptId, records)
+    })
+    const result = await ctx.jev.testConnection(ctx.jev.judgmentConnectionIdentity(), new AbortController().signal)
+      .finally(() => writing.mockRestore())
+    expect(result).toMatchObject({ ok: false, failure: { code: 'INVALID_RESPONSE' } })
+    const detail = (await ctx.jev.getRecord(result.recordId))!
+    expect(detail).toMatchObject({ diagnostic: true, status: 'failed', attempts: 1 })
+    expect(detail.attemptRecords[0]).toMatchObject({ status: 'failed', settledAt: expect.any(String), failure: { code: 'INVALID_RESPONSE' } })
+    expect(detail.attemptRecords[0]!.networkRecords![0]).toMatchObject({ rawResponseText: raw, settledAt: expect.any(String) })
+    expect(detail.attemptRecords[0]!.networkRecords![0]!.rawResponse).toBeUndefined()
+    expect(schema.safeParse(detail).success).toBe(true)
+    await dispose()
+    const reopened = await setup(options)
+    expect(await reopened.ctx.jev.getRecord(result.recordId)).toEqual(detail)
+  })
+
+  it.each(['retry', 'cancel'] as const)('persists the failed interactive attempt before manual %s', async choice => {
+    const raw = overflowMetadata(channel.valid)
+    const http = await fixture([raw, channel.valid])
+    const { ctx, agent } = await connect(http)
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+    const asked = deferred<void>()
+    const answer = deferred<{ answers: { id: string; selected: string[] }[] }>()
+    ctx.on('user-questions/request', () => { asked.resolve(); return answer.promise })
+    const pending = ctx.jev.judge({ featureId: 'fixture', link: {}, agent, refresh: () => request })
+    // Race against completion so a rejected judgment cannot hide behind an unasked question.
+    await Promise.race([asked.promise, pending.then(() => { throw new Error('Judgment completed before manual resolution') })])
+    const page = await ctx.jev.listRecords({})
+    const detail = (await ctx.jev.getRecord(page.items[0]!.id))!
+    expect(detail).toMatchObject({ status: 'waiting', attempts: 1 })
+    expect(detail.attemptRecords[0]).toMatchObject({ status: 'failed', settledAt: expect.any(String), failure: { code: 'INVALID_RESPONSE' } })
+    expect(detail.attemptRecords[0]!.networkRecords![0]).toMatchObject({ rawResponseText: raw, settledAt: expect.any(String) })
+    expect(detail.attemptRecords[0]!.networkRecords![0]!.rawResponse).toBeUndefined()
+    expect(http.received).toHaveLength(1)
+    answer.resolve({ answers: [{ id: 'jev-resolution', selected: [choice === 'retry' ? '重试 / Retry' : '取消 / Cancel'] }] })
+    const result = await pending
+    expect(result.kind).toBe(choice === 'retry' ? 'ok' : 'cancelled')
+    expect(await ctx.jev.getRecord(detail.id)).toMatchObject({ status: choice === 'retry' ? 'succeeded' : 'cancelled',
+      attempts: choice === 'retry' ? 2 : 1 })
+    expect(http.received).toHaveLength(choice === 'retry' ? 2 : 1)
+  })
+})
 
 describe('saved Luna channels, complete attempts and original-response history', () => {
   it.each([200, 201, 401])('covers all %i OpenRouter questions once and persists each actual exchange', async count => {

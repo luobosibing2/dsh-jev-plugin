@@ -10,21 +10,22 @@ import { z } from "zod";
 function record(value) {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
-function json(value) {
+/** A parsed response may contain overflowing numbers, including in nested metadata. */
+function isJson$1(value) {
 	if (value === null || typeof value === "string" || typeof value === "boolean") return true;
 	if (typeof value === "number") return Number.isFinite(value);
-	if (Array.isArray(value)) return value.every(json);
-	return record(value) && Object.values(value).every(json);
+	if (Array.isArray(value)) return value.every(isJson$1);
+	return record(value) && Object.values(value).every(isJson$1);
 }
 function input(value) {
-	return typeof value === "string" || json(value) && value !== null && typeof value === "object";
+	return typeof value === "string" || isJson$1(value) && value !== null && typeof value === "object";
 }
 function probability$1(value) {
 	return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1;
 }
 /** Reject invalid questions before a ledger write or model call. */
 function validateRequest(request) {
-	if (!json(request.state)) throw new TypeError("Jev state must be JSON");
+	if (!isJson$1(request.state)) throw new TypeError("Jev state must be JSON");
 	if (!Array.isArray(request.questions) || request.questions.length === 0) throw new TypeError("Jev needs at least one question");
 	const ids = /* @__PURE__ */ new Set();
 	for (const question of request.questions) {
@@ -82,7 +83,7 @@ function wireQuestion(question) {
 }
 /** Parse every answer, including optional probabilities and service signals, or reject the whole request. */
 function parseWireResponse(raw, request) {
-	if (!json(raw) || !record(raw) || !record(raw.answers)) throw new TypeError("Jev response has no answers object");
+	if (!isJson$1(raw) || !record(raw) || !record(raw.answers)) throw new TypeError("Jev response has no answers object");
 	const answers = raw.answers;
 	if (Object.keys(answers).length !== request.questions.length) throw new TypeError("Jev response has missing or extra answers");
 	const parsed = [];
@@ -250,7 +251,7 @@ function nativeProbabilities(value, question) {
 /** Decode the provider's original response directly into the existing business answers. */
 function parseProtocolResponse(raw, request, connectionId = "jev") {
 	if (connectionId !== "luna-openai") return parseWireResponse(raw, request);
-	if (!json(raw) || !record(raw) || !Array.isArray(raw.answers)) throw new TypeError("Decision response has no answers array");
+	if (!isJson$1(raw) || !record(raw) || !Array.isArray(raw.answers)) throw new TypeError("Decision response has no answers array");
 	if (raw.answers.length !== request.questions.length) throw new TypeError("Decision response has missing or extra answers");
 	const byName = /* @__PURE__ */ new Map();
 	for (const value of raw.answers) {
@@ -477,7 +478,7 @@ var JevAdapter = class extends LlmAdapter {
 		exchange.rawResponseText = raw;
 		try {
 			const parsed = JSON.parse(raw);
-			if (parsed !== void 0) {
+			if (isJson$1(parsed)) {
 				exchange.rawResponse = parsed;
 				exchange.usage = knownUsage(parsed);
 				if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {

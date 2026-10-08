@@ -2,7 +2,7 @@
 import { randomUUID } from 'node:crypto'
 import { LlmAdapter, LlmError, attributionHeaders, type GenerateOptions, type StreamChunk } from '@deepseek-ai/dsh-llm'
 import type { JevConnectionIdentity, JevNetworkRecord, JevRequest } from './types.ts'
-import { DecisionResponseError, knownUsage, parseProtocolResponse, protocolBody, validateRequest } from './wire.ts'
+import { DecisionResponseError, isJson, knownUsage, parseProtocolResponse, protocolBody, validateRequest } from './wire.ts'
 
 export const JEV_PROVIDER = 'jev-system-one'
 
@@ -105,16 +105,15 @@ export class JevAdapter extends LlmAdapter {
     exchange.rawResponseText = raw
     try {
       const parsed: unknown = JSON.parse(raw)
-      if (parsed !== undefined) {
-        // JSON.parse receives provider JSON text; the decoder validates all finite JSON values.
-        exchange.rawResponse = parsed as JevNetworkRecord['rawResponse']
+      if (isJson(parsed)) {
+        exchange.rawResponse = parsed
         exchange.usage = knownUsage(parsed)
         if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
           if ('model' in parsed && typeof parsed.model === 'string') exchange.returnedModel = parsed.model
           if (exchange.requestId === undefined && 'id' in parsed && typeof parsed.id === 'string') exchange.requestId = parsed.id
         }
       }
-    } catch { /* The original non-JSON body remains available on the failed exchange. */ }
+    } catch { /* The original body remains available even when it is not finite JSON. */ }
     if (!response.ok) {
       const code = response.status === 401 || response.status === 403 ? 'AUTH'
         : response.status === 402 ? 'PAYMENT_REQUIRED'

@@ -1,5 +1,7 @@
 /** System One request serialization and complete response validation. */
 import type { JevConnectionId, JevNetworkRecord, JevRequest, JevResponse, JevUsage, Json } from './types.ts';
+/** A parsed response may contain overflowing numbers, including in nested metadata. */
+export declare function isJson(value: unknown): value is Json;
 /** Reject invalid questions before a ledger write or model call. */
 export declare function validateRequest(request: JevRequest): void;
 /** Encode the typed public request into the provider's System One HTTP body. */
