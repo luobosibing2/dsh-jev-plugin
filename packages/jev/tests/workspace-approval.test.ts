@@ -4,6 +4,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
+import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
 import { createVolatile, updateVolatile, type Volatile } from '@deepseek-ai/cosmokit'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
@@ -116,6 +117,7 @@ async function fixture(steps: Step[], replies: Reply[], options: { enabled?: boo
   await ctx.plugin(SandboxPolicy, { mode: options.mode ?? 'workspace-write', workspaceRoot: workspace })
   await ctx.plugin(ApprovalService, { policy: options.policy ?? 'ask' })
   await ctx.plugin(SandboxedFileSystem, { cwd: workspace })
+  await ctx.plugin(WorkingDirectory)
   await ctx.plugin(ToolFs)
   if (options.ptc) await ctx.plugin(PtcFixture)
   if (options.ptcInner) (ctx.ptcRuntime as PtcFixture).runInner = true

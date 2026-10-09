@@ -8,13 +8,15 @@ English | [简体中文](README.zh-CN.md) | [中文功能与实测网站](https:
 
 The main model continues to plan, generate answers, and call native tools. Enabled features use the saved Jev or Luna Decisions connection at DSH extension points for skill catalogs, agent lifecycle, tool results, and approvals, then apply results according to each feature. DSH configures the main model separately. Integration uses public Cordis / DSH plugin APIs without modifying the host source.
 
-This is an independent community project, not an official DeepSeek or Jev release. It is an early-stage plugin tested with **DSH 0.1.7-rc.2**; its APIs and model judgments are not a correctness guarantee.
+This is an independent community project, not an official DeepSeek or Jev release. It is an early-stage plugin tested with **DSH 0.2.1-alpha.2**; its APIs and model judgments are not a correctness guarantee.
 
 The [Chinese feature website](https://luobosibing2.github.io/dsh-jev-plugin/) explains each DSH integration point, the information sent to the judgment service, and the observed test cases and limits.
 
 The Chinese [principles and all features explainer](https://luobosibing2.github.io/dsh-jev-plugin/explainers/dsh-jev-plugin.html) covers all 12 features and includes a complete skill-selection input/output example. Its [Markdown source](docs/explainers/dsh-jev-plugin.md) is maintained in this repository.
 
 `main` supports Jev and Luna Decisions through OpenRouter or OpenAI, with three separate saved connections per profile. The [2026-10-07 public report](docs/testing/2026-10-07-luna-decisions/README.md) separates fixed protocol/installation checks, controlled live samples, and real DeepSeek Flash tasks. Official OpenAI calls succeeded in these limited samples; the only live OpenRouter diagnostic returned a provider-access HTTP 403 and was stopped. These results do not establish general judgment accuracy or stable task benefit.
+
+The [2026-10-09–10 Harness compatibility report](docs/testing/2026-10-09-harness-compatibility/README.md) records the upgrade from DSH 0.1.7-rc.2 to 0.2.1-alpha.2, official installation and Web checks, and new real DeepSeek Flash / Jev tasks. The original package was rejected by the new installer's version checks; this revision updates the dependencies and affected public APIs. The report separates real tasks, seeded completion diagnostics, fixed lifecycle tests, and untested provider channels.
 
 ## What is included?
 
@@ -53,12 +55,12 @@ Each classification covers one complete DSH model step: its recorded reasoning, 
 
 ## Install through the Web UI (recommended)
 
-If you already use **DSH 0.1.7-rc.2 Web**, install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
+If you already use **DSH 0.2.1-alpha.2 Web**, install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
 
 1. Open **Plugins in the sidebar → Add plugin**.
 2. Paste the GitHub URL below into **Package name or address**, then click **Install**.
 3. Click **Enable now** after installation. Restart the current profile only if DSH says it will load on the next start.
-4. Open **Jev**, configure the endpoint, model, and API key, then enable the individual features you need.
+4. Select **View @dsh-jev/plugin** in the installed plugin list to open its Jev page. Configure the endpoint, model, and API key, then enable the individual features you need.
 
 ```text
 https://github.com/luobosibing2/deepseek-harness-jev
@@ -80,13 +82,13 @@ Use the following steps when modifying or building the plugin yourself. Existing
 
 - Node.js **24.11 or later** is recommended; the publication build is checked on Node 24.14.1.
 - pnpm **11.7.0** available on `PATH`.
-- DeepSeek Harness CLI **0.1.7-rc.2**. The plugin pins the corresponding DSH peers and Cordis **4.0.4**; newer versions are not automatically supported.
+- DeepSeek Harness CLI **0.2.1-alpha.2**. The plugin pins the corresponding DSH peers and Cordis **4.0.5-alpha.1**; other Harness versions are not automatically supported. This is an alpha release; use the explicit version below because npm's `latest` tag can point to a different release.
 - A configured main-model provider in DSH, plus credentials for your selected Jev-compatible System One service or Luna API.
 
 If needed, install the tools:
 
 ```sh
-npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.1.7-rc.2
+npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.1-alpha.2
 ```
 
 ### Build the package
@@ -96,7 +98,7 @@ Build a `.tgz` from source, then install it through the Web UI or official CLI.
 ```sh
 git clone https://github.com/luobosibing2/deepseek-harness-jev.git
 cd deepseek-harness-jev
-pnpm install --frozen-lockfile --ignore-scripts
+pnpm install --frozen-lockfile
 pnpm run build
 mkdir -p dist
 pnpm -C packages/jev pack --pack-destination "$PWD/dist"

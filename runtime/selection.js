@@ -224,8 +224,9 @@ function apply(ctx, config) {
 			}]
 		},
 		async execute(_args, exec) {
+			const cwd = exec.agent === void 0 ? void 0 : await ctx.workingDirectory.ensure(exec.agent, exec.signal);
 			const snapshot = await ctx.skills.snapshot({
-				cwd: exec.agent?.session.header.cwd,
+				cwd,
 				signal: exec.signal,
 				scope: exec.agent
 			});
@@ -247,8 +248,9 @@ function apply(ctx, config) {
 		}
 		if (ctx.tools.get("skill", agent) === void 0) return decision;
 		signal.throwIfAborted();
+		const cwd = await ctx.workingDirectory.ensure(agent, signal);
 		const snapshot = await ctx.skills.snapshot({
-			cwd: agent.session.header.cwd,
+			cwd,
 			signal,
 			scope: agent
 		});
@@ -284,8 +286,9 @@ function apply(ctx, config) {
 					first = false;
 					return initial;
 				}
+				const cwd = await ctx.workingDirectory.ensure(agent, retrySignal);
 				const refreshed = await ctx.skills.snapshot({
-					cwd: agent.session.header.cwd,
+					cwd,
 					signal: retrySignal,
 					scope: agent
 				});
@@ -426,7 +429,8 @@ const inject = [
 	"tools",
 	"skills",
 	"settings",
-	"agents"
+	"agents",
+	"workingDirectory"
 ];
 const name = "jev-selection";
 //#endregion

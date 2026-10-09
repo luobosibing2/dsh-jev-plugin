@@ -1,9 +1,10 @@
 import { createServer } from 'node:http'
-import { mkdtemp, mkdir, rm, writeFile, readFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, realpath, rm, writeFile, readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
+import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
 import { createVolatile, updateVolatile } from '@deepseek-ai/cosmokit'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
@@ -18,6 +19,8 @@ import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
 import UserQuestionService from '@deepseek-ai/dsh-user-questions'
+import * as ToolFs from '@deepseek-ai/dsh-tool-fs'
+import * as ToolWorkingDirectory from '@deepseek-ai/dsh-tool-working-directory'
 import JevService from '../src/index.ts'
 import * as instructions from '../src/instructions.ts'
 
@@ -37,7 +40,7 @@ class BindingRuntime extends PtcRuntime {
   }
 }
 
-async function fixture(ptc = false, sessionDirectory = '') {
+async function fixture(ptc = false, sessionDirectory = '', nativeFs = false) {
   const root = await mkdtemp(join(tmpdir(), 'jev-instructions-'))
   cleanups.push(() => rm(root, { recursive: true, force: true }))
   await mkdir(join(root, '.git'))
@@ -72,6 +75,8 @@ async function fixture(ptc = false, sessionDirectory = '') {
   const ctx = new Context()
   for (const plugin of [Storage, LlmRuntime, AgentRegistry, SessionStore, SystemPrompt, UserQuestionService]) await ctx.plugin(plugin)
   await ctx.plugin(LocalFileSystem, { cwd: root })
+  await ctx.plugin(SessionProjectionRegistry)
+  await ctx.plugin(WorkingDirectory)
   await ctx.plugin(ToolRuntime, { mode: ptc ? 'ptc' : 'native' })
   if (ptc) await ctx.plugin(BindingRuntime)
   const backend = new JsonStorageBackend(join(root, 'storage'))
@@ -95,16 +100,19 @@ async function fixture(ptc = false, sessionDirectory = '') {
   })
   let instructionsFiber = await ctx.plugin(instructions)
   let writes = 0
-  ctx.tools.register(defineTool({ name: 'write', description: 'Fixture file write through the original tools pipeline',
-    parameters: { file_path: { type: 'string', required: true }, content: { type: 'string', required: true } },
-    output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
-    async execute(args) { writes++; await writeFile(resolve(cwd, args.file_path), args.content); return 'written' },
-  }))
-  ctx.tools.register(defineTool({ name: 'read', description: 'Fixture file read through the original tools pipeline',
-    parameters: { file_path: { type: 'string', required: true } },
-    output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
-    execute: args => readFile(resolve(cwd, args.file_path), 'utf8'),
-  }))
+  if (nativeFs) await ctx.plugin(ToolFs)
+  else {
+    ctx.tools.register(defineTool({ name: 'write', description: 'Fixture file write through the original tools pipeline',
+      parameters: { file_path: { type: 'string', required: true }, content: { type: 'string', required: true } },
+      output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+      async execute(args) { writes++; await writeFile(resolve(cwd, args.file_path), args.content); return 'written' },
+    }))
+    ctx.tools.register(defineTool({ name: 'read', description: 'Fixture file read through the original tools pipeline',
+      parameters: { file_path: { type: 'string', required: true } },
+      output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+      execute: args => readFile(resolve(cwd, args.file_path), 'utf8'),
+    }))
+  }
   const session = ctx.sessions.create(SessionId('instructions-' + root), { meta: { cwd } })
   session.append('user/message', user('Update this project.'), { surfaceOp: 'append' })
   session.append('turn/start', { turn: 1 })
@@ -144,6 +152,31 @@ async function fixture(ptc = false, sessionDirectory = '') {
 }
 
 describe('instruction guidance with original Native/PTC pipeline and localhost Jev', () => {
+  it('judges the native write in its changed working directory with that directory rules', async () => {
+    const f = await fixture(false, '', true)
+    await mkdir(join(f.root, 'changed'))
+    const changed = await realpath(join(f.root, 'changed'))
+    await f.rule('Original directory instructions.')
+    await f.rule('Changed directory instructions.', 'changed/TEAM.md')
+    await f.ctx.plugin(ToolWorkingDirectory)
+    f.enabled(false)
+    const moved = await f.ctx.agents.withInitiator(f.agent, () => f.ctx.tools.execute({
+      name: 'working_directory', arguments: { cd: 'changed' }, agent: f.agent,
+      signal: new AbortController().signal, callId: ToolCallId('change-instructions-directory'),
+    }))
+    expect(moved.isError).toBe(false)
+    expect(moved.value).toEqual({ cwd: changed })
+    f.enabled(true)
+    expect((await f.invoke()).isError).toBe(false)
+    await f.settled()
+    expect(await readFile(join(changed, 'product.txt'), 'utf8')).toBe('written')
+    await expect(readFile(join(f.root, 'product.txt'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
+    expect(f.session.header.cwd).toBe(f.root)
+    expect(f.requests).toHaveLength(1)
+    expect(f.requests[0]!.state.operation).toMatchObject({ cwd: changed })
+    expect(f.requests[0]!.state.sources.map(source => source.origin)).toContain(join(changed, 'TEAM.md') + ':1')
+  })
+
   it('does not wait for a slow judge; the next existing model step receives exactly one original-backed reminder', async () => {
     const f = await fixture()
     const receipts = vi.spyOn(f.ctx.jev, 'writeReceipt')
@@ -328,7 +361,6 @@ describe('instruction guidance with original Native/PTC pipeline and localhost J
   })
   it('delivers once into a real AgentLoop model request without inventing a follow-up turn', async () => {
     const f = await fixture(); await f.rule('Write only in isolated workspace.')
-    await f.ctx.plugin(SessionProjectionRegistry)
     await f.ctx.plugin(AgentLoop, { agents: [] })
     const seen: GenerateOptions[] = []
     class MainModel extends LlmAdapter {

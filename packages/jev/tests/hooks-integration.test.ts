@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
+import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
 import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
@@ -98,6 +99,7 @@ async function fixture(script: ModelEntry[], options: { enabled?: boolean; suppl
   cleanups.push(async () => { await ctx.fiber.dispose() })
   await mountAgentLoopTestDependencies(ctx)
   await ctx.plugin(LocalFileSystem, { cwd: dir })
+  await ctx.plugin(WorkingDirectory)
   await ctx.plugin(Storage)
   await ctx.plugin(GoalService)
   await ctx.plugin(UserQuestions)

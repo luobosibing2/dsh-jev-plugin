@@ -9,11 +9,10 @@ import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
 import { createUserMessage, ToolCallId, LlmAdapter, type GenerateOptions, type StreamChunk } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
+import type { ToolExecutionResult } from '@deepseek-ai/dsh-tools'
 import JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import SessionQuery from '@deepseek-ai/dsh-session-query'
 import Subagents from '@deepseek-ai/dsh-subagent'
-import JobsLocal from '@deepseek-ai/dsh-jobs-local'
-import * as ToolJobs from '@deepseek-ai/dsh-tool-jobs'
 import * as ToolSubagent from '@deepseek-ai/dsh-tool-subagent'
 import * as Spawn from '@deepseek-ai/dsh-subagent-spawn-in-process'
 import Storage from '@deepseek-ai/dsh-storage'
@@ -91,10 +90,10 @@ async function fixture(kind = 'unrelated', enabled = true) {
   let mountedFeature: { dispose: () => Promise<void> } | undefined
   cleanups.push(async () => {
     await mountedFeature?.dispose()
-    await ctx.subagents.drainContinuableDescendants(ctx.agents.roots())
+    await ctx.subagents.drainDescendants(ctx.agents.roots())
     await ctx.fiber.dispose()
   })
-  await mountAgentLoopTestDependencies(ctx)
+  await mountAgentLoopTestDependencies(ctx, { workingDirectory: true })
   await ctx.plugin(JsonlPersistence, { root: join(dir, 'sessions') })
   await ctx.plugin(AgentLoop, { agents: [] })
   await ctx.plugin(Query)
@@ -117,7 +116,7 @@ async function fixture(kind = 'unrelated', enabled = true) {
   const business = await opened.mock.results[0]!.value
   async function child(id: string, parent = root) {
     const gate = deferred(); model.gates.set(id, gate)
-    const result = await ctx.subagents.startContinuable({ provider: 'spawn', label: id, childId: SessionId(id),
+    const result = await ctx.subagents.startActivation({ delivery: 'parent', provider: 'spawn', label: id, childId: SessionId(id),
       request: { parent, maxDepth: 3, prompt: [{ type: 'text', text: 'Work on ' + id }] }, signal: new AbortController().signal })
     const agent = ctx.agents.get(result.childId)!
     await vi.waitFor(() => expect(model.requests.some(request => request.sessionId === id)).toBe(true))
@@ -398,12 +397,16 @@ it('aborts a correction that loses the public send-versus-disposal race without 
   expect(f.relations()[0]!.deliveries[0]!.state).toBe('unconfirmed')
 })
 
-it('observes a foreground report only after the real native subagent tool returns it', async () => {
+it('observes a native subagent report only after its managed activation settles', async () => {
   const f = await fixture('support')
   const reporter = await f.child('reporter')
   await f.send(reporter.agent, f.root, 'Previously shared finding')
   await f.root.whenIdle()
-  await f.ctx.plugin(ToolSubagent, { provider: 'spawn', modelSelectionSettings: false, enableRunInBackground: false })
+  await f.ctx.plugin(ToolSubagent, { provider: 'spawn', modelSelectionSettings: false })
+  const results = new Map<string, ToolExecutionResult>()
+  f.ctx.on('tools/result', (exec, result) => { if (exec.agent === f.root) results.set(exec.callId, result) })
+  const gate = deferred()
+  f.ctx.on('subagent/start', info => { f.model.gates.set(info.id, gate) })
   f.model.next.set('root', [
     { type: 'block-start', index: 0, blockType: 'tool-call' },
     { type: 'block-end', index: 0, block: { type: 'tool-call', id: ToolCallId('native-delegation'), name: 'subagent', arguments: JSON.stringify({ description: 'read evidence', prompt: 'Return a finding' }) } },
@@ -411,12 +414,19 @@ it('observes a foreground report only after the real native subagent tool return
   ])
   f.root.followup(createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: 'Delegate evidence reading' }] }))
   await f.root.whenIdle()
-  await vi.waitFor(() => expect(f.findings().some(item => item.source === 'tool-report')).toBe(true))
-  const finding = f.findings().find(item => item.source === 'tool-report')!
-  expect(finding.toolCallId).toBe('native-delegation')
+  const result = results.get('native-delegation')
+  expect(result?.isError).toBe(false)
+  expect(result?.value).toMatchObject({ kind: 'activation' })
+  expect(f.findings().some(item => item.source === 'subagent-settled')).toBe(false)
+  gate.resolve()
+  await vi.waitFor(() => expect(f.findings().some(item => item.source === 'subagent-settled')).toBe(true))
+  const finding = f.findings().find(item => item.source === 'subagent-settled')!
+  expect(result?.value).toEqual({ kind: 'activation', subagentId: finding.senderId })
+  const durable = f.root.session.snapshotEvents().find(event => event.type === 'tool/result' && event.data.message.toolCallId === 'native-delegation')
+  expect(durable?.type === 'tool/result' && durable.data.message.content).toEqual([{ type: 'text', text: 'started subagent ' + finding.senderId }])
   expect(finding.original).toContain('Acknowledged.')
   expect(f.ctx.agents.get(SessionId(finding.senderId)) === undefined).toBe(true)
-  expect(f.relations()).toHaveLength(1)
+  await vi.waitFor(() => expect(f.relations()).toHaveLength(1))
 })
 
 it('uses the live root for failure decisions and cancellation does not resume dependent input or cancel unrelated work', async () => {
@@ -568,11 +578,17 @@ it('retains oversized originals but never adopts a truncated relation and asks t
   expect(f.relations()[0]!.deliveries).toHaveLength(0)
 })
 
-it('binds concurrent same-label background reports by execution and job identity, not arrival order', async () => {
+it('keeps simultaneous same-label activation reports tied to their actual child identities', async () => {
   const f = await fixture('support')
-  await f.ctx.plugin(JobsLocal)
-  await f.ctx.plugin(ToolJobs, { completionDelivery: 'quiet' })
   await f.ctx.plugin(ToolSubagent, { provider: 'spawn', modelSelectionSettings: false })
+  const results = new Map<string, ToolExecutionResult>()
+  f.ctx.on('tools/result', (exec, result) => { if (exec.agent === f.root) results.set(exec.callId, result) })
+  const gates = new Map<string, ReturnType<typeof deferred>>()
+  f.ctx.on('subagent/start', info => {
+    const gate = deferred()
+    gates.set(info.id, gate)
+    f.model.gates.set(info.id, gate)
+  })
   const calls = (items: { id: string; name: string; arguments: object }[]): StreamChunk[] => [
     ...items.flatMap((item, index): StreamChunk[] => [
       { type: 'block-start', index, blockType: 'tool-call' },
@@ -581,29 +597,30 @@ it('binds concurrent same-label background reports by execution and job identity
     { type: 'finish', reason: { kind: 'tool-calls' } },
   ]
   f.model.next.set('root', calls([
-    { id: 'launch-A', name: 'subagent', arguments: { description: 'identical label', prompt: 'SOURCE_A', run_in_background: true } },
-    { id: 'launch-B', name: 'subagent', arguments: { description: 'identical label', prompt: 'SOURCE_B', run_in_background: true } },
+    { id: 'launch-A', name: 'subagent', arguments: { description: 'identical label', prompt: 'SOURCE_A' } },
+    { id: 'launch-B', name: 'subagent', arguments: { description: 'identical label', prompt: 'SOURCE_B' } },
   ]))
-  f.root.followup(createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: 'Start two background reports' }] }))
+  f.root.followup(createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: 'Start two independent reports' }] }))
   await f.root.whenIdle()
-  await vi.waitFor(() => expect(f.ctx.jobs.list(f.root.id).filter(job => job.status === 'completed')).toHaveLength(2))
+  const childId = (callId: string): string => {
+    const result = results.get(callId)
+    expect(result?.isError).toBe(false)
+    const value = result?.value
+    if (typeof value !== 'object' || value === null || !('subagentId' in value) || typeof value.subagentId !== 'string') throw new Error('Missing child identity')
+    expect(value).toEqual({ kind: 'activation', subagentId: value.subagentId })
+    return value.subagentId
+  }
+  const a = childId('launch-A')
+  const b = childId('launch-B')
+  expect(a).not.toBe(b)
+  expect(gates.size).toBe(2)
   expect(f.findings()).toHaveLength(0)
-  const sources = [...f.business.table('background_sources').entries()].map(([, value]) => value)
-  expect(sources).toHaveLength(2)
-  expect(sources.every(source => source.childIds.length === 1)).toBe(true)
-  const a = sources.find(source => source.sourceCallId === 'launch-A')!
-  const b = sources.find(source => source.sourceCallId === 'launch-B')!
-  expect(a.childIds[0]).not.toBe(b.childIds[0])
-  f.model.next.set('root', calls([
-    { id: 'read-B', name: 'job_output', arguments: { job_id: b.jobId } },
-    { id: 'read-A', name: 'job_output', arguments: { job_id: a.jobId } },
-  ]))
-  f.root.followup(createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: 'Read both finished reports' }] }))
-  await f.root.whenIdle()
+  gates.get(b)!.resolve()
+  await vi.waitFor(() => expect(f.findings()).toHaveLength(1))
+  expect(f.findings()[0]!.senderId).toBe(b)
+  gates.get(a)!.resolve()
   await vi.waitFor(() => expect(f.findings()).toHaveLength(2))
-  expect(f.findings().find(item => item.toolCallId === 'read-A')!.senderId).toBe(a.childIds[0])
-  expect(f.findings().find(item => item.toolCallId === 'read-B')!.senderId).toBe(b.childIds[0])
-  expect(f.findings().find(item => item.toolCallId === 'read-A')!.original).toContain('Report A')
-  expect(f.findings().find(item => item.toolCallId === 'read-B')!.original).toContain('Report B')
-  expect(f.relations()).toHaveLength(1)
+  expect(f.findings().find(item => item.senderId === a)!.original).toContain('Report A')
+  expect(f.findings().find(item => item.senderId === b)!.original).toContain('Report B')
+  await vi.waitFor(() => expect(f.relations()).toHaveLength(1))
 })

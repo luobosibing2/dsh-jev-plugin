@@ -175,7 +175,7 @@ async function harness(options: HarnessOptions = {}) {
   const http = await localJev(options.answer)
   const ctx = new Context()
   cleanups.push(async () => { await ctx.fiber.dispose() })
-  await mountAgentLoopTestDependencies(ctx, options.ptc ? { tools: { mode: 'ptc' } } : {})
+  await mountAgentLoopTestDependencies(ctx, { workingDirectory: true, ...options.ptc ? { tools: { mode: 'ptc' } } : {} })
   if (options.ptc) await ctx.plugin(FixturePtcRuntime)
   await ctx.plugin(Storage)
   await ctx.plugin(GoalService)

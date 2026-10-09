@@ -4,6 +4,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
+import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
+import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
+import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
 import { createVolatile, updateVolatile } from '@deepseek-ai/cosmokit'
 import AgentRegistry, { type Agent } from '@deepseek-ai/dsh-agent'
 import LlmRuntime, { createUserMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
@@ -52,6 +55,9 @@ async function setup(url: string) {
   const ctx = new Context()
   await ctx.plugin(Storage)
   await ctx.plugin(LlmRuntime)
+  await ctx.plugin(LocalFileSystem, { cwd: root })
+  await ctx.plugin(SessionProjectionRegistry)
+  await ctx.plugin(WorkingDirectory)
   await ctx.plugin(AgentRegistry)
   await ctx.plugin(SessionStore)
   await ctx.plugin(SystemPrompt)
@@ -101,7 +107,7 @@ async function setup(url: string) {
   session.append('user/message', createUserMessage({
     content: [{ type: 'text', text: 'Find the relevant TypeScript file' }], source: { kind: 'user' },
   }), { surfaceOp: 'append' })
-  const agent = { id: session.id, session } as Agent
+  const agent = { ctx, id: session.id, session } as Agent
   ctx.agents.enter(agent, undefined)
   cleanups.push(async () => {
     await ctx.fiber.dispose()

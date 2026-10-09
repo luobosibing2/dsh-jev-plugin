@@ -3,6 +3,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
+import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
+import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
+import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
 import { createVolatile } from '@deepseek-ai/cosmokit'
 import AgentRegistry, { type Agent } from '@deepseek-ai/dsh-agent'
 import { createUserMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
@@ -44,6 +47,9 @@ describe('glob selection through the published DSH PTC bridge', () => {
     cleanups.push(() => rm(root, { recursive: true, force: true }))
     const ctx = new Context()
     cleanups.push(() => ctx.fiber.dispose())
+    await ctx.plugin(LocalFileSystem, { cwd: root })
+    await ctx.plugin(SessionProjectionRegistry)
+    await ctx.plugin(WorkingDirectory)
     await ctx.plugin(AgentRegistry)
     await ctx.plugin(SessionStore)
     await ctx.plugin(SystemPrompt)
@@ -104,7 +110,7 @@ describe('glob selection through the published DSH PTC bridge', () => {
       source: { kind: 'user' },
     }), { surfaceOp: 'append' })
     session.append('turn/start', { turn: 1 })
-    const agent = { id: 'jev-selection-ptc', session } as Agent
+    const agent = { ctx, id: 'jev-selection-ptc', session } as Agent
     ctx.agents.enter(agent, undefined)
 
     const result = await ctx.agents.withInitiator(agent, () => ctx.tools.execute({
