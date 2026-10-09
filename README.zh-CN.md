@@ -12,6 +12,8 @@
 
 [中文功能介绍站](https://luobosibing2.github.io/dsh-jev-plugin/)逐项说明 DSH 原生触发节点、交给判断服务的信息，以及实际测试场景、结果和边界。
 
+[原理与全部功能](https://luobosibing2.github.io/dsh-jev-plugin/explainers/dsh-jev-plugin.html)文章说明全部 12 项功能，并展示技能选择的完整输入输出例子。[Markdown 源稿](docs/explainers/dsh-jev-plugin.md)在本仓库维护。
+
 `main` 支持 Jev，以及通过 OpenRouter 或 OpenAI 使用 Luna Decisions；每个 profile 独立保存三套连接。[2026-10-07 公开报告](docs/testing/2026-10-07-luna-decisions/README.md)区分固定协议及安装、受控真实样例与真实 DeepSeek Flash 任务。官方 OpenAI 在这些有限样例中调用成功；OpenRouter 的唯一真实诊断返回提供方访问限制的 HTTP 403 后停止。这些结果不建立通用判断准确率或稳定任务收益。
 
 ## 包含哪些功能？

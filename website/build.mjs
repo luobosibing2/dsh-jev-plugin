@@ -7,6 +7,8 @@ const website = dirname(fileURLToPath(import.meta.url));
 const repository = resolve(website, '..');
 const output = join(website, 'dist');
 const github = 'https://github.com/luobosibing2/dsh-jev-plugin';
+const explainerDraftPath = join(repository, 'docs/explainers/dsh-jev-plugin.md');
+const explainerHtmlPath = join(website, 'src/explainers/dsh-jev-plugin.html');
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (character) => ({
@@ -29,7 +31,7 @@ function page({ title, description, depth = '', body }) {
   <a class="skip-link" href="#main">跳到正文</a>
   <header class="site-header"><div class="shell site-header__inner">
     <a class="brand" href="${depth}index.html" aria-label="deepseek-harness-jev 首页"><span class="brand__glyph" aria-hidden="true">d<span>/</span>j</span><span>deepseek-harness-jev</span></a>
-    <nav class="top-nav" aria-label="主导航"><a href="${depth}index.html#features">功能与案例</a><a href="${depth}connections/luna-decisions.html">Jev / Luna 连接</a><a href="${depth}index.html#evidence">验证口径</a><a href="${depth}index.html#install">安装</a><a href="${github}" target="_blank" rel="noopener noreferrer">仓库 ↗</a></nav>
+    <nav class="top-nav" aria-label="主导航"><a href="${depth}explainers/dsh-jev-plugin.html">原理与全部功能</a><a href="${depth}index.html#features">功能与案例</a><a href="${depth}connections/luna-decisions.html">Jev / Luna 连接</a><a href="${depth}index.html#evidence">验证口径</a><a href="${depth}index.html#install">安装</a><a href="${github}" target="_blank" rel="noopener noreferrer">仓库 ↗</a></nav>
   </div></header>
   <main id="main">${body}</main>
   <footer class="site-footer"><div class="shell site-footer__inner"><p>独立社区项目 · 内容来自公开测试记录，不代表普遍语义正确性。</p><a href="${github}/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT 许可证 ↗</a></div></footer>
@@ -51,7 +53,7 @@ function homePage() {
     return `<section class="feature-group" aria-labelledby="group-${group.id}"><div class="feature-group__heading"><h3 id="group-${group.id}">${escapeHtml(group.title)}</h3><p>${escapeHtml(group.description)}</p></div><div class="feature-grid">${cards}</div></section>`;
   }).join('');
   const body = `
-  <section class="hero shell" aria-labelledby="hero-title"><div class="hero__copy"><p class="eyebrow">deepseek-harness-jev / 功能与实测</p><h1 id="hero-title">DSH 继续执行。<br>Jev / Luna 提供判断。</h1><p class="hero__lead">主 Agent 负责规划、工具调用与回答；所选 Jev / System One 或 Luna Decisions 在已启用的 DSH 原生扩展点提供判断。Luna 可选 OpenAI 或 OpenRouter API；本页保留 11 个业务案例页，功能分别开启，默认全部关闭。</p><a class="text-link" href="connections/luna-decisions.html">Jev / Luna 判断连接与验真 <span aria-hidden="true">↗</span></a> <a class="text-link" href="#features">查看业务案例 <span aria-hidden="true">↓</span></a></div><aside class="hook-trace" aria-labelledby="hook-trace-title"><div class="hook-trace__heading"><span>源码接入点</span><h2 id="hook-trace-title">典型的三处判断</h2></div><ul><li><code>agent/pre-step</code><span>发布技能目录前，整理技能摘要。</span><a href="${github}/blob/main/packages/jev/src/selection.ts" target="_blank" rel="noopener noreferrer" aria-label="查看技能选择实现">↗</a></li><li><code>tools/post-execute</code><span>命令返回后，评估可省略的日志。</span><a href="${github}/blob/main/packages/jev/src/output-admission.ts" target="_blank" rel="noopener noreferrer" aria-label="查看日志准入实现">↗</a></li><li><code>approval/request</code><span>适用的单次提权请求进入原生审批。</span><a href="${github}/blob/main/packages/jev/src/workspace-approval.ts" target="_blank" rel="noopener noreferrer" aria-label="查看工作区审批实现">↗</a></li></ul><p>这些是三个独立例子，并非任务必须依次经过的步骤。</p></aside></section>
+  <section class="hero shell" aria-labelledby="hero-title"><div class="hero__copy"><p class="eyebrow">deepseek-harness-jev / 功能与实测</p><h1 id="hero-title">DSH 继续执行。<br>Jev / Luna 提供判断。</h1><p class="hero__lead">主 Agent 负责规划、工具调用与回答；所选 Jev / System One 或 Luna Decisions 在已启用的 DSH 原生扩展点提供判断。Luna 可选 OpenAI 或 OpenRouter API；本页保留 11 个业务案例页，功能分别开启，默认全部关闭。</p><p>“原理与全部功能”文章说明 12 项功能的触发、输入、判断与采用，并展示技能选择的完整输入输出例子。</p><a class="text-link" href="explainers/dsh-jev-plugin.html">原理与全部功能 <span aria-hidden="true">↗</span></a> <a class="text-link" href="connections/luna-decisions.html">Jev / Luna 判断连接与验真 <span aria-hidden="true">↗</span></a> <a class="text-link" href="#features">查看业务案例 <span aria-hidden="true">↓</span></a></div><aside class="hook-trace" aria-labelledby="hook-trace-title"><div class="hook-trace__heading"><span>源码接入点</span><h2 id="hook-trace-title">典型的三处判断</h2></div><ul><li><code>agent/pre-step</code><span>发布技能目录前，整理技能摘要。</span><a href="${github}/blob/main/packages/jev/src/selection.ts" target="_blank" rel="noopener noreferrer" aria-label="查看技能选择实现">↗</a></li><li><code>tools/post-execute</code><span>命令返回后，评估可省略的日志。</span><a href="${github}/blob/main/packages/jev/src/output-admission.ts" target="_blank" rel="noopener noreferrer" aria-label="查看日志准入实现">↗</a></li><li><code>approval/request</code><span>适用的单次提权请求进入原生审批。</span><a href="${github}/blob/main/packages/jev/src/workspace-approval.ts" target="_blank" rel="noopener noreferrer" aria-label="查看工作区审批实现">↗</a></li></ul><p>这些是三个独立例子，并非任务必须依次经过的步骤。</p></aside></section>
   <section class="flow shell" aria-labelledby="flow-title"><div class="section-heading"><p class="eyebrow">工作方式</p><h2 id="flow-title">一次判断放在原生流程之内。</h2></div><ol class="flow__steps"><li><span>DSH 主 Agent</span><small>规划与调用工具</small></li><li><span>原生扩展点</span><small>只接入已启用功能</small></li><li><span>所选判断模型</span><small>Jev / Luna Decisions</small></li><li><span>DSH 记录</span><small>核对交付与实际执行</small></li></ol><p class="flow__note">插件不替代主模型，也不修改 DSH 宿主源码。切换连接保留原功能开关、判断题、阈值与权限机制；判断成功和操作成功分别记录。</p></section>
   <section class="evidence-overview shell" id="evidence" aria-labelledby="evidence-title"><div class="section-heading"><p class="eyebrow">指定场景的实测</p><h2 id="evidence-title">数字、动作和结果一起看。</h2><p>优先查看官方 Luna 的有限真实任务链，历史 Jev 实验继续保留。每条结论注明实际模型和主模型是否受控；这些结果只适用于所测条件。</p></div><div class="observation-grid"><a href="connections/luna-decisions.html#real-results" class="observation"><span>官方 Luna · 真实 DeepSeek Flash 任务与同会话续验</span><strong>8,407 → 2,122</strong><p>构建日志净减 74.76%，实际后续主模型收到缩短文本；验收者逐字回读原生 spill。160 模块、sum 12880、哈希及测试 3/3 均核对。</p><span class="observation__link">查看真实任务与日志证据 ↗</span></a><a href="connections/luna-decisions.html#approval-results" class="observation observation--negative"><span>官方 Luna · 审批成功与保留负例</span><strong>一次 allowed-once</strong><p>真实任务的 approve 0.68 经原生许可完成准确写入，无人工和长期模式变化；此前两个受控授权样例均未自动批准，尚未证明审批稳定。</p><span class="observation__link">查看审批结果与边界 ↗</span></a><a href="features/completion-check.html" class="observation"><span>历史 Jev · 完成核查 / 三类脚本种错</span><strong>6/6 真实补做</strong><p>开启组由真实 Jev 判断，原生补做入模后由 DeepSeek 自主处理，三类固定错误的核心要求各 2/2 满足。</p><span class="observation__link">查看完成核查案例 ↗</span></a><a href="features/skill-selection.html" class="observation"><span>24 技能仓库调查 · 真实 DeepSeek 与 Jev</span><strong>96 → 20</strong><p>目录摘要累计减少；关闭与开启组各读 24 次源码、加载 6 次所需技能，题面事实均 4/4。</p><span class="observation__link">查看技能选择案例 ↗</span></a><a href="features/long-log-admission.html" class="observation"><span>历史 Jev · 单次构建日志</span><strong>75.7%</strong><p>交给 Agent 的文本从 8,510 缩至 2,072 字符，产物哈希保留。没有测得平均节省。</p><span class="observation__link">查看日志准入案例 ↗</span></a><a href="features/completion-check.html" class="observation"><span>历史 Jev · 完成核查 / 准确报告对照</span><strong>2/2 无误补做</strong><p>同类Python测试实际生成缓存；开启组准确报告后，Jev两次均判complete，零原生补做、零真实主模型派发。</p><span class="observation__link">查看准确对照 ↗</span></a></div><p class="evidence-overview__note">阅读口径：官方 Luna 两个真实主模型任务及同会话续验共 14 次主模型请求、3 次 Decisions，全部 HTTP 200；前轮固定主模型的 6 次官方调用另记。OpenRouter 首次真实诊断因访问限制返回 403，已停止该渠道，未完成成功验真。未新测 GUI cold stage 或全部 12 项功能，费用金额未返回，也未证明自然任务平均收益。<a href="evidence/luna-decisions-results.html">Luna 公开验真 ↗</a> <a href="connections/luna-decisions.html">三套连接与证据口径 ↗</a> 历史 Jev 的固定种错补做与长轨迹零采用继续保留：<a href="evidence/completion-recovery-results.html">新实验报告 ↗</a> <a href="evidence/completion-skill-results.html">历史报告 ↗</a> <a href="${github}/blob/main/docs/testing/2026-10-05-completion-recovery/results.json" target="_blank" rel="noopener noreferrer">结构化结果 ↗</a> <a href="${github}/blob/main/bench/completion_skill/README.zh-CN.md" target="_blank" rel="noopener noreferrer">复跑指南 ↗</a> <a href="evidence/validation.html">验证范围 ↗</a></p></section>
   <section class="catalog shell" id="features" aria-labelledby="features-title"><div class="section-heading"><p class="eyebrow">本页介绍的 11 项功能</p><h2 id="features-title">按用途阅读，再进入具体案例。</h2><p>每页说明触发时机、所选判断模型收到什么、宿主怎样采用判断，以及按实际模型分别记录的测试结果。Luna 连接入口单独展示，不增加业务功能数量。</p></div>${featureGroups}</section>
@@ -132,6 +134,20 @@ function evidencePage(source, content) {
 if (features.length !== 11 || new Set(features.map((feature) => feature.slug)).size !== features.length) {
   throw new Error('功能清单必须包含 11 个不重复的页面');
 }
+const [explainerDraft, explainerHtml] = await Promise.all([
+  readFile(explainerDraftPath, 'utf8'),
+  readFile(explainerHtmlPath, 'utf8'),
+]);
+const embeddedSource = explainerHtml.match(/<textarea\b[^>]*\bid="am-source"[^>]*>([\s\S]*?)<\/textarea>/);
+if (!embeddedSource) {
+  throw new Error('原理文章 HTML 缺少 #am-source；请用 answer-me-with-html 从 Markdown 源稿重生成');
+}
+const embeddedDraft = embeddedSource[1].replace(/&(amp|lt|gt|quot|#39);/g, (_, entity) => ({
+  amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'",
+})[entity]);
+if (embeddedDraft.replace(/\n+$/, '') !== explainerDraft.replace(/\n+$/, '')) {
+  throw new Error('原理文章 Markdown 与 HTML 的 #am-source 不一致；请重生成 HTML 并同时提交两份文件');
+}
 const sourceContents = await Promise.all(Object.values(evidence).map(async (source) => ({
   source,
   content: await readFile(join(repository, source.file), 'utf8'),
@@ -141,7 +157,9 @@ await mkdir(join(output, 'assets'), { recursive: true });
 await mkdir(join(output, 'features'), { recursive: true });
 await mkdir(join(output, 'evidence'), { recursive: true });
 await mkdir(join(output, 'connections'), { recursive: true });
+await mkdir(join(output, 'explainers'), { recursive: true });
 await copyFile(join(website, 'src/styles.css'), join(output, 'assets/site.css'));
+await copyFile(explainerHtmlPath, join(output, 'explainers/dsh-jev-plugin.html'));
 await writeFile(join(output, 'index.html'), homePage());
 await writeFile(join(output, 'connections', 'luna-decisions.html'), connectionsPage());
 for (const feature of features) {
@@ -150,4 +168,4 @@ for (const feature of features) {
 for (const { source, content } of sourceContents) {
   await writeFile(join(output, 'evidence', `${source.slug}.html`), evidencePage(source, content));
 }
-console.log(`已构建 1 个首页、1 个判断连接页、${features.length} 个功能页、${Object.keys(evidence).length} 个公开证据页：${output}`);
+console.log(`已构建 1 个首页、1 个原理文章页、1 个判断连接页、${features.length} 个功能页、${Object.keys(evidence).length} 个公开证据页：${output}`);

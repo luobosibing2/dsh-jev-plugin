@@ -6,6 +6,7 @@ on:
     paths:
       - .github/workflows/pages.yml
       - website/**
+      - docs/explainers/**
       - docs/validation.md
       - docs/testing/jev-selection/public-results.zh-CN.md
       - docs/testing/2026-09-27-jev-hooks/public-results.zh-CN.md

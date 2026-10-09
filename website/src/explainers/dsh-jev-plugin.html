@@ -1,0 +1,2155 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="blueprint" data-mode="light" data-style="80">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="Answer me with HTML 0.4.9">
+<title>DSH Jev 插件：原理与全部 12 项功能</title>
+<style>
+html[data-theme="blueprint"], html[data-theme="blueprint"][data-mode="light"] {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --radius: 0px;
+  --shadow: none;
+  --bw: 1.5px;
+  --head-font: var(--font-sans);
+  --bg: #f6f6f3;
+  --paper: #ffffff;
+  --ink: #16181d;
+  --ink-2: #4b5260;
+  --ink-3: #8b929e;
+  --line: #1d2026;
+  --line-2: #d6dae1;
+  --fill: #f3f5f8;
+  --accent: #1d5fbf;
+  --accent-bg: #e4ecf8;
+  --ok: #1d5fbf;
+  --ok-bg: #e4ecf8;
+  --err: #c62828;
+  --err-bg: #fbeaea;
+  --warn: #a8620a;
+  --warn-bg: #fdf3e2;
+  --head-bg: #16181d;
+  --head-fg: #ffffff;
+}
+html[data-theme="blueprint"][data-mode="dark"] {
+  --bg: #081322;
+  --paper: #0d1c31;
+  --ink: #e6edf7;
+  --ink-2: #a9b8cc;
+  --ink-3: #6b7f99;
+  --line: #c9d6e8;
+  --line-2: #23385a;
+  --fill: #12253f;
+  --accent: #6ea8ff;
+  --accent-bg: #16305a;
+  --ok: #6ea8ff;
+  --ok-bg: #16305a;
+  --err: #ff7070;
+  --err-bg: #3b1620;
+  --warn: #f0b14a;
+  --warn-bg: #3a2a10;
+  --head-bg: #e6edf7;
+  --head-fg: #081322;
+}
+@media (prefers-color-scheme: dark) {
+html[data-theme="blueprint"][data-mode="auto"] {
+  --bg: #081322;
+  --paper: #0d1c31;
+  --ink: #e6edf7;
+  --ink-2: #a9b8cc;
+  --ink-3: #6b7f99;
+  --line: #c9d6e8;
+  --line-2: #23385a;
+  --fill: #12253f;
+  --accent: #6ea8ff;
+  --accent-bg: #16305a;
+  --ok: #6ea8ff;
+  --ok-bg: #16305a;
+  --err: #ff7070;
+  --err-bg: #3b1620;
+  --warn: #f0b14a;
+  --warn-bg: #3a2a10;
+  --head-bg: #e6edf7;
+  --head-fg: #081322;
+}
+}
+
+html[data-theme="shadcn"], html[data-theme="shadcn"][data-mode="light"] {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --radius: 8px;
+  --shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+  --bw: 1px;
+  --head-font: var(--font-sans);
+  --bg: #fafafa;
+  --paper: #ffffff;
+  --ink: #09090b;
+  --ink-2: #71717a;
+  --ink-3: #a1a1aa;
+  --line: #e4e4e7;
+  --line-2: #f0f0f2;
+  --fill: #f4f4f5;
+  --accent: #2563eb;
+  --accent-bg: #eff6ff;
+  --ok: #16a34a;
+  --ok-bg: #f0fdf4;
+  --err: #dc2626;
+  --err-bg: #fef2f2;
+  --warn: #d97706;
+  --warn-bg: #fffbeb;
+  --head-bg: #18181b;
+  --head-fg: #fafafa;
+}
+html[data-theme="shadcn"][data-mode="dark"] {
+  --bg: #09090b;
+  --paper: #121215;
+  --ink: #fafafa;
+  --ink-2: #a1a1aa;
+  --ink-3: #71717a;
+  --line: #27272a;
+  --line-2: #1c1c1f;
+  --fill: #18181b;
+  --accent: #60a5fa;
+  --accent-bg: #172554;
+  --ok: #4ade80;
+  --ok-bg: #052e16;
+  --err: #f87171;
+  --err-bg: #450a0a;
+  --warn: #fbbf24;
+  --warn-bg: #451a03;
+  --head-bg: #fafafa;
+  --head-fg: #18181b;
+}
+@media (prefers-color-scheme: dark) {
+html[data-theme="shadcn"][data-mode="auto"] {
+  --bg: #09090b;
+  --paper: #121215;
+  --ink: #fafafa;
+  --ink-2: #a1a1aa;
+  --ink-3: #71717a;
+  --line: #27272a;
+  --line-2: #1c1c1f;
+  --fill: #18181b;
+  --accent: #60a5fa;
+  --accent-bg: #172554;
+  --ok: #4ade80;
+  --ok-bg: #052e16;
+  --err: #f87171;
+  --err-bg: #450a0a;
+  --warn: #fbbf24;
+  --warn-bg: #451a03;
+  --head-bg: #fafafa;
+  --head-fg: #18181b;
+}
+}
+
+html[lang="ja"][data-theme][data-mode] {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "Noto Sans JP", "PingFang SC", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+html[lang="ja"][data-theme="3b1b"][data-mode] {
+  --v-title-font: "CMU Serif", "Latin Modern Roman", "Iowan Old Style", "Palatino", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", "Noto Serif JP", "Songti SC", serif;
+}
+
+/* Answer me with HTML base — uses theme variables only, never hard-coded colors (theme tokens: themes/index.js). Exception: the var() fallbacks of diagrams (flow / sequence) equal the blueprint light tokens, guarded by a test. */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-sans); font-size: 14px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+code, pre, kbd { font-family: var(--font-mono); }
+
+/* ── Toolbar ─────────────────────────────── */
+.am-toolbar {
+  position: fixed; top: 12px; right: 12px; z-index: 10; display: flex; gap: 6px;
+}
+.am-btn {
+  font: 12px/1 var(--font-sans); color: var(--ink); background: var(--paper);
+  border: 1px solid var(--line-2); border-radius: var(--radius); padding: 7px 10px; cursor: pointer;
+}
+.am-btn:hover { border-color: var(--ink-3); }
+.am-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── Header ───────────────────────────────── */
+.am-head { margin: 0 0 20px; padding-right: 260px; }
+.am-head h1 { margin: 0; font-size: 24px; line-height: 1.25; letter-spacing: -0.01em; }
+.am-sub { margin: 4px 0 0; color: var(--ink-2); }
+.am-head-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; font-size: 12px; color: var(--ink-2); }
+.am-head-meta b { font-family: var(--font-mono); font-weight: 400; color: var(--ink-3); margin-right: 6px; }
+.am-intro { margin-top: 12px; max-width: 80ch; }
+
+/* ── sheet template ────────────────────────── */
+.am-sheet { max-width: 1680px; margin: 0 auto; padding: 32px 28px 40px; }
+.am-frame { position: relative; }
+.am-grid {
+  display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+  gap: 20px; align-items: start;
+}
+.am-ruler { display: none; }
+html[data-theme="blueprint"] .am-frame { border: 1px solid var(--line); padding: 30px; }
+html[data-theme="blueprint"] .am-frame::before {
+  content: ""; position: absolute; inset: 18px; border: 1px solid var(--line); pointer-events: none;
+}
+html[data-theme="blueprint"] .am-ruler {
+  display: flex; position: absolute; font: 10px/1 var(--font-mono); color: var(--ink-3);
+}
+.am-ruler span { flex: 1; display: flex; align-items: center; justify-content: center; }
+.am-ruler--top, .am-ruler--bottom { left: 18px; right: 18px; height: 18px; }
+.am-ruler--top { top: 0; }
+.am-ruler--bottom { bottom: 0; }
+.am-ruler--left, .am-ruler--right { top: 18px; bottom: 18px; width: 18px; flex-direction: column; }
+.am-ruler--left { left: 0; }
+.am-ruler--right { right: 0; }
+.am-ruler--top span + span, .am-ruler--bottom span + span { border-left: 1px solid var(--line); }
+.am-ruler--left span + span, .am-ruler--right span + span { border-top: 1px solid var(--line); }
+
+/* ── Panels ───────────────────────────────── */
+.am-panel {
+  background: var(--paper); border: var(--bw) solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); min-width: 0; overflow: hidden;
+}
+.am-panel-head {
+  display: flex; align-items: stretch; gap: 0; border-bottom: var(--bw) solid var(--line); min-height: 34px;
+}
+.am-panel-id {
+  display: flex; align-items: center; justify-content: center; min-width: 34px; padding: 0 8px;
+  background: var(--head-bg); color: var(--head-fg); font-weight: 600; font-size: 14px;
+}
+html[data-theme="shadcn"] .am-panel-id { border-radius: 6px; min-width: 24px; height: 24px; margin: 9px 0 9px 14px; font-size: 12px; }
+html[data-theme="shadcn"] .am-panel-head { border-bottom-width: 1px; }
+.am-panel-head h2 { margin: 0; padding: 7px 12px; font-size: 15px; font-weight: 600; flex: 1; display: flex; align-items: center; }
+.am-panel-meta { align-self: center; padding: 0 12px; font: 11px/1.3 var(--font-mono); color: var(--ink-2); text-align: right; }
+.am-panel-body { padding: 14px 16px 16px; }
+.am-panel-body > * + * { margin-top: 12px; }
+
+/* ── Markdown body ───────────────────────── */
+.am-md > :first-child { margin-top: 0; }
+.am-md > :last-child { margin-bottom: 0; }
+.am-md p { margin: 0 0 8px; }
+.am-md ul, .am-md ol { margin: 0 0 8px; padding-left: 20px; }
+.am-md li + li { margin-top: 3px; }
+.am-md h3, .am-md h4 { margin: 14px 0 6px; font-size: 13px; }
+.am-md a { color: var(--accent); }
+.am-md blockquote { margin: 0 0 8px; padding: 2px 12px; border-left: 3px solid var(--line-2); color: var(--ink-2); }
+.am-md :not(pre) > code { font-size: 0.9em; background: var(--fill); padding: 1px 5px; border-radius: 4px; }
+.am-md hr { border: 0; border-top: 1px solid var(--line-2); margin: 12px 0; }
+.am-md table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.am-md th {
+  text-align: left; font: 11px/1.3 var(--font-mono); color: var(--ink-2); font-weight: 400;
+  padding: 6px 10px; border-bottom: 1px solid var(--line-2);
+}
+/* th { text-align: left } outranks the align attribute from Markdown alignment, so restore right and center columns explicitly. */
+.am-md th[align="right"] { text-align: right; }
+.am-md th[align="center"] { text-align: center; }
+.am-md td { padding: 7px 10px; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+.am-md tbody tr:nth-child(even) td { background: var(--fill); }
+.am-table-wrap { overflow-x: auto; }
+.am-code {
+  margin: 0; padding: 12px 14px; background: var(--fill); border: 1px solid var(--line-2);
+  border-radius: var(--radius); overflow-x: auto; font-size: 12.5px; line-height: 1.5;
+}
+
+/* ── Status badges ok / no / warn ──────────────── */
+.am-status { white-space: nowrap; font-weight: 500; }
+.am-status--ok { color: var(--ok); }
+.am-status--no { color: var(--err); }
+.am-status--warn { color: var(--warn); }
+.am-status-icon { display: inline-block; width: 1.1em; font-weight: 700; }
+
+/* ── callout ─────────────────────────────── */
+.am-callout {
+  border: 1px solid var(--line-2); border-left: 3px solid var(--accent); background: var(--accent-bg);
+  padding: 10px 14px; border-radius: var(--radius);
+}
+.am-callout--ok { border-left-color: var(--ok); background: var(--ok-bg); }
+.am-callout--warn { border-left-color: var(--warn); background: var(--warn-bg); }
+.am-callout--err { border-left-color: var(--err); background: var(--err-bg); }
+.am-callout-title { font-weight: 600; margin-bottom: 4px; }
+
+/* ── kv title block ─────────────────────────── */
+.am-kv {
+  display: grid; grid-template-columns: repeat(var(--kv-cols, 2), minmax(0, 1fr)); margin: 0;
+  border-top: var(--bw) solid var(--line); border-left: var(--bw) solid var(--line);
+}
+.am-kv-cell { border-right: var(--bw) solid var(--line); border-bottom: var(--bw) solid var(--line); padding: 6px 10px 8px; min-width: 0; }
+.am-kv-cell--wide { grid-column: 1 / -1; }
+.am-kv dt { font: 11px/1.4 var(--font-mono); color: var(--ink-2); }
+.am-kv dd { margin: 2px 0 0; font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.am-kv-cell--wide dd { font-size: 17px; font-weight: 600; }
+html[data-theme="shadcn"] .am-kv { border-color: var(--line); border-radius: var(--radius); overflow: hidden; }
+
+/* ── timeline ────────────────────────────── */
+.am-timeline { list-style: none; margin: 0; padding: 0; }
+.am-timeline--h { display: grid; grid-template-columns: repeat(var(--n, 1), minmax(0, 1fr)); padding-top: 4px; }
+.am-timeline--h li { position: relative; text-align: center; padding: 0 6px; }
+.am-timeline--h li::before {
+  content: ""; position: absolute; top: 31px; left: 0; right: 0; border-top: var(--bw) solid var(--line);
+}
+.am-timeline--h li:first-child::before { left: 50%; }
+.am-timeline--h li:last-child::before { right: 50%; }
+.am-tl-when { display: block; font-size: 15px; font-weight: 500; height: 24px; }
+.am-tl-dot {
+  position: relative; display: block; width: 11px; height: 11px; margin: 2px auto 8px;
+  border: var(--bw) solid var(--line); border-radius: 50%; background: var(--paper);
+}
+.am-tl-item--hi .am-tl-dot { background: var(--accent); border-color: var(--accent); }
+.am-tl-title { display: block; font-size: 12.5px; font-weight: 500; }
+.am-tl-text { display: block; font-size: 12px; color: var(--ink-2); line-height: 1.45; }
+.am-timeline--v li { position: relative; padding: 0 0 14px 22px; }
+.am-timeline--v li::before { content: ""; position: absolute; left: 5px; top: 6px; bottom: -6px; border-left: var(--bw) solid var(--line-2); }
+.am-timeline--v li:last-child::before { display: none; }
+.am-timeline--v .am-tl-dot { position: absolute; left: 0; top: 4px; margin: 0; }
+.am-timeline--v .am-tl-when { display: inline; height: auto; font: 12px var(--font-mono); color: var(--ink-2); margin-right: 8px; }
+.am-timeline--v .am-tl-title { display: inline; font-size: 14px; }
+.am-timeline--v .am-tl-text { margin-top: 2px; }
+
+/* ── annot sentence notes ──────────────────────── */
+.am-annot + .am-annot { border-top: 1px solid var(--line-2); padding-top: 12px; }
+.am-annot-head { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.am-annot-meta { font: 11px var(--font-mono); font-weight: 400; color: var(--ink-2); }
+.am-annot-scroll { overflow-x: auto; }
+.am-annot-line {
+  position: relative; display: inline-block; white-space: pre; font: 14px/1.6 var(--font-mono);
+  padding-bottom: calc(var(--rows, 0) * 17px + 14px);
+}
+.am-annot-line--wrap { display: block; white-space: normal; padding-bottom: 10px; }
+.am-annot-line--wrap .am-seg { white-space: nowrap; }
+.am-seg { position: relative; }
+.am-seg::after {
+  content: ""; position: absolute; left: 1px; right: 1px; top: calc(100% + 1px); height: 5px;
+  border: 1px solid var(--accent); border-top: 0;
+}
+.am-seg-n {
+  position: absolute; left: 0; top: calc(100% + 8px + var(--row, 0) * 17px);
+  font: 11px/16px var(--font-sans); color: var(--accent); white-space: nowrap;
+}
+.am-seg--err { color: var(--err); }
+.am-seg--err::after { border-color: var(--err); }
+.am-seg--err .am-seg-n { color: var(--err); }
+.am-annot-caption { font-size: 12px; color: var(--ink-2); }
+
+/* ── limits bars ───────────────────────── */
+.am-lim + .am-lim { margin-top: 14px; }
+.am-lim-head { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; margin-bottom: 4px; }
+.am-lim-val { font: 12px var(--font-mono); color: var(--accent); white-space: nowrap; }
+.am-lim-track { position: relative; height: 12px; border: 1px solid var(--line-2); background: var(--fill); border-radius: calc(var(--radius) / 2); }
+.am-lim-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent-bg); border-right: 1px solid var(--accent); }
+.am-lim-mark { position: absolute; top: -4px; bottom: -4px; border-left: 2px solid var(--accent); }
+.am-lim.is-over .am-lim-fill { background: var(--err-bg); border-right-color: var(--err); }
+.am-lim.is-over .am-lim-val { color: var(--err); }
+.am-lim-ticks { position: relative; height: 16px; font: 10px/16px var(--font-mono); color: var(--ink-3); }
+.am-lim-ticks span { position: absolute; transform: translateX(-50%); }
+.am-lim-ticks span:first-child { transform: none; }
+.am-lim-note { font-size: 11px; color: var(--ink-2); margin-left: 6px; }
+
+/* ── tree ─────────────────────────── */
+.am-tree { font-size: 13px; }
+.am-tree-root { display: flex; justify-content: center; position: relative; padding-bottom: 18px; }
+.am-tree-root::after { content: ""; position: absolute; bottom: 0; left: 50%; height: 18px; border-left: var(--bw) solid var(--line); }
+.am-tree-root--solo { padding-bottom: 12px; }
+.am-tree-root--solo::after { display: none; }
+.am-tree-box {
+  border: var(--bw) solid var(--line); background: var(--paper); padding: 6px 14px; text-align: center;
+  border-radius: var(--radius); font-weight: 600;
+}
+.am-tree-box small { display: block; font-weight: 400; color: var(--ink-2); font-size: 12px; }
+.am-tree-box--root { background: var(--accent-bg); font-size: 15px; padding: 8px 28px; }
+.am-tree-cols { display: grid; grid-template-columns: repeat(var(--n, 1), minmax(0, 1fr)); }
+.am-tree-col { position: relative; padding: 18px 8px 0; min-width: 0; }
+.am-tree-col::before { content: ""; position: absolute; top: 0; left: 0; right: 0; border-top: var(--bw) solid var(--line); }
+.am-tree-col:first-child::before { left: 50%; }
+.am-tree-col:last-child::before { right: 50%; }
+.am-tree-col::after { content: ""; position: absolute; top: 0; left: 50%; height: 18px; border-left: var(--bw) solid var(--line); }
+.am-tree-list, .am-tree-list ul { list-style: none; margin: 0; padding: 0; }
+.am-tree-col > .am-tree-list { margin: 8px 0 0 14px; }
+.am-tree-list ul { margin-left: 16px; }
+.am-tree-list li { position: relative; padding: 3px 0 3px 18px; }
+.am-tree-list li::before { content: ""; position: absolute; left: 0; top: 0.95em; width: 12px; border-top: 1px solid var(--ink-3); }
+.am-tree-list li::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; border-left: 1px solid var(--ink-3); }
+.am-tree-list li:last-child::after { bottom: auto; height: 0.95em; }
+.am-tree-tag { font: 11px var(--font-mono); color: var(--ink-3); margin-right: 4px; }
+.am-tree code { font: 12px var(--font-mono); }
+.am-tree-sub { display: block; font-size: 11.5px; color: var(--ink-2); }
+.am-tree-hi > .am-tree-label { color: var(--accent); font-weight: 600; }
+
+/* ── Diagrams (flow / sequence) ───────────────── */
+.am-diagram { margin: 0; overflow-x: auto; text-align: center; }
+/* Embedded previews can lose html[data-theme]; the fallbacks keep diagrams readable, and defined theme variables still win. */
+.am-diagram svg { max-width: 100%; height: auto; font-family: var(--font-sans, sans-serif); }
+.am-diagram text { fill: var(--ink, #16181d); font-size: 13px; }
+.am-node-shape { fill: var(--paper, #ffffff); stroke: var(--line, #1d2026); stroke-width: var(--bw, 1.5px); }
+.am-node--hi .am-node-shape { fill: var(--accent-bg, #e4ecf8); stroke: var(--accent, #1d5fbf); }
+.am-node--hi text { fill: var(--accent, #1d5fbf); font-weight: 600; }
+.am-edge { fill: none; stroke: var(--ink-2, #4b5260); stroke-width: 1.3; }
+.am-edge--dashed { stroke-dasharray: 5 4; }
+.am-arrow { fill: var(--ink-2, #4b5260); }
+.am-edge-label rect { fill: var(--paper, #ffffff); }
+.am-diagram .am-edge-label text { fill: var(--accent, #1d5fbf); font-size: 11.5px; }
+.am-cluster { fill: var(--fill, #f3f5f8); stroke: var(--line-2, #d6dae1); stroke-width: 1; stroke-dasharray: 4 3; }
+.am-diagram .am-cluster-label { fill: var(--ink-2, #4b5260); font: 11px var(--font-mono, monospace); }
+.am-lifeline { stroke: var(--ink-3, #8b929e); stroke-width: 1; stroke-dasharray: 4 4; }
+.am-actor { fill: var(--paper, #ffffff); stroke: var(--line, #1d2026); stroke-width: var(--bw, 1.5px); }
+.am-note { fill: var(--warn-bg, #fdf3e2); stroke: var(--warn, #a8620a); stroke-width: 1; }
+.am-diagram .am-step { fill: var(--ink-3, #8b929e); font: 10px var(--font-mono, monospace); }
+
+/* ── doc template ────────────────────────── */
+.am-doc { max-width: 1120px; margin: 0 auto; padding: 40px 28px 64px; }
+.am-doc-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 32px; align-items: start; }
+.am-doc-layout--notoc { grid-template-columns: minmax(0, 1fr); max-width: 860px; }
+.am-toc { position: sticky; top: 24px; font-size: 13px; }
+.am-toc a { display: block; color: var(--ink-2); text-decoration: none; padding: 4px 0 4px 10px; border-left: 2px solid var(--line-2); }
+.am-toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+.am-doc-body > .am-panel + .am-panel { margin-top: 20px; }
+
+/* ── Responsive and print ─────────────────────────── */
+@media (max-width: 1100px) {
+  .am-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .am-grid > .am-panel { grid-column: auto !important; }
+  .am-grid > .am-panel.am-span-wide { grid-column: 1 / -1 !important; }
+}
+@media (max-width: 760px) {
+  .am-sheet, .am-doc { padding: 56px 12px 24px; }
+  .am-head { padding-right: 0; }
+  .am-grid { grid-template-columns: minmax(0, 1fr); }
+  .am-grid > .am-panel.am-span-wide { grid-column: auto !important; }
+  html[data-theme="blueprint"] .am-frame { padding: 0; border: 0; }
+  html[data-theme="blueprint"] .am-frame::before, html[data-theme="blueprint"] .am-ruler { display: none; }
+  .am-doc-layout { grid-template-columns: minmax(0, 1fr); }
+  .am-toc { position: static; }
+  .am-timeline--h { grid-template-columns: minmax(0, 1fr); }
+  .am-tree-cols { grid-template-columns: minmax(0, 1fr); }
+  /* Tables and diagrams keep their size: the wrapper scrolls horizontally when they overflow. */
+  .am-md th, .am-md td { min-width: 6em; }
+  .am-diagram svg { max-width: none; }
+}
+.am-colophon { text-align: center; padding: 0 0 28px; font: 11px var(--font-mono); color: var(--ink-3); }
+
+@media print {
+  .am-toolbar { display: none; }
+  body { background: var(--paper); }
+  .am-panel { break-inside: avoid; box-shadow: none; }
+}
+.am-panel--bare { border: 0; background: transparent; box-shadow: none; }
+.am-panel--bare > .am-panel-body { padding: 0; }
+.am-panel--bare .am-kv { background: var(--paper); }
+
+</style>
+</head>
+<body>
+<div class="am-toolbar">
+<button class="am-btn" type="button" data-am="theme" data-labels="{&quot;blueprint&quot;:&quot;主题：图纸&quot;,&quot;shadcn&quot;:&quot;主题：卡片&quot;}">主题：图纸</button>
+<button class="am-btn" type="button" data-am="mode" data-labels="{&quot;auto&quot;:&quot;明暗：跟随系统&quot;,&quot;light&quot;:&quot;明暗：亮&quot;,&quot;dark&quot;:&quot;明暗：暗&quot;}">明暗：亮</button>
+<button class="am-btn" type="button" data-am="copy" data-done="已复制 ✓">复制源稿</button>
+</div>
+<main class="am-doc">
+<header class="am-head"><h1>DSH Jev 插件：原理与全部 12 项功能</h1><p class="am-sub">看清每项功能何时触发、给判断模型看什么，以及程序如何采用答案</p><div class="am-head-meta"><span><b>date</b>2026-10-09</span><span><b>source</b>dsh-jev-plugin · 79cdf650 · 差异核对 a3de7fc</span></div><div class="am-intro am-md"><div class="am-md"><p><a href="https://luobosibing2.github.io/dsh-jev-plugin/">返回功能网站</a> · <a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/main/docs/explainers/dsh-jev-plugin.md">阅读 Markdown 源稿</a></p>
+<p>主模型负责规划、回答和工具调用。DSH Jev 插件在指定节点加入结构化判断。下面按任务执行顺序，解释全部 12 项功能。</p>
+</div></div></header>
+<div class="am-doc-layout">
+<nav class="am-toc" aria-label="目录"><a href="#panel-A">A · 直接答案：这个插件如何工作</a><a href="#panel-B">B · 选择：哪些技能和文件先给主模型看</a><a href="#panel-C">C · 监督：有没有跑偏，记录是否支持完成</a><a href="#panel-D">D · 约束和协作：要求与新消息如何进入当前任务</a><a href="#panel-E">E · 日志：哪些工具文本可以省略</a><a href="#panel-F">F · 审批：何时允许一次工作区外操作</a><a href="#panel-G">G · 复盘：把历史模型步骤归到哪个阶段</a><a href="#panel-H">H · 边界与验证</a></nav><div class="am-doc-body">
+<section class="am-panel" id="panel-A">
+<header class="am-panel-head"><span class="am-panel-id">A</span><h2>直接答案：这个插件如何工作</h2></header>
+<div class="am-panel-body"><div class="am-md"><p>我们做的是 <strong>DSH 的独立原生插件 <code>@dsh-jev/plugin</code></strong>。它通过公开扩展点接入宿主。当前 <code>main</code> 包含 12 项业务功能，每项都有独立开关，默认全部关闭。</p>
+<h3>三个参与者各做什么</h3>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>参与者</th>
+<th>职责</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DSH 主模型</td>
+<td>理解任务，制定方案，生成回答，调用工具</td>
+<td>搜索文件、修改代码、运行测试</td>
+</tr>
+<tr>
+<td>Jev 或 Luna Decisions</td>
+<td>根据提供的材料，回答预先定义的问题</td>
+<td>哪条路径相关；记录是否支持完成</td>
+</tr>
+<tr>
+<td>本地插件与 DSH</td>
+<td>校验答案，检查是否仍适用，采用结果</td>
+<td>排序、加入提醒、发放原生单次许可</td>
+</tr>
+</tbody></table></div>
+</div>
+<figure class="am-diagram am-seq"><svg viewBox="0 0 614 366" width="614" height="366" role="img" aria-label="时序图：DSH、功能插件、判断服务" xmlns="http://www.w3.org/2000/svg"><defs><marker id="am1-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><line class="am-lifeline" x1="54" y1="42" x2="54" y2="362"/><g data-key="DSH"><rect class="am-actor" x="12" y="8" width="84" height="34" rx="2"/><text x="54" y="25" text-anchor="middle" dominant-baseline="central" font-weight="600">DSH</text></g><line class="am-lifeline" x1="283" y1="42" x2="283" y2="362"/><g data-key="功能插件"><rect class="am-actor" x="241" y="8" width="84" height="34" rx="2"/><text x="283" y="25" text-anchor="middle" dominant-baseline="central" font-weight="600">功能插件</text></g><line class="am-lifeline" x1="560" y1="42" x2="560" y2="362"/><g data-key="判断服务"><rect class="am-actor" x="518" y="8" width="84" height="34" rx="2"/><text x="560" y="25" text-anchor="middle" dominant-baseline="central" font-weight="600">判断服务</text></g><g data-step="0"><text x="168.5" y="70" text-anchor="middle">扩展点触发已开启功能</text><path class="am-edge" d="M54,80 L281,80" marker-end="url(#am1-arrow)"/><text class="am-step" x="60" y="74" text-anchor="start">1</text></g><g data-step="1"><text x="323" y="108" dominant-baseline="central">组装并保存 state 与 questions</text><path class="am-edge" d="M283,104 H313 V124 H285" marker-end="url(#am1-arrow)"/><text class="am-step" x="289" y="114" text-anchor="start">2</text></g><g data-step="2"><text x="421.5" y="158" text-anchor="middle">发送本次判断材料</text><path class="am-edge" d="M283,168 L558,168" marker-end="url(#am1-arrow)"/><text class="am-step" x="289" y="162" text-anchor="start">3</text></g><g data-step="3"><text x="421.5" y="198" text-anchor="middle">返回有类型的答案和概率</text><path class="am-edge am-edge--dashed" d="M560,208 L285,208" marker-end="url(#am1-arrow)"/><text class="am-step" x="554" y="202" text-anchor="end">4</text></g><g data-step="4"><text x="323" y="236" dominant-baseline="central">校验、保存、检查目标是否仍有效</text><path class="am-edge" d="M283,232 H313 V252 H285" marker-end="url(#am1-arrow)"/><text class="am-step" x="289" y="242" text-anchor="start">5</text></g><g data-step="5"><text x="168.5" y="286" text-anchor="middle">采用排序、消息、日志或审批结果</text><path class="am-edge" d="M283,296 L56,296" marker-end="url(#am1-arrow)"/><text class="am-step" x="277" y="290" text-anchor="end">6</text></g><g data-step="6"><text x="168.5" y="326" text-anchor="middle">记录实际采用与执行结果</text><path class="am-edge am-edge--dashed" d="M54,336 L281,336" marker-end="url(#am1-arrow)"/><text class="am-step" x="60" y="330" text-anchor="start">7</text></g></svg></figure>
+<div class="am-md"><h3>Jev 的原理：材料与问题分开</h3>
+<p><code>state</code> 是待判断的事实材料。<code>questions</code> 定义要回答的问题和允许的答案。同一请求中的问题共享 <code>state</code>，各自作答。候选名称或路径也可以写在题目中。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>题型</th>
+<th>含义</th>
+<th>插件如何使用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Choice</td>
+<td>从给定选项中选择，并返回概率分布</td>
+<td>判断跑偏、遗漏、消息路由、审批和阶段</td>
+</tr>
+<tr>
+<td>Noul</td>
+<td>返回“是”的概率</td>
+<td>分别判断每个技能或路径是否相关</td>
+</tr>
+<tr>
+<td>Score</td>
+<td>在有序等级间评分，可以返回小数</td>
+<td>主要用于连接诊断</td>
+</tr>
+</tbody></table></div>
+<p>TypeSafe 将 Jev 的训练方法称为 <strong>RLCD</strong>，即为校准决策训练模型。它的目标是输出决策与概率。校准要在一组预测上衡量。本插件的有限样例没有验证概率校准。</p>
+<p>例如，日志候选得到 <code>omit</code> 后，程序还要检查概率门槛。<code>0.8</code> 是该功能的采用参数，不能直接解释为本项目有 80% 正确率。<code>confidence</code> 描述答案的不确定程度，也不代表业务结果已验证。</p>
+<p>原理来源：<a href="https://docs.typesafe.ai/concepts/system-one">System One</a>、<a href="https://docs.typesafe.ai/concepts/state">State</a>、<a href="https://docs.typesafe.ai/introduction/machine-learning-primer">RLCD</a>、<a href="https://docs.typesafe.ai/confidence">概率与 confidence</a>。</p>
+<h3>公共服务让 12 项功能共用哪些能力</h3>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>公共能力</th>
+<th>当前行为</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>判断连接</td>
+<td>Jev、Luna / OpenAI、Luna / OpenRouter 三套连接</td>
+</tr>
+<tr>
+<td>配置隔离</td>
+<td>每个 DSH profile 独立保存连接、凭据引用、开关和参数</td>
+</tr>
+<tr>
+<td>连接诊断</td>
+<td>显式发送 Choice、Score、Noul；保存设置不发模型请求</td>
+</tr>
+<tr>
+<td>判断记录</td>
+<td>保存精确输入、原始响应、统一答案、已知用量和动作回执</td>
+</tr>
+<tr>
+<td>输入与结果保存</td>
+<td>输入保存失败就不发送；结果保存失败就不交付可用答案</td>
+</tr>
+<tr>
+<td>重试</td>
+<td><code>judge</code> 的失败等待人工 Retry / Cancel；Retry 刷新当前材料</td>
+</tr>
+<tr>
+<td>后台判断</td>
+<td><code>judgeOnce</code> 最多尝试一次，失败直接交回消费者</td>
+</tr>
+<tr>
+<td>后端切换</td>
+<td>新尝试使用新连接；故障不自动换模型或 API</td>
+</tr>
+</tbody></table></div>
+<p>三个连接都投影到内部 <code>JevRequest = { state, questions }</code>。适配器负责协议转换。OpenAI 将 Noul 转为 <code>predicate</code>。OpenRouter 超过 200 题时分批，全部成功后才交付业务答案。</p>
+<p><strong>判断成功、业务采纳、原生许可和实际执行分开记录。</strong> 没有执行回执时，不能凭判断答案认定操作完成。失败回执也不能成为重复执行的理由。</p>
+<p>来源：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/README.zh-CN.md#L17">12 项功能与默认状态</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/types.ts#L6">内部类型</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/README.md#consumer-api">公共消费者 API</a>。</p>
+</div></div>
+</section>
+<section class="am-panel" id="panel-B">
+<header class="am-panel-head"><span class="am-panel-id">B</span><h2>选择：哪些技能和文件先给主模型看</h2></header>
+<div class="am-panel-body"><div class="am-md"><h3>01 技能选择 · skill-selection</h3>
+<p><strong>解决的问题：</strong> 技能目录较大时，先发布与当前任务相关的摘要。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>实际内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>触发</td>
+<td>主 Agent 的 <code>agent/pre-step</code>，原生技能目录发布前</td>
+</tr>
+<tr>
+<td>state</td>
+<td>最近最多 2 条直接用户文本、1 条助手可见文本；默认合计 2,000 字符</td>
+</tr>
+<tr>
+<td>questions</td>
+<td>每个技能一道 Noul；题目包含技能名称和 description</td>
+</tr>
+<tr>
+<td>采用</td>
+<td>按相关概率排序，默认先取前 5 个，再去掉 Session 已可见的名称</td>
+</tr>
+<tr>
+<td>主模型后续行动</td>
+<td>通过原生 <code>skill</code> 工具加载技能正文</td>
+</tr>
+</tbody></table></div>
+<p><strong>示例：</strong> 用户要求分析退款逻辑。插件判断代码调查技能是否相关，再把入选摘要交给主模型。Jev 没有读取技能正文、工具结果或附件。</p>
+<p>去重后不从第 6 名补位。主模型仍可直接调用未入选技能。<code>skill_catalog</code> 可恢复完整摘要目录，恢复不调用 Jev。判断失败走人工 Retry / Cancel。</p>
+<p>来源：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L65">任务上下文</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L227">技能判断与目录采用</a>。</p>
+<h3>技能选择的完整输入输出示例</h3>
+<p><strong>6 个技能摘要 → 一次请求、6 道 Noul → 6 个概率 → 默认选前 5 个。</strong></p>
+<p>本例使用 Jev / System One 协议。技能名称、简介和概率都是演示值，不是真实模型实测。假设这 6 个技能都可由当前 Agent 调用，且尚未在 Session 中展示。</p>
+</div>
+<figure class="am-diagram am-flow"><svg viewBox="0 0 194 387" width="194" height="387" role="img" aria-label="流程图：6 个技能摘要、一次请求中的 6 道 Noul、Jev 返回 6 个概率、插件排序并取前 5 个、主模型收到入选摘要" xmlns="http://www.w3.org/2000/svg"><defs><marker id="am2-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g></g><g><g data-step="0"><path class="am-edge" d="M96.8,49 L96.8,60.5 Q96.8,72 96.8,83.5 L96.8,95" marker-end="url(#am2-arrow)"/></g><g data-step="1"><path class="am-edge" d="M96.8,130 L96.8,141.5 Q96.8,153 96.8,164.5 L96.8,176" marker-end="url(#am2-arrow)"/></g><g data-step="2"><path class="am-edge" d="M96.8,211 L96.8,222.5 Q96.8,234 96.8,245.5 L96.8,257" marker-end="url(#am2-arrow)"/></g><g data-step="3"><path class="am-edge" d="M96.8,292 L96.8,303.5 Q96.8,315 96.8,326.5 L96.8,338" marker-end="url(#am2-arrow)"/></g></g><g><g class="am-node am-node--rect" data-key="6 个技能摘要" data-step="0"><rect class="am-node-shape" x="44.7" y="14" width="104.2" height="35" rx="3"/><text x="96.8" y="31.5" text-anchor="middle" dominant-baseline="central">6 个技能摘要</text></g><g class="am-node am-node--rect" data-key="一次请求中的 6 道 Noul" data-step="0"><rect class="am-node-shape" x="14" y="95" width="165.5" height="35" rx="3"/><text x="96.8" y="112.5" text-anchor="middle" dominant-baseline="central">一次请求中的 6 道 Noul</text></g><g class="am-node am-node--rect" data-key="Jev 返回 6 个概率" data-step="1"><rect class="am-node-shape" x="29.1" y="176" width="135.4" height="35" rx="3"/><text x="96.8" y="193.5" text-anchor="middle" dominant-baseline="central">Jev 返回 6 个概率</text></g><g class="am-node am-node--rect" data-key="插件排序并取前 5 个" data-step="2"><rect class="am-node-shape" x="23.2" y="257" width="147.1" height="35" rx="3"/><text x="96.8" y="274.5" text-anchor="middle" dominant-baseline="central">插件排序并取前 5 个</text></g><g class="am-node am-node--rect" data-key="主模型收到入选摘要" data-step="3"><rect class="am-node-shape" x="24.3" y="338" width="145" height="35" rx="3"/><text x="96.8" y="355.5" text-anchor="middle" dominant-baseline="central">主模型收到入选摘要</text></g></g></svg></figure>
+<div class="am-md"><h4>用户提出什么任务</h4>
+<blockquote>
+<p>查一下退款金额算错的原因，修复代码，补上测试，并说明改动。</p>
+</blockquote>
+<h4>输入：实际发送给 Jev 的请求</h4>
+<p>任务放在共享 <code>state</code> 中。每个技能的名称和简介放在对应问题的 <code>instructions</code> 中。插件没有把技能正文放进请求。</p>
+</div>
+<pre class="am-code"><code data-lang="json">{
+  &quot;model&quot;: &quot;jev-latest&quot;,
+  &quot;state&quot;: {
+    &quot;context&quot;: [
+      {
+        &quot;role&quot;: &quot;user&quot;,
+        &quot;text&quot;: &quot;查一下退款金额算错的原因，修复代码，补上测试，并说明改动。&quot;
+      }
+    ]
+  },
+  &quot;questions&quot;: {
+    &quot;candidate-0&quot;: {
+      &quot;type&quot;: &quot;noul&quot;,
+      &quot;instructions&quot;: &quot;Would this skill help the task? Skill: code-investigation. Description: 查找代码实现，追踪调用关系，定位相关文件。&quot;
+    },
+    &quot;candidate-1&quot;: {
+      &quot;type&quot;: &quot;noul&quot;,
+      &quot;instructions&quot;: &quot;Would this skill help the task? Skill: slide-generation. Description: 把材料组织成演示文稿。&quot;
+    },
+    &quot;candidate-2&quot;: {
+      &quot;type&quot;: &quot;noul&quot;,
+      &quot;instructions&quot;: &quot;Would this skill help the task? Skill: unit-testing. Description: 编写单元测试，覆盖正常情况和异常情况。&quot;
+    },
+    &quot;candidate-3&quot;: {
+      &quot;type&quot;: &quot;noul&quot;,
+      &quot;instructions&quot;: &quot;Would this skill help the task? Skill: technical-writing. Description: 说明代码改动、使用方式和验证结果。&quot;
+    },
+    &quot;candidate-4&quot;: {
+      &quot;type&quot;: &quot;noul&quot;,
+      &quot;instructions&quot;: &quot;Would this skill help the task? Skill: root-cause-analysis. Description: 从现象和证据中查找故障原因。&quot;
+    },
+    &quot;candidate-5&quot;: {
+      &quot;type&quot;: &quot;noul&quot;,
+      &quot;instructions&quot;: &quot;Would this skill help the task? Skill: code-editing. Description: 根据已确认的问题修改代码，并检查相关影响。&quot;
+    }
+  }
+}</code></pre>
+<div class="am-md"><p>这是一个请求体。<code>candidate-0</code> 到 <code>candidate-5</code> 是问题 ID，帮助插件把答案对应回技能。6 道题分别问“这个技能能帮助当前任务吗？”</p>
+<h4>输出：Jev 返回的答案部分</h4>
+<p>下面省略用量等其他响应字段，只展示 6 道题的模拟答案。</p>
+</div>
+<pre class="am-code"><code data-lang="json">{
+  &quot;answers&quot;: {
+    &quot;candidate-0&quot;: { &quot;noul&quot;: 0.88 },
+    &quot;candidate-1&quot;: { &quot;noul&quot;: 0.03 },
+    &quot;candidate-2&quot;: { &quot;noul&quot;: 0.91 },
+    &quot;candidate-3&quot;: { &quot;noul&quot;: 0.61 },
+    &quot;candidate-4&quot;: { &quot;noul&quot;: 0.95 },
+    &quot;candidate-5&quot;: { &quot;noul&quot;: 0.83 }
+  }
+}</code></pre>
+<div class="am-md"><p><code>candidate-4</code> 的 <code>noul: 0.95</code> 是该技能能帮助任务的估计概率。它不表示修复成功率为 95%。6 道题彼此独立，不要求这些概率相加等于 1。</p>
+<h4>插件如何读取并排序答案</h4>
+<p>适配器将 <code>noul</code> 转为内部的 <code>probability</code>，保持概率值不变。例如，第 5 道题转为：</p>
+</div>
+<pre class="am-code"><code data-lang="json">{
+  &quot;id&quot;: &quot;candidate-4&quot;,
+  &quot;kind&quot;: &quot;noul&quot;,
+  &quot;probability&quot;: 0.95
+}</code></pre>
+<div class="am-md"><p>随后，本地插件按概率排序，默认取前 5 个：</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>排名</th>
+<th>技能</th>
+<th>相关概率（演示值）</th>
+<th>默认前 5 个</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>root-cause-analysis</td>
+<td>0.95</td>
+<td>入选</td>
+</tr>
+<tr>
+<td>2</td>
+<td>unit-testing</td>
+<td>0.91</td>
+<td>入选</td>
+</tr>
+<tr>
+<td>3</td>
+<td>code-investigation</td>
+<td>0.88</td>
+<td>入选</td>
+</tr>
+<tr>
+<td>4</td>
+<td>code-editing</td>
+<td>0.83</td>
+<td>入选</td>
+</tr>
+<tr>
+<td>5</td>
+<td>technical-writing</td>
+<td>0.61</td>
+<td>入选</td>
+</tr>
+<tr>
+<td>6</td>
+<td>slide-generation</td>
+<td>0.03</td>
+<td>不入选</td>
+</tr>
+</tbody></table></div>
+<p>技能选择使用 Top 5，没有日志功能的 0.8 采用门槛。因此，本例中概率为 0.61 的第 5 名也会入选。若入选名称已在 Session 可见，插件会去重，不用第 6 名补位。</p>
+<h4>输出：主模型最终收到的技能摘要</h4>
+<p>下面展示插件消息中的目录部分。技能顺序已经改变，演示文稿技能没有进入本次摘要。</p>
+</div>
+<pre class="am-code"><code data-lang="text">&lt;available_skills&gt;
+- root-cause-analysis: 从现象和证据中查找故障原因。 (relevance probability 0.95)
+- unit-testing: 编写单元测试，覆盖正常情况和异常情况。 (relevance probability 0.91)
+- code-investigation: 查找代码实现，追踪调用关系，定位相关文件。 (relevance probability 0.88)
+- code-editing: 根据已确认的问题修改代码，并检查相关影响。 (relevance probability 0.83)
+- technical-writing: 说明代码改动、使用方式和验证结果。 (relevance probability 0.61)
+&lt;/available_skills&gt;</code></pre>
+<div class="am-md"><p>消息还要求主模型先调用原生 <code>skill</code> 工具读取正文。主模型可用 <code>skill_catalog</code> 恢复完整摘要目录。</p>
+<p><strong>到这里，插件只筛选并发布了摘要。</strong> 主模型之后决定加载和执行哪个技能。Jev 的入选结果不会自动执行技能。</p>
+<p>格式来源：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L256">问题组装</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/wire.ts#L65">Jev 请求编码</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/wire.ts#L117">Noul 答案转换</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L140">目录消息</a>。</p>
+<h3>02 文件排序 · file-ranking</h3>
+<p><strong>解决的问题：</strong> 原生 glob 命中多条路径时，让相关路径先出现。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>实际内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>触发</td>
+<td>主 Agent 的原生 glob 成功返回 <code>{ root, paths }</code> 后</td>
+</tr>
+<tr>
+<td>state</td>
+<td>任务文本、glob 的 pattern 和 path</td>
+</tr>
+<tr>
+<td>questions</td>
+<td>每条候选路径一道 Noul；路径写在题目中</td>
+</tr>
+<tr>
+<td>采用</td>
+<td>对完整 paths 排序；概率相同保持原顺序</td>
+</tr>
+<tr>
+<td>展示与恢复</td>
+<td>默认展示前 12 条；完整带分数列表可通过原生 spill 回读</td>
+</tr>
+</tbody></table></div>
+<p><strong>示例：</strong> glob 找到 <code>src/refund.ts</code> 和 <code>docs/refund-theme.md</code>。Jev 判断路径名称与任务的相关性。插件不会追加扫描，也不会读取文件正文。</p>
+<p>默认最多判断 40 条候选。出现 41 条时，整次跳过判断排序。空候选也直接旁路。判断失败走人工 Retry / Cancel；重试复用已完成的 glob，不重复搜索。</p>
+<p>来源：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L294">glob 判断与结构化排序</a>。</p>
+</div></div>
+</section>
+<section class="am-panel" id="panel-C">
+<header class="am-panel-head"><span class="am-panel-id">C</span><h2>监督：有没有跑偏，记录是否支持完成</h2></header>
+<div class="am-panel-body"><div class="am-md"><p>这三项共用已记录的可见证据。材料包含用户请求、助手正文、工具调用与结果，以及适用的原生 goal。监督排除 reasoning，不追加文件读取或验证命令。</p>
+<p>每次判断都问两道 Choice：一道选结论，一道选支持结论的既有证据 ID。程序引用原始要求或记录来反馈。</p>
+<h3>03 跑偏提醒 · drift-monitoring</h3>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>实际内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>触发</td>
+<td>默认每 6 个完成的模型 step 检查一次；并行工具仍算一个 step</td>
+</tr>
+<tr>
+<td>上下文</td>
+<td>当前请求范围内的可见记录，或当前 goal revision 的记录</td>
+</tr>
+<tr>
+<td>结论选项</td>
+<td><code>on-track / drift / unknown</code>，另选证据 ID</td>
+</tr>
+<tr>
+<td>采用</td>
+<td>drift 在后续已进入的模型步骤加入一次普通 Session 提醒</td>
+</tr>
+<tr>
+<td>失败与限制</td>
+<td>后台 <code>judgeOnce</code>；失败不阻塞；已结束任务不会被唤醒</td>
+</tr>
+</tbody></table></div>
+<p><strong>示例：</strong> 用户要求检查退款故障，模型却持续调整页面样式。Jev 可以选择某条用户要求，插件据此提醒主模型回到任务。相同要求不会在同一请求中反复提醒。</p>
+<p>提醒送达不代表主模型一定改正，也不会取消已经执行的工具。</p>
+<h3>04 完成核查 · completion-check</h3>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>实际内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>触发</td>
+<td>最终回答已展示，进入 <code>agent/turn-stopping</code></td>
+</tr>
+<tr>
+<td>上下文</td>
+<td>从原始请求到本次回答的记录，含工具结果和最终事实声称</td>
+</tr>
+<tr>
+<td>结论选项</td>
+<td><code>complete / omission / needs-user / unknown</code>，另选证据 ID</td>
+</tr>
+<tr>
+<td>采用</td>
+<td>complete 正常结束；首次 omission 最多排入一次原生 steer 补做</td>
+</tr>
+<tr>
+<td>停止条件</td>
+<td>再次遗漏或需要用户决定时，只记录说明，不再自动补做</td>
+</tr>
+</tbody></table></div>
+<p><strong>示例：</strong> 最终回答声称“测试通过”，工具结果却记录失败。这个矛盾可算 omission。补做可以纠正报告，或完成已授权的遗漏工作。</p>
+</div>
+<figure class="am-diagram am-flow"><svg viewBox="0 0 687 205" width="687" height="205" role="img" aria-label="流程图：最终回答已展示、核对记录、结论、正常结束、最多一次补做、停止自动补做" xmlns="http://www.w3.org/2000/svg"><defs><marker id="am3-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g></g><g><g data-step="0"><path class="am-edge" d="M133,102.5 L144.5,102.5 Q156,102.5 167.5,102.5 L179,102.5" marker-end="url(#am3-arrow)"/></g><g data-step="1"><path class="am-edge" d="M259,102.5 L270.5,102.5 Q282,102.5 293.5,102.5 L305,102.5" marker-end="url(#am3-arrow)"/></g><g data-step="2"><path class="am-edge" d="M368.2,114.8 L422.2,144.2 Q476.3,173.5 527.9,173.5 L579.6,173.5" marker-end="url(#am3-arrow)"/><g class="am-edge-label"><rect x="446.6" y="164.5" width="59.5" height="18" rx="3"/><text x="476.3" y="173.5" text-anchor="middle" dominant-baseline="central">complete</text></g></g><g data-step="3"><path class="am-edge" d="M386,102.5 L431.1,102.5 Q476.3,102.5 521.4,102.5 L566.6,102.5" marker-end="url(#am3-arrow)"/><g class="am-edge-label"><rect x="433.3" y="93.5" width="85.9" height="18" rx="3"/><text x="476.3" y="102.5" text-anchor="middle" dominant-baseline="central">首次 omission</text></g></g><g data-step="4"><path class="am-edge" d="M368.2,90.2 L422.2,60.8 Q476.3,31.5 521.4,31.5 L566.6,31.5" marker-end="url(#am3-arrow)"/><g class="am-edge-label"><rect x="410" y="22.5" width="132.6" height="18" rx="3"/><text x="476.3" y="31.5" text-anchor="middle" dominant-baseline="central">再次遗漏或 needs-user</text></g></g></g><g><g class="am-node am-node--rect" data-key="最终回答已展示" data-step="0"><rect class="am-node-shape" x="14" y="85" width="119" height="35" rx="3"/><text x="73.5" y="102.5" text-anchor="middle" dominant-baseline="central">最终回答已展示</text></g><g class="am-node am-node--rect" data-key="核对记录" data-step="0"><rect class="am-node-shape" x="179" y="85" width="80" height="35" rx="3"/><text x="219" y="102.5" text-anchor="middle" dominant-baseline="central">核对记录</text></g><g class="am-node am-node--diamond" data-key="结论" data-step="1"><polygon class="am-node-shape" points="345.5,74.5 386,102.5 345.5,130.5 305,102.5"/><text x="345.5" y="102.5" text-anchor="middle" dominant-baseline="central">结论</text></g><g class="am-node am-node--rect" data-key="正常结束" data-step="2"><rect class="am-node-shape" x="579.6" y="156" width="80" height="35" rx="3"/><text x="619.6" y="173.5" text-anchor="middle" dominant-baseline="central">正常结束</text></g><g class="am-node am-node--rect" data-key="最多一次补做" data-step="3"><rect class="am-node-shape" x="566.6" y="85" width="106" height="35" rx="3"/><text x="619.6" y="102.5" text-anchor="middle" dominant-baseline="central">最多一次补做</text></g><g class="am-node am-node--rect" data-key="停止自动补做" data-step="4"><rect class="am-node-shape" x="566.6" y="14" width="106" height="35" rx="3"/><text x="619.6" y="31.5" text-anchor="middle" dominant-baseline="central">停止自动补做</text></g></g></svg></figure>
+<div class="am-md"><p>补做预约先持久保存，再排入消息，重启后不会因此重复补做。核查不能撤回已展示回答，也不独立重跑测试。原始任务只授权审查时，补做只能在该授权范围内行动。</p>
+<h3>05 持续目标监督 · goal-supervision</h3>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>路径</th>
+<th>判断材料与答案</th>
+<th>本地行动</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>每个原生目标轮结束</td>
+<td>当前 goal、当前和上一轮可见记录；<code>progress / no-progress / needs-user / unknown</code></td>
+<td>progress 清零停滞计数；默认连续 3 轮 no-progress 暂停目标</td>
+</tr>
+<tr>
+<td><code>update_goal</code> 申请完成</td>
+<td>当前目标范围的完成证据；与完成核查相同的结论</td>
+<td>complete 保留原许可；omission 拒绝本次完成申请；needs-user 还会暂停目标</td>
+</tr>
+</tbody></table></div>
+<p><strong>示例：</strong> 多轮操作没有带来新证据时，插件可以暂停目标。有效调查或排除假设也可算 progress。用户恢复目标后，停滞计数重新开始。</p>
+<p>插件使用 DSH 原生目标轮次驱动。原生目标服务仍负责状态修改和轮次上限。人工直接完成目标也由原服务处理。</p>
+<h3>证据预算为何会改变采用结果</h3>
+<p>默认预算是 <strong>24,000 字符</strong>。程序按完整消息选取证据，并记录遗漏范围。如果范围内的必要证据被预算裁掉，<code>completeEvidence=false</code>，判断不能作为可用结论采用。高概率也不能补回缺失证据。</p>
+<p>完成核查和目标监督使用交互 <code>judge</code>。unknown、证据不全或技术失败进入人工 Retry / Cancel。新请求、目标修改或取消会使旧答案失效。</p>
+<p>来源：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L88">证据与两道题</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L272">跑偏触发</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L299">完成与目标轮监督</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L343">目标完成申请</a>。</p>
+</div></div>
+</section>
+<section class="am-panel" id="panel-D">
+<header class="am-panel-head"><span class="am-panel-id">D</span><h2>约束和协作：要求与新消息如何进入当前任务</h2></header>
+<div class="am-panel-body"><div class="am-md"><h3>06 用户约束提醒 · instruction-guidance</h3>
+<p><strong>解决的问题：</strong> 工具操作可能偏离当前用户要求或适用规则。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>实际内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>触发</td>
+<td>主 Agent 的 <code>tools/pre-execute</code>；启动检查后立即继续原工具</td>
+</tr>
+<tr>
+<td>state</td>
+<td>用户原文、明确声明为 instruction 的 Host 原文、适用规则段落；工具参数、cwd、显式路径和来源作用域</td>
+</tr>
+<tr>
+<td>questions</td>
+<td>每个原文段落一道 Choice：<code>conflict / no-conflict / undetermined</code></td>
+</tr>
+<tr>
+<td>采用</td>
+<td>conflict 在后续已进入的模型步骤提醒，并引用具体原文</td>
+</tr>
+<tr>
+<td>失败与限制</td>
+<td>后台一次判断；证据不全或失败不采用，不阻挡原工具</td>
+</tr>
+</tbody></table></div>
+<p><strong>示例：</strong> 当前要求是“只读检查”，工具却请求写文件。插件比较实际操作与原文要求，随后发出提醒。原生 sandbox 和审批仍独立生效。</p>
+<p>默认证据预算 24,000 字符、最多 64 个来源。采用前会重读原文，防止使用过期规则。它只识别可取得的显式目标，不推断任意脚本的全部效果。</p>
+<p>来源：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/instructions.ts#L151">来源读取</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/instructions.ts#L229">判断与提醒</a>。</p>
+<h3>07 中途插话分流 · interjection-routing</h3>
+<p><strong>解决的问题：</strong> 运行期间收到新消息时，区分当前纠正和后续工作。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>实际内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>触发</td>
+<td>存活主 Agent 运行期间收到直接用户 inbox 消息</td>
+</tr>
+<tr>
+<td>state</td>
+<td>完整插话文本、消息 ID、历史可见文本片段、当前目标；附件只给类型</td>
+</tr>
+<tr>
+<td>questions</td>
+<td>一道 Choice：<code>correction / queue / unknown</code></td>
+</tr>
+<tr>
+<td>采用</td>
+<td>correction 进入 <code>next-step</code>；queue 留到 <code>next-turn</code></td>
+</tr>
+<tr>
+<td>失败与限制</td>
+<td>unknown 或失败等待人工 Retry / Cancel；不取消已开始的模型请求或工具</td>
+</tr>
+</tbody></table></div>
+<p><strong>示例：</strong> “你查错文件了，应该看退款模块”属于当前纠正。“结束后再整理一份文档”属于后续工作。</p>
+<p>消息内容和身份保持原样。同一目标队列保持到达顺序。编辑消息会让旧判断失效。它不读取附件内容；历史文本默认最多 12,000 字符。</p>
+<p>来源：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/interjection.ts#L117">插话输入与路由题</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/interjection.ts#L271">消息接纳</a>。</p>
+<h3>08 共享发现纠正 · shared-findings</h3>
+<p><strong>解决的问题：</strong> 已共享的旧结论被新证据替代后，让实际接收者收到纠正。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>实际内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>触发</td>
+<td>已共享的 Agent 消息、前台子 Agent 报告或可关联身份的后台报告</td>
+</tr>
+<tr>
+<td>state</td>
+<td>当前用户任务、旧报告和新报告的完整原文、作者、消息身份、实际接收状态</td>
+</tr>
+<tr>
+<td>questions</td>
+<td>relation：<code>replacement / conflict / support / unrelated / unknown</code>；basis：新原文中的证据行</td>
+</tr>
+<tr>
+<td>replacement 采用</td>
+<td>保留旧原文并标记被替代，向合资格的实际接收者发送新旧结论与证据</td>
+</tr>
+<tr>
+<td>conflict 采用</td>
+<td>保留双方，请主 Agent 核实；插件不执行新的独立验证</td>
+</tr>
+</tbody></table></div>
+<p><strong>示例：</strong> A 报告“缓存键缺失”。B 提供原始记录，证明键存在且问题来自过期值。只有新原文提供替代依据时，程序才把旧发现标为被替代。</p>
+<p>更新更晚、作者不同或重复转述，都不足以证明新结论正确。插件不读 Agent 私有探索。自动纠正只发给存活主 Agent 和符合条件的直接子 Agent。</p>
+<p>默认请求预算 48,000 字符。超限不会静默截短两份报告后采纳。unknown 或失败进入人工 Retry / Cancel。排入 inbox、模型实际收到、模型采用结论，是不同状态；采用仍可能未知。</p>
+<p>来源：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/shared-findings.ts#L60">双报告输入与题目</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/shared-findings.ts#L154">纠正投递</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/shared-findings.ts#L208">比较与采用</a>。</p>
+</div></div>
+</section>
+<section class="am-panel" id="panel-E">
+<header class="am-panel-head"><span class="am-panel-id">E</span><h2>日志：哪些工具文本可以省略</h2></header>
+<div class="am-panel-body"><div class="am-md"><p>这两项在工具执行后，通过 <code>tools/post-execute</code> 调整模型可见文本。命令已经执行，插件只判断符合规则的日志候选。</p>
+</div>
+<figure class="am-diagram am-flow"><svg viewBox="0 0 380 606" width="380" height="606" role="img" aria-label="流程图：工具完成、本地规则保护关键行、提取候选片段、Jev 判断保留或省略、是否满足采用条件、保存完整原文、交付省略标记与恢复入口、保留原结果" xmlns="http://www.w3.org/2000/svg"><defs><marker id="am4-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g></g><g><g data-step="0"><path class="am-edge" d="M174.5,49 L174.5,60.5 Q174.5,72 174.5,83.5 L174.5,95" marker-end="url(#am4-arrow)"/></g><g data-step="1"><path class="am-edge" d="M174.5,130 L174.5,141.5 Q174.5,153 174.5,164.5 L174.5,176" marker-end="url(#am4-arrow)"/></g><g data-step="2"><path class="am-edge" d="M174.5,211 L174.5,222.5 Q174.5,234 174.5,245.5 L174.5,257" marker-end="url(#am4-arrow)"/></g><g data-step="3"><path class="am-edge" d="M174.5,292 L174.5,303.5 Q174.5,315 174.5,326.5 L174.5,338" marker-end="url(#am4-arrow)"/></g><g data-step="4"><path class="am-edge" d="M198.1,387.3 L219.6,406.7 Q241,426 241,442 L241,458" marker-end="url(#am4-arrow)"/><g class="am-edge-label"><rect x="224.5" y="417" width="33" height="18" rx="3"/><text x="241" y="426" text-anchor="middle" dominant-baseline="central">满足</text></g></g><g data-step="5"><path class="am-edge" d="M254.8,493 L267.4,509 Q280,525 280,541 L280,557" marker-end="url(#am4-arrow)"/><g class="am-edge-label"><rect x="252" y="516" width="56" height="18" rx="3"/><text x="280" y="525" text-anchor="middle" dominant-baseline="central">保存成功</text></g></g><g data-step="6"><path class="am-edge" d="M141,384.5 L103.5,405.3 Q66,426 66,450.8 Q66,475.5 66,500.3 Q66,525 73.9,541 L81.8,557" marker-end="url(#am4-arrow)"/><g class="am-edge-label"><rect x="15" y="466.5" width="102" height="18" rx="3"/><text x="66" y="475.5" text-anchor="middle" dominant-baseline="central">不满足或判断失败</text></g></g><g data-step="7"><path class="am-edge" d="M211.3,493 L184.2,509 Q157,525 135.5,541 L114,557" marker-end="url(#am4-arrow)"/><g class="am-edge-label"><rect x="129" y="516" width="56" height="18" rx="3"/><text x="157" y="525" text-anchor="middle" dominant-baseline="central">保存失败</text></g></g></g><g><g class="am-node am-node--rect" data-key="工具完成" data-step="0"><rect class="am-node-shape" x="134.5" y="14" width="80" height="35" rx="3"/><text x="174.5" y="31.5" text-anchor="middle" dominant-baseline="central">工具完成</text></g><g class="am-node am-node--rect" data-key="本地规则保护关键行" data-step="0"><rect class="am-node-shape" x="102" y="95" width="145" height="35" rx="3"/><text x="174.5" y="112.5" text-anchor="middle" dominant-baseline="central">本地规则保护关键行</text></g><g class="am-node am-node--rect" data-key="提取候选片段" data-step="1"><rect class="am-node-shape" x="121.5" y="176" width="106" height="35" rx="3"/><text x="174.5" y="193.5" text-anchor="middle" dominant-baseline="central">提取候选片段</text></g><g class="am-node am-node--rect" data-key="Jev 判断保留或省略" data-step="2"><rect class="am-node-shape" x="101.4" y="257" width="146.3" height="35" rx="3"/><text x="174.5" y="274.5" text-anchor="middle" dominant-baseline="central">Jev 判断保留或省略</text></g><g class="am-node am-node--diamond" data-key="是否满足采用条件" data-step="3"><polygon class="am-node-shape" points="174.5,338 273.5,366 174.5,394 75.5,366"/><text x="174.5" y="366" text-anchor="middle" dominant-baseline="central">是否满足采用条件</text></g><g class="am-node am-node--rect" data-key="保存完整原文" data-step="4"><rect class="am-node-shape" x="188" y="458" width="106" height="35" rx="3"/><text x="241" y="475.5" text-anchor="middle" dominant-baseline="central">保存完整原文</text></g><g class="am-node am-node--rect" data-key="交付省略标记与恢复入口" data-step="5"><rect class="am-node-shape" x="194.5" y="557" width="171" height="35" rx="3"/><text x="280" y="574.5" text-anchor="middle" dominant-baseline="central">交付省略标记与恢复入口</text></g><g class="am-node am-node--rect" data-key="保留原结果" data-step="6"><rect class="am-node-shape" x="44" y="557" width="93" height="35" rx="3"/><text x="90.5" y="574.5" text-anchor="middle" dominant-baseline="central">保留原结果</text></g></g></svg></figure>
+<div class="am-md"><h3>09 通用长日志准入 · output-admission</h3>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>实际内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>触发</td>
+<td>可识别的长命令日志；默认从 6,000 个 Unicode 码点开始</td>
+</tr>
+<tr>
+<td>输入</td>
+<td>当前任务、命令信息、受保护上下文和候选进度或重复提示片段</td>
+</tr>
+<tr>
+<td>问题</td>
+<td>对候选问 Choice：<code>omit / keep / unknown</code></td>
+</tr>
+<tr>
+<td>采用</td>
+<td>omit 的概率不小于 0.8 才考虑省略；概率缺失时读取 confidence</td>
+</tr>
+<tr>
+<td>失败与限制</td>
+<td>默认最多等待 4 秒；失败、未知、低概率或存储失败都保留原结果</td>
+</tr>
+</tbody></table></div>
+<p><strong>示例：</strong> 构建输出数百条数字进度。插件保护错误、摘要、首尾与关键行，再判断进度候选是否仍有用。没有识别到候选时直接旁路。</p>
+<h3>10 测试日志准入 · test-log-admission</h3>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>实际内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>触发</td>
+<td>可识别测试日志；默认从 4,000 个 Unicode 码点开始</td>
+</tr>
+<tr>
+<td>输入</td>
+<td>任务与测试日志候选；本地先保护失败、摘要、点名测试和慢测试</td>
+</tr>
+<tr>
+<td>问题</td>
+<td>对普通通过明细问 Choice：<code>omit / keep / unknown</code></td>
+</tr>
+<tr>
+<td>采用</td>
+<td>使用独立开关，共用默认 0.8 门槛与 4 秒等待</td>
+</tr>
+<tr>
+<td>特殊规则</td>
+<td>完全相同的重复失败详情可由确定性规则合并，不必调用 Jev</td>
+</tr>
+</tbody></table></div>
+<p><strong>示例：</strong> 一百条通过明细和一条失败详情。失败详情先被保护，Jev 只判断普通通过候选。日志变短不必然来自模型判断。</p>
+<p>两项功能都先保存完整原文，再提供恢复入口。默认净减少量至少 300 字符且至少 10%，才替换文本。structured value、status 和 error 保持原值。</p>
+<p>恢复范围是这个 Hook 收到的文本。DSH 原生 spill、输出上限和后续上下文压缩仍会生效。它不能恢复上游已经丢掉的内容。减量文本是否进入下次模型请求，需要另外核对。</p>
+<p>来源：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/output-admission.ts#L129">日志输入和题目</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/output-admission.ts#L299">保存与采用</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/output-admission-rules.ts#L136">本地保护与候选规则</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/docs/reports/2026-09-27-tool-output-admission.zh-CN.md">真实日志报告</a>。</p>
+</div></div>
+</section>
+<section class="am-panel" id="panel-F">
+<header class="am-panel-head"><span class="am-panel-id">F</span><h2>审批：何时允许一次工作区外操作</h2></header>
+<div class="am-panel-body"><div class="am-md"><h3>11 工作区提权代审批 · workspace-approval</h3>
+<p><strong>解决的问题：</strong> 用户已经授权一次具体操作时，为适用的原生提权请求提供判断。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>实际内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>参与条件</td>
+<td>原生 <code>workspace-write</code>、approval policy 为 <code>ask</code>，请求显式包含 <code>danger-full-access</code> 与 justification</td>
+</tr>
+<tr>
+<td>state</td>
+<td>当前可见授权消息与 pending 消息、完整工具参数、cwd、目标路径、原生策略、可读取的简单直接脚本</td>
+</tr>
+<tr>
+<td>questions</td>
+<td>一道 Choice：<code>approve / unauthorized / unknown</code></td>
+</tr>
+<tr>
+<td>采用</td>
+<td>当前 approve 通过快照重验后，返回原生 <code>allowed-once</code></td>
+</tr>
+<tr>
+<td>非肯定判断</td>
+<td>unauthorized 或 unknown 交回既有人工审批；技术失败使用 Retry / Cancel</td>
+</tr>
+</tbody></table></div>
+</div>
+<figure class="am-diagram am-flow"><svg viewBox="0 0 403 606" width="403" height="606" role="img" aria-label="流程图：适用的原生提权请求、Jev 判断授权、答案、重验当前操作快照、原生 allowed-once、不采用旧批准、原人工审批、工具实际执行" xmlns="http://www.w3.org/2000/svg"><defs><marker id="am5-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g></g><g><g data-step="0"><path class="am-edge" d="M162.2,49 L162.2,60.5 Q162.2,72 162.2,83.5 L162.2,95" marker-end="url(#am5-arrow)"/></g><g data-step="1"><path class="am-edge" d="M162.2,130 L162.2,141.5 Q162.2,153 162.2,164.5 L162.2,176" marker-end="url(#am5-arrow)"/></g><g data-step="2"><path class="am-edge" d="M180.9,219.1 L208.7,241.5 Q236.5,264 236.5,280 L236.5,296" marker-end="url(#am5-arrow)"/><g class="am-edge-label"><rect x="210.3" y="255" width="52.3" height="18" rx="3"/><text x="236.5" y="264" text-anchor="middle" dominant-baseline="central">approve</text></g></g><g data-step="3"><path class="am-edge" d="M264.8,331 L290.8,347 Q316.7,363 316.7,379 L316.7,395" marker-end="url(#am5-arrow)"/><g class="am-edge-label"><rect x="294.4" y="354" width="44.5" height="18" rx="3"/><text x="316.7" y="363" text-anchor="middle" dominant-baseline="central">仍适用</text></g></g><g data-step="4"><path class="am-edge" d="M208.1,331 L182.2,347 Q156.2,363 156.2,379 L156.2,395" marker-end="url(#am5-arrow)"/><g class="am-edge-label"><rect x="134" y="354" width="44.5" height="18" rx="3"/><text x="156.2" y="363" text-anchor="middle" dominant-baseline="central">已变化</text></g></g><g data-step="5"><path class="am-edge" d="M143.5,219.1 L115.8,241.5 Q88,264 88,280 L88,296" marker-end="url(#am5-arrow)"/><g class="am-edge-label"><rect x="15" y="255" width="145.9" height="18" rx="3"/><text x="88" y="264" text-anchor="middle" dominant-baseline="central">unauthorized 或 unknown</text></g></g><g data-step="6"><path class="am-edge" d="M316.7,430 L316.7,441.5 Q316.7,453 316.7,464.5 L316.7,476" marker-end="url(#am5-arrow)"/></g><g data-step="7"><path class="am-edge" d="M316.7,511 L316.7,522.5 Q316.7,534 316.7,545.5 L316.7,557" marker-end="url(#am5-arrow)"/></g></g><g><g class="am-node am-node--rect" data-key="适用的原生提权请求" data-step="0"><rect class="am-node-shape" x="89.7" y="14" width="145" height="35" rx="3"/><text x="162.2" y="31.5" text-anchor="middle" dominant-baseline="central">适用的原生提权请求</text></g><g class="am-node am-node--rect" data-key="Jev 判断授权" data-step="0"><rect class="am-node-shape" x="108.6" y="95" width="107.3" height="35" rx="3"/><text x="162.2" y="112.5" text-anchor="middle" dominant-baseline="central">Jev 判断授权</text></g><g class="am-node am-node--diamond" data-key="答案" data-step="1"><polygon class="am-node-shape" points="162.2,176 202.7,204 162.2,232 121.7,204"/><text x="162.2" y="204" text-anchor="middle" dominant-baseline="central">答案</text></g><g class="am-node am-node--rect" data-key="重验当前操作快照" data-step="2"><rect class="am-node-shape" x="170.5" y="296" width="132" height="35" rx="3"/><text x="236.5" y="313.5" text-anchor="middle" dominant-baseline="central">重验当前操作快照</text></g><g class="am-node am-node--rect" data-key="原生 allowed-once" data-step="3"><rect class="am-node-shape" x="245.2" y="395" width="142.9" height="35" rx="3"/><text x="316.7" y="412.5" text-anchor="middle" dominant-baseline="central">原生 allowed-once</text></g><g class="am-node am-node--rect" data-key="不采用旧批准" data-step="4"><rect class="am-node-shape" x="103.2" y="395" width="106" height="35" rx="3"/><text x="156.2" y="412.5" text-anchor="middle" dominant-baseline="central">不采用旧批准</text></g><g class="am-node am-node--rect" data-key="原人工审批" data-step="5"><rect class="am-node-shape" x="41.5" y="296" width="93" height="35" rx="3"/><text x="88" y="313.5" text-anchor="middle" dominant-baseline="central">原人工审批</text></g><g class="am-node am-node--rect" data-key="工具实际执行" data-step="6"><rect class="am-node-shape" x="263.7" y="476" width="106" height="35" rx="3"/><text x="316.7" y="493.5" text-anchor="middle" dominant-baseline="central">工具实际执行</text></g><g class="am-node am-node--rect" data-key="单独记录操作结果" data-step="7"><rect class="am-node-shape" x="250.7" y="557" width="132" height="35" rx="3"/><text x="316.7" y="574.5" text-anchor="middle" dominant-baseline="central">单独记录操作结果</text></g></g></svg></figure>
+<div class="am-md"><p><strong>示例：</strong> 用户明确要求把指定内容写入一个工作区外路径。插件判断这次提权是否属于已授权操作。发放许可后，仍由原生工具执行并记录结果。</p>
+<p>这项功能没有日志功能的统一 0.8 门槛。旧批准在任务、脚本、路径或策略变化后失效。它不改变长期 sandbox 模式；一次 approve 也不能证明工具执行成功。</p>
+<p>来源：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/workspace-approval.ts#L117">审批输入与题目</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/workspace-approval.ts#L265">最后重验与单次许可</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/README.md#workspace-approval">审批参考</a>。</p>
+</div></div>
+</section>
+<section class="am-panel" id="panel-G">
+<header class="am-panel-head"><span class="am-panel-id">G</span><h2>复盘：把历史模型步骤归到哪个阶段</h2></header>
+<div class="am-panel-body"><div class="am-md"><h3>12 阶段导航 · stage-navigation</h3>
+<p><strong>解决的问题：</strong> 在长轨迹中找到调查、规划、实施和验证所对应的原始步骤。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>实际内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>触发</td>
+<td>用户手动选择已结束轮，或尚未分析的全部已结束轮</td>
+</tr>
+<tr>
+<td>state</td>
+<td>一个完整目标 step：已记录 Think、正文、全部工具调用及配对结果；当时有效的用户要求</td>
+</tr>
+<tr>
+<td>前序材料</td>
+<td>默认前 2 个 step，每个摘要最多 700 字符</td>
+</tr>
+<tr>
+<td>questions</td>
+<td>一道 Choice：六阶段加 <code>mixed / unknown</code></td>
+</tr>
+<tr>
+<td>采用</td>
+<td>同一轮内，相邻、连续且有效的相同标签可合并；点击定位完整原文</td>
+</tr>
+</tbody></table></div>
+</div>
+<div class="am-tree"><div class="am-tree-root am-tree-root--solo"><div class="am-tree-box am-tree-box--root" data-key="历史步骤的主要目的" data-step="0">历史步骤的主要目的</div></div><ul class="am-tree-list"><li data-key="输入解析" data-step="1"><span class="am-tree-label">输入解析</span><span class="am-tree-sub">识别任务输入和约束</span></li><li data-key="问题理解" data-step="2"><span class="am-tree-label">问题理解</span><span class="am-tree-sub">调查事实、原因和未决问题</span></li><li data-key="方案规划" data-step="3"><span class="am-tree-label">方案规划</span><span class="am-tree-sub">选择或修改方法</span></li><li data-key="实施" data-step="4"><span class="am-tree-label">实施</span><span class="am-tree-sub">修改、调试及相关测试</span></li><li data-key="审查验证" data-step="5"><span class="am-tree-label">审查验证</span><span class="am-tree-sub">检查已有结果是否满足要求</span></li><li data-key="交付收尾" data-step="6"><span class="am-tree-label">交付收尾</span><span class="am-tree-sub">整理证据与交付</span></li><li data-key="mixed" data-step="7"><span class="am-tree-label">mixed</span><span class="am-tree-sub">多个主要目的无法拆开</span></li><li data-key="unknown" data-step="8"><span class="am-tree-label">unknown</span><span class="am-tree-sub">记录不足以判断</span></li></ul></div>
+<div class="am-md"><p>开启功能只显示页面，不立即调用服务。关闭会隐藏页面并取消未完成分类，已保存结果保留。默认请求预算 48,000 字符；超限就不能分析，目标 step 不被截短。</p>
+<p><strong>与监督的输入区别：</strong> 阶段导航会发送已记录的 Think。监督会排除 reasoning。图片和文件只发送存在标记及元数据，插件没有把附件字节转换为原生图片输入。</p>
+<p>来源指纹包含连接身份。换后端后，旧结果不能冒充新判断。阶段标签只描述步骤目的，不能证明分类正确或该阶段成功。</p>
+<p>来源：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/stage-input.ts#L10">完整 step 输入与八种标签</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/stage-input.ts#L78">输入预算与指纹</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/stage-navigation.ts">页面与分析服务</a>。</p>
+</div></div>
+</section>
+<section class="am-panel" id="panel-H">
+<header class="am-panel-head"><span class="am-panel-id">H</span><h2>边界与验证</h2></header>
+<div class="am-panel-body"><div class="am-md"><h3>12 项功能是否都经过真实 Luna 验证</h3>
+<p><strong>没有。</strong> 当前源码实现了 12 项功能。2026-10-07 公开报告的真实 Luna 业务样例只覆盖下面 3 项。其余 9 项不能借用 Jev 历史结果来证明 Luna 效果。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>功能</th>
+<th>公开报告中的真实 Luna 业务覆盖</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>01 技能选择</td>
+<td>未报告</td>
+</tr>
+<tr>
+<td>02 文件排序</td>
+<td>有限样例；真实任务五条路径同分，原序不变</td>
+</tr>
+<tr>
+<td>03 跑偏提醒</td>
+<td>未报告</td>
+</tr>
+<tr>
+<td>04 完成核查</td>
+<td>未报告</td>
+</tr>
+<tr>
+<td>05 持续目标监督</td>
+<td>未报告</td>
+</tr>
+<tr>
+<td>06 用户约束提醒</td>
+<td>未报告</td>
+</tr>
+<tr>
+<td>07 中途插话分流</td>
+<td>未报告</td>
+</tr>
+<tr>
+<td>08 共享发现纠正</td>
+<td>未报告</td>
+</tr>
+<tr>
+<td>09 通用长日志准入</td>
+<td>有限样例；真实续验 8,407 → 2,122 码点，缩减 74.76%</td>
+</tr>
+<tr>
+<td>10 测试日志准入</td>
+<td>未覆盖；运行退款测试不等于触发该功能</td>
+</tr>
+<tr>
+<td>11 工作区提权代审批</td>
+<td>两次受控授权未自动批准；另一个真实任务获一次许可并执行</td>
+</tr>
+<tr>
+<td>12 阶段导航</td>
+<td>未报告真实 Luna 业务分类；存在固定响应接线测试</td>
+</tr>
+</tbody></table></div>
+<p>官方 OpenAI 渠道的受控阶段有 6 次成功请求，其中 1 次是诊断；真实主模型阶段另有 3 次 Luna 请求。OpenRouter 唯一真实诊断返回 HTTP 403 访问限制，没有成功业务答案。</p>
+<h3>已有证据分别证明什么</h3>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>证据</th>
+<th>支持的结论</th>
+<th>不能推出的结论</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>当前源码与配置</td>
+<td>功能存在，输入、触发、采用规则可追溯</td>
+<td>在用户当前 profile 已开启或已触发</td>
+</tr>
+<tr>
+<td>历史 27 文件 / 300 用例</td>
+<td>当次固定协议、生命周期与接线集合通过</td>
+<td>300 次真实语义判断正确</td>
+</tr>
+<tr>
+<td>Jev 固定完成诊断</td>
+<td>开启组 6/6 个种入错误经判断与补做满足核心要求</td>
+<td>自然任务错误率或编码平均收益</td>
+</tr>
+<tr>
+<td>真实 Luna 日志续验</td>
+<td>一次真实模型请求收到减量文本，原文可恢复</td>
+<td>普遍缩减比例、准确率或成本收益</td>
+</tr>
+<tr>
+<td>真实 Luna 单次审批</td>
+<td>一个指定操作完成许可与执行链路</td>
+<td>稳定可靠性，或先前拒绝原因已解决</td>
+</tr>
+</tbody></table></div>
+<p>提醒、判断和最终业务结果需要分别核对。过去样例中，约束提醒送达后主模型仍未修正错误陈述。跑偏提醒的真实样例也因任务已结束，没有进入后续请求。</p>
+<p>阶段导航属于当前主分支。原生网页执行仍是暂停实验，普通网站效果未通过验收，不属于这 12 项已合入功能。</p>
+<h3>如何使用这份网页</h3>
+<p>先配置连接并显式诊断，再按任务需要开启单项功能。核对结果时，查看实际输入、统一答案、动作回执与原生 Session。多数 Agent 功能面向存活主会话；子 Agent 收到纠正，不代表拥有全部增强。</p>
+<p>本页主体依据固定源码 <code>79cdf650</code> 与公开报告。另核对了主分支 <code>a3de7fc</code> 的差异。新增修复拒绝响应中的非有限 JSON 数值，保留原始文本供诊断；12 项业务功能不变。</p>
+<p>本次核对没有调用真实模型，也没有重新执行产品验收。历史数量和结果都保留其日期与样例范围。</p>
+<p>资料入口：</p>
+<ul>
+<li><a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/README.zh-CN.md">源码与功能概览</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/README.md">公共判断服务参考</a>。</li>
+<li><a href="https://github.com/luobosibing2/dsh-jev-plugin/commit/e4eafb9">新增 JSON 响应记录修复</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/commit/a3de7fc170ddac413f9e5d822dbe399346c215fd">核对后的上游提交</a>。</li>
+<li><a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/docs/testing/2026-09-27-jev-hooks/public-results.zh-CN.md">Jev 监督与纠正样例</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/docs/testing/2026-10-05-completion-recovery/public-results.zh-CN.md">固定完成诊断</a>。</li>
+<li><a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/docs/testing/2026-10-07-luna-decisions/public-results.zh-CN.md#L31">Luna 受控与真实任务报告</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/docs/validation.md">总体验证说明</a>。</li>
+</ul>
+</div></div>
+</section>
+</div>
+</div>
+</main>
+<footer class="am-colophon">Generated by Answer me with HTML 0.4.9 · 2026-10-10 00:49</footer>
+<textarea id="am-source" hidden readonly aria-hidden="true">---
+template: doc
+theme: blueprint
+mode: light
+lang: zh
+style: 80
+title: DSH Jev 插件：原理与全部 12 项功能
+subtitle: 看清每项功能何时触发、给判断模型看什么，以及程序如何采用答案
+date: 2026-10-09
+source: dsh-jev-plugin · 79cdf650 · 差异核对 a3de7fc
+---
+
+[返回功能网站](https://luobosibing2.github.io/dsh-jev-plugin/) · [阅读 Markdown 源稿](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/docs/explainers/dsh-jev-plugin.md)
+
+主模型负责规划、回答和工具调用。DSH Jev 插件在指定节点加入结构化判断。下面按任务执行顺序，解释全部 12 项功能。
+
+## 直接答案：这个插件如何工作
+
+我们做的是 **DSH 的独立原生插件 `@dsh-jev/plugin`**。它通过公开扩展点接入宿主。当前 `main` 包含 12 项业务功能，每项都有独立开关，默认全部关闭。
+
+### 三个参与者各做什么
+
+| 参与者 | 职责 | 例子 |
+| --- | --- | --- |
+| DSH 主模型 | 理解任务，制定方案，生成回答，调用工具 | 搜索文件、修改代码、运行测试 |
+| Jev 或 Luna Decisions | 根据提供的材料，回答预先定义的问题 | 哪条路径相关；记录是否支持完成 |
+| 本地插件与 DSH | 校验答案，检查是否仍适用，采用结果 | 排序、加入提醒、发放原生单次许可 |
+
+```sequence num
+participants: DSH, 功能插件, 判断服务
+DSH -&gt; 功能插件: 扩展点触发已开启功能
+功能插件 -&gt; 功能插件: 组装并保存 state 与 questions
+功能插件 -&gt; 判断服务: 发送本次判断材料
+判断服务 --&gt; 功能插件: 返回有类型的答案和概率
+功能插件 -&gt; 功能插件: 校验、保存、检查目标是否仍有效
+功能插件 -&gt; DSH: 采用排序、消息、日志或审批结果
+DSH --&gt; 功能插件: 记录实际采用与执行结果
+```
+
+### Jev 的原理：材料与问题分开
+
+`state` 是待判断的事实材料。`questions` 定义要回答的问题和允许的答案。同一请求中的问题共享 `state`，各自作答。候选名称或路径也可以写在题目中。
+
+| 题型 | 含义 | 插件如何使用 |
+| --- | --- | --- |
+| Choice | 从给定选项中选择，并返回概率分布 | 判断跑偏、遗漏、消息路由、审批和阶段 |
+| Noul | 返回“是”的概率 | 分别判断每个技能或路径是否相关 |
+| Score | 在有序等级间评分，可以返回小数 | 主要用于连接诊断 |
+
+TypeSafe 将 Jev 的训练方法称为 **RLCD**，即为校准决策训练模型。它的目标是输出决策与概率。校准要在一组预测上衡量。本插件的有限样例没有验证概率校准。
+
+例如，日志候选得到 `omit` 后，程序还要检查概率门槛。`0.8` 是该功能的采用参数，不能直接解释为本项目有 80% 正确率。`confidence` 描述答案的不确定程度，也不代表业务结果已验证。
+
+原理来源：[System One](https://docs.typesafe.ai/concepts/system-one)、[State](https://docs.typesafe.ai/concepts/state)、[RLCD](https://docs.typesafe.ai/introduction/machine-learning-primer)、[概率与 confidence](https://docs.typesafe.ai/confidence)。
+
+### 公共服务让 12 项功能共用哪些能力
+
+| 公共能力 | 当前行为 |
+| --- | --- |
+| 判断连接 | Jev、Luna / OpenAI、Luna / OpenRouter 三套连接 |
+| 配置隔离 | 每个 DSH profile 独立保存连接、凭据引用、开关和参数 |
+| 连接诊断 | 显式发送 Choice、Score、Noul；保存设置不发模型请求 |
+| 判断记录 | 保存精确输入、原始响应、统一答案、已知用量和动作回执 |
+| 输入与结果保存 | 输入保存失败就不发送；结果保存失败就不交付可用答案 |
+| 重试 | `judge` 的失败等待人工 Retry / Cancel；Retry 刷新当前材料 |
+| 后台判断 | `judgeOnce` 最多尝试一次，失败直接交回消费者 |
+| 后端切换 | 新尝试使用新连接；故障不自动换模型或 API |
+
+三个连接都投影到内部 `JevRequest = { state, questions }`。适配器负责协议转换。OpenAI 将 Noul 转为 `predicate`。OpenRouter 超过 200 题时分批，全部成功后才交付业务答案。
+
+**判断成功、业务采纳、原生许可和实际执行分开记录。** 没有执行回执时，不能凭判断答案认定操作完成。失败回执也不能成为重复执行的理由。
+
+来源：[12 项功能与默认状态](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/README.zh-CN.md#L17)、[内部类型](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/types.ts#L6)、[公共消费者 API](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/README.md#consumer-api)。
+
+## 选择：哪些技能和文件先给主模型看
+
+### 01 技能选择 · skill-selection
+
+**解决的问题：** 技能目录较大时，先发布与当前任务相关的摘要。
+
+| 环节 | 实际内容 |
+| --- | --- |
+| 触发 | 主 Agent 的 `agent/pre-step`，原生技能目录发布前 |
+| state | 最近最多 2 条直接用户文本、1 条助手可见文本；默认合计 2,000 字符 |
+| questions | 每个技能一道 Noul；题目包含技能名称和 description |
+| 采用 | 按相关概率排序，默认先取前 5 个，再去掉 Session 已可见的名称 |
+| 主模型后续行动 | 通过原生 `skill` 工具加载技能正文 |
+
+**示例：** 用户要求分析退款逻辑。插件判断代码调查技能是否相关，再把入选摘要交给主模型。Jev 没有读取技能正文、工具结果或附件。
+
+去重后不从第 6 名补位。主模型仍可直接调用未入选技能。`skill_catalog` 可恢复完整摘要目录，恢复不调用 Jev。判断失败走人工 Retry / Cancel。
+
+来源：[任务上下文](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L65)、[技能判断与目录采用](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L227)。
+
+### 技能选择的完整输入输出示例
+
+**6 个技能摘要 → 一次请求、6 道 Noul → 6 个概率 → 默认选前 5 个。**
+
+本例使用 Jev / System One 协议。技能名称、简介和概率都是演示值，不是真实模型实测。假设这 6 个技能都可由当前 Agent 调用，且尚未在 Session 中展示。
+
+```flow
+6 个技能摘要 -&gt; 一次请求中的 6 道 Noul
+一次请求中的 6 道 Noul -&gt; Jev 返回 6 个概率
+Jev 返回 6 个概率 -&gt; 插件排序并取前 5 个
+插件排序并取前 5 个 -&gt; 主模型收到入选摘要
+```
+
+#### 用户提出什么任务
+
+&gt; 查一下退款金额算错的原因，修复代码，补上测试，并说明改动。
+
+#### 输入：实际发送给 Jev 的请求
+
+任务放在共享 `state` 中。每个技能的名称和简介放在对应问题的 `instructions` 中。插件没有把技能正文放进请求。
+
+```json
+{
+  &quot;model&quot;: &quot;jev-latest&quot;,
+  &quot;state&quot;: {
+    &quot;context&quot;: [
+      {
+        &quot;role&quot;: &quot;user&quot;,
+        &quot;text&quot;: &quot;查一下退款金额算错的原因，修复代码，补上测试，并说明改动。&quot;
+      }
+    ]
+  },
+  &quot;questions&quot;: {
+    &quot;candidate-0&quot;: {
+      &quot;type&quot;: &quot;noul&quot;,
+      &quot;instructions&quot;: &quot;Would this skill help the task? Skill: code-investigation. Description: 查找代码实现，追踪调用关系，定位相关文件。&quot;
+    },
+    &quot;candidate-1&quot;: {
+      &quot;type&quot;: &quot;noul&quot;,
+      &quot;instructions&quot;: &quot;Would this skill help the task? Skill: slide-generation. Description: 把材料组织成演示文稿。&quot;
+    },
+    &quot;candidate-2&quot;: {
+      &quot;type&quot;: &quot;noul&quot;,
+      &quot;instructions&quot;: &quot;Would this skill help the task? Skill: unit-testing. Description: 编写单元测试，覆盖正常情况和异常情况。&quot;
+    },
+    &quot;candidate-3&quot;: {
+      &quot;type&quot;: &quot;noul&quot;,
+      &quot;instructions&quot;: &quot;Would this skill help the task? Skill: technical-writing. Description: 说明代码改动、使用方式和验证结果。&quot;
+    },
+    &quot;candidate-4&quot;: {
+      &quot;type&quot;: &quot;noul&quot;,
+      &quot;instructions&quot;: &quot;Would this skill help the task? Skill: root-cause-analysis. Description: 从现象和证据中查找故障原因。&quot;
+    },
+    &quot;candidate-5&quot;: {
+      &quot;type&quot;: &quot;noul&quot;,
+      &quot;instructions&quot;: &quot;Would this skill help the task? Skill: code-editing. Description: 根据已确认的问题修改代码，并检查相关影响。&quot;
+    }
+  }
+}
+```
+
+这是一个请求体。`candidate-0` 到 `candidate-5` 是问题 ID，帮助插件把答案对应回技能。6 道题分别问“这个技能能帮助当前任务吗？”
+
+#### 输出：Jev 返回的答案部分
+
+下面省略用量等其他响应字段，只展示 6 道题的模拟答案。
+
+```json
+{
+  &quot;answers&quot;: {
+    &quot;candidate-0&quot;: { &quot;noul&quot;: 0.88 },
+    &quot;candidate-1&quot;: { &quot;noul&quot;: 0.03 },
+    &quot;candidate-2&quot;: { &quot;noul&quot;: 0.91 },
+    &quot;candidate-3&quot;: { &quot;noul&quot;: 0.61 },
+    &quot;candidate-4&quot;: { &quot;noul&quot;: 0.95 },
+    &quot;candidate-5&quot;: { &quot;noul&quot;: 0.83 }
+  }
+}
+```
+
+`candidate-4` 的 `noul: 0.95` 是该技能能帮助任务的估计概率。它不表示修复成功率为 95%。6 道题彼此独立，不要求这些概率相加等于 1。
+
+#### 插件如何读取并排序答案
+
+适配器将 `noul` 转为内部的 `probability`，保持概率值不变。例如，第 5 道题转为：
+
+```json
+{
+  &quot;id&quot;: &quot;candidate-4&quot;,
+  &quot;kind&quot;: &quot;noul&quot;,
+  &quot;probability&quot;: 0.95
+}
+```
+
+随后，本地插件按概率排序，默认取前 5 个：
+
+| 排名 | 技能 | 相关概率（演示值） | 默认前 5 个 |
+| --- | --- | --- | --- |
+| 1 | root-cause-analysis | 0.95 | 入选 |
+| 2 | unit-testing | 0.91 | 入选 |
+| 3 | code-investigation | 0.88 | 入选 |
+| 4 | code-editing | 0.83 | 入选 |
+| 5 | technical-writing | 0.61 | 入选 |
+| 6 | slide-generation | 0.03 | 不入选 |
+
+技能选择使用 Top 5，没有日志功能的 0.8 采用门槛。因此，本例中概率为 0.61 的第 5 名也会入选。若入选名称已在 Session 可见，插件会去重，不用第 6 名补位。
+
+#### 输出：主模型最终收到的技能摘要
+
+下面展示插件消息中的目录部分。技能顺序已经改变，演示文稿技能没有进入本次摘要。
+
+```text
+&lt;available_skills&gt;
+- root-cause-analysis: 从现象和证据中查找故障原因。 (relevance probability 0.95)
+- unit-testing: 编写单元测试，覆盖正常情况和异常情况。 (relevance probability 0.91)
+- code-investigation: 查找代码实现，追踪调用关系，定位相关文件。 (relevance probability 0.88)
+- code-editing: 根据已确认的问题修改代码，并检查相关影响。 (relevance probability 0.83)
+- technical-writing: 说明代码改动、使用方式和验证结果。 (relevance probability 0.61)
+&lt;/available_skills&gt;
+```
+
+消息还要求主模型先调用原生 `skill` 工具读取正文。主模型可用 `skill_catalog` 恢复完整摘要目录。
+
+**到这里，插件只筛选并发布了摘要。** 主模型之后决定加载和执行哪个技能。Jev 的入选结果不会自动执行技能。
+
+格式来源：[问题组装](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L256)、[Jev 请求编码](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/wire.ts#L65)、[Noul 答案转换](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/wire.ts#L117)、[目录消息](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L140)。
+
+### 02 文件排序 · file-ranking
+
+**解决的问题：** 原生 glob 命中多条路径时，让相关路径先出现。
+
+| 环节 | 实际内容 |
+| --- | --- |
+| 触发 | 主 Agent 的原生 glob 成功返回 `{ root, paths }` 后 |
+| state | 任务文本、glob 的 pattern 和 path |
+| questions | 每条候选路径一道 Noul；路径写在题目中 |
+| 采用 | 对完整 paths 排序；概率相同保持原顺序 |
+| 展示与恢复 | 默认展示前 12 条；完整带分数列表可通过原生 spill 回读 |
+
+**示例：** glob 找到 `src/refund.ts` 和 `docs/refund-theme.md`。Jev 判断路径名称与任务的相关性。插件不会追加扫描，也不会读取文件正文。
+
+默认最多判断 40 条候选。出现 41 条时，整次跳过判断排序。空候选也直接旁路。判断失败走人工 Retry / Cancel；重试复用已完成的 glob，不重复搜索。
+
+来源：[glob 判断与结构化排序](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L294)。
+## 监督：有没有跑偏，记录是否支持完成
+
+这三项共用已记录的可见证据。材料包含用户请求、助手正文、工具调用与结果，以及适用的原生 goal。监督排除 reasoning，不追加文件读取或验证命令。
+
+每次判断都问两道 Choice：一道选结论，一道选支持结论的既有证据 ID。程序引用原始要求或记录来反馈。
+
+### 03 跑偏提醒 · drift-monitoring
+
+| 环节 | 实际内容 |
+| --- | --- |
+| 触发 | 默认每 6 个完成的模型 step 检查一次；并行工具仍算一个 step |
+| 上下文 | 当前请求范围内的可见记录，或当前 goal revision 的记录 |
+| 结论选项 | `on-track / drift / unknown`，另选证据 ID |
+| 采用 | drift 在后续已进入的模型步骤加入一次普通 Session 提醒 |
+| 失败与限制 | 后台 `judgeOnce`；失败不阻塞；已结束任务不会被唤醒 |
+
+**示例：** 用户要求检查退款故障，模型却持续调整页面样式。Jev 可以选择某条用户要求，插件据此提醒主模型回到任务。相同要求不会在同一请求中反复提醒。
+
+提醒送达不代表主模型一定改正，也不会取消已经执行的工具。
+
+### 04 完成核查 · completion-check
+
+| 环节 | 实际内容 |
+| --- | --- |
+| 触发 | 最终回答已展示，进入 `agent/turn-stopping` |
+| 上下文 | 从原始请求到本次回答的记录，含工具结果和最终事实声称 |
+| 结论选项 | `complete / omission / needs-user / unknown`，另选证据 ID |
+| 采用 | complete 正常结束；首次 omission 最多排入一次原生 steer 补做 |
+| 停止条件 | 再次遗漏或需要用户决定时，只记录说明，不再自动补做 |
+
+**示例：** 最终回答声称“测试通过”，工具结果却记录失败。这个矛盾可算 omission。补做可以纠正报告，或完成已授权的遗漏工作。
+
+```flow LR
+最终回答已展示 -&gt; 核对记录
+核对记录 -&gt; {结论}
+结论 -&gt; 正常结束: complete
+结论 -&gt; 最多一次补做: 首次 omission
+结论 -&gt; 停止自动补做: 再次遗漏或 needs-user
+```
+
+补做预约先持久保存，再排入消息，重启后不会因此重复补做。核查不能撤回已展示回答，也不独立重跑测试。原始任务只授权审查时，补做只能在该授权范围内行动。
+
+### 05 持续目标监督 · goal-supervision
+
+| 路径 | 判断材料与答案 | 本地行动 |
+| --- | --- | --- |
+| 每个原生目标轮结束 | 当前 goal、当前和上一轮可见记录；`progress / no-progress / needs-user / unknown` | progress 清零停滞计数；默认连续 3 轮 no-progress 暂停目标 |
+| `update_goal` 申请完成 | 当前目标范围的完成证据；与完成核查相同的结论 | complete 保留原许可；omission 拒绝本次完成申请；needs-user 还会暂停目标 |
+
+**示例：** 多轮操作没有带来新证据时，插件可以暂停目标。有效调查或排除假设也可算 progress。用户恢复目标后，停滞计数重新开始。
+
+插件使用 DSH 原生目标轮次驱动。原生目标服务仍负责状态修改和轮次上限。人工直接完成目标也由原服务处理。
+
+### 证据预算为何会改变采用结果
+
+默认预算是 **24,000 字符**。程序按完整消息选取证据，并记录遗漏范围。如果范围内的必要证据被预算裁掉，`completeEvidence=false`，判断不能作为可用结论采用。高概率也不能补回缺失证据。
+
+完成核查和目标监督使用交互 `judge`。unknown、证据不全或技术失败进入人工 Retry / Cancel。新请求、目标修改或取消会使旧答案失效。
+
+来源：[证据与两道题](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L88)、[跑偏触发](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L272)、[完成与目标轮监督](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L299)、[目标完成申请](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L343)。
+
+## 约束和协作：要求与新消息如何进入当前任务
+
+### 06 用户约束提醒 · instruction-guidance
+
+**解决的问题：** 工具操作可能偏离当前用户要求或适用规则。
+
+| 环节 | 实际内容 |
+| --- | --- |
+| 触发 | 主 Agent 的 `tools/pre-execute`；启动检查后立即继续原工具 |
+| state | 用户原文、明确声明为 instruction 的 Host 原文、适用规则段落；工具参数、cwd、显式路径和来源作用域 |
+| questions | 每个原文段落一道 Choice：`conflict / no-conflict / undetermined` |
+| 采用 | conflict 在后续已进入的模型步骤提醒，并引用具体原文 |
+| 失败与限制 | 后台一次判断；证据不全或失败不采用，不阻挡原工具 |
+
+**示例：** 当前要求是“只读检查”，工具却请求写文件。插件比较实际操作与原文要求，随后发出提醒。原生 sandbox 和审批仍独立生效。
+
+默认证据预算 24,000 字符、最多 64 个来源。采用前会重读原文，防止使用过期规则。它只识别可取得的显式目标，不推断任意脚本的全部效果。
+
+来源：[来源读取](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/instructions.ts#L151)、[判断与提醒](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/instructions.ts#L229)。
+
+### 07 中途插话分流 · interjection-routing
+
+**解决的问题：** 运行期间收到新消息时，区分当前纠正和后续工作。
+
+| 环节 | 实际内容 |
+| --- | --- |
+| 触发 | 存活主 Agent 运行期间收到直接用户 inbox 消息 |
+| state | 完整插话文本、消息 ID、历史可见文本片段、当前目标；附件只给类型 |
+| questions | 一道 Choice：`correction / queue / unknown` |
+| 采用 | correction 进入 `next-step`；queue 留到 `next-turn` |
+| 失败与限制 | unknown 或失败等待人工 Retry / Cancel；不取消已开始的模型请求或工具 |
+
+**示例：** “你查错文件了，应该看退款模块”属于当前纠正。“结束后再整理一份文档”属于后续工作。
+
+消息内容和身份保持原样。同一目标队列保持到达顺序。编辑消息会让旧判断失效。它不读取附件内容；历史文本默认最多 12,000 字符。
+
+来源：[插话输入与路由题](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/interjection.ts#L117)、[消息接纳](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/interjection.ts#L271)。
+
+### 08 共享发现纠正 · shared-findings
+
+**解决的问题：** 已共享的旧结论被新证据替代后，让实际接收者收到纠正。
+
+| 环节 | 实际内容 |
+| --- | --- |
+| 触发 | 已共享的 Agent 消息、前台子 Agent 报告或可关联身份的后台报告 |
+| state | 当前用户任务、旧报告和新报告的完整原文、作者、消息身份、实际接收状态 |
+| questions | relation：`replacement / conflict / support / unrelated / unknown`；basis：新原文中的证据行 |
+| replacement 采用 | 保留旧原文并标记被替代，向合资格的实际接收者发送新旧结论与证据 |
+| conflict 采用 | 保留双方，请主 Agent 核实；插件不执行新的独立验证 |
+
+**示例：** A 报告“缓存键缺失”。B 提供原始记录，证明键存在且问题来自过期值。只有新原文提供替代依据时，程序才把旧发现标为被替代。
+
+更新更晚、作者不同或重复转述，都不足以证明新结论正确。插件不读 Agent 私有探索。自动纠正只发给存活主 Agent 和符合条件的直接子 Agent。
+
+默认请求预算 48,000 字符。超限不会静默截短两份报告后采纳。unknown 或失败进入人工 Retry / Cancel。排入 inbox、模型实际收到、模型采用结论，是不同状态；采用仍可能未知。
+
+来源：[双报告输入与题目](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/shared-findings.ts#L60)、[纠正投递](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/shared-findings.ts#L154)、[比较与采用](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/shared-findings.ts#L208)。
+
+## 日志：哪些工具文本可以省略
+
+这两项在工具执行后，通过 `tools/post-execute` 调整模型可见文本。命令已经执行，插件只判断符合规则的日志候选。
+
+```flow
+工具完成 -&gt; 本地规则保护关键行
+本地规则保护关键行 -&gt; 提取候选片段
+提取候选片段 -&gt; Jev 判断保留或省略
+Jev 判断保留或省略 -&gt; {是否满足采用条件}
+是否满足采用条件 -&gt; 保存完整原文: 满足
+保存完整原文 -&gt; 交付省略标记与恢复入口: 保存成功
+是否满足采用条件 -&gt; 保留原结果: 不满足或判断失败
+保存完整原文 -&gt; 保留原结果: 保存失败
+```
+
+### 09 通用长日志准入 · output-admission
+
+| 环节 | 实际内容 |
+| --- | --- |
+| 触发 | 可识别的长命令日志；默认从 6,000 个 Unicode 码点开始 |
+| 输入 | 当前任务、命令信息、受保护上下文和候选进度或重复提示片段 |
+| 问题 | 对候选问 Choice：`omit / keep / unknown` |
+| 采用 | omit 的概率不小于 0.8 才考虑省略；概率缺失时读取 confidence |
+| 失败与限制 | 默认最多等待 4 秒；失败、未知、低概率或存储失败都保留原结果 |
+
+**示例：** 构建输出数百条数字进度。插件保护错误、摘要、首尾与关键行，再判断进度候选是否仍有用。没有识别到候选时直接旁路。
+
+### 10 测试日志准入 · test-log-admission
+
+| 环节 | 实际内容 |
+| --- | --- |
+| 触发 | 可识别测试日志；默认从 4,000 个 Unicode 码点开始 |
+| 输入 | 任务与测试日志候选；本地先保护失败、摘要、点名测试和慢测试 |
+| 问题 | 对普通通过明细问 Choice：`omit / keep / unknown` |
+| 采用 | 使用独立开关，共用默认 0.8 门槛与 4 秒等待 |
+| 特殊规则 | 完全相同的重复失败详情可由确定性规则合并，不必调用 Jev |
+
+**示例：** 一百条通过明细和一条失败详情。失败详情先被保护，Jev 只判断普通通过候选。日志变短不必然来自模型判断。
+
+两项功能都先保存完整原文，再提供恢复入口。默认净减少量至少 300 字符且至少 10%，才替换文本。structured value、status 和 error 保持原值。
+
+恢复范围是这个 Hook 收到的文本。DSH 原生 spill、输出上限和后续上下文压缩仍会生效。它不能恢复上游已经丢掉的内容。减量文本是否进入下次模型请求，需要另外核对。
+
+来源：[日志输入和题目](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/output-admission.ts#L129)、[保存与采用](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/output-admission.ts#L299)、[本地保护与候选规则](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/output-admission-rules.ts#L136)、[真实日志报告](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/docs/reports/2026-09-27-tool-output-admission.zh-CN.md)。
+
+## 审批：何时允许一次工作区外操作
+
+### 11 工作区提权代审批 · workspace-approval
+
+**解决的问题：** 用户已经授权一次具体操作时，为适用的原生提权请求提供判断。
+
+| 环节 | 实际内容 |
+| --- | --- |
+| 参与条件 | 原生 `workspace-write`、approval policy 为 `ask`，请求显式包含 `danger-full-access` 与 justification |
+| state | 当前可见授权消息与 pending 消息、完整工具参数、cwd、目标路径、原生策略、可读取的简单直接脚本 |
+| questions | 一道 Choice：`approve / unauthorized / unknown` |
+| 采用 | 当前 approve 通过快照重验后，返回原生 `allowed-once` |
+| 非肯定判断 | unauthorized 或 unknown 交回既有人工审批；技术失败使用 Retry / Cancel |
+
+```flow
+适用的原生提权请求 -&gt; Jev 判断授权
+Jev 判断授权 -&gt; {答案}
+答案 -&gt; 重验当前操作快照: approve
+重验当前操作快照 -&gt; 原生 allowed-once: 仍适用
+重验当前操作快照 -&gt; 不采用旧批准: 已变化
+答案 -&gt; 原人工审批: unauthorized 或 unknown
+原生 allowed-once -&gt; 工具实际执行
+工具实际执行 -&gt; 单独记录操作结果
+```
+
+**示例：** 用户明确要求把指定内容写入一个工作区外路径。插件判断这次提权是否属于已授权操作。发放许可后，仍由原生工具执行并记录结果。
+
+这项功能没有日志功能的统一 0.8 门槛。旧批准在任务、脚本、路径或策略变化后失效。它不改变长期 sandbox 模式；一次 approve 也不能证明工具执行成功。
+
+来源：[审批输入与题目](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/workspace-approval.ts#L117)、[最后重验与单次许可](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/workspace-approval.ts#L265)、[审批参考](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/README.md#workspace-approval)。
+
+## 复盘：把历史模型步骤归到哪个阶段
+
+### 12 阶段导航 · stage-navigation
+
+**解决的问题：** 在长轨迹中找到调查、规划、实施和验证所对应的原始步骤。
+
+| 环节 | 实际内容 |
+| --- | --- |
+| 触发 | 用户手动选择已结束轮，或尚未分析的全部已结束轮 |
+| state | 一个完整目标 step：已记录 Think、正文、全部工具调用及配对结果；当时有效的用户要求 |
+| 前序材料 | 默认前 2 个 step，每个摘要最多 700 字符 |
+| questions | 一道 Choice：六阶段加 `mixed / unknown` |
+| 采用 | 同一轮内，相邻、连续且有效的相同标签可合并；点击定位完整原文 |
+
+```tree list
+历史步骤的主要目的
+  输入解析 | 识别任务输入和约束
+  问题理解 | 调查事实、原因和未决问题
+  方案规划 | 选择或修改方法
+  实施 | 修改、调试及相关测试
+  审查验证 | 检查已有结果是否满足要求
+  交付收尾 | 整理证据与交付
+  mixed | 多个主要目的无法拆开
+  unknown | 记录不足以判断
+```
+
+开启功能只显示页面，不立即调用服务。关闭会隐藏页面并取消未完成分类，已保存结果保留。默认请求预算 48,000 字符；超限就不能分析，目标 step 不被截短。
+
+**与监督的输入区别：** 阶段导航会发送已记录的 Think。监督会排除 reasoning。图片和文件只发送存在标记及元数据，插件没有把附件字节转换为原生图片输入。
+
+来源指纹包含连接身份。换后端后，旧结果不能冒充新判断。阶段标签只描述步骤目的，不能证明分类正确或该阶段成功。
+
+来源：[完整 step 输入与八种标签](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/stage-input.ts#L10)、[输入预算与指纹](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/stage-input.ts#L78)、[页面与分析服务](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/stage-navigation.ts)。
+
+## 边界与验证
+
+### 12 项功能是否都经过真实 Luna 验证
+
+**没有。** 当前源码实现了 12 项功能。2026-10-07 公开报告的真实 Luna 业务样例只覆盖下面 3 项。其余 9 项不能借用 Jev 历史结果来证明 Luna 效果。
+
+| 功能 | 公开报告中的真实 Luna 业务覆盖 |
+| --- | --- |
+| 01 技能选择 | 未报告 |
+| 02 文件排序 | 有限样例；真实任务五条路径同分，原序不变 |
+| 03 跑偏提醒 | 未报告 |
+| 04 完成核查 | 未报告 |
+| 05 持续目标监督 | 未报告 |
+| 06 用户约束提醒 | 未报告 |
+| 07 中途插话分流 | 未报告 |
+| 08 共享发现纠正 | 未报告 |
+| 09 通用长日志准入 | 有限样例；真实续验 8,407 → 2,122 码点，缩减 74.76% |
+| 10 测试日志准入 | 未覆盖；运行退款测试不等于触发该功能 |
+| 11 工作区提权代审批 | 两次受控授权未自动批准；另一个真实任务获一次许可并执行 |
+| 12 阶段导航 | 未报告真实 Luna 业务分类；存在固定响应接线测试 |
+
+官方 OpenAI 渠道的受控阶段有 6 次成功请求，其中 1 次是诊断；真实主模型阶段另有 3 次 Luna 请求。OpenRouter 唯一真实诊断返回 HTTP 403 访问限制，没有成功业务答案。
+
+### 已有证据分别证明什么
+
+| 证据 | 支持的结论 | 不能推出的结论 |
+| --- | --- | --- |
+| 当前源码与配置 | 功能存在，输入、触发、采用规则可追溯 | 在用户当前 profile 已开启或已触发 |
+| 历史 27 文件 / 300 用例 | 当次固定协议、生命周期与接线集合通过 | 300 次真实语义判断正确 |
+| Jev 固定完成诊断 | 开启组 6/6 个种入错误经判断与补做满足核心要求 | 自然任务错误率或编码平均收益 |
+| 真实 Luna 日志续验 | 一次真实模型请求收到减量文本，原文可恢复 | 普遍缩减比例、准确率或成本收益 |
+| 真实 Luna 单次审批 | 一个指定操作完成许可与执行链路 | 稳定可靠性，或先前拒绝原因已解决 |
+
+提醒、判断和最终业务结果需要分别核对。过去样例中，约束提醒送达后主模型仍未修正错误陈述。跑偏提醒的真实样例也因任务已结束，没有进入后续请求。
+
+阶段导航属于当前主分支。原生网页执行仍是暂停实验，普通网站效果未通过验收，不属于这 12 项已合入功能。
+
+### 如何使用这份网页
+
+先配置连接并显式诊断，再按任务需要开启单项功能。核对结果时，查看实际输入、统一答案、动作回执与原生 Session。多数 Agent 功能面向存活主会话；子 Agent 收到纠正，不代表拥有全部增强。
+
+本页主体依据固定源码 `79cdf650` 与公开报告。另核对了主分支 `a3de7fc` 的差异。新增修复拒绝响应中的非有限 JSON 数值，保留原始文本供诊断；12 项业务功能不变。
+
+本次核对没有调用真实模型，也没有重新执行产品验收。历史数量和结果都保留其日期与样例范围。
+
+资料入口：
+
+- [源码与功能概览](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/README.zh-CN.md)、[公共判断服务参考](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/README.md)。
+- [新增 JSON 响应记录修复](https://github.com/luobosibing2/dsh-jev-plugin/commit/e4eafb9)、[核对后的上游提交](https://github.com/luobosibing2/dsh-jev-plugin/commit/a3de7fc170ddac413f9e5d822dbe399346c215fd)。
+- [Jev 监督与纠正样例](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/docs/testing/2026-09-27-jev-hooks/public-results.zh-CN.md)、[固定完成诊断](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/docs/testing/2026-10-05-completion-recovery/public-results.zh-CN.md)。
+- [Luna 受控与真实任务报告](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/docs/testing/2026-10-07-luna-decisions/public-results.zh-CN.md#L31)、[总体验证说明](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/docs/validation.md)。
+</textarea>
+<script>
+(() => {
+  const root = document.documentElement;
+  const cycle = (list, cur) => list[(list.indexOf(cur) + 1) % list.length];
+  const label = (btn, value) => {
+    const map = JSON.parse(btn.dataset.labels || '{}');
+    btn.textContent = map[value] || value;
+  };
+  const bind = (name, attr, values) => {
+    const btn = document.querySelector(`[data-am="${name}"]`);
+    if (!btn) return;
+    label(btn, root.getAttribute(attr));
+    btn.addEventListener('click', () => {
+      const next = cycle(values, root.getAttribute(attr));
+      root.setAttribute(attr, next);
+      label(btn, next);
+    });
+  };
+  bind('theme', 'data-theme', ['blueprint', 'shadcn']);
+  bind('mode', 'data-mode', ['auto', 'light', 'dark']);
+
+  const copyBtn = document.querySelector('[data-am="copy"]');
+  copyBtn?.addEventListener('click', async () => {
+    const nodes = document.querySelectorAll('#am-source');
+    const text = nodes[nodes.length - 1]?.value ?? '';
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = Object.assign(document.createElement('textarea'), { value: text });
+      document.body.append(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    const original = copyBtn.textContent;
+    copyBtn.textContent = copyBtn.dataset.done;
+    setTimeout(() => { copyBtn.textContent = original; }, 1400);
+  });
+})();
+(() => {
+// Pure planner for justified ("photo wall") rows on sheet pages. No DOM access.
+//
+// This file must stay inlinable into the page script: top-level declarations only, no imports, and the exports are
+// `planLayout` and the constants the DOM adapter shares (STEP, MAX_SCALE, MIN_SCALE). The page build strips the `export ` keyword,
+// and test/layout-plan.test.js checks that this still works.
+//
+// planLayout({ width, gap, cols, panels }) -> { rows: [{ columns: [{ panels: [index, ...], width }], height }] }
+//
+// Input (all lengths in px):
+//   width   container width
+//   gap     space between columns, and between two panels stacked in one column
+//   cols    most columns in one row (the planner never uses more than MAX_COLUMNS, but spans stay shares of `cols`)
+//   panels  one entry per panel, in reading order:
+//     samples   [{ w, h }] panel height at sampled widths, ascending by w (heights between samples are interpolated)
+//     minWidth  narrowest feasible width (clamped to `width`)
+//     maxWidth  widest useful width; beyond it the panel only gains empty space (default: no limit)
+//     natural   natural diagram width for a diagram-only panel (default: none)
+//     pad       panel width not used by the diagram (padding and border; default 0)
+//     span      the author's width hint in grid columns (default 1); span >= cols keeps the panel alone in its row
+//
+// Output: { rows, maxScale }. Rows are in reading order; a row is a list of columns (at most `cols`); a column holds one panel or two
+// consecutive panels, stacked. For integer inputs the column widths plus the gaps between them equal `width`.
+// Rows are chosen by dynamic programming over break points; widths by a search in STEP px steps. Cost per row:
+//   H = tallest column; waste = sum((H - columnHeight) * columnWidth) + sum over diagrams wider than maxWidth of (w - maxWidth) * h
+//   dev = sum(((w - preferred) / oneColumn)^2) + SCALE_WEIGHT * sum over diagrams of (ln(scale) / ln(MAX_SCALE))^2
+//   cost = waste / 1000 + PREF_WEIGHT * dev * H
+// Scale band: diagrams on one page stay at similar sizes. With the result's `maxScale` as the diagram size limit, a diagram is
+// shown at scale min(maxScale, (width - pad) / natural). The planner tries a few bands [lo, lo * BAND_RATIO] (lo in BAND_LOS) and
+// keeps the cheapest plan in which no diagram is narrower than scale lo and none is shown above the band's top, so the largest and
+// smallest diagram scale on the page differ by at most BAND_RATIO. A panel wider than its diagram's top size keeps the diagram at
+// that size, and the page script must set the diagram's max-width to natural * maxScale. The band starts no higher than the
+// largest scale the page allows the least roomy diagram, so one wide diagram lowers the band for the others.
+// If no band is feasible the plan is made without a band (maxScale = MAX_SCALE); if no plan fits (or the input is unusable) the
+// result is a single column: one panel per row at the full width.
+
+const STEP = 10;
+const MAX_SCALE = 1.25;
+const MIN_SCALE = 0.75; // the narrowest a diagram is shown, as a share of its natural width
+const MAX_COLUMNS = 6; // rows with more columns are unreadable, and the search grows steeply with the column count
+const BAND_RATIO = 1.25; // the largest and smallest diagram scale on a page differ by at most this
+const BAND_LOS = [MIN_SCALE, 0.85, 0.95, 1]; // lower ends tried for the band; lo * BAND_RATIO is the upper end (1.25 means no upper limit)
+const SCALE_WEIGHT = 3;
+const PREF_WEIGHT = 0.15;
+
+function heightAt(samples, w) {
+  const i = samples.findIndex((s) => s.w >= w);
+  if (i === -1) return samples[samples.length - 1].h;
+  if (i === 0) return samples[0].h;
+  const a = samples[i - 1];
+  const b = samples[i];
+  return a.h + ((b.h - a.h) * (w - a.w)) / (b.w - a.w);
+}
+
+// Every way to split `len` consecutive panels into columns of 1 or 2 panels, as lists of column sizes.
+function splits(len) {
+  if (len === 0) return [[]];
+  return [1, 2].filter((k) => k <= len).flatMap((k) => splits(len - k).map((rest) => [k, ...rest]));
+}
+
+function singleColumn(width, panels) {
+  return { rows: panels.map((_, i) => ({ columns: [{ panels: [i], width }], height: 0 })) };
+}
+
+function planLayout({ width, gap = 0, cols = 3, panels }) {
+  const usable = Number.isFinite(width) && width > 0 && panels.every((p) => Array.isArray(p.samples) && p.samples.length > 0);
+  if (!usable) return singleColumn(width, panels);
+
+  // `cols` stays the unit of the author's spans; no row gets more than MAX_COLUMNS columns however large `cols` is.
+  const maxColumns = Math.min(cols, MAX_COLUMNS);
+  const oneColumn = Math.max(1, (width - gap * (cols - 1)) / cols);
+  // Per-panel limits. With a band [lo, lo * BAND_RATIO], a diagram is no narrower than scale lo and shown at most at the top of the
+  // band: a wider panel keeps it at that size and gains empty space, which the cost counts as waste.
+  const prepare = (lo) => panels.map((p) => {
+    const pad = p.pad ?? 0;
+    const diagram = lo > 0 && p.natural > 0;
+    const scaleCap = diagram ? Math.min(MAX_SCALE, lo * BAND_RATIO) : MAX_SCALE;
+    return {
+      ...p,
+      minWidth: Math.min(width, Math.max(Math.ceil(p.minWidth || 0), diagram ? Math.ceil(p.natural * lo + pad) : 0)),
+      maxWidth: Math.min(p.maxWidth ?? Infinity, diagram ? p.natural * scaleCap + pad : Infinity),
+      scaleCap,
+      pad,
+      preferred: Math.min(width, (p.span ?? 1) * oneColumn + ((p.span ?? 1) - 1) * gap),
+      alone: (p.span ?? 1) >= cols,
+    };
+  });
+  let info = prepare(0);
+  // Beyond its maxWidth a panel only gains empty space, so its height stops changing there (matters when a band lowers maxWidth).
+  const heightOf = (p, w) => heightAt(p.samples, Math.min(w, p.maxWidth));
+  const columnHeight = (col, w) => col.reduce((h, k) => h + heightOf(info[k], w), 0) + gap * (col.length - 1);
+
+  function bestColumns(columns) {
+    const avail = width - gap * (columns.length - 1);
+    const mins = columns.map((c) => Math.max(...c.map((k) => info[k].minWidth)));
+    const minsFrom = mins.map((_, n) => mins.slice(n).reduce((s, w) => s + w, 0));
+    if (minsFrom[0] > avail) return null;
+    let best = null;
+    const evaluate = (ws) => {
+      const hs = ws.map((w, n) => columnHeight(columns[n], w));
+      const H = Math.max(...hs);
+      let waste = 0;
+      let dev = 0;
+      ws.forEach((w, n) => {
+        waste += (H - hs[n]) * w;
+        for (const k of columns[n]) {
+          const p = info[k];
+          if (w > p.maxWidth) waste += (w - p.maxWidth) * heightOf(p, w);
+          dev += ((w - p.preferred) / oneColumn) ** 2;
+          if (p.natural > 0) {
+            const scale = Math.min(p.scaleCap, Math.max(w - p.pad, 1) / p.natural);
+            dev += SCALE_WEIGHT * (Math.log(scale) / Math.log(MAX_SCALE)) ** 2;
+          }
+        }
+      });
+      const cost = waste / 1000 + PREF_WEIGHT * dev * H;
+      if (!best || cost < best.cost) best = { cost, ws, height: H, columns };
+    };
+    const choose = (n, used, ws) => {
+      if (n === columns.length - 1) {
+        const w = avail - used;
+        if (w >= mins[n]) evaluate([...ws, w]);
+        return;
+      }
+      for (let w = mins[n]; used + w + minsFrom[n + 1] <= avail; w += STEP) choose(n + 1, used + w, [...ws, w]);
+    };
+    choose(0, 0, []);
+    return best;
+  }
+
+  // Best columns for one row of panels i..j.
+  function bestRow(i, j) {
+    if (j > i && info.slice(i, j + 1).some((p) => p.alone)) return null;
+    let best = null;
+    for (const split of splits(j - i + 1)) {
+      if (split.length > maxColumns) continue;
+      let next = i;
+      const columns = split.map((size) => Array.from({ length: size }, () => next++));
+      const r = bestColumns(columns);
+      if (r && (!best || r.cost < best.cost)) best = r;
+    }
+    return best;
+  }
+
+  // Row breaks in reading order, for the band set up in `info`. A row holds at most 2 * maxColumns panels. Null if nothing fits.
+  function solve() {
+    const n = panels.length;
+    const total = Array(n + 1).fill(Infinity);
+    const from = Array(n + 1).fill(-1);
+    const chosen = Array(n + 1).fill(null);
+    total[0] = 0;
+    for (let j = 1; j <= n; j++) {
+      for (let i = Math.max(0, j - 2 * maxColumns); i < j; i++) {
+        if (total[i] === Infinity) continue;
+        const r = bestRow(i, j - 1);
+        if (r && total[i] + r.cost < total[j]) {
+          total[j] = total[i] + r.cost;
+          from[j] = i;
+          chosen[j] = r;
+        }
+      }
+    }
+    if (total[n] === Infinity) return null;
+    const rows = [];
+    for (let j = n; j > 0; j = from[j]) {
+      const r = chosen[j];
+      rows.unshift({ columns: r.columns.map((panelsInColumn, c) => ({ panels: panelsInColumn, width: r.ws[c] })), height: r.height });
+    }
+    return { rows, cost: total[n] };
+  }
+
+  let best = null;
+  const diagrams = panels.filter((p) => p.natural > 0);
+  if (diagrams.length > 1) {
+    // No diagram can be shown larger than the page allows, so the band cannot start above the smallest of those limits.
+    const reach = Math.min(...diagrams.map((p) => Math.min(MAX_SCALE, Math.max(width - (p.pad ?? 0), 1) / p.natural)));
+    for (const lo of new Set([...BAND_LOS.filter((x) => x < reach), reach])) {
+      info = prepare(lo);
+      const r = solve();
+      if (r && (!best || r.cost < best.cost)) best = { ...r, maxScale: Math.min(MAX_SCALE, lo * BAND_RATIO) };
+    }
+    info = prepare(0);
+  }
+  best ??= solve();
+  return best ? { rows: best.rows, maxScale: best.maxScale ?? MAX_SCALE } : singleColumn(width, panels);
+}
+
+// DOM adapter for the sheet's justified ("photo wall") layout. Not a module: compose.js puts it after src/runtime/layout-plan.js
+// (which defines planLayout and the shared STEP, MAX_SCALE, MIN_SCALE) inside one function scope of the page script.
+//
+// It measures every panel at sampled widths, asks planLayout for rows and column widths, and applies them with flexbox.
+// The rendered HTML keeps the plain CSS grid: with JavaScript off, at the single-column breakpoint, or while printing, the grid is what
+// shows (the planned widths belong to the screen width, so print never gets a mix of the two); after printing the layout comes back.
+
+const grid = document.querySelector('.am-grid');
+const panels = grid ? [...grid.children].filter((el) => el.classList.contains('am-panel')) : [];
+
+if (panels.length > 1) {
+  const SINGLE_COLUMN = '(max-width: 760px)'; // the single-column breakpoint in src/themes/base.css
+  const TWO_COLUMNS = '(max-width: 1100px)'; // below this the CSS grid has two columns
+  const SAMPLE_STEP = 20; // width sampling step, px; the planner interpolates between samples
+  const TEXT_MIN = 260; // text keeps at least about 16 CJK characters per line
+  const TABLE_COL_MIN = 96; // per table column, px
+  const DIAGRAM_MIN = 160;
+  const RESIZE_DELAY = 150;
+  const OVERFLOWING = '.am-table-wrap, .am-diagram, .am-annot-scroll, pre';
+
+  const original = new Map([grid, ...panels, ...grid.querySelectorAll('.am-diagram > svg')].map((el) => [el, el.getAttribute('style')]));
+  const restoreStyle = (el) => (original.get(el) === null ? el.removeAttribute('style') : el.setAttribute('style', original.get(el)));
+
+  // Back to the plain grid markup and styles.
+  const restore = () => {
+    for (const box of grid.querySelectorAll(':scope > .am-col')) box.replaceWith(...box.children);
+    for (const el of original.keys()) restoreStyle(el);
+  };
+
+  // The author's width hint, rendered as data-span only when the author wrote one. The inline grid-column is the no-JavaScript fallback
+  // and may hold spans the server added, so it is never read here.
+  const spanHint = (el) => Number(el.dataset.span) || 1;
+  const diagramOnly = (el) => {
+    const body = el.querySelector(':scope > .am-panel-body');
+    return body && body.children.length === 1 ? body.querySelector(':scope > .am-diagram > svg') : null;
+  };
+  const naturalWidth = (svg) => Number(svg.getAttribute('width')) || 0;
+
+  // Height (and, for panels with tables or code, the narrowest width without sideways scrolling) at sampled widths.
+  // Only one panel is displayed while it is measured, so each width change lays out that panel alone.
+  function measure(width) {
+    grid.style.display = 'block';
+    for (const el of panels) {
+      el.style.display = 'none';
+      el.style.boxSizing = 'border-box';
+      for (const svg of el.querySelectorAll('.am-diagram > svg')) {
+        svg.style.width = '100%';
+        svg.style.maxWidth = `${naturalWidth(svg) * MAX_SCALE}px`;
+      }
+    }
+    const info = panels.map((el) => {
+      const svg = diagramOnly(el);
+      const svgs = [...el.querySelectorAll('.am-diagram > svg')];
+      const scrollers = el.querySelectorAll(OVERFLOWING);
+      const tableCols = Math.max(0, ...[...el.querySelectorAll('table tr:first-child')].map((tr) => tr.children.length));
+      el.style.display = '';
+      el.style.width = `${width}px`;
+      const pad = svg ? el.offsetWidth - svg.parentElement.clientWidth : 0;
+      const natural = svg ? naturalWidth(svg) : 0;
+      const shrunk = Math.max(0, ...svgs.map((s) => naturalWidth(s) * MIN_SCALE)) + (svg ? pad : 34);
+      const floor = svg ? Math.max(DIAGRAM_MIN, natural * MIN_SCALE + pad) : Math.max(TEXT_MIN, shrunk, tableCols * TABLE_COL_MIN + 34);
+      const from = Math.min(width, Math.floor(floor / STEP) * STEP);
+      const samples = [];
+      let fits = null;
+      for (let w = from; ; w += SAMPLE_STEP) {
+        w = Math.min(w, width);
+        el.style.width = `${w}px`;
+        if (fits === null && !svg && scrollers.length && ![...scrollers].some((s) => s.scrollWidth > s.clientWidth + 1)) fits = w;
+        samples.push({ w, h: el.offsetHeight });
+        if (w === width) break;
+      }
+      el.style.display = 'none';
+      return {
+        samples,
+        minWidth: svg ? floor : Math.max(floor, fits ?? (scrollers.length ? width : 0)),
+        maxWidth: svg ? natural * MAX_SCALE + pad : Infinity,
+        natural,
+        pad,
+        span: spanHint(el),
+      };
+    });
+    for (const el of panels) {
+      el.style.display = '';
+      el.style.width = '';
+    }
+    return info;
+  }
+
+  // Each column gets a fixed width. A row adds up to the full width, so flex-wrap breaks rows by itself.
+  // Stacked panels go into a column wrapper whose last panel absorbs the extra height.
+  function apply(plan, gap) {
+    grid.style.display = 'flex';
+    grid.style.flexWrap = 'wrap';
+    grid.style.alignItems = 'stretch';
+    grid.style.gap = `${gap}px`;
+    for (const el of panels) {
+      el.style.gridColumn = '';
+      el.style.gridRow = '';
+      el.style.flex = '0 0 auto';
+    }
+    for (const row of plan.rows) {
+      for (const col of row.columns) {
+        const width = `${col.width}px`;
+        if (col.panels.length === 1) {
+          panels[col.panels[0]].style.width = width;
+          continue;
+        }
+        const box = document.createElement('div');
+        box.className = 'am-col';
+        box.style.cssText = `width:${width};flex:0 0 auto;display:flex;flex-direction:column;gap:${gap}px`;
+        panels[col.panels[0]].before(box);
+        for (const k of col.panels) {
+          panels[k].style.width = '';
+          box.append(panels[k]);
+        }
+        panels[col.panels[col.panels.length - 1]].style.flex = '1 1 auto';
+      }
+    }
+  }
+
+  // Diagram-only panels show their diagram at most at the top of the page's scale band; a wider panel gains empty space instead.
+  function capDiagrams(maxScale) {
+    for (const el of panels) {
+      const svg = diagramOnly(el);
+      if (svg) svg.style.maxWidth = `${naturalWidth(svg) * maxScale}px`;
+    }
+  }
+
+  const containerWidth = () => Math.floor(grid.getBoundingClientRect().width);
+
+  function justify() {
+    if (printing || printQuery.matches) return;
+    try {
+      // A vertical scrollbar can appear or vanish once the rows change height; plan again if the width moved.
+      let planned = -1;
+      for (let pass = 0; pass < 3 && planned !== containerWidth(); pass++) {
+        restore();
+        if (matchMedia(SINGLE_COLUMN).matches) return;
+        planned = containerWidth();
+        const gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
+        const cols = Math.max(1, Number(getComputedStyle(grid).getPropertyValue('--cols')) || 3);
+        const plan = planLayout({ width: planned, gap, cols: matchMedia(TWO_COLUMNS).matches ? Math.min(cols, 2) : cols, panels: measure(planned) });
+        apply(plan, gap);
+        capDiagrams(plan.maxScale);
+      }
+      // The width never settled: columns planned for another width would overflow or leave gaps, so show the plain grid.
+      if (planned !== containerWidth()) restore();
+    } catch {
+      restore();
+    }
+  }
+
+  // Printing: back to the plain grid (spans and all), and the layout again afterwards. Browsers disagree on which of the
+  // `beforeprint` event and the print media query change fires first, or at all, so listen to both; both are idempotent.
+  // While `printing` is set (beforeprint to afterprint) justify() does nothing, so a late resize cannot bring flex widths into the print layout.
+  let printing = false;
+  const printQuery = matchMedia('print');
+  let timer = 0;
+  const later = () => {
+    clearTimeout(timer);
+    timer = setTimeout(justify, RESIZE_DELAY);
+  };
+  const toPrint = () => {
+    clearTimeout(timer);
+    restore();
+  };
+  justify();
+  addEventListener('resize', later);
+  addEventListener('beforeprint', () => {
+    printing = true;
+    toPrint();
+  });
+  addEventListener('afterprint', () => {
+    printing = false;
+    later();
+  });
+  printQuery.addEventListener('change', (e) => (e.matches ? toPrint() : later()));
+  // Late changes to panel heights: web fonts arriving, and images inside the grid finishing their load (load does not bubble, so capture it).
+  document.fonts?.ready.then(later);
+  grid.addEventListener('load', later, true);
+  // Switching theme changes paddings and fonts, hence panel heights.
+  document.querySelector('[data-am="theme"]')?.addEventListener('click', later);
+}
+})();
+</script>
+</body>
+</html>

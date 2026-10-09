@@ -12,6 +12,8 @@ This is an independent community project, not an official DeepSeek or Jev releas
 
 The [Chinese feature website](https://luobosibing2.github.io/dsh-jev-plugin/) explains each DSH integration point, the information sent to the judgment service, and the observed test cases and limits.
 
+The Chinese [principles and all features explainer](https://luobosibing2.github.io/dsh-jev-plugin/explainers/dsh-jev-plugin.html) covers all 12 features and includes a complete skill-selection input/output example. Its [Markdown source](docs/explainers/dsh-jev-plugin.md) is maintained in this repository.
+
 `main` supports Jev and Luna Decisions through OpenRouter or OpenAI, with three separate saved connections per profile. The [2026-10-07 public report](docs/testing/2026-10-07-luna-decisions/README.md) separates fixed protocol/installation checks, controlled live samples, and real DeepSeek Flash tasks. Official OpenAI calls succeeded in these limited samples; the only live OpenRouter diagnostic returned a provider-access HTTP 403 and was stopped. These results do not establish general judgment accuracy or stable task benefit.
 
 ## What is included?
