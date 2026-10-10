@@ -9,6 +9,7 @@ import { trySaveFormattedResult } from '@deepseek-ai/dsh-tool-fs-search'
 import { defineTool, type ToolExecution, type ToolExecutionResult } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-settings'
 import type {} from '@deepseek-ai/dsh-tool-skill'
+import type {} from '@deepseek-ai/dsh-working-directory'
 import { JevError } from './index.ts'
 import type { SelectionConfigValues } from './selection-types.ts'
 import type { JevRequest, JevResponse } from './types.ts'
@@ -217,7 +218,8 @@ export function apply(ctx: Context, config: Config): void {
         '- ' + skill.name + ': ' + skill.description).join('\n') || 'No model-invocable skills are available.' }],
     },
     async execute(_args, exec) {
-      const snapshot = await ctx.skills.snapshot({ cwd: exec.agent?.session.header.cwd, signal: exec.signal, scope: exec.agent })
+      const cwd = exec.agent === undefined ? undefined : await ctx.workingDirectory.ensure(exec.agent, exec.signal)
+      const snapshot = await ctx.skills.snapshot({ cwd, signal: exec.signal, scope: exec.agent })
       if (!snapshot.complete) throw new Error('Skill catalog is incomplete')
       return { skills: snapshot.skills.filter(isModelInvocable).map(({ name, description }) => ({ name, description })) }
     },
@@ -234,7 +236,8 @@ export function apply(ctx: Context, config: Config): void {
     }
     if (ctx.tools.get('skill', agent) === undefined) return decision
     signal.throwIfAborted()
-    const snapshot = await ctx.skills.snapshot({ cwd: agent.session.header.cwd, signal, scope: agent })
+    const cwd = await ctx.workingDirectory.ensure(agent, signal)
+    const snapshot = await ctx.skills.snapshot({ cwd, signal, scope: agent })
     if (!snapshot.complete) return decision
     const skills = snapshot.skills.filter(isModelInvocable)
     if (skills.length === 0) return decision
@@ -262,7 +265,8 @@ export function apply(ctx: Context, config: Config): void {
       featureId: 'skill-selection', agent, signal, link: { sessionId: agent.session.id },
       refresh: async retrySignal => {
         if (first) { first = false; return initial }
-        const refreshed = await ctx.skills.snapshot({ cwd: agent.session.header.cwd, signal: retrySignal, scope: agent })
+        const cwd = await ctx.workingDirectory.ensure(agent, retrySignal)
+        const refreshed = await ctx.skills.snapshot({ cwd, signal: retrySignal, scope: agent })
         if (!refreshed.complete) throw new Error('Skill catalog is incomplete')
         current = refreshed.skills.filter(isModelInvocable)
         if (current.length === 0) throw new Error('No skills remain available')
@@ -356,5 +360,5 @@ export function apply(ctx: Context, config: Config): void {
   }, { prepend: true })
 }
 
-export const inject = ['jev', 'tools', 'skills', 'settings', 'agents']
+export const inject = ['jev', 'tools', 'skills', 'settings', 'agents', 'workingDirectory']
 export const name = 'jev-selection'

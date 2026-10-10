@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
+import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
 import { createVolatile, updateVolatile } from '@deepseek-ai/cosmokit'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
@@ -124,6 +125,7 @@ async function fixture(api: JevLunaApi, script: ModelEntry[], features: Record<s
   let disposeStorage: (() => Promise<void>) | undefined
   cleanups.push(async () => { try { await ctx.fiber.dispose() } finally { await disposeStorage?.() } })
   await mountAgentLoopTestDependencies(ctx)
+  await ctx.plugin(WorkingDirectory)
   if (filesystem === 'sandbox') {
     await ctx.plugin(SandboxPolicy, { mode: 'workspace-write', workspaceRoot: workspace })
     await ctx.plugin(ApprovalService, { policy: 'ask' })

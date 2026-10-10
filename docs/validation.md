@@ -6,6 +6,10 @@ The checked-in source and tests are public. Raw live-session captures, personal 
 
 公开源码包含实现和可复测测试；真实会话原始抓取、个人截图、凭据、运行环境和绑定本机的实验资料不随源码公开。
 
+The [2026-10-09–10 Harness compatibility report](testing/2026-10-09-harness-compatibility/README.md) covers the current DSH 0.2.1-alpha.2 revision: the old package's actual installation rejection, the adapted package's official installation and Web client, new real DeepSeek Flash / Jev tasks, and scoped lifecycle tests. The older reports below retain their original runtime versions and experiment conditions.
+
+[2026-10-09–10 Harness 兼容报告](testing/2026-10-09-harness-compatibility/README.md)验证当前 DSH 0.2.1-alpha.2 适配：旧包的实际安装拒绝、适配包的正式安装与 Web 客户端、新一轮真实 DeepSeek Flash / Jev 任务及有界生命周期测试。下面的历史报告保留各自原始版本和实验条件。
+
 The [Jev / Luna public report](testing/2026-10-07-luna-decisions/public-results.md) separates fixed protocol/installation checks, controlled live samples, and real main-model tasks. Both Luna APIs are supported in `main`; the executed official samples and the failed OpenRouter access attempt retain different conclusions.
 
 [Jev / Luna 公开报告](testing/2026-10-07-luna-decisions/public-results.zh-CN.md)分别记录固定协议及安装、受控真实样例与真实主模型任务。`main`支持两种Luna API；官方执行样例与OpenRouter访问失败保留不同结论。

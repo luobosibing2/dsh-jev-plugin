@@ -6,8 +6,8 @@ const reference = resolve('packages/typert-protocol-reference')
 const require = createRequire(resolve('packages/jev/package.json'))
 const installed = dirname(require.resolve('@deepseek-ai/dsh-typert-protocol/package.json'))
 const manifest = JSON.parse(await readFile(join(installed, 'package.json'), 'utf8'))
-if (manifest.version !== '0.1.7-rc.2') {
-  throw new Error(`Expected @deepseek-ai/dsh-typert-protocol@0.1.7-rc.2, found ${manifest.version}`)
+if (manifest.version !== '0.2.1-alpha.2') {
+  throw new Error(`Expected @deepseek-ai/dsh-typert-protocol@0.2.1-alpha.2, found ${manifest.version}`)
 }
 
 const declarations = join(installed, 'lib/types')

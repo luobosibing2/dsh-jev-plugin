@@ -1,9 +1,12 @@
 import { spawn as nodeSpawn } from 'node:child_process'
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, realpath, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
+import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
+import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
+import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
 import { createVolatile, updateVolatile } from '@deepseek-ai/cosmokit'
 import AgentRegistry, { agentEvents, type Agent, type PreStepDecision } from '@deepseek-ai/dsh-agent'
 import { createAssistantMessage, createUserMessage, ToolCallId, type UserMessage } from '@deepseek-ai/dsh-llm'
@@ -12,6 +15,7 @@ import SkillRegistry from '@deepseek-ai/dsh-skill'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import { applyGlobTool, applyGrepTool } from '@deepseek-ai/dsh-tool-fs-search'
 import * as toolSkill from '@deepseek-ai/dsh-tool-skill'
+import * as toolWorkingDirectory from '@deepseek-ai/dsh-tool-working-directory'
 import ToolRuntime from '@deepseek-ai/dsh-tools'
 import { apply, Config } from '../src/selection.ts'
 import type { JevJudgeOptions, JevJudgeResult } from '../src/index.ts'
@@ -57,6 +61,9 @@ async function fixture(counts = { skillLimit: 1, fileCandidates: 40, fileLimit: 
   const ctx = new Context()
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(ToolRuntime)
+  await ctx.plugin(LocalFileSystem, { cwd: root })
+  await ctx.plugin(SessionProjectionRegistry)
+  await ctx.plugin(WorkingDirectory)
   await ctx.plugin(AgentRegistry)
   await ctx.plugin(SkillRegistry)
   await ctx.plugin(toolSkill)
@@ -182,6 +189,37 @@ describe('selection hooks through host plugin paths', () => {
     const original = await step(noContext.ctx, noContext.agent)
     expect(original.kind === 'enter' && original.messages.some(message => message.source.kind === 'skill-catalog')).toBe(true)
     expect(noContext.requests).toHaveLength(0)
+  })
+
+  it('selects skills from the current directory after the native working_directory tool changes it', async () => {
+    const { ctx, agent, root, requests } = await fixture()
+    await mkdir(join(root, 'changed'))
+    const changed = await realpath(join(root, 'changed'))
+    ctx.skills.registerProvider(() => ({
+      name: 'directory-fixture',
+      list: async ({ cwd }) => [{
+        name: cwd === changed ? 'changed-skill' : 'original-skill',
+        description: cwd === changed ? 'Changed directory skill' : 'Original directory skill',
+        invocation: { modelInvocable: true, userInvocable: true }, source: 'custom',
+        provider: 'directory-fixture', rank: 0, locator: cwd,
+      }],
+      get: async () => undefined,
+    }))
+    await ctx.plugin(toolWorkingDirectory)
+    await step(ctx, agent, [user('Choose a skill for the current directory')])
+    expect(JSON.stringify(requests[0])).toContain('original-skill')
+    const moved = await invoke(ctx, agent, 'working_directory', { cd: 'changed' })
+    expect(moved.isError).toBe(false)
+    expect(moved.value).toEqual({ cwd: changed })
+    expect(agent.session.header.cwd).toBe(root)
+    const next = await step(ctx, agent)
+    expect(requests).toHaveLength(2)
+    expect(JSON.stringify(requests[1])).toContain('changed-skill')
+    expect(JSON.stringify(requests[1])).not.toContain('original-skill')
+    const catalog = next.kind === 'enter' ? next.messages.find(message => message.source.kind === 'jev-skill-catalog') : undefined
+    expect(catalog?.source).toMatchObject({ entries: [{ name: 'changed-skill', description: 'Changed directory skill' }] })
+    const full = await invoke(ctx, agent, 'skill_catalog', {})
+    expect(full.value).toEqual({ skills: [{ name: 'changed-skill', description: 'Changed directory skill' }] })
   })
 
   it('ranks the original glob output twice, preserves the structured paths and reports omitted results', async () => {

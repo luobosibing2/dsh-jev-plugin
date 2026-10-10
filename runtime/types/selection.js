@@ -179,7 +179,8 @@ export function apply(ctx, config) {
             render: (_args, value) => [{ type: 'text', text: value.skills.map(skill => '- ' + skill.name + ': ' + skill.description).join('\n') || 'No model-invocable skills are available.' }],
         },
         async execute(_args, exec) {
-            const snapshot = await ctx.skills.snapshot({ cwd: exec.agent?.session.header.cwd, signal: exec.signal, scope: exec.agent });
+            const cwd = exec.agent === undefined ? undefined : await ctx.workingDirectory.ensure(exec.agent, exec.signal);
+            const snapshot = await ctx.skills.snapshot({ cwd, signal: exec.signal, scope: exec.agent });
             if (!snapshot.complete)
                 throw new Error('Skill catalog is incomplete');
             return { skills: snapshot.skills.filter(isModelInvocable).map(({ name, description }) => ({ name, description })) };
@@ -198,7 +199,8 @@ export function apply(ctx, config) {
         if (ctx.tools.get('skill', agent) === undefined)
             return decision;
         signal.throwIfAborted();
-        const snapshot = await ctx.skills.snapshot({ cwd: agent.session.header.cwd, signal, scope: agent });
+        const cwd = await ctx.workingDirectory.ensure(agent, signal);
+        const snapshot = await ctx.skills.snapshot({ cwd, signal, scope: agent });
         if (!snapshot.complete)
             return decision;
         const skills = snapshot.skills.filter(isModelInvocable);
@@ -231,7 +233,8 @@ export function apply(ctx, config) {
                     first = false;
                     return initial;
                 }
-                const refreshed = await ctx.skills.snapshot({ cwd: agent.session.header.cwd, signal: retrySignal, scope: agent });
+                const cwd = await ctx.workingDirectory.ensure(agent, retrySignal);
+                const refreshed = await ctx.skills.snapshot({ cwd, signal: retrySignal, scope: agent });
                 if (!refreshed.complete)
                     throw new Error('Skill catalog is incomplete');
                 current = refreshed.skills.filter(isModelInvocable);
@@ -339,6 +342,6 @@ export function apply(ctx, config) {
             ] };
     }, { prepend: true });
 }
-export const inject = ['jev', 'tools', 'skills', 'settings', 'agents'];
+export const inject = ['jev', 'tools', 'skills', 'settings', 'agents', 'workingDirectory'];
 export const name = 'jev-selection';
 //# sourceMappingURL=selection.js.map

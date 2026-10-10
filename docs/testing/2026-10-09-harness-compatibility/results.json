@@ -1,0 +1,4630 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-10-09T16:18:22.467Z",
+  "campaignStartedLocalDate": "2026-10-09",
+  "timezone": "Asia/Shanghai",
+  "host": {
+    "publishedCliVersion": "0.2.1-alpha.2",
+    "harnessSourceCommit": "d743267388641bc76f17c45ce8b4c231aed1d32c",
+    "pluginBaseCommit": "a3de7fc170ddac413f9e5d822dbe399346c215fd"
+  },
+  "originalInstall": {
+    "result": "rejected-and-rolled-back",
+    "reason": "Original package peers pinned to DSH 0.1.7-rc.2 were incompatible with 0.2.1-alpha.2; no exemption was used.",
+    "evidence": ".artifacts/baseline-install/install.log",
+    "rerunByThisWorker": false
+  },
+  "upgradedInstall": {
+    "result": "official-installer-succeeded",
+    "profile": "compatibility-headless",
+    "firstInstalledJsCompared": 47,
+    "firstMatchingJs": 47,
+    "source": "packages/jev/lib",
+    "stageProfile": "compatibility-stage",
+    "currentDirectoryUpdateInstalled": true
+  },
+  "artifactIdentities": [
+    {
+      "path": ".artifacts/compatibility/dsh-jev-plugin-0.1.0.tgz",
+      "sha256": "172512f0a52aac2fef55557ade3ebc82ece6dab694ea9a251795b50eabf057d1"
+    },
+    {
+      "path": ".artifacts/compatibility-final/dsh-jev-plugin-0.1.0.tgz",
+      "sha256": "dff3d7633fc64354361364e7873d57888798c7fb450d4f2892fb090c444c4a42"
+    },
+    {
+      "path": ".artifacts/compatibility-current-cwd/dsh-jev-plugin-0.1.0-current-cwd.tgz",
+      "sha256": "5a3ff82cce8b794941f69edb6507520a37ec1d9bb5cd2ea382a4747c9f6a95ad"
+    },
+    {
+      "path": ".artifacts/web-smoke/root-final-package/dsh-jev-plugin-0.1.0.tgz",
+      "sha256": "1206a2eefdcd9fbfc7433e37f9df119b31b8f7477ab1f19367592b6c876dde28"
+    }
+  ],
+  "rootWebUiSummary": {
+    "dsh_version": "0.2.1-alpha.2",
+    "source_sha": "d743267388641bc76f17c45ce8b4c231aed1d32c",
+    "package_entry": "./runtime/index.js",
+    "official_installation": "passed",
+    "compatibility_exemption": false,
+    "runtime_files_byte_equal": 82,
+    "host_components_running": 9,
+    "host_components_total": 9,
+    "features_default_off": 12,
+    "diagnostic": {
+      "outcome": "succeeded",
+      "attempts": 1,
+      "http_status": 200,
+      "request_model": "jev-1.13.0",
+      "returned_model": "jev-1.13.0",
+      "latency_ms": 1014,
+      "input_tokens": 377,
+      "output_tokens": 61,
+      "kinds": [
+        "choice",
+        "score",
+        "noul"
+      ],
+      "action_receipts": 0
+    },
+    "screenshots": [
+      "settings-diagnostic.jpg",
+      "decision-record.jpg",
+      "final-components.jpg"
+    ],
+    "initial_web_client_console_warnings_or_errors": 0,
+    "controlled_restart_connection_warnings": 3,
+    "web_client_console_errors": 0,
+    "final_host_components_running": 9,
+    "final_features_default_off": 12,
+    "final_runtime_files_byte_equal": 82
+  },
+  "totals": {
+    "cases": 18,
+    "realMainHttpRequests": 40,
+    "realMainHttp200": 40,
+    "realMainReturnedModelConfirmed": 38,
+    "realMainReturnedModelUnavailable": 2,
+    "realJudgmentHttpRequests": 27,
+    "realJudgmentHttp200": 27,
+    "rootWebUiDiagnosticExcludedFromWorkerTotals": 1,
+    "setupFailureCases": [
+      "default-off-config-attempt"
+    ],
+    "businessCasesWithoutSetupWarnings": 17
+  },
+  "liveFeatureCoverage": {
+    "skill-selection": "real-main-native-tool-and-real-judgment",
+    "file-ranking": "real-main-native-glob-and-real-judgment",
+    "drift-monitoring": "not-run-live",
+    "completion-check": "scripted-initial-real-judgment-real-main-supplement-plus-scripted-accurate-control",
+    "goal-supervision": "not-run-live",
+    "instruction-guidance": "real-main-raw-AGENTS-no-conflict-judgment",
+    "interjection-routing": "not-run-live",
+    "shared-findings": "not-run-live",
+    "output-admission": "real-main-native-log-reduction-and-recovered-original",
+    "test-log-admission": "real-main-native-test-and-real-judgment-original-kept",
+    "workspace-approval": "one-real-main-negative-and-one-real-main-single-operation-approval",
+    "stage-navigation": "real-judgment-cold-three-step-real-main-Session"
+  },
+  "cases": [
+    {
+      "caseId": "completion-control",
+      "layer": "scripted-initial-real-Jev-real-Flash-supplement",
+      "features": [
+        "completion-check"
+      ],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-run.mjs completion-control",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 1081,
+      "setupWarning": false,
+      "realMainRequests": [],
+      "realJudgmentRequests": [
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 2346,
+            "output_tokens": 129
+          },
+          "latencyMs": 484,
+          "responseChars": 389
+        }
+      ],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [
+        {
+          "callId": "seed-write-summary",
+          "tool": "bash",
+          "input": {
+            "command": "printf 'ready\\n' > summary.txt && cat summary.txt",
+            "description": "Create and verify the seeded summary."
+          }
+        }
+      ],
+      "toolResults": [
+        {
+          "callId": "seed-write-summary",
+          "status": "completed",
+          "chars": 6,
+          "sha256": "ed1a545bb85e55816bbf9566b028b2a0bc456b88f49f6f266c0401048824194b",
+          "omissionMarker": false
+        }
+      ],
+      "judgments": [
+        {
+          "operationId": "evidence-1",
+          "featureId": "completion-check",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "completion-checked",
+              "status": "observed",
+              "at": "2026-10-09T15:56:24.772Z",
+              "reason": "Requirements supported by recorded evidence; not an independent test run"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-2",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "assessment",
+                    "kind": "choice",
+                    "optionId": "complete",
+                    "probabilities": {
+                      "complete": 0.99,
+                      "omission": 0.01,
+                      "needs-user": 0,
+                      "unknown": 0
+                    },
+                    "confidence": 0.99
+                  },
+                  {
+                    "id": "evidence",
+                    "kind": "choice",
+                    "optionId": "evidence-3",
+                    "probabilities": {
+                      "evidence-3": 1
+                    },
+                    "confidence": 1
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 2346,
+                "outputTokens": 129
+              },
+              "usageComplete": true,
+              "requestSha256": "6c993a08bbd0dc1e75e6a9a0fe3f4ffcf87934e5eab1fe96429b158f97ccf55a",
+              "network": [
+                {
+                  "id": "evidence-4",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 2,
+                  "usage": {
+                    "inputTokens": 2346,
+                    "outputTokens": 129
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "business": {
+        "scriptedInitialMainRequests": 2,
+        "realSupplementMainRequests": 0,
+        "summaryContentCorrect": true,
+        "checksumPresent": false,
+        "checksumContentCorrect": false,
+        "supplementalDeliveries": 0,
+        "assessments": [
+          "complete"
+        ],
+        "limitation": "Fixed seeded diagnosis; the initial assistant answer was scripted. Accurate control sends no real main-model request."
+      }
+    },
+    {
+      "caseId": "completion-incomplete",
+      "layer": "scripted-initial-real-Jev-real-Flash-supplement",
+      "features": [
+        "completion-check"
+      ],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-run.mjs completion-incomplete",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 4912,
+      "setupWarning": false,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 1244,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 5376,
+            "output_tokens": 222,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1458,
+          "responseChars": 25474
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 268,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6784,
+            "output_tokens": 78,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 655,
+          "responseChars": 5741
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 264,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 7040,
+            "output_tokens": 231,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1180,
+          "responseChars": 28722
+        }
+      ],
+      "realJudgmentRequests": [
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 2367,
+            "output_tokens": 129
+          },
+          "latencyMs": 516,
+          "responseChars": 386
+        },
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 3881,
+            "output_tokens": 127
+          },
+          "latencyMs": 335,
+          "responseChars": 388
+        }
+      ],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [
+        {
+          "callId": "seed-write-summary",
+          "tool": "bash",
+          "input": {
+            "command": "printf 'ready\\n' > summary.txt && cat summary.txt",
+            "description": "Create and verify the seeded summary."
+          }
+        },
+        {
+          "callId": "evidence-5",
+          "tool": "bash",
+          "input": {
+            "command": "ls -la; printf 'checked\\n' > checksum.txt; echo \"---\"; ls -la",
+            "description": "Inspect directory and create checksum.txt."
+          }
+        },
+        {
+          "callId": "evidence-6",
+          "tool": "read",
+          "input": {
+            "file_path": "summary.txt"
+          }
+        },
+        {
+          "callId": "evidence-7",
+          "tool": "read",
+          "input": {
+            "file_path": "checksum.txt"
+          }
+        }
+      ],
+      "toolResults": [
+        {
+          "callId": "seed-write-summary",
+          "status": "completed",
+          "chars": 6,
+          "sha256": "ed1a545bb85e55816bbf9566b028b2a0bc456b88f49f6f266c0401048824194b",
+          "omissionMarker": false
+        },
+        {
+          "callId": "evidence-5",
+          "status": "completed",
+          "chars": 432,
+          "sha256": "6a80f5748780808551018599cf13cdcf5035455dc288f040e8c1db53bcb8de0d",
+          "omissionMarker": false
+        },
+        {
+          "callId": "evidence-6",
+          "status": "completed",
+          "chars": 261,
+          "sha256": "b740517341f926b1a3188adb7c6c506fd02cf22a89efb9a428e004cbe0c415a6",
+          "omissionMarker": false
+        },
+        {
+          "callId": "evidence-7",
+          "status": "completed",
+          "chars": 264,
+          "sha256": "70af4fd29881f8a8571bd43625459cd0826eddff8be8dc7d5e31bd237432bb59",
+          "omissionMarker": false
+        }
+      ],
+      "judgments": [
+        {
+          "operationId": "evidence-8",
+          "featureId": "completion-check",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "completion-checked",
+              "status": "observed",
+              "at": "2026-10-09T15:56:23.656Z",
+              "reason": "Requirements supported by recorded evidence; not an independent test run"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-9",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "assessment",
+                    "kind": "choice",
+                    "optionId": "complete",
+                    "probabilities": {
+                      "complete": 0.85,
+                      "omission": 0.15,
+                      "needs-user": 0,
+                      "unknown": 0
+                    },
+                    "confidence": 0.8
+                  },
+                  {
+                    "id": "evidence",
+                    "kind": "choice",
+                    "optionId": "evidence-10",
+                    "probabilities": {
+                      "evidence-10": 1
+                    },
+                    "confidence": 1
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 3881,
+                "outputTokens": 127
+              },
+              "usageComplete": true,
+              "requestSha256": "2b317317fa99c5141775d6d7f69c5e5943b44ec3e08191df7debec6b6fb8fb3f",
+              "network": [
+                {
+                  "id": "evidence-11",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 2,
+                  "usage": {
+                    "inputTokens": 3881,
+                    "outputTokens": 127
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "operationId": "evidence-12",
+          "featureId": "completion-check",
+          "status": "succeeded",
+          "actionStatus": "executed",
+          "receipts": [
+            {
+              "id": "supplement-reserved",
+              "status": "observed",
+              "at": "2026-10-09T15:56:19.869Z",
+              "reason": "One supplemental attempt reserved for this original request"
+            },
+            {
+              "id": "supplement-queued",
+              "status": "executed",
+              "at": "2026-10-09T15:56:19.879Z",
+              "reason": "Supplement queued; completion remains unverified"
+            },
+            {
+              "id": "supplement-delivered",
+              "status": "executed",
+              "at": "2026-10-09T15:56:19.898Z",
+              "reason": "Message admitted to the session"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-13",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "assessment",
+                    "kind": "choice",
+                    "optionId": "omission",
+                    "probabilities": {
+                      "complete": 0,
+                      "omission": 1,
+                      "needs-user": 0,
+                      "unknown": 0
+                    },
+                    "confidence": 1
+                  },
+                  {
+                    "id": "evidence",
+                    "kind": "choice",
+                    "optionId": "evidence-10",
+                    "probabilities": {
+                      "evidence-10": 1
+                    },
+                    "confidence": 1
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 2367,
+                "outputTokens": 129
+              },
+              "usageComplete": true,
+              "requestSha256": "fb7770b6cc62f6f103d4e0d4d596476332beddc4e3ba2aeb2f4870b0bba16278",
+              "network": [
+                {
+                  "id": "evidence-14",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 2,
+                  "usage": {
+                    "inputTokens": 2367,
+                    "outputTokens": 129
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "business": {
+        "scriptedInitialMainRequests": 2,
+        "realSupplementMainRequests": 3,
+        "summaryContentCorrect": true,
+        "checksumPresent": true,
+        "checksumContentCorrect": true,
+        "supplementalDeliveries": 1,
+        "assessments": [
+          "complete",
+          "omission"
+        ],
+        "limitation": "Fixed seeded diagnosis; the initial assistant answer was scripted. Accurate control sends no real main-model request."
+      }
+    },
+    {
+      "caseId": "current-cwd",
+      "layer": "real-Flash-real-Jev-native-profile",
+      "features": [
+        "skill-selection",
+        "instruction-guidance"
+      ],
+      "artifactPhase": "current-working-directory-update",
+      "command": "node scripts/validation/latest-harness-run.mjs current-cwd",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 10561,
+      "setupWarning": false,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 616,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 5376,
+            "output_tokens": 119,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1015,
+          "responseChars": 12854
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 513,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6016,
+            "output_tokens": 175,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1142,
+          "responseChars": 20149
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 202,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6528,
+            "output_tokens": 53,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 961,
+          "responseChars": 5270
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 153,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6656,
+            "output_tokens": 147,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1192,
+          "responseChars": 15657
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 207,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6784,
+            "output_tokens": 235,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1138,
+          "responseChars": 23805
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 429,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 7168,
+            "output_tokens": 186,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1156,
+          "responseChars": 20471
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 182,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 7680,
+            "output_tokens": 81,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 662,
+          "responseChars": 8119
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 338,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 7936,
+            "output_tokens": 258,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1452,
+          "responseChars": 32056
+        }
+      ],
+      "realJudgmentRequests": [
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 389,
+            "output_tokens": 22
+          },
+          "latencyMs": 566,
+          "responseChars": 124
+        },
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1760,
+            "output_tokens": 189
+          },
+          "latencyMs": 379,
+          "responseChars": 567
+        },
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1762,
+            "output_tokens": 189
+          },
+          "latencyMs": 317,
+          "responseChars": 568
+        },
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1756,
+            "output_tokens": 189
+          },
+          "latencyMs": 338,
+          "responseChars": 569
+        },
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1810,
+            "output_tokens": 189
+          },
+          "latencyMs": 347,
+          "responseChars": 568
+        },
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 2129,
+            "output_tokens": 189
+          },
+          "latencyMs": 367,
+          "responseChars": 569
+        },
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 2092,
+            "output_tokens": 189
+          },
+          "latencyMs": 465,
+          "responseChars": 569
+        },
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 2088,
+            "output_tokens": 189
+          },
+          "latencyMs": 492,
+          "responseChars": 568
+        },
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 2093,
+            "output_tokens": 188
+          },
+          "latencyMs": 333,
+          "responseChars": 566
+        },
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 2085,
+            "output_tokens": 189
+          },
+          "latencyMs": 329,
+          "responseChars": 570
+        }
+      ],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [
+        {
+          "callId": "evidence-15",
+          "tool": "working_directory",
+          "input": {
+            "cd": "child"
+          }
+        },
+        {
+          "callId": "evidence-16",
+          "tool": "skill",
+          "input": {
+            "name": "child-reporting"
+          }
+        },
+        {
+          "callId": "evidence-17",
+          "tool": "skill_catalog",
+          "input": {}
+        },
+        {
+          "callId": "evidence-18",
+          "tool": "glob",
+          "input": {
+            "pattern": "**/*",
+            "path": "."
+          }
+        },
+        {
+          "callId": "evidence-19",
+          "tool": "read",
+          "input": {
+            "file_path": ".agents/skills/child-reporting/SKILL.md"
+          }
+        },
+        {
+          "callId": "evidence-20",
+          "tool": "read",
+          "input": {
+            "file_path": "guide.txt"
+          }
+        },
+        {
+          "callId": "evidence-21",
+          "tool": "read",
+          "input": {
+            "file_path": "AGENTS.md"
+          }
+        },
+        {
+          "callId": "evidence-22",
+          "tool": "write",
+          "input": {
+            "file_path": "report.txt",
+            "content": "CURRENT_CWD_OK\n"
+          }
+        },
+        {
+          "callId": "evidence-23",
+          "tool": "read",
+          "input": {
+            "file_path": "report.txt"
+          }
+        }
+      ],
+      "toolResults": [
+        {
+          "callId": "evidence-15",
+          "status": "completed",
+          "chars": 153,
+          "sha256": "7f393eed08fbe388f523f2006089b0d9ad12670a00c1fb6266a8ffcfa12c87f6",
+          "omissionMarker": false
+        },
+        {
+          "callId": "evidence-16",
+          "status": "error",
+          "chars": 64,
+          "sha256": "fab7f1d1dce1a22aa540a9d64a5a9ae2e501af4d6ebc3de3517f23b151776bae",
+          "omissionMarker": false,
+          "error": "Error: skill \"child-reporting\" is unknown or no longer available"
+        },
+        {
+          "callId": "evidence-17",
+          "status": "completed",
+          "chars": 76,
+          "sha256": "fc872fe0a6f03dd8a76446cd5f8e350a55634368696d56e560489d2ed8cfa856",
+          "omissionMarker": false
+        },
+        {
+          "callId": "evidence-18",
+          "status": "completed",
+          "chars": 65,
+          "sha256": "5334918403145ab5c0b45f999d9fef59b5524b6f4a35b1fc8b648f7856de9f35",
+          "omissionMarker": false
+        },
+        {
+          "callId": "evidence-19",
+          "status": "completed",
+          "chars": 521,
+          "sha256": "b0036c05c7def6e440770040d02bf0296cc4c897258802cd502fba4507c5665b",
+          "omissionMarker": false
+        },
+        {
+          "callId": "evidence-20",
+          "status": "completed",
+          "chars": 264,
+          "sha256": "88a34c319588862cc527c17240fccb6f79b0985940b18c46ca44f75e7ae4071c",
+          "omissionMarker": false
+        },
+        {
+          "callId": "evidence-21",
+          "status": "completed",
+          "chars": 387,
+          "sha256": "d8dc42d43c1bed6a180f12677a85d74269adf69f820fe0cc973b2593bc5869c5",
+          "omissionMarker": false
+        },
+        {
+          "callId": "evidence-22",
+          "status": "completed",
+          "chars": 229,
+          "sha256": "0c8a905f0cd6a0a75af9ca79fc88404849881985bd3346237f63f31523c9f6dd",
+          "omissionMarker": false
+        },
+        {
+          "callId": "evidence-23",
+          "status": "completed",
+          "chars": 265,
+          "sha256": "0eaa6a027f56e985fd7ac2d1a4cf1f92822d871d73314c1b0edfe2cf1983e11d",
+          "omissionMarker": false
+        }
+      ],
+      "judgments": [
+        {
+          "operationId": "evidence-24",
+          "featureId": "instruction-guidance",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "instruction-guidance",
+              "status": "observed",
+              "reason": "No conflict established for supplied evidence; general compliance unconfirmed",
+              "at": "2026-10-09T16:06:38.195Z"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-25",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "source-c7083672756e9d34c647",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.19,
+                      "no-conflict": 0.69,
+                      "undetermined": 0.12
+                    },
+                    "confidence": 0.53
+                  },
+                  {
+                    "id": "source-23f31acdd73c1307396b",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.01,
+                      "no-conflict": 0.81,
+                      "undetermined": 0.18
+                    },
+                    "confidence": 0.72
+                  },
+                  {
+                    "id": "source-7470c3406a41448955b1",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.04,
+                      "no-conflict": 0.78,
+                      "undetermined": 0.18
+                    },
+                    "confidence": 0.67
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 2085,
+                "outputTokens": 189
+              },
+              "usageComplete": true,
+              "requestSha256": "74d583c7024a9d8cf8ae124047411e4388271e74d29bb30c040e8307ad2e65b1",
+              "network": [
+                {
+                  "id": "evidence-26",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 3,
+                  "usage": {
+                    "inputTokens": 2085,
+                    "outputTokens": 189
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "operationId": "evidence-27",
+          "featureId": "instruction-guidance",
+          "status": "succeeded",
+          "receipts": [],
+          "attempts": [
+            {
+              "attemptId": "evidence-28",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "source-c7083672756e9d34c647",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.28,
+                      "no-conflict": 0.67,
+                      "undetermined": 0.05
+                    },
+                    "confidence": 0.51
+                  },
+                  {
+                    "id": "source-23f31acdd73c1307396b",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.11,
+                      "no-conflict": 0.7,
+                      "undetermined": 0.19
+                    },
+                    "confidence": 0.55
+                  },
+                  {
+                    "id": "source-7470c3406a41448955b1",
+                    "kind": "choice",
+                    "optionId": "conflict",
+                    "probabilities": {
+                      "conflict": 0.97,
+                      "no-conflict": 0.02,
+                      "undetermined": 0.01
+                    },
+                    "confidence": 0.95
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 2093,
+                "outputTokens": 188
+              },
+              "usageComplete": true,
+              "requestSha256": "6c652be71ef6b47e034dae85dade34ca43e7118f794b3b820013cffeae215f46",
+              "network": [
+                {
+                  "id": "evidence-29",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 3,
+                  "usage": {
+                    "inputTokens": 2093,
+                    "outputTokens": 188
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "operationId": "evidence-30",
+          "featureId": "instruction-guidance",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "instruction-guidance",
+              "status": "observed",
+              "reason": "No conflict established for supplied evidence; general compliance unconfirmed",
+              "at": "2026-10-09T16:06:36.386Z"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-31",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "source-c7083672756e9d34c647",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.07,
+                      "no-conflict": 0.89,
+                      "undetermined": 0.04
+                    },
+                    "confidence": 0.83
+                  },
+                  {
+                    "id": "source-23f31acdd73c1307396b",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.01,
+                      "no-conflict": 0.86,
+                      "undetermined": 0.13
+                    },
+                    "confidence": 0.79
+                  },
+                  {
+                    "id": "source-7470c3406a41448955b1",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.02,
+                      "no-conflict": 0.9,
+                      "undetermined": 0.08
+                    },
+                    "confidence": 0.85
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 2092,
+                "outputTokens": 189
+              },
+              "usageComplete": true,
+              "requestSha256": "d0680b4adda99bb9ee2ce418e26173aa360085e287dccd1f505b63e7b8f54c27",
+              "network": [
+                {
+                  "id": "evidence-32",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 3,
+                  "usage": {
+                    "inputTokens": 2092,
+                    "outputTokens": 189
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "operationId": "evidence-33",
+          "featureId": "instruction-guidance",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "instruction-guidance",
+              "status": "observed",
+              "reason": "No conflict established for supplied evidence; general compliance unconfirmed",
+              "at": "2026-10-09T16:06:36.409Z"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-34",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "source-c7083672756e9d34c647",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.33,
+                      "no-conflict": 0.65,
+                      "undetermined": 0.02
+                    },
+                    "confidence": 0.48
+                  },
+                  {
+                    "id": "source-23f31acdd73c1307396b",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.06,
+                      "no-conflict": 0.8,
+                      "undetermined": 0.14
+                    },
+                    "confidence": 0.7
+                  },
+                  {
+                    "id": "source-7470c3406a41448955b1",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.31,
+                      "no-conflict": 0.66,
+                      "undetermined": 0.03
+                    },
+                    "confidence": 0.49
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 2088,
+                "outputTokens": 189
+              },
+              "usageComplete": true,
+              "requestSha256": "4b35dbfef913fa6ffd6c29f438f6222296d8e96892ca79ed92a80636908b1736",
+              "network": [
+                {
+                  "id": "evidence-35",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 3,
+                  "usage": {
+                    "inputTokens": 2088,
+                    "outputTokens": 189
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "operationId": "evidence-36",
+          "featureId": "instruction-guidance",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "instruction-guidance",
+              "status": "observed",
+              "reason": "No conflict established for supplied evidence; general compliance unconfirmed",
+              "at": "2026-10-09T16:06:36.272Z"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-37",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "source-c7083672756e9d34c647",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.07,
+                      "no-conflict": 0.88,
+                      "undetermined": 0.05
+                    },
+                    "confidence": 0.82
+                  },
+                  {
+                    "id": "source-23f31acdd73c1307396b",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0,
+                      "no-conflict": 0.91,
+                      "undetermined": 0.09
+                    },
+                    "confidence": 0.86
+                  },
+                  {
+                    "id": "source-7470c3406a41448955b1",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.01,
+                      "no-conflict": 0.92,
+                      "undetermined": 0.07
+                    },
+                    "confidence": 0.88
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 2129,
+                "outputTokens": 189
+              },
+              "usageComplete": true,
+              "requestSha256": "d15e15a0fa4dd4e51c0559146b8b35b9f19730c6d0536fa03d013e767b252871",
+              "network": [
+                {
+                  "id": "evidence-38",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 3,
+                  "usage": {
+                    "inputTokens": 2129,
+                    "outputTokens": 189
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "operationId": "evidence-39",
+          "featureId": "instruction-guidance",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "instruction-guidance",
+              "status": "observed",
+              "reason": "No conflict established for supplied evidence; general compliance unconfirmed",
+              "at": "2026-10-09T16:06:35.027Z"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-40",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "source-c7083672756e9d34c647",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.32,
+                      "no-conflict": 0.6,
+                      "undetermined": 0.08
+                    },
+                    "confidence": 0.4
+                  },
+                  {
+                    "id": "source-23f31acdd73c1307396b",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.02,
+                      "no-conflict": 0.76,
+                      "undetermined": 0.22
+                    },
+                    "confidence": 0.64
+                  },
+                  {
+                    "id": "source-7470c3406a41448955b1",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.04,
+                      "no-conflict": 0.77,
+                      "undetermined": 0.19
+                    },
+                    "confidence": 0.66
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 1810,
+                "outputTokens": 189
+              },
+              "usageComplete": true,
+              "requestSha256": "0f9ebe388a11c283681ffc35b32be4871fdadf119880510509b0ea5859eb5bcd",
+              "network": [
+                {
+                  "id": "evidence-41",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 3,
+                  "usage": {
+                    "inputTokens": 1810,
+                    "outputTokens": 189
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "operationId": "evidence-42",
+          "featureId": "instruction-guidance",
+          "status": "failed",
+          "receipts": [],
+          "attempts": [
+            {
+              "attemptId": "evidence-43",
+              "status": "failed",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "source-c7083672756e9d34c647",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.3,
+                      "no-conflict": 0.37,
+                      "undetermined": 0.33
+                    },
+                    "confidence": 0.06
+                  },
+                  {
+                    "id": "source-23f31acdd73c1307396b",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.02,
+                      "no-conflict": 0.76,
+                      "undetermined": 0.22
+                    },
+                    "confidence": 0.64
+                  },
+                  {
+                    "id": "source-7470c3406a41448955b1",
+                    "kind": "choice",
+                    "optionId": "undetermined",
+                    "probabilities": {
+                      "conflict": 0.06,
+                      "no-conflict": 0.41,
+                      "undetermined": 0.53
+                    },
+                    "confidence": 0.3
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": false,
+                "reason": "Instruction applicability or operation effects are undetermined"
+              },
+              "failure": {
+                "code": "UNDETERMINED",
+                "message": "Instruction applicability or operation effects are undetermined"
+              },
+              "usage": {
+                "inputTokens": 1756,
+                "outputTokens": 189
+              },
+              "usageComplete": true,
+              "requestSha256": "2c52e38d2f6308c74f1b5123affba1d2a87879d797a36ce0a3ce3f01cba649d4",
+              "network": [
+                {
+                  "id": "evidence-44",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 3,
+                  "usage": {
+                    "inputTokens": 1756,
+                    "outputTokens": 189
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "operationId": "evidence-45",
+          "featureId": "instruction-guidance",
+          "status": "failed",
+          "receipts": [],
+          "attempts": [
+            {
+              "attemptId": "evidence-46",
+              "status": "failed",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "source-c7083672756e9d34c647",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.2,
+                      "no-conflict": 0.57,
+                      "undetermined": 0.23
+                    },
+                    "confidence": 0.35
+                  },
+                  {
+                    "id": "source-23f31acdd73c1307396b",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0.01,
+                      "no-conflict": 0.79,
+                      "undetermined": 0.2
+                    },
+                    "confidence": 0.69
+                  },
+                  {
+                    "id": "source-7470c3406a41448955b1",
+                    "kind": "choice",
+                    "optionId": "undetermined",
+                    "probabilities": {
+                      "conflict": 0.05,
+                      "no-conflict": 0.42,
+                      "undetermined": 0.53
+                    },
+                    "confidence": 0.3
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": false,
+                "reason": "Instruction applicability or operation effects are undetermined"
+              },
+              "failure": {
+                "code": "UNDETERMINED",
+                "message": "Instruction applicability or operation effects are undetermined"
+              },
+              "usage": {
+                "inputTokens": 1762,
+                "outputTokens": 189
+              },
+              "usageComplete": true,
+              "requestSha256": "a7071b94cb22a1d8d4e4bd433216d050074224de642788aa6c43ca9af3ea26f3",
+              "network": [
+                {
+                  "id": "evidence-47",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 3,
+                  "usage": {
+                    "inputTokens": 1762,
+                    "outputTokens": 189
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "operationId": "evidence-48",
+          "featureId": "instruction-guidance",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "instruction-guidance",
+              "status": "observed",
+              "reason": "No conflict established for supplied evidence; general compliance unconfirmed",
+              "at": "2026-10-09T16:06:31.648Z"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-49",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "source-c7083672756e9d34c647",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0,
+                      "no-conflict": 0.99,
+                      "undetermined": 0.01
+                    },
+                    "confidence": 0.98
+                  },
+                  {
+                    "id": "source-23f31acdd73c1307396b",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0,
+                      "no-conflict": 0.95,
+                      "undetermined": 0.05
+                    },
+                    "confidence": 0.92
+                  },
+                  {
+                    "id": "source-7470c3406a41448955b1",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0,
+                      "no-conflict": 0.97,
+                      "undetermined": 0.03
+                    },
+                    "confidence": 0.95
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 1760,
+                "outputTokens": 189
+              },
+              "usageComplete": true,
+              "requestSha256": "1cc7c5cff901efceaec571a8fa7c751672bda77863f0a3b6628163007a6783a6",
+              "network": [
+                {
+                  "id": "evidence-50",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 3,
+                  "usage": {
+                    "inputTokens": 1760,
+                    "outputTokens": 189
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "operationId": "evidence-51",
+          "featureId": "skill-selection",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "skill-catalog-published",
+              "status": "observed",
+              "at": "2026-10-09T16:06:30.114Z"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-52",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "candidate-0",
+                    "kind": "noul",
+                    "probability": 0.03
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 389,
+                "outputTokens": 22
+              },
+              "usageComplete": true,
+              "requestSha256": "32bdfdd46c7cd27d69e4117422e9f8e1a2ea653c26273ce98df7eeee88cde9fa",
+              "network": [
+                {
+                  "id": "evidence-53",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 1,
+                  "usage": {
+                    "inputTokens": 389,
+                    "outputTokens": 22
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "business": {
+        "nativeDirectoryChange": true,
+        "childHasProjectMarker": false,
+        "childSkillNativeResolved": false,
+        "childSkillDirectRead": true,
+        "skillJudgmentsWithChildSkill": 0,
+        "instructionJudgmentCwds": [
+          "$WORKTREE/.artifacts/latest-harness-validation/workspaces/current-cwd/child"
+        ],
+        "childRawAgentsRuleInJudgment": true,
+        "childReportCorrect": true,
+        "initialRootReportAbsent": true,
+        "limitation": "Skills are discovered from the nearest project root. A child folder without its own project marker remains inside the initial project; the original child skill was therefore read directly after native lookup failed. Instruction cwd and actual file placement were independently checked."
+      }
+    },
+    {
+      "caseId": "current-cwd-project",
+      "layer": "real-Flash-real-Jev-native-profile",
+      "features": [
+        "skill-selection"
+      ],
+      "artifactPhase": "current-working-directory-update",
+      "command": "node scripts/validation/latest-harness-run.mjs current-cwd-project",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 7545,
+      "setupWarning": false,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 596,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 5376,
+            "output_tokens": 120,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1040,
+          "responseChars": 12981
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 540,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6016,
+            "output_tokens": 53,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 704,
+          "responseChars": 4551
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 224,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6528,
+            "output_tokens": 42,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 748,
+          "responseChars": 6353
+        }
+      ],
+      "realJudgmentRequests": [
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 368,
+            "output_tokens": 22
+          },
+          "latencyMs": 3692,
+          "responseChars": 124
+        },
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 367,
+            "output_tokens": 22
+          },
+          "latencyMs": 347,
+          "responseChars": 124
+        }
+      ],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [
+        {
+          "callId": "evidence-54",
+          "tool": "working_directory",
+          "input": {
+            "cd": "child"
+          }
+        },
+        {
+          "callId": "evidence-55",
+          "tool": "skill",
+          "input": {
+            "name": "child-reporting"
+          }
+        }
+      ],
+      "toolResults": [
+        {
+          "callId": "evidence-54",
+          "status": "completed",
+          "chars": 161,
+          "sha256": "90b60eacbc5b79605ad6b32009dea9e7b7656303287aa9ec9214f260bff14988",
+          "omissionMarker": false
+        },
+        {
+          "callId": "evidence-55",
+          "status": "completed",
+          "chars": 543,
+          "sha256": "7edae807aaa8d32254471d852e4cbf1e9f64227cacbf64a47fde80ff02c3e552",
+          "omissionMarker": false
+        }
+      ],
+      "judgments": [
+        {
+          "operationId": "evidence-56",
+          "featureId": "skill-selection",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "skill-catalog-published",
+              "status": "observed",
+              "at": "2026-10-09T16:09:52.995Z"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-57",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "candidate-0",
+                    "kind": "noul",
+                    "probability": 0.83
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 367,
+                "outputTokens": 22
+              },
+              "usageComplete": true,
+              "requestSha256": "4b240b69c5f118b1f0faa4d677498ead20084bcf6844c190890a1fefada1926b",
+              "network": [
+                {
+                  "id": "evidence-58",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 1,
+                  "usage": {
+                    "inputTokens": 367,
+                    "outputTokens": 22
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "operationId": "evidence-59",
+          "featureId": "skill-selection",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "skill-catalog-published",
+              "status": "observed",
+              "at": "2026-10-09T16:09:51.503Z"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-60",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "candidate-0",
+                    "kind": "noul",
+                    "probability": 0.06
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 368,
+                "outputTokens": 22
+              },
+              "usageComplete": true,
+              "requestSha256": "c2eaba2e3fed149a4b3f957ef428a21c2e7f7a74ca6592f5b5a44fbc1ca84b6a",
+              "network": [
+                {
+                  "id": "evidence-61",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 1,
+                  "usage": {
+                    "inputTokens": 368,
+                    "outputTokens": 22
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "business": {
+        "nativeDirectoryChange": true,
+        "childHasProjectMarker": true,
+        "childSkillNativeResolved": true,
+        "skillJudgmentsWithChildSkill": 1,
+        "originalSkillMarkerReturned": true,
+        "mainRequestAndStepLimit": 3,
+        "limitation": "Separate child project has its own .git marker. This bounded task checks project-level discovery after native cwd change; it does not measure skill judgment accuracy."
+      }
+    },
+    {
+      "caseId": "default-off",
+      "layer": "real-Flash-real-Jev-native-profile",
+      "features": [],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-run.mjs default-off",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 2622,
+      "setupWarning": false,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "observationError": "AbortError"
+        }
+      ],
+      "realJudgmentRequests": [
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 377,
+            "output_tokens": 61
+          },
+          "latencyMs": 568,
+          "responseChars": 362
+        }
+      ],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [],
+      "toolResults": [],
+      "judgments": [
+        {
+          "operationId": "evidence-62",
+          "featureId": "diagnostic",
+          "status": "succeeded",
+          "receipts": [],
+          "attempts": [
+            {
+              "attemptId": "evidence-63",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "route",
+                    "kind": "choice",
+                    "optionId": "left",
+                    "probabilities": {
+                      "left": 0.8,
+                      "right": 0.2
+                    },
+                    "confidence": 0.6
+                  },
+                  {
+                    "id": "risk",
+                    "kind": "score",
+                    "value": 0.62,
+                    "probabilities": {
+                      "0": 0.49,
+                      "1": 0.4,
+                      "2": 0.11
+                    },
+                    "confidence": 0.07,
+                    "legend": {
+                      "0": "low",
+                      "1": "medium",
+                      "2": "high"
+                    }
+                  },
+                  {
+                    "id": "ready",
+                    "kind": "noul",
+                    "probability": 0.51
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 377,
+                "outputTokens": 61
+              },
+              "usageComplete": true,
+              "requestSha256": "9efaa8d075a9e42033efd49ee26db365463d628d5e67f8db9ce892973b2fa33c",
+              "network": [
+                {
+                  "id": "evidence-64",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 3,
+                  "usage": {
+                    "inputTokens": 377,
+                    "outputTokens": 61
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "caseId": "default-off-config-attempt",
+      "layer": "real-Flash-real-Jev-native-profile",
+      "features": [],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-run.mjs default-off-config-attempt",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 4313,
+      "setupWarning": true,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "observationError": "AbortError"
+        }
+      ],
+      "realJudgmentRequests": [],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [],
+      "toolResults": [],
+      "judgments": []
+    },
+    {
+      "caseId": "file-ranking",
+      "layer": "real-Flash-real-Jev-native-profile",
+      "features": [
+        "file-ranking"
+      ],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-run.mjs file-ranking",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 8575,
+      "setupWarning": false,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 995,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 5376,
+            "output_tokens": 254,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 4516,
+          "responseChars": 28465
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 364,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6528,
+            "output_tokens": 102,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 885,
+          "responseChars": 10938
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 184,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6912,
+            "output_tokens": 193,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1306,
+          "responseChars": 24126
+        }
+      ],
+      "realJudgmentRequests": [
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 645,
+            "output_tokens": 222
+          },
+          "latencyMs": 477,
+          "responseChars": 588
+        }
+      ],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [
+        {
+          "callId": "evidence-65",
+          "tool": "glob",
+          "input": {
+            "pattern": "*.ts"
+          }
+        },
+        {
+          "callId": "evidence-66",
+          "tool": "skill",
+          "input": {
+            "name": "auth-reset-validator"
+          }
+        },
+        {
+          "callId": "evidence-67",
+          "tool": "read",
+          "input": {
+            "file_path": "auth-password-reset.ts"
+          }
+        }
+      ],
+      "toolResults": [
+        {
+          "callId": "evidence-65",
+          "status": "completed",
+          "chars": 379,
+          "sha256": "8b6e091055c8aaeee8ae9948e484904e6fbe5011611f58f17f00fd716bd910b0",
+          "omissionMarker": false
+        },
+        {
+          "callId": "evidence-66",
+          "status": "completed",
+          "chars": 523,
+          "sha256": "9d682f0ee7d776e9ce0459d85cf4ac6cf5efb11efe747462f97beda1991c7a95",
+          "omissionMarker": false
+        },
+        {
+          "callId": "evidence-67",
+          "status": "completed",
+          "chars": 311,
+          "sha256": "ce9e45d451e8b60f24d2bef03992135160a967e622e60ea44a7ea56c2aae66a3",
+          "omissionMarker": false
+        }
+      ],
+      "judgments": [
+        {
+          "operationId": "evidence-68",
+          "featureId": "file-ranking",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "glob-paths-ranked",
+              "status": "observed",
+              "at": "2026-10-09T15:55:32.017Z"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-69",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "candidate-0",
+                    "kind": "noul",
+                    "probability": 0.29
+                  },
+                  {
+                    "id": "candidate-1",
+                    "kind": "noul",
+                    "probability": 0.29
+                  },
+                  {
+                    "id": "candidate-2",
+                    "kind": "noul",
+                    "probability": 0.29
+                  },
+                  {
+                    "id": "candidate-3",
+                    "kind": "noul",
+                    "probability": 0.31
+                  },
+                  {
+                    "id": "candidate-4",
+                    "kind": "noul",
+                    "probability": 0.29
+                  },
+                  {
+                    "id": "candidate-5",
+                    "kind": "noul",
+                    "probability": 0.28
+                  },
+                  {
+                    "id": "candidate-6",
+                    "kind": "noul",
+                    "probability": 0.32
+                  },
+                  {
+                    "id": "candidate-7",
+                    "kind": "noul",
+                    "probability": 0.28
+                  },
+                  {
+                    "id": "candidate-8",
+                    "kind": "noul",
+                    "probability": 0.31
+                  },
+                  {
+                    "id": "candidate-9",
+                    "kind": "noul",
+                    "probability": 0.29
+                  },
+                  {
+                    "id": "candidate-10",
+                    "kind": "noul",
+                    "probability": 0.3
+                  },
+                  {
+                    "id": "candidate-11",
+                    "kind": "noul",
+                    "probability": 0.78
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 645,
+                "outputTokens": 222
+              },
+              "usageComplete": true,
+              "requestSha256": "a7bbc457e076f4c5debeebe8475d83397011e8dd8881f73d3da3e809ff0a47aa",
+              "network": [
+                {
+                  "id": "evidence-70",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 12,
+                  "usage": {
+                    "inputTokens": 645,
+                    "outputTokens": 222
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "business": {
+        "targetMarkerReturned": true,
+        "candidates": 12
+      }
+    },
+    {
+      "caseId": "glob-forty-one",
+      "layer": "real-Flash-real-Jev-native-profile",
+      "features": [
+        "file-ranking"
+      ],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-run.mjs glob-forty-one",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 2286,
+      "setupWarning": false,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 987,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 5376,
+            "output_tokens": 83,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 720,
+          "responseChars": 8365
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 264,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6400,
+            "output_tokens": 81,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 970,
+          "responseChars": 11110
+        }
+      ],
+      "realJudgmentRequests": [],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [
+        {
+          "callId": "evidence-71",
+          "tool": "glob",
+          "input": {
+            "pattern": "*.ts"
+          }
+        }
+      ],
+      "toolResults": [
+        {
+          "callId": "evidence-71",
+          "status": "completed",
+          "chars": 742,
+          "sha256": "430967a3a15229ab857737a96cca46905bd131aec83c90aafcda977677949e57",
+          "omissionMarker": false
+        }
+      ],
+      "judgments": [],
+      "business": {
+        "expectedCandidates": 41,
+        "judgmentBypassed": true
+      }
+    },
+    {
+      "caseId": "glob-zero",
+      "layer": "real-Flash-real-Jev-native-profile",
+      "features": [
+        "file-ranking"
+      ],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-run.mjs glob-zero",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 2710,
+      "setupWarning": false,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 978,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 5376,
+            "output_tokens": 81,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1204,
+          "responseChars": 8121
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 178,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6272,
+            "output_tokens": 45,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 902,
+          "responseChars": 6500
+        }
+      ],
+      "realJudgmentRequests": [],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [
+        {
+          "callId": "evidence-72",
+          "tool": "glob",
+          "input": {
+            "pattern": "*.missing"
+          }
+        }
+      ],
+      "toolResults": [
+        {
+          "callId": "evidence-72",
+          "status": "completed",
+          "chars": 14,
+          "sha256": "949d59b7ee8dabf8c14f26bb88463d19a331f38aa2542534727cb77fc3b94338",
+          "omissionMarker": false
+        }
+      ],
+      "judgments": [],
+      "business": {
+        "expectedCandidates": 0,
+        "judgmentBypassed": true
+      }
+    },
+    {
+      "caseId": "instruction-guidance",
+      "layer": "real-Flash-real-Jev-native-profile",
+      "features": [
+        "instruction-guidance"
+      ],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-run.mjs instruction-guidance",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 2382,
+      "setupWarning": false,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 1026,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 5376,
+            "output_tokens": 45,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 704,
+          "responseChars": 3789
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 141,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6400,
+            "output_tokens": 153,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1095,
+          "responseChars": 19718
+        }
+      ],
+      "realJudgmentRequests": [
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 2945,
+            "output_tokens": 364
+          },
+          "latencyMs": 520,
+          "responseChars": 1048
+        }
+      ],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [
+        {
+          "callId": "evidence-73",
+          "tool": "read",
+          "input": {
+            "file_path": "guide.txt"
+          }
+        }
+      ],
+      "toolResults": [
+        {
+          "callId": "evidence-73",
+          "status": "completed",
+          "chars": 270,
+          "sha256": "e3193fb8447d217f9a347670846a90e815101f6cb18bd9f476d9fa00702f98b4",
+          "omissionMarker": false
+        }
+      ],
+      "judgments": [
+        {
+          "operationId": "evidence-74",
+          "featureId": "instruction-guidance",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "instruction-guidance",
+              "status": "observed",
+              "reason": "No conflict established for supplied evidence; general compliance unconfirmed",
+              "at": "2026-10-09T15:56:26.635Z"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-75",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "source-f0c03611e16ec72fbde9",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0,
+                      "no-conflict": 0.99,
+                      "undetermined": 0.01
+                    },
+                    "confidence": 0.98
+                  },
+                  {
+                    "id": "source-8af0716b6cbdf3c499f1",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0,
+                      "no-conflict": 0.97,
+                      "undetermined": 0.03
+                    },
+                    "confidence": 0.95
+                  },
+                  {
+                    "id": "source-9565f19b6190f0a17e01",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0,
+                      "no-conflict": 0.99,
+                      "undetermined": 0.01
+                    },
+                    "confidence": 0.98
+                  },
+                  {
+                    "id": "source-8e36bbb408128d9fe9d9",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0,
+                      "no-conflict": 0.98,
+                      "undetermined": 0.02
+                    },
+                    "confidence": 0.97
+                  },
+                  {
+                    "id": "source-e0dae57505c6b2569e3c",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0,
+                      "no-conflict": 0.9,
+                      "undetermined": 0.1
+                    },
+                    "confidence": 0.85
+                  },
+                  {
+                    "id": "source-e4130bcff78216be65f4",
+                    "kind": "choice",
+                    "optionId": "no-conflict",
+                    "probabilities": {
+                      "conflict": 0,
+                      "no-conflict": 0.97,
+                      "undetermined": 0.03
+                    },
+                    "confidence": 0.95
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 2945,
+                "outputTokens": 364
+              },
+              "usageComplete": true,
+              "requestSha256": "2aab428a5fb7195da19c231d17ffce1ad3384caa1243d318968472493975fa14",
+              "network": [
+                {
+                  "id": "evidence-76",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 6,
+                  "usage": {
+                    "inputTokens": 2945,
+                    "outputTokens": 364
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "business": {
+        "rawControlledAgentsRuleRead": true,
+        "finalMarkersPresent": true,
+        "reminderDelivered": false,
+        "limitation": "No conflict was established; this sample does not test reminder adoption or enforcement."
+      }
+    },
+    {
+      "caseId": "output-admission",
+      "layer": "real-Flash-real-Jev-native-profile",
+      "features": [
+        "output-admission"
+      ],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-run.mjs output-admission",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 12106,
+      "setupWarning": false,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 994,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 5376,
+            "output_tokens": 417,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 2021,
+          "responseChars": 49175
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 267,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6784,
+            "output_tokens": 1284,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 6269,
+          "responseChars": 157390
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 175,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 8192,
+            "output_tokens": 452,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 2352,
+          "responseChars": 56124
+        }
+      ],
+      "realJudgmentRequests": [
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 6601,
+            "output_tokens": 262
+          },
+          "latencyMs": 727,
+          "responseChars": 942
+        }
+      ],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [
+        {
+          "callId": "evidence-77",
+          "tool": "bash",
+          "input": {
+            "description": "Run node build.mjs build verification",
+            "command": "node build.mjs",
+            "workdir": "$WORKTREE/.artifacts/latest-harness-validation/workspaces/output-admission"
+          }
+        },
+        {
+          "callId": "evidence-78",
+          "tool": "bash",
+          "input": {
+            "command": "true",
+            "description": "Calibrate zero exit code marker"
+          }
+        },
+        {
+          "callId": "evidence-79",
+          "tool": "bash",
+          "input": {
+            "command": "false",
+            "description": "Calibrate nonzero exit code marker"
+          }
+        }
+      ],
+      "toolResults": [
+        {
+          "callId": "evidence-77",
+          "status": "completed",
+          "chars": 853,
+          "sha256": "2e377f71cb9095727dc2ad05907daa550e85863696f8d1380bf127648de40317",
+          "omissionMarker": true
+        },
+        {
+          "callId": "evidence-78",
+          "status": "completed",
+          "chars": 11,
+          "sha256": "efefc15c24ee8645a3f5f6958389db729c1577eb6b32aeac4caab2a86d90daa3",
+          "omissionMarker": false
+        },
+        {
+          "callId": "evidence-79",
+          "status": "completed",
+          "chars": 26,
+          "sha256": "886199495f2d44b690f5809b8256789f06d5e757cb9b3b0e8f9c494d6018aa1c",
+          "omissionMarker": false
+        }
+      ],
+      "judgments": [
+        {
+          "operationId": "evidence-80",
+          "featureId": "output-admission",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "tool-log-final-result",
+              "status": "observed",
+              "reason": "{\"branch\":\"output-admission\",\"callId\":\"evidence-77\",\"inputChars\":7634,\"proposedChars\":853,\"finalChars\":853,\"finalIsError\":false,\"rules\":0,\"jev\":7,\"locator\":\"$PRIVATE_SPILL\"}",
+              "at": "2026-10-09T15:56:06.259Z"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-81",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "candidate-0",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.82,
+                      "keep": 0.1,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.73
+                  },
+                  {
+                    "id": "candidate-1",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.85,
+                      "keep": 0.09,
+                      "unknown": 0.06
+                    },
+                    "confidence": 0.77
+                  },
+                  {
+                    "id": "candidate-2",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.84,
+                      "keep": 0.09,
+                      "unknown": 0.07
+                    },
+                    "confidence": 0.76
+                  },
+                  {
+                    "id": "candidate-3",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.83,
+                      "keep": 0.1,
+                      "unknown": 0.07
+                    },
+                    "confidence": 0.74
+                  },
+                  {
+                    "id": "candidate-4",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.82,
+                      "keep": 0.1,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.73
+                  },
+                  {
+                    "id": "candidate-5",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.85,
+                      "keep": 0.09,
+                      "unknown": 0.06
+                    },
+                    "confidence": 0.77
+                  },
+                  {
+                    "id": "candidate-6",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.84,
+                      "keep": 0.09,
+                      "unknown": 0.07
+                    },
+                    "confidence": 0.76
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 6601,
+                "outputTokens": 262
+              },
+              "usageComplete": true,
+              "requestSha256": "25d78648abca1441d53d07439e5f8f5eb9896dac07dfba46f0b599edeb8d0201",
+              "network": [
+                {
+                  "id": "evidence-82",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 7,
+                  "usage": {
+                    "inputTokens": 6601,
+                    "outputTokens": 262
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "business": {
+        "inputChars": 7634,
+        "finalChars": 853,
+        "reductionPercent": 88.8263033796175,
+        "recoveredOriginalChars": 7634,
+        "recoveredOriginalSha256": "c71bf8c58072206872c342df3a02cbe40923be60621f3f498cda28b41969014e",
+        "recoveredProgressLines": 450,
+        "originalBuildMarkerPreserved": true,
+        "deliveredBuildMarkerPreserved": true,
+        "originalSummaryPreserved": true
+      }
+    },
+    {
+      "caseId": "skill-selection",
+      "layer": "real-Flash-real-Jev-native-profile",
+      "features": [
+        "skill-selection"
+      ],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-run.mjs skill-selection",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 3952,
+      "setupWarning": false,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 953,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 5376,
+            "output_tokens": 319,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 2041,
+          "responseChars": 38565
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 257,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6528,
+            "output_tokens": 42,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 713,
+          "responseChars": 6317
+        }
+      ],
+      "realJudgmentRequests": [
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 531,
+            "output_tokens": 148
+          },
+          "latencyMs": 560,
+          "responseChars": 419
+        }
+      ],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [
+        {
+          "callId": "evidence-83",
+          "tool": "skill",
+          "input": {
+            "name": "auth-reset-validator"
+          }
+        }
+      ],
+      "toolResults": [
+        {
+          "callId": "evidence-83",
+          "status": "completed",
+          "chars": 523,
+          "sha256": "9d682f0ee7d776e9ce0459d85cf4ac6cf5efb11efe747462f97beda1991c7a95",
+          "omissionMarker": false
+        }
+      ],
+      "judgments": [
+        {
+          "operationId": "evidence-84",
+          "featureId": "skill-selection",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "skill-catalog-published",
+              "status": "observed",
+              "at": "2026-10-09T15:55:59.979Z"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-85",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "candidate-0",
+                    "kind": "noul",
+                    "probability": 0.03
+                  },
+                  {
+                    "id": "candidate-1",
+                    "kind": "noul",
+                    "probability": 0.88
+                  },
+                  {
+                    "id": "candidate-2",
+                    "kind": "noul",
+                    "probability": 0.03
+                  },
+                  {
+                    "id": "candidate-3",
+                    "kind": "noul",
+                    "probability": 0.03
+                  },
+                  {
+                    "id": "candidate-4",
+                    "kind": "noul",
+                    "probability": 0.02
+                  },
+                  {
+                    "id": "candidate-5",
+                    "kind": "noul",
+                    "probability": 0.03
+                  },
+                  {
+                    "id": "candidate-6",
+                    "kind": "noul",
+                    "probability": 0.03
+                  },
+                  {
+                    "id": "candidate-7",
+                    "kind": "noul",
+                    "probability": 0.03
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 531,
+                "outputTokens": 148
+              },
+              "usageComplete": true,
+              "requestSha256": "0449256adc1066d79f57651926ee7a8a3a4e190753f8a88b08036d9ea4194658",
+              "network": [
+                {
+                  "id": "evidence-86",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 8,
+                  "usage": {
+                    "inputTokens": 531,
+                    "outputTokens": 148
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "business": {
+        "originalSkillLoaded": true,
+        "originalSkillMarkerReturned": true,
+        "controlledSkillCount": 8,
+        "defaultSelectedLimit": 5
+      }
+    },
+    {
+      "caseId": "stage-navigation",
+      "layer": "real-Jev-cold-real-Flash-Session-published-Web-profile",
+      "features": [
+        "stage-navigation"
+      ],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-stage-run.mjs",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 6124,
+      "setupWarning": false,
+      "realMainRequests": [],
+      "realJudgmentRequests": [
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1610,
+            "output_tokens": 87
+          },
+          "latencyMs": 4059,
+          "responseChars": 347
+        },
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1321,
+            "output_tokens": 87
+          },
+          "latencyMs": 334,
+          "responseChars": 344
+        },
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1350,
+            "output_tokens": 91
+          },
+          "latencyMs": 298,
+          "responseChars": 354
+        }
+      ],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [],
+      "toolResults": [],
+      "judgments": [
+        {
+          "operationId": "evidence-87",
+          "featureId": "stage-navigation",
+          "status": "succeeded",
+          "receipts": [],
+          "attempts": [
+            {
+              "attemptId": "evidence-88",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "stage",
+                    "kind": "choice",
+                    "optionId": "delivery_finalization",
+                    "probabilities": {
+                      "input_parsing": 0,
+                      "problem_understanding": 0.03,
+                      "solution_planning": 0,
+                      "implementation": 0.43,
+                      "review_validation": 0.05,
+                      "delivery_finalization": 0.48,
+                      "mixed": 0.01,
+                      "unknown": 0
+                    },
+                    "confidence": 0.41
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 1350,
+                "outputTokens": 91
+              },
+              "usageComplete": true,
+              "requestSha256": "da2bf5ef5229d98c32519b97200cbbb3093b2edd6153ef03833d66666c891d66",
+              "network": [
+                {
+                  "id": "evidence-89",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 1,
+                  "usage": {
+                    "inputTokens": 1350,
+                    "outputTokens": 91
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "operationId": "evidence-90",
+          "featureId": "stage-navigation",
+          "status": "succeeded",
+          "receipts": [],
+          "attempts": [
+            {
+              "attemptId": "evidence-91",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "stage",
+                    "kind": "choice",
+                    "optionId": "implementation",
+                    "probabilities": {
+                      "input_parsing": 0,
+                      "problem_understanding": 0.12,
+                      "solution_planning": 0,
+                      "implementation": 0.88,
+                      "review_validation": 0,
+                      "delivery_finalization": 0,
+                      "mixed": 0,
+                      "unknown": 0
+                    },
+                    "confidence": 0.86
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 1321,
+                "outputTokens": 87
+              },
+              "usageComplete": true,
+              "requestSha256": "062814588a1b18946275ecc9911cb9907fb06c9710ed435286750f933755c136",
+              "network": [
+                {
+                  "id": "evidence-92",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 1,
+                  "usage": {
+                    "inputTokens": 1321,
+                    "outputTokens": 87
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "operationId": "evidence-93",
+          "featureId": "stage-navigation",
+          "status": "succeeded",
+          "receipts": [],
+          "attempts": [
+            {
+              "attemptId": "evidence-94",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "stage",
+                    "kind": "choice",
+                    "optionId": "implementation",
+                    "probabilities": {
+                      "input_parsing": 0.01,
+                      "problem_understanding": 0.09,
+                      "solution_planning": 0.42,
+                      "implementation": 0.41,
+                      "review_validation": 0,
+                      "delivery_finalization": 0,
+                      "mixed": 0.07,
+                      "unknown": 0
+                    },
+                    "confidence": 0.34
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 1610,
+                "outputTokens": 87
+              },
+              "usageComplete": true,
+              "requestSha256": "403dc3d9988c4ee9f04613021b130971eba2a1540dd478cd8fc37fdd88c27f44",
+              "network": [
+                {
+                  "id": "evidence-95",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 1,
+                  "usage": {
+                    "inputTokens": 1610,
+                    "outputTokens": 87
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "business": {
+        "beforeReadJudgments": 0,
+        "afterFirstAnalysisJudgments": 3,
+        "afterSecondMissingJudgments": 3,
+        "steps": [
+          {
+            "stepId": "evidence-96:10",
+            "step": 1,
+            "status": "succeeded",
+            "label": "implementation",
+            "originalToolCount": 2
+          },
+          {
+            "stepId": "evidence-96:26",
+            "step": 2,
+            "status": "succeeded",
+            "label": "implementation",
+            "originalToolCount": 1
+          },
+          {
+            "stepId": "evidence-96:32",
+            "step": 3,
+            "status": "succeeded",
+            "label": "delivery_finalization",
+            "originalToolCount": 0
+          }
+        ],
+        "limitation": "Labels are provider judgments on three complete steps; no human stage-accuracy benchmark was run."
+      }
+    },
+    {
+      "caseId": "test-log-admission",
+      "layer": "real-Flash-real-Jev-native-profile",
+      "features": [
+        "test-log-admission"
+      ],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-run.mjs test-log-admission",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 3731,
+      "setupWarning": false,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 991,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 5376,
+            "output_tokens": 92,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1013,
+          "responseChars": 8619
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 1330,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6400,
+            "output_tokens": 158,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1520,
+          "responseChars": 20156
+        }
+      ],
+      "realJudgmentRequests": [],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [
+        {
+          "callId": "evidence-97",
+          "tool": "bash",
+          "input": {
+            "description": "Run the checks test suite",
+            "command": "node --test checks.test.mjs"
+          }
+        }
+      ],
+      "toolResults": [
+        {
+          "callId": "evidence-97",
+          "status": "completed",
+          "chars": 3911,
+          "sha256": "836e6b3010d0302fc525f39881041cc5708f6453899989dcfb4f2a9b0c64911b",
+          "omissionMarker": false
+        }
+      ],
+      "judgments": [],
+      "business": {
+        "testToolInvocations": 1,
+        "testCount": 101,
+        "failCount": 0,
+        "sentinelReportedPassed": true,
+        "originalRetained": true,
+        "judgmentCount": 0,
+        "limitation": "Node default spec output has no supported runner marker."
+      }
+    },
+    {
+      "caseId": "test-log-admission-neutral",
+      "layer": "real-Flash-real-Jev-native-profile",
+      "features": [
+        "test-log-admission"
+      ],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-run.mjs test-log-admission-neutral",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 8281,
+      "setupWarning": false,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 994,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 5376,
+            "output_tokens": 250,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1589,
+          "responseChars": 28750
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 4093,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6528,
+            "output_tokens": 447,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 2478,
+          "responseChars": 53890
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 4065,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 11008,
+            "output_tokens": 166,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 2055,
+          "responseChars": 20861
+        }
+      ],
+      "realJudgmentRequests": [
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 16816,
+            "output_tokens": 791
+          },
+          "latencyMs": 645,
+          "responseChars": 2676
+        },
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 16817,
+            "output_tokens": 791
+          },
+          "latencyMs": 426,
+          "responseChars": 2679
+        }
+      ],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [
+        {
+          "callId": "evidence-98",
+          "tool": "bash",
+          "input": {
+            "description": "Run node TAP test suite",
+            "command": "node --test --test-reporter=tap checks.test.mjs"
+          }
+        },
+        {
+          "callId": "evidence-99",
+          "tool": "bash",
+          "input": {
+            "command": "node --test --test-reporter=tap checks.test.mjs; echo \"EXIT_STATUS=$?\"",
+            "description": "Run TAP tests and print exit status"
+          }
+        }
+      ],
+      "toolResults": [
+        {
+          "callId": "evidence-98",
+          "status": "completed",
+          "chars": 8192,
+          "sha256": "0ae5a585bed254dcbfc0e9f48267bf226e8e0c3edb28dfc374e871cf706ca348",
+          "omissionMarker": false
+        },
+        {
+          "callId": "evidence-99",
+          "status": "completed",
+          "chars": 8192,
+          "sha256": "dce403bb2f55f882f80480a7dd56e021c165a4c2f2d72e7b744232f8433389ee",
+          "omissionMarker": false
+        }
+      ],
+      "judgments": [
+        {
+          "operationId": "evidence-100",
+          "featureId": "test-log-admission",
+          "status": "succeeded",
+          "receipts": [],
+          "attempts": [
+            {
+              "attemptId": "evidence-101",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "candidate-0",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.77,
+                      "keep": 0.14,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.66
+                  },
+                  {
+                    "id": "candidate-1",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.77,
+                      "keep": 0.14,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.66
+                  },
+                  {
+                    "id": "candidate-2",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.78,
+                      "keep": 0.13,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.67
+                  },
+                  {
+                    "id": "candidate-3",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.78,
+                      "keep": 0.14,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.67
+                  },
+                  {
+                    "id": "candidate-4",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.78,
+                      "keep": 0.14,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.67
+                  },
+                  {
+                    "id": "candidate-5",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.75,
+                      "keep": 0.17,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.62
+                  },
+                  {
+                    "id": "candidate-6",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.79,
+                      "keep": 0.14,
+                      "unknown": 0.07
+                    },
+                    "confidence": 0.69
+                  },
+                  {
+                    "id": "candidate-7",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.79,
+                      "keep": 0.13,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.69
+                  },
+                  {
+                    "id": "candidate-8",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.76,
+                      "keep": 0.15,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.64
+                  },
+                  {
+                    "id": "candidate-9",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.78,
+                      "keep": 0.14,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.67
+                  },
+                  {
+                    "id": "candidate-10",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.79,
+                      "keep": 0.13,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.69
+                  },
+                  {
+                    "id": "candidate-11",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.76,
+                      "keep": 0.15,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.64
+                  },
+                  {
+                    "id": "candidate-12",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.78,
+                      "keep": 0.14,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.67
+                  },
+                  {
+                    "id": "candidate-13",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.76,
+                      "keep": 0.15,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.64
+                  },
+                  {
+                    "id": "candidate-14",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.79,
+                      "keep": 0.13,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.69
+                  },
+                  {
+                    "id": "candidate-15",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.78,
+                      "keep": 0.14,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.67
+                  },
+                  {
+                    "id": "candidate-16",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.77,
+                      "keep": 0.14,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.66
+                  },
+                  {
+                    "id": "candidate-17",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.78,
+                      "keep": 0.14,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.67
+                  },
+                  {
+                    "id": "candidate-18",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.77,
+                      "keep": 0.14,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.66
+                  },
+                  {
+                    "id": "candidate-19",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.79,
+                      "keep": 0.14,
+                      "unknown": 0.07
+                    },
+                    "confidence": 0.69
+                  },
+                  {
+                    "id": "candidate-20",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.79,
+                      "keep": 0.13,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.69
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 16817,
+                "outputTokens": 791
+              },
+              "usageComplete": true,
+              "requestSha256": "42aabe7a376d6204ff6f15c2eee09ca0e675c23b3f24b3b3188458835c9ed67a",
+              "network": [
+                {
+                  "id": "evidence-102",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 21,
+                  "usage": {
+                    "inputTokens": 16817,
+                    "outputTokens": 791
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "operationId": "evidence-103",
+          "featureId": "test-log-admission",
+          "status": "succeeded",
+          "receipts": [],
+          "attempts": [
+            {
+              "attemptId": "evidence-104",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "candidate-0",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.73,
+                      "keep": 0.17,
+                      "unknown": 0.1
+                    },
+                    "confidence": 0.59
+                  },
+                  {
+                    "id": "candidate-1",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.76,
+                      "keep": 0.15,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.64
+                  },
+                  {
+                    "id": "candidate-2",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.77,
+                      "keep": 0.14,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.66
+                  },
+                  {
+                    "id": "candidate-3",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.78,
+                      "keep": 0.13,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.67
+                  },
+                  {
+                    "id": "candidate-4",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.77,
+                      "keep": 0.14,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.66
+                  },
+                  {
+                    "id": "candidate-5",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.8,
+                      "keep": 0.12,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.7
+                  },
+                  {
+                    "id": "candidate-6",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.77,
+                      "keep": 0.14,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.66
+                  },
+                  {
+                    "id": "candidate-7",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.78,
+                      "keep": 0.14,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.67
+                  },
+                  {
+                    "id": "candidate-8",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.74,
+                      "keep": 0.17,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.61
+                  },
+                  {
+                    "id": "candidate-9",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.76,
+                      "keep": 0.15,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.64
+                  },
+                  {
+                    "id": "candidate-10",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.78,
+                      "keep": 0.14,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.67
+                  },
+                  {
+                    "id": "candidate-11",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.77,
+                      "keep": 0.14,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.66
+                  },
+                  {
+                    "id": "candidate-12",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.75,
+                      "keep": 0.16,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.62
+                  },
+                  {
+                    "id": "candidate-13",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.77,
+                      "keep": 0.15,
+                      "unknown": 0.08
+                    },
+                    "confidence": 0.66
+                  },
+                  {
+                    "id": "candidate-14",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.76,
+                      "keep": 0.15,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.64
+                  },
+                  {
+                    "id": "candidate-15",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.75,
+                      "keep": 0.16,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.62
+                  },
+                  {
+                    "id": "candidate-16",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.77,
+                      "keep": 0.14,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.66
+                  },
+                  {
+                    "id": "candidate-17",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.77,
+                      "keep": 0.14,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.66
+                  },
+                  {
+                    "id": "candidate-18",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.76,
+                      "keep": 0.15,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.64
+                  },
+                  {
+                    "id": "candidate-19",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.76,
+                      "keep": 0.15,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.64
+                  },
+                  {
+                    "id": "candidate-20",
+                    "kind": "choice",
+                    "optionId": "omit",
+                    "probabilities": {
+                      "omit": 0.77,
+                      "keep": 0.14,
+                      "unknown": 0.09
+                    },
+                    "confidence": 0.66
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 16816,
+                "outputTokens": 791
+              },
+              "usageComplete": true,
+              "requestSha256": "8b3aad1f87a6eaeb0081a16870f43dd236cad3d6274154d439ccd301fbf32c20",
+              "network": [
+                {
+                  "id": "evidence-105",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 21,
+                  "usage": {
+                    "inputTokens": 16816,
+                    "outputTokens": 791
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "business": {
+        "testToolInvocations": 2,
+        "testCount": 101,
+        "failCount": 0,
+        "sentinelReportedPassed": true,
+        "originalRetained": true,
+        "judgmentCount": 2,
+        "limitation": "Two native test invocations and two real judgments; omit probabilities 0.73 to 0.80 yielded no final reduction receipt."
+      }
+    },
+    {
+      "caseId": "test-log-admission-tap",
+      "layer": "real-Flash-real-Jev-native-profile",
+      "features": [
+        "test-log-admission"
+      ],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-run.mjs test-log-admission-tap",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 3702,
+      "setupWarning": false,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 1001,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 5376,
+            "output_tokens": 226,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1389,
+          "responseChars": 25718
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 4078,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6528,
+            "output_tokens": 282,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1454,
+          "responseChars": 35492
+        }
+      ],
+      "realJudgmentRequests": [],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [
+        {
+          "callId": "evidence-106",
+          "tool": "bash",
+          "input": {
+            "description": "Run node TAP test suite",
+            "command": "node --test --test-reporter=tap checks.test.mjs"
+          }
+        }
+      ],
+      "toolResults": [
+        {
+          "callId": "evidence-106",
+          "status": "completed",
+          "chars": 8192,
+          "sha256": "40be86b7fc1c88c01fce241cb067327c18e0c8cf33ceb0c1a5fd1a918cf3d735",
+          "omissionMarker": false
+        }
+      ],
+      "judgments": [],
+      "business": {
+        "testToolInvocations": 1,
+        "testCount": 101,
+        "failCount": 0,
+        "sentinelReportedPassed": true,
+        "originalRetained": true,
+        "judgmentCount": 0,
+        "limitation": "The task names arithmetic, protecting matching test details from candidate judgment."
+      }
+    },
+    {
+      "caseId": "workspace-approval",
+      "layer": "real-Flash-real-Jev-native-profile",
+      "features": [
+        "workspace-approval"
+      ],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-run.mjs workspace-approval",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 6904,
+      "setupWarning": false,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 1050,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 5376,
+            "output_tokens": 1237,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 5786,
+          "responseChars": 153042
+        }
+      ],
+      "realJudgmentRequests": [
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 3589,
+            "output_tokens": 44
+          },
+          "latencyMs": 502,
+          "responseChars": 227
+        }
+      ],
+      "errors": [],
+      "interactions": [
+        {
+          "event": "approval/request"
+        }
+      ],
+      "toolCalls": [
+        {
+          "callId": "evidence-107",
+          "tool": "write",
+          "input": {
+            "file_path": "../approval-outside/allowed.txt",
+            "content": "APPROVED_ONCE_OK",
+            "sandbox_permissions": "danger-full-access",
+            "justification": "Write the explicitly authorized isolated approval fixture"
+          }
+        }
+      ],
+      "toolResults": [
+        {
+          "callId": "evidence-107",
+          "status": "error",
+          "chars": 68,
+          "sha256": "b598f39d6c456018e4698cb4b5105c2a718e55874530f525487196f643a4c58e",
+          "omissionMarker": false,
+          "error": "Error: approval for escalating to \"danger-full-access\" was cancelled"
+        }
+      ],
+      "judgments": [
+        {
+          "operationId": "evidence-108",
+          "featureId": "workspace-approval",
+          "status": "succeeded",
+          "actionStatus": "observed",
+          "receipts": [
+            {
+              "id": "approval-routing",
+              "status": "observed",
+              "reason": "unauthorized: delegated to native answerer",
+              "at": "2026-10-09T15:57:31.869Z"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-109",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "authorization",
+                    "kind": "choice",
+                    "optionId": "unauthorized",
+                    "probabilities": {
+                      "approve": 0.41,
+                      "unauthorized": 0.48,
+                      "unknown": 0.11
+                    },
+                    "confidence": 0.22
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 3589,
+                "outputTokens": 44
+              },
+              "usageComplete": true,
+              "requestSha256": "acf950d29a676042e1069057fd4fdc136d3123caeaeebb2740a48e1e13eefa06",
+              "network": [
+                {
+                  "id": "evidence-110",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 1,
+                  "usage": {
+                    "inputTokens": 3589,
+                    "outputTokens": 44
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "business": {
+        "exactFileExists": false,
+        "exactContentMatches": false,
+        "nativeGrantIssued": false,
+        "toolExecutionReceipt": false,
+        "limitation": "One relative-path combined write/read request was not approved; a separate exact-path single-operation request was approved. This does not establish approval reliability."
+      }
+    },
+    {
+      "caseId": "workspace-approval-exact",
+      "layer": "real-Flash-real-Jev-native-profile",
+      "features": [
+        "workspace-approval"
+      ],
+      "artifactPhase": "first-compatible-build",
+      "command": "node scripts/validation/latest-harness-run.mjs workspace-approval-exact",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 5142,
+      "setupWarning": false,
+      "realMainRequests": [
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 1082,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 5376,
+            "output_tokens": 465,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 2273,
+          "responseChars": 55011
+        },
+        {
+          "endpoint": "https://api.deepseek.com/anthropic/v1/messages",
+          "status": 200,
+          "returnedModel": "deepseek-flash",
+          "usage": {
+            "input_tokens": 217,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 6784,
+            "output_tokens": 282,
+            "service_tier": "standard"
+          },
+          "observationError": "AbortError",
+          "latencyMs": 1598,
+          "responseChars": 35347
+        }
+      ],
+      "realJudgmentRequests": [
+        {
+          "endpoint": "https://api.typesafe.ai/v1/systemone",
+          "status": 200,
+          "returnedModel": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 3899,
+            "output_tokens": 41
+          },
+          "latencyMs": 516,
+          "responseChars": 222
+        }
+      ],
+      "errors": [],
+      "interactions": [],
+      "toolCalls": [
+        {
+          "callId": "evidence-111",
+          "tool": "write",
+          "input": {
+            "file_path": "$WORKTREE/.artifacts/latest-harness-validation/workspaces/approval-outside/exact.txt",
+            "content": "EXACT_APPROVAL_OK",
+            "sandbox_permissions": "danger-full-access",
+            "justification": "The user explicitly authorized this one write to the exact absolute path $WORKTREE/.artifacts/latest-harness-validation/workspaces/approval-outside/exact.txt, which lies outside the current workspace, and explicitly authorized danger-full-access for this single tool operation."
+          }
+        }
+      ],
+      "toolResults": [
+        {
+          "callId": "evidence-111",
+          "status": "completed",
+          "chars": 227,
+          "sha256": "16a485d2edeb090a32623d6343d39adc9a27e144822770ddd4bbf2437c07006a",
+          "omissionMarker": false
+        }
+      ],
+      "judgments": [
+        {
+          "operationId": "evidence-112",
+          "featureId": "workspace-approval",
+          "status": "succeeded",
+          "actionStatus": "executed",
+          "receipts": [
+            {
+              "id": "approval-routing",
+              "status": "observed",
+              "reason": "Jev answered approve; final freshness check pending",
+              "at": "2026-10-09T15:58:57.191Z"
+            },
+            {
+              "id": "grant-issued",
+              "status": "observed",
+              "reason": "Jev allowed-once was issued to the native approval request",
+              "at": "2026-10-09T15:58:57.207Z"
+            },
+            {
+              "id": "tool-result",
+              "status": "executed",
+              "reason": "Native tool completed; see native result for operation outcome",
+              "at": "2026-10-09T15:58:57.220Z"
+            }
+          ],
+          "attempts": [
+            {
+              "attemptId": "evidence-113",
+              "status": "succeeded",
+              "connection": {
+                "baseUrl": "https://api.typesafe.ai/v1/systemone",
+                "model": "jev-1.13.0",
+                "credentialRef": "JEV_SELECTION_REAL_KEY",
+                "connectionId": "jev"
+              },
+              "response": {
+                "answers": [
+                  {
+                    "id": "authorization",
+                    "kind": "choice",
+                    "optionId": "approve",
+                    "probabilities": {
+                      "approve": 0.86,
+                      "unauthorized": 0.12,
+                      "unknown": 0.02
+                    },
+                    "confidence": 0.79
+                  }
+                ]
+              },
+              "interpretation": {
+                "usable": true
+              },
+              "usage": {
+                "inputTokens": 3899,
+                "outputTokens": 41
+              },
+              "usageComplete": true,
+              "requestSha256": "aeb57f13fb006d5922d22bffdffd8b5024c6b85de0d39bf05fe498b203ead915",
+              "network": [
+                {
+                  "id": "evidence-114",
+                  "status": "succeeded",
+                  "httpStatus": 200,
+                  "returnedModel": "jev-1.13.0",
+                  "questionCount": 1,
+                  "usage": {
+                    "inputTokens": 3899,
+                    "outputTokens": 41
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "business": {
+        "exactFileExists": true,
+        "exactContentMatches": true,
+        "nativeGrantIssued": true,
+        "toolExecutionReceipt": true,
+        "limitation": "One relative-path combined write/read request was not approved; a separate exact-path single-operation request was approved. This does not establish approval reliability."
+      }
+    }
+  ],
+  "limitations": [
+    "These are bounded compatibility and business samples; they do not establish general semantic accuracy, stable task benefit, cost savings, probability calibration, or production reliability.",
+    "Four features lack corresponding live-service samples: drift-monitoring, goal-supervision, interjection-routing, shared-findings. Local tests are reported separately by the parent.",
+    "All judgment requests used Jev 1.13.0. No live Luna credential was available and no Luna API request was sent.",
+    "The headless shipped profile has no sessionController; its stage consumer was disabled. Stage analysis used the officially initialized Web profile.",
+    "An initial observer/overlay configuration attempt produced setup warnings despite a successful main task and is retained separately from clean cases.",
+    "Main response metadata observers saw AbortError when the native adapter closed completed SSE streams. HTTP status, partial parsed provider model/usage, Session completion, and business outcomes are kept separately.",
+    "Raw request inputs, provider responses, Session captures, credentials, and authenticated Web URLs remain private under .artifacts and are excluded from this report."
+  ],
+  "deliverable": {
+    "tarball": ".artifacts/deliverable/dsh-jev-plugin-0.1.0.tgz",
+    "sha256": "5f412c7fe2984065b1597e1e7a37151f9a48052e39c4f1827fddd9e95393c74c",
+    "official_installation": "passed",
+    "runtime_files_byte_equal": 82,
+    "tarball_readmes_byte_equal": true,
+    "manifest_matches_source_except_pnpm_removed_packageManager": true
+  },
+  "fixedChecks": {
+    "testFiles": 27,
+    "testsPassed": 338,
+    "failed": 0,
+    "hostTypecheck": "passed",
+    "clientTypecheck": "passed",
+    "build": "passed",
+    "frozenInstall": "passed",
+    "workspacePeers": "passed",
+    "scriptsNodeCheck": 8
+  }
+}

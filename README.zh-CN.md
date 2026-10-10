@@ -8,13 +8,15 @@
 
 主模型继续负责规划、生成回答和调用原生工具；已启用功能在 DSH 的技能目录、Agent 生命周期、工具结果与审批等扩展点使用已保存的 Jev 或 Luna Decisions 连接，再按对应功能应用结果。主模型由 DSH 单独配置。接入基于公开的 Cordis / DSH 插件接口，无需修改宿主源码。
 
-这是独立社区项目，并非 DeepSeek 或 Jev 官方发布。当前属于早期插件，已针对 **DSH 0.1.7-rc.2** 验证；接口和模型判断都不构成正确性保证。
+这是独立社区项目，并非 DeepSeek 或 Jev 官方发布。当前属于早期插件，已针对 **DSH 0.2.1-alpha.2** 验证；接口和模型判断都不构成正确性保证。
 
 [中文功能介绍站](https://luobosibing2.github.io/dsh-jev-plugin/)逐项说明 DSH 原生触发节点、交给判断服务的信息，以及实际测试场景、结果和边界。
 
 [原理与全部功能](https://luobosibing2.github.io/dsh-jev-plugin/explainers/dsh-jev-plugin.html)文章说明全部 12 项功能，并展示技能选择的完整输入输出例子。[Markdown 源稿](docs/explainers/dsh-jev-plugin.md)在本仓库维护。
 
 `main` 支持 Jev，以及通过 OpenRouter 或 OpenAI 使用 Luna Decisions；每个 profile 独立保存三套连接。[2026-10-07 公开报告](docs/testing/2026-10-07-luna-decisions/README.md)区分固定协议及安装、受控真实样例与真实 DeepSeek Flash 任务。官方 OpenAI 在这些有限样例中调用成功；OpenRouter 的唯一真实诊断返回提供方访问限制的 HTTP 403 后停止。这些结果不建立通用判断准确率或稳定任务收益。
+
+[2026-10-09–10 Harness 兼容报告](docs/testing/2026-10-09-harness-compatibility/README.md)记录从 DSH 0.1.7-rc.2 升至 0.2.1-alpha.2 的适配、正式安装与 Web 检查，以及新一轮真实 DeepSeek Flash / Jev 任务。原始插件被新版安装器的版本检查拒绝；本次修改同步依赖并适配受影响的公开 API。报告分别记录真实任务、固定初始遗漏的完成诊断、确定性生命周期测试及本轮未实测的提供方渠道。
 
 ## 包含哪些功能？
 
@@ -53,12 +55,12 @@
 
 ## 网页端安装（推荐）
 
-已经在使用 **DSH 0.1.7-rc.2 Web** 的用户，直接填写 GitHub 仓库地址即可，无需克隆源码、手动打包或登录 npm。
+已经在使用 **DSH 0.2.1-alpha.2 Web** 的用户，直接填写 GitHub 仓库地址即可，无需克隆源码、手动打包或登录 npm。
 
 1. 打开 **侧边栏「插件」→「添加插件」**。
 2. 在 **「包名或地址」** 中粘贴下面的 GitHub 地址，点击 **「安装」**。
 3. 安装完成后点击 **「立即启用」**；若提示下次启动后加载，重启当前 DSH profile。
-4. 进入 **Jev** 页面配置服务地址、模型和 API Key，再按需开启功能。
+4. 在已安装插件列表中点击 **查看 @dsh-jev/plugin**，进入 Jev 页面配置服务地址、模型和 API Key，再按需开启功能。
 
 ```text
 https://github.com/luobosibing2/deepseek-harness-jev
@@ -80,13 +82,13 @@ https://github.com/luobosibing2/deepseek-harness-jev
 
 - 推荐 Node.js **24.11 或更高版本**；发布构建使用 Node 24.14.1 检查。
 - `PATH` 中可用的 pnpm **11.7.0**。
-- DeepSeek Harness CLI **0.1.7-rc.2**。插件固定使用对应 DSH peer 包和 Cordis **4.0.4**，不自动承诺兼容更新版本。
+- DeepSeek Harness CLI **0.2.1-alpha.2**。插件固定使用对应 DSH peer 包和 Cordis **4.0.5-alpha.1**，不自动承诺兼容其他 Harness 版本。这是 alpha 版本；请使用下面的精确版本号，npm 的 `latest` 标签可能指向另一版本。
 - 在 DSH 中配置好主模型，以及所选 Jev 兼容 System One 服务或 Luna API 的凭据。
 
 如尚未安装工具：
 
 ```sh
-npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.1.7-rc.2
+npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.1-alpha.2
 ```
 
 ### 构建安装包
@@ -96,7 +98,7 @@ npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.1.7-rc.2
 ```sh
 git clone https://github.com/luobosibing2/deepseek-harness-jev.git
 cd deepseek-harness-jev
-pnpm install --frozen-lockfile --ignore-scripts
+pnpm install --frozen-lockfile
 pnpm run build
 mkdir -p dist
 pnpm -C packages/jev pack --pack-destination "$PWD/dist"
