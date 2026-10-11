@@ -8,7 +8,7 @@
 
 主模型继续负责规划、生成回答和调用原生工具；已启用功能在 DSH 的技能目录、Agent 生命周期、工具结果与审批等扩展点使用已保存的 Jev 或 Luna Decisions 连接，再按对应功能应用结果。主模型由 DSH 单独配置。接入基于公开的 Cordis / DSH 插件接口，无需修改宿主源码。
 
-这是独立社区项目，并非 DeepSeek 或 Jev 官方发布。当前属于早期插件，已针对 **DSH 0.2.1-alpha.2** 验证；接口和模型判断都不构成正确性保证。
+这是独立社区项目，并非 DeepSeek 或 Jev 官方发布。当前属于早期插件，支持有界的 [DSH 版本范围](#网页端安装推荐)；接口和模型判断都不构成正确性保证。
 
 [中文功能介绍站](https://luobosibing2.github.io/dsh-jev-plugin/)逐项说明 DSH 原生触发节点、交给判断服务的信息，以及实际测试场景、结果和边界。
 
@@ -17,6 +17,8 @@
 `main` 支持 Jev，以及通过 OpenRouter 或 OpenAI 使用 Luna Decisions；每个 profile 独立保存三套连接。[2026-10-07 公开报告](docs/testing/2026-10-07-luna-decisions/README.md)区分固定协议及安装、受控真实样例与真实 DeepSeek Flash 任务。官方 OpenAI 在这些有限样例中调用成功；OpenRouter 的唯一真实诊断返回提供方访问限制的 HTTP 403 后停止。这些结果不建立通用判断准确率或稳定任务收益。
 
 [2026-10-09–10 Harness 兼容报告](docs/testing/2026-10-09-harness-compatibility/README.md)记录从 DSH 0.1.7-rc.2 升至 0.2.1-alpha.2 的适配、正式安装与 Web 检查，以及新一轮真实 DeepSeek Flash / Jev 任务。原始插件被新版安装器的版本检查拒绝；本次修改同步依赖并适配受影响的公开 API。报告分别记录真实任务、固定初始遗漏的完成诊断、确定性生命周期测试及本轮未实测的提供方渠道。
+
+[2026-10-11 版本兼容报告](docs/testing/2026-10-11-harness-version-compatibility/README.md)检查当前插件在四个旧发布版本和 0.2.1-alpha.2 上的接入。报告记录正式安装、九个 Host 组件、原生工具和本地确定性判断流程，以及最早版本、0.2.0-rc.2 和 0.2.1-alpha.2 的浏览器检查。这些检查验证所测环境中的版本接入，不评估判断模型质量。
 
 ## 包含哪些功能？
 
@@ -55,7 +57,7 @@
 
 ## 网页端安装（推荐）
 
-已经在使用 **DSH 0.2.1-alpha.2 Web** 的用户，直接填写 GitHub 仓库地址即可，无需克隆源码、手动打包或登录 npm。
+支持的 DSH 发布版本为 **0.1.7-rc.1、0.1.7-rc.2、0.2.0-rc.1、0.2.0-rc.2 和 0.2.1-alpha.2**。安装包声明 `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2`；其他版本，包括 0.2.1-alpha.1，不在声明范围内。直接填写 GitHub 仓库地址即可，无需克隆源码、手动打包或登录 npm。
 
 1. 打开 **侧边栏「插件」→「添加插件」**。
 2. 在 **「包名或地址」** 中粘贴下面的 GitHub 地址，点击 **「安装」**。
@@ -82,7 +84,7 @@ https://github.com/luobosibing2/deepseek-harness-jev
 
 - 推荐 Node.js **24.11 或更高版本**；发布构建使用 Node 24.14.1 检查。
 - `PATH` 中可用的 pnpm **11.7.0**。
-- DeepSeek Harness CLI **0.2.1-alpha.2**。插件固定使用对应 DSH peer 包和 Cordis **4.0.5-alpha.1**，不自动承诺兼容其他 Harness 版本。这是 alpha 版本；请使用下面的精确版本号，npm 的 `latest` 标签可能指向另一版本。
+- 开发基线：DeepSeek Harness CLI 和开发依赖 **0.2.1-alpha.2**，以及 Cordis **4.0.5-alpha.1**。这些精确构建版本与上面的安装兼容范围分开维护；请使用下面的精确版本号，npm 的 `latest` 标签可能指向另一版本。
 - 在 DSH 中配置好主模型，以及所选 Jev 兼容 System One 服务或 Luna API 的凭据。
 
 如尚未安装工具：

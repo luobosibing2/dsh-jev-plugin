@@ -21,6 +21,13 @@ function positive(value, name) {
 function liveRoot(ctx, agent) {
     return agent !== undefined && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent);
 }
+/** Use the native live directory when available; legacy providers receive the Session's original directory or their default. */
+async function skillDirectory(ctx, agent, signal) {
+    if (agent === undefined)
+        return undefined;
+    const directory = ctx.get('workingDirectory');
+    return directory === undefined ? agent.session.header.cwd : directory.ensure(agent, signal);
+}
 function textOf(message) {
     return message.content.filter(block => block.type === 'text').map(block => block.text).join('\n').trim();
 }
@@ -179,7 +186,7 @@ export function apply(ctx, config) {
             render: (_args, value) => [{ type: 'text', text: value.skills.map(skill => '- ' + skill.name + ': ' + skill.description).join('\n') || 'No model-invocable skills are available.' }],
         },
         async execute(_args, exec) {
-            const cwd = exec.agent === undefined ? undefined : await ctx.workingDirectory.ensure(exec.agent, exec.signal);
+            const cwd = await skillDirectory(ctx, exec.agent, exec.signal);
             const snapshot = await ctx.skills.snapshot({ cwd, signal: exec.signal, scope: exec.agent });
             if (!snapshot.complete)
                 throw new Error('Skill catalog is incomplete');
@@ -199,7 +206,7 @@ export function apply(ctx, config) {
         if (ctx.tools.get('skill', agent) === undefined)
             return decision;
         signal.throwIfAborted();
-        const cwd = await ctx.workingDirectory.ensure(agent, signal);
+        const cwd = await skillDirectory(ctx, agent, signal);
         const snapshot = await ctx.skills.snapshot({ cwd, signal, scope: agent });
         if (!snapshot.complete)
             return decision;
@@ -233,7 +240,7 @@ export function apply(ctx, config) {
                     first = false;
                     return initial;
                 }
-                const cwd = await ctx.workingDirectory.ensure(agent, retrySignal);
+                const cwd = await skillDirectory(ctx, agent, retrySignal);
                 const refreshed = await ctx.skills.snapshot({ cwd, signal: retrySignal, scope: agent });
                 if (!refreshed.complete)
                     throw new Error('Skill catalog is incomplete');
@@ -342,6 +349,6 @@ export function apply(ctx, config) {
             ] };
     }, { prepend: true });
 }
-export const inject = ['jev', 'tools', 'skills', 'settings', 'agents', 'workingDirectory'];
+export const inject = ['jev', 'tools', 'skills', 'settings', 'agents'];
 export const name = 'jev-selection';
 //# sourceMappingURL=selection.js.map

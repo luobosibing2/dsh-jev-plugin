@@ -24,7 +24,7 @@ import * as ToolWorkingDirectory from '@deepseek-ai/dsh-tool-working-directory'
 import JevService from '../src/index.ts'
 import * as instructions from '../src/instructions.ts'
 
-interface Wire { state: { sources: { id: string; text: string; origin: string }[]; operation: { name: string; arguments: string } }; questions: Record<string, object> }
+interface Wire { state: { sources: { id: string; text: string; origin: string }[]; operation: { name: string; arguments: string; cwd: string } }; questions: Record<string, object> }
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => { for (const fn of cleanups.splice(0).reverse()) await fn() })
 const user = (text: string) => createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text }] })
@@ -40,7 +40,8 @@ class BindingRuntime extends PtcRuntime {
   }
 }
 
-async function fixture(ptc = false, sessionDirectory = '', nativeFs = false) {
+async function fixture(ptc = false, sessionDirectory = '', nativeFs = false,
+  directory: { service?: boolean; sessionCwd?: boolean } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'jev-instructions-'))
   cleanups.push(() => rm(root, { recursive: true, force: true }))
   await mkdir(join(root, '.git'))
@@ -76,7 +77,7 @@ async function fixture(ptc = false, sessionDirectory = '', nativeFs = false) {
   for (const plugin of [Storage, LlmRuntime, AgentRegistry, SessionStore, SystemPrompt, UserQuestionService]) await ctx.plugin(plugin)
   await ctx.plugin(LocalFileSystem, { cwd: root })
   await ctx.plugin(SessionProjectionRegistry)
-  await ctx.plugin(WorkingDirectory)
+  if (directory.service !== false) await ctx.plugin(WorkingDirectory)
   await ctx.plugin(ToolRuntime, { mode: ptc ? 'ptc' : 'native' })
   if (ptc) await ctx.plugin(BindingRuntime)
   const backend = new JsonStorageBackend(join(root, 'storage'))
@@ -105,15 +106,15 @@ async function fixture(ptc = false, sessionDirectory = '', nativeFs = false) {
     ctx.tools.register(defineTool({ name: 'write', description: 'Fixture file write through the original tools pipeline',
       parameters: { file_path: { type: 'string', required: true }, content: { type: 'string', required: true } },
       output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
-      async execute(args) { writes++; await writeFile(resolve(cwd, args.file_path), args.content); return 'written' },
+      async execute(args, exec) { writes++; await writeFile(resolve(exec.agent?.session.header.cwd ?? process.cwd(), args.file_path), args.content); return 'written' },
     }))
     ctx.tools.register(defineTool({ name: 'read', description: 'Fixture file read through the original tools pipeline',
       parameters: { file_path: { type: 'string', required: true } },
       output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
-      execute: args => readFile(resolve(cwd, args.file_path), 'utf8'),
+      execute: (args, exec) => readFile(resolve(exec.agent?.session.header.cwd ?? process.cwd(), args.file_path), 'utf8'),
     }))
   }
-  const session = ctx.sessions.create(SessionId('instructions-' + root), { meta: { cwd } })
+  const session = ctx.sessions.create(SessionId('instructions-' + root), { meta: directory.sessionCwd === false ? {} : { cwd } })
   session.append('user/message', user('Update this project.'), { surfaceOp: 'append' })
   session.append('turn/start', { turn: 1 })
   const agent = { ctx, id: session.id, session, status: 'running', inbox: { nextStep: [], nextTurn: [] }, options: {},
@@ -152,6 +153,59 @@ async function fixture(ptc = false, sessionDirectory = '', nativeFs = false) {
 }
 
 describe('instruction guidance with original Native/PTC pipeline and localhost Jev', () => {
+  it('reads operation paths and rules from each legacy Session without a directory service', async () => {
+    const f = await fixture(false, '', false, { service: false })
+    await f.rule('Root directory instructions.')
+    const otherCwd = join(f.root, 'other')
+    await mkdir(otherCwd)
+    await f.rule('Other directory instructions.', 'other/TEAM.md')
+    const otherSession = f.ctx.sessions.create(SessionId('legacy-instructions-other-' + f.root), { meta: { cwd: otherCwd } })
+    otherSession.append('user/message', user('Update the other project.'), { surfaceOp: 'append' })
+    otherSession.append('turn/start', { turn: 1 })
+    const other = { ...f.agent, id: otherSession.id, session: otherSession } as Agent
+    f.ctx.agents.enter(other, undefined)
+    expect((await f.invoke()).isError).toBe(false)
+    await f.settled()
+    const second = await f.ctx.agents.withInitiator(other, () => f.ctx.tools.execute({
+      name: 'write', arguments: { file_path: 'product.txt', content: 'other written' }, agent: other,
+      signal: new AbortController().signal, callId: ToolCallId('legacy-other-instructions'),
+    }))
+    expect(second.isError).toBe(false)
+    await f.settled(2)
+    expect(f.requests).toHaveLength(2)
+    expect(f.requests[0]!.state.operation.cwd).toBe(f.root)
+    expect(f.requests[1]!.state.operation.cwd).toBe(otherCwd)
+    expect(f.requests[0]!.state.sources.map(source => source.origin)).not.toContain(join(otherCwd, 'TEAM.md') + ':1')
+    expect(f.requests[1]!.state.sources.map(source => source.origin)).toContain(await realpath(join(otherCwd, 'TEAM.md')) + ':1')
+    expect(await readFile(join(f.root, 'product.txt'), 'utf8')).toBe('written')
+    expect(await readFile(join(otherCwd, 'product.txt'), 'utf8')).toBe('other written')
+  })
+
+  it('uses the process directory for legacy instruction evidence when the Session directory is unset', async () => {
+    const f = await fixture(false, '', false, { service: false, sessionCwd: false })
+    expect((await f.invoke(join(f.root, 'product.txt'))).isError).toBe(false)
+    await f.settled()
+    expect(f.requests).toHaveLength(1)
+    expect(f.requests[0]!.state.operation.cwd).toBe(process.cwd())
+    expect(await readFile(join(f.root, 'product.txt'), 'utf8')).toBe('written')
+  })
+
+  it.each([new Error('Directory read refused'), new DOMException('Directory read cancelled', 'AbortError')])(
+    'retains a directory service error as a failed observation without legacy evidence: %s', async failure => {
+      const f = await fixture()
+      await f.rule('Write only in isolated workspace.')
+      vi.spyOn(f.ctx.workingDirectory, 'get').mockImplementation(() => { throw failure })
+      expect((await f.invoke()).isError).toBe(false)
+      await f.settled()
+      expect(f.requests).toHaveLength(0)
+      const record = await f.ctx.jev.getRecord((await f.ctx.jev.listRecords({})).items[0]!.id)
+      expect(record?.status).toBe('failed')
+      expect(record?.failure?.code).toBe('SERVICE_FAILURE')
+      expect(await f.step()).toHaveLength(0)
+      expect(f.writes()).toBe(1)
+    },
+  )
+
   it('judges the native write in its changed working directory with that directory rules', async () => {
     const f = await fixture(false, '', true)
     await mkdir(join(f.root, 'changed'))

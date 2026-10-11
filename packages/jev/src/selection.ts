@@ -58,6 +58,13 @@ function liveRoot(ctx: Context, agent: Agent | undefined): agent is Agent {
   return agent !== undefined && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent)
 }
 
+/** Use the native live directory when available; legacy providers receive the Session's original directory or their default. */
+async function skillDirectory(ctx: Context, agent: Agent | undefined, signal: AbortSignal): Promise<string | undefined> {
+  if (agent === undefined) return undefined
+  const directory = ctx.get('workingDirectory')
+  return directory === undefined ? agent.session.header.cwd : directory.ensure(agent, signal)
+}
+
 function textOf(message: Message): string {
   return message.content.filter(block => block.type === 'text').map(block => block.text).join('\n').trim()
 }
@@ -218,7 +225,7 @@ export function apply(ctx: Context, config: Config): void {
         '- ' + skill.name + ': ' + skill.description).join('\n') || 'No model-invocable skills are available.' }],
     },
     async execute(_args, exec) {
-      const cwd = exec.agent === undefined ? undefined : await ctx.workingDirectory.ensure(exec.agent, exec.signal)
+      const cwd = await skillDirectory(ctx, exec.agent, exec.signal)
       const snapshot = await ctx.skills.snapshot({ cwd, signal: exec.signal, scope: exec.agent })
       if (!snapshot.complete) throw new Error('Skill catalog is incomplete')
       return { skills: snapshot.skills.filter(isModelInvocable).map(({ name, description }) => ({ name, description })) }
@@ -236,7 +243,7 @@ export function apply(ctx: Context, config: Config): void {
     }
     if (ctx.tools.get('skill', agent) === undefined) return decision
     signal.throwIfAborted()
-    const cwd = await ctx.workingDirectory.ensure(agent, signal)
+    const cwd = await skillDirectory(ctx, agent, signal)
     const snapshot = await ctx.skills.snapshot({ cwd, signal, scope: agent })
     if (!snapshot.complete) return decision
     const skills = snapshot.skills.filter(isModelInvocable)
@@ -265,7 +272,7 @@ export function apply(ctx: Context, config: Config): void {
       featureId: 'skill-selection', agent, signal, link: { sessionId: agent.session.id },
       refresh: async retrySignal => {
         if (first) { first = false; return initial }
-        const cwd = await ctx.workingDirectory.ensure(agent, retrySignal)
+        const cwd = await skillDirectory(ctx, agent, retrySignal)
         const refreshed = await ctx.skills.snapshot({ cwd, signal: retrySignal, scope: agent })
         if (!refreshed.complete) throw new Error('Skill catalog is incomplete')
         current = refreshed.skills.filter(isModelInvocable)
@@ -360,5 +367,5 @@ export function apply(ctx: Context, config: Config): void {
   }, { prepend: true })
 }
 
-export const inject = ['jev', 'tools', 'skills', 'settings', 'agents', 'workingDirectory']
+export const inject = ['jev', 'tools', 'skills', 'settings', 'agents']
 export const name = 'jev-selection'

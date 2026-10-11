@@ -20,6 +20,12 @@ function positive(value, name) {
 function liveRoot(ctx, agent) {
 	return agent !== void 0 && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent);
 }
+/** Use the native live directory when available; legacy providers receive the Session's original directory or their default. */
+async function skillDirectory(ctx, agent, signal) {
+	if (agent === void 0) return void 0;
+	const directory = ctx.get("workingDirectory");
+	return directory === void 0 ? agent.session.header.cwd : directory.ensure(agent, signal);
+}
 function textOf(message) {
 	return message.content.filter((block) => block.type === "text").map((block) => block.text).join("\n").trim();
 }
@@ -224,7 +230,7 @@ function apply(ctx, config) {
 			}]
 		},
 		async execute(_args, exec) {
-			const cwd = exec.agent === void 0 ? void 0 : await ctx.workingDirectory.ensure(exec.agent, exec.signal);
+			const cwd = await skillDirectory(ctx, exec.agent, exec.signal);
 			const snapshot = await ctx.skills.snapshot({
 				cwd,
 				signal: exec.signal,
@@ -248,7 +254,7 @@ function apply(ctx, config) {
 		}
 		if (ctx.tools.get("skill", agent) === void 0) return decision;
 		signal.throwIfAborted();
-		const cwd = await ctx.workingDirectory.ensure(agent, signal);
+		const cwd = await skillDirectory(ctx, agent, signal);
 		const snapshot = await ctx.skills.snapshot({
 			cwd,
 			signal,
@@ -286,7 +292,7 @@ function apply(ctx, config) {
 					first = false;
 					return initial;
 				}
-				const cwd = await ctx.workingDirectory.ensure(agent, retrySignal);
+				const cwd = await skillDirectory(ctx, agent, retrySignal);
 				const refreshed = await ctx.skills.snapshot({
 					cwd,
 					signal: retrySignal,
@@ -429,8 +435,7 @@ const inject = [
 	"tools",
 	"skills",
 	"settings",
-	"agents",
-	"workingDirectory"
+	"agents"
 ];
 const name = "jev-selection";
 //#endregion

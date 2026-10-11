@@ -43,7 +43,9 @@ function root(ctx: Context, agent: Agent | undefined): agent is Agent {
 }
 
 function operation(ctx: Context, exec: ToolExecution, limit: number): { name: string; arguments: string; omitted: boolean; cwd: string; targets: string[] } {
-  const cwd = exec.agent === undefined ? process.cwd() : ctx.workingDirectory.get(exec.agent.session)
+  const directory = ctx.get('workingDirectory')
+  const cwd = exec.agent === undefined ? process.cwd() : directory === undefined
+    ? exec.agent.session.header.cwd ?? process.cwd() : directory.get(exec.agent.session)
   const serialized = JSON.stringify(exec.arguments)
   const targets: string[] = []
   const args: unknown = exec.arguments
@@ -332,5 +334,5 @@ export function apply(ctx: Context, config: Config): void {
   }, { prepend: true })
 }
 
-export const inject = ['jev', 'tools', 'agents', 'workingDirectory']
+export const inject = ['jev', 'tools', 'agents']
 export const name = 'jev-instructions'

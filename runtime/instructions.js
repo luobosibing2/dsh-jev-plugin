@@ -21,7 +21,8 @@ function root(ctx, agent) {
 	return agent !== void 0 && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent);
 }
 function operation(ctx, exec, limit) {
-	const cwd = exec.agent === void 0 ? process.cwd() : ctx.workingDirectory.get(exec.agent.session);
+	const directory = ctx.get("workingDirectory");
+	const cwd = exec.agent === void 0 ? process.cwd() : directory === void 0 ? exec.agent.session.header.cwd ?? process.cwd() : directory.get(exec.agent.session);
 	const serialized = JSON.stringify(exec.arguments);
 	const targets = [];
 	const args = exec.arguments;
@@ -433,8 +434,7 @@ function apply(ctx, config) {
 const inject = [
 	"jev",
 	"tools",
-	"agents",
-	"workingDirectory"
+	"agents"
 ];
 const name = "jev-instructions";
 //#endregion
