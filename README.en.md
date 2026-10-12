@@ -2,6 +2,8 @@
 
 The English guide for the `main` integration, including Jev and both Luna Decisions APIs, is on the repository home page: [Read the English README](README.md).
 
+[Plugin CI](.github/workflows/ci.yml) checks pull requests and pushes to `main` with the frozen lockfile, type check, tests, build, and committed runtime comparison. See [Development](README.md#development) for the commands and runtime update requirements.
+
 The Chinese [principles and all features explainer](https://luobosibing2.github.io/dsh-jev-plugin/explainers/dsh-jev-plugin.html) covers all 12 features with a complete skill-selection input/output example. The [Markdown source](docs/explainers/dsh-jev-plugin.md) is maintained in this repository.
 
 The [2026-10-09–10 Harness compatibility report](docs/testing/2026-10-09-harness-compatibility/README.md) records official DSH 0.2.1-alpha.2 installation, Web smoke checks, and real DeepSeek Flash / Jev experiments, including retained failures and untested channels.

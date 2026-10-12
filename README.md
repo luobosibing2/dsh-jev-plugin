@@ -184,6 +184,10 @@ The project is named `deepseek-harness-jev`; its internal package and import ide
 
 The repository root is the GitHub install entry; `packages/jev` retains development sources. `pnpm run build` also regenerates `runtime/`; commit these generated files when releasing source changes.
 
+[Plugin CI](.github/workflows/ci.yml) runs on pull requests and pushes to `main`, using Node 24 and the pnpm version declared in `packageManager`. It runs `pnpm install --frozen-lockfile`, `pnpm run typecheck`, `pnpm test`, and `pnpm run build`, then rejects changed, deleted, or new files under `runtime/`. Build and commit updated runtime files with source changes before opening a pull request.
+
+The Client CSS build uses paths relative to the package for class-name hashes and sorts class mappings, so the runtime comparison does not depend on the checkout's absolute path or CSS export traversal order.
+
 Maintainers can use the [DeepSWE paired-evaluation runner](bench/deepswe/README.md) for coding tasks and the [glob-ranking pipeline](bench/selection/README.md) for fixed path-selection cases. Both use isolated DSH/Pier trials and keep model execution separate from offline checks and reports. The [Chinese evaluation guide](bench/deepswe/README.zh-CN.md) covers the coding-task workflow.
 
 The [completion and skill evaluation entry](bench/completion_skill/README.md) provides four named scenarios, including `completion-recovery-16`, explicit resource manifests, new-batch preparation, keyless preflight, paid execution, and offline reports. The [new fixed diagnosis](docs/testing/2026-10-05-completion-recovery/README.md) and [historical results](docs/testing/2026-10-02-completion-skill/README.md) remain separate from validation of the maintained runner. A rerun records the runner commit and source hashes; dependencies and credentials remain local prerequisites.

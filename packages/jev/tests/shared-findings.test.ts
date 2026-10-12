@@ -282,7 +282,8 @@ it('records a late recipient only after its current-replacement notice reaches t
   expect(JSON.stringify(notice)).toContain('Queued finding has been superseded')
   expect(receipt.adopted).toBe('unknown')
   await f.send(reporter.agent, f.root, 'Third finding: the environment failed again.\nEvidence: fresh startup failure.')
-  await vi.waitFor(() => expect(f.relations().some(item => item.olderId === second.id && item.deliveries.some(delivery => delivery.recipientId === 'late' && delivery.state === 'queued'))).toBe(true))
+  await f.root.whenIdle()
+  expect(f.relations().some(item => item.olderId === second.id && item.deliveries.some(delivery => delivery.recipientId === 'late' && delivery.state === 'queued'))).toBe(true)
 })
 
 it('states factual-only relation rules and retains a reported restatement as support without another correction', async () => {

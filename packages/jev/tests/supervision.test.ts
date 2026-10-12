@@ -229,8 +229,17 @@ describe('supervision through real AgentLoop, goal driver, tools and HTTP Jev', 
       const goal = h.ctx.goals.get(h.agent)!
       return call('complete', 'update_goal', { action: 'complete', goal_id: goal.id, revision: goal.revision })
     }, text('Still pending')], [answer('omission'), answer('needs-user')], { 'goal-supervision': true })
-    h.ctx.goals.create(h.agent, { objective: 'Test changes', maxGoalRounds: 8 })
-    await vi.waitFor(() => expect(h.ctx.goals.get(h.agent)?.phase).toBe('paused'))
+    let resolvePaused!: () => void
+    const paused = new Promise<void>(resolve => { resolvePaused = resolve })
+    const unsubscribe = h.ctx.on('goal/changed', ({ agent, change }) => {
+      if (agent === h.agent && change.goal?.phase === 'paused') resolvePaused()
+    })
+    cleanups.push(async () => { unsubscribe() })
+    try {
+      h.ctx.goals.create(h.agent, { objective: 'Test changes', maxGoalRounds: 8 })
+      await paused
+    } finally { unsubscribe() }
+    expect(h.ctx.goals.get(h.agent)?.phase).toBe('paused')
     const goal = h.ctx.goals.get(h.agent)!
     expect(visible(h.agent)).toContain('Jev:')
     h.ctx.goals.complete(h.agent, { id: goal.id, revision: goal.revision })

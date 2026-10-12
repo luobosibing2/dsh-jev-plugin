@@ -184,6 +184,10 @@ dsh --profile jev
 
 仓库根目录是 GitHub 安装入口，`packages/jev` 保留开发源码；`pnpm run build` 会同步生成 `runtime/`，发布源码改动时应一并提交这些生成文件。
 
+[插件 CI](.github/workflows/ci.yml) 在拉取请求和推送到 `main` 时运行，使用 Node 24 和 `packageManager` 声明的 pnpm 版本。它依次运行 `pnpm install --frozen-lockfile`、`pnpm run typecheck`、`pnpm test` 和 `pnpm run build`，随后检查 `runtime/`，其中有修改、删除或新增文件时检查失败。提交拉取请求前，请构建并将更新后的 runtime 文件与源码改动一并提交。
+
+Client CSS 构建用包内相对路径计算类名哈希，并对类名映射排序，使 runtime 比较不依赖 checkout 的绝对路径或 CSS 导出字段的遍历顺序。
+
 维护者可用 [DeepSWE 配对评测入口](bench/deepswe/README.zh-CN.md)评测编码任务，用 [glob 排序管线](bench/selection/README.zh-CN.md)验证固定路径选择案例。两者采用隔离的 DSH/Pier trial，将模型执行与离线检查、报告分开。[英文评测指南](bench/deepswe/README.md)提供编码任务工作流。
 
 [完成核查与技能评测入口](bench/completion_skill/README.zh-CN.md)提供四个具名场景，包括`completion-recovery-16`，以及显式资源清单、新批次准备、无费预检、收费执行和离线报告。[新固定诊断](docs/testing/2026-10-05-completion-recovery/README.md)与[历史结果](docs/testing/2026-10-02-completion-skill/README.md)均和维护入口的验证分开。每次重跑记录脚本提交和源码哈希，依赖及凭据仍需在运行机器上可用。
