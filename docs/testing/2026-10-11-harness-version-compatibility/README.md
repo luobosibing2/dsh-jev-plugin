@@ -66,7 +66,7 @@ The local adapter and HTTP replies are fixed inputs. The matrix checks native ex
 
 ## 复核与重跑
 
-入口为 [compatibility-matrix.mjs](../../../scripts/validation/compatibility-matrix.mjs)，测试 profile 为 [compatibility-profile.mjs](../../../packages/jev/tests/fixtures/compatibility-profile.mjs)。准备五个明确版本的已发布 CLI，并将每个 `@deepseek-ai/dsh/lib/index.js` 的绝对路径写入 JSON，以精确版本号作为键。安装包可由根目录 `npm pack --ignore-scripts` 或 workspace 的 `pnpm pack` 生成。
+自动准备正式包和 CLI 的入口见[兼容性 smoke 指南](../compatibility-smoke/README.md)。手动复核本矩阵时，入口为 [compatibility-matrix.mjs](../../../scripts/validation/compatibility-matrix.mjs)，测试 profile 为 [compatibility-profile.mjs](../../../packages/jev/tests/fixtures/compatibility-profile.mjs)。准备五个明确版本的已发布 CLI，并按各版本 `@deepseek-ai/dsh/package.json` 的 `bin.dsh` 获取入口绝对路径，写入以精确版本号为键的 JSON。安装包可由根目录 `npm pack --ignore-scripts` 或 workspace 的 `pnpm pack` 生成。
 
 ```sh
 pnpm install --frozen-lockfile

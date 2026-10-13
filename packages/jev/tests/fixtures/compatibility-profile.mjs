@@ -1,7 +1,7 @@
 /** Run keyless compatibility cases through one installed official Web profile. */
 import assert from 'node:assert/strict'
 import { writeFile, readFile, rename } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, relative } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import LlmRuntime, { LlmAdapter, createUserMessage } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
@@ -63,17 +63,37 @@ export function apply(ctx) {
       }
       if (!script) throw new Error('No deterministic script for ' + id)
       await Promise.all([...runningJudgments])
-      const action = script.actions.shift()
+      let newSettlements = []
+      if (script.sharedReports) {
+        for (const message of request.messages.filter(message => message.role === 'tool' && script.delegationCallIds.has(message.source.callId))) {
+          const text = message.content.filter(block => block.type === 'text').map(block => block.text).join('')
+          const childId = /^started subagent ([^\s]+)$/.exec(text)?.[1]
+          if (childId) script.delegatedChildIds.add(childId)
+        }
+        assert(script.delegatedChildIds.size <= 2, 'Shared-report fixture may delegate at most two children')
+        for (const message of request.messages.filter(message => message.source.kind === 'subagent-settled')) {
+          const childId = message.source.senderSessionId
+          assert(script.delegatedChildIds.has(childId), 'Settled notice must identify a child delegated by this fixture')
+          if (!script.settledChildIds.has(childId)) {
+            script.settledChildIds.add(childId)
+            newSettlements.push(childId)
+          }
+        }
+      }
+      // Native child completion can admit one more root turn after its final reply.
+      const action = script.actions.shift() ?? (script.sharedReports && newSettlements.length > 0 ? {} : undefined)
       if (!action) throw new Error('Deterministic script exhausted for ' + id)
       results.modelRequests.push({ sessionId: id, action: action.name ?? 'final', messages: request.messages })
       if (script.correct && !script.corrected && results.modelRequests.filter(item => item.sessionId === id).length === 2) {
         script.corrected = true
         agents.get(id).steer(user('Correction: continue only the current isolated compatibility fixture plan.'))
       }
-      if (action.name === '$delegate') {
+      const delegated = action.name === '$delegate'
+      if (delegated) {
         const tool = request.tools.find(tool => tool.description.includes('self-contained task') && tool.parameters.properties?.prompt)
         assert(tool, 'Standard preset must expose native self-contained delegation')
         action.name = tool.name
+        if (!Object.hasOwn(tool.parameters.properties, 'run_in_background')) delete action.arguments.run_in_background
       }
       if (action.name === 'update_goal') {
         const goal = ctx.goals.get(agents.get(id))
@@ -81,6 +101,7 @@ export function apply(ctx) {
         action.arguments = { goal_id: goal.id, revision: goal.revision, action: 'complete' }
       }
       const block = action.name ? { type: 'tool-call', id: 'compat-' + randomUUID(), name: action.name, arguments: JSON.stringify(action.arguments) } : { type: 'text', text: script.child ? 'COMPAT_SHARED_FINDING: the isolated project marker exists.' : 'Deterministic fixture completed with recorded native results.' }
+      if (delegated && script.sharedReports) script.delegationCallIds.add(block.id)
       yield { type: 'block-start', index: 0, blockType: block.type }
       yield { type: 'block-end', index: 0, block }
       yield { type: 'usage', usage: { inputTokens: 7, outputTokens: 7 } }
@@ -91,11 +112,22 @@ export function apply(ctx) {
   const rows = () => [...ctx.loader.entries()].filter(entry => entry.options.name?.startsWith('@dsh-jev/plugin')).map(entry => ({ id: entry.id, name: entry.options.name, state: entry.fiber?.state }))
   async function runCase(label, cwd, actions, correct = false) {
     const id = SessionId('compat-' + label + '-' + randomUUID())
-    scripts.set(id, { actions: [...actions, {}], correct })
+    const script = { actions: [...actions, {}], correct, sharedReports: label === 'shared-reports',
+      delegationCallIds: new Set(), delegatedChildIds: new Set(), settledChildIds: new Set() }
+    scripts.set(id, script)
     const { agent } = await ctx.agents.create({ sessionId: id, agentOptions: { provider: 'jev-compatibility-fixture', model: 'fixture' }, meta: { cwd, agentPreset: 'standard' }, setup: async agentCtx => { await ctx.agentPresets.mount(agentCtx, 'standard') } })
     agents.set(id, agent)
-    agent.followup(user('Use native tools to read this isolated project, load its own skill, run its fixture scripts, and follow its AGENTS.md. I authorize the single fixture write at ' + join(root, 'approval-outside.txt') + ' with danger-full-access for that operation only.'))
+    // An absolute artifact path containing "ok" protects every TAP passing line.
+    const approvedFixturePath = relative(cwd, join(root, 'approval-outside.txt'))
+    agent.followup(user('Use native tools to read this isolated project, load its own skill, run its fixture scripts, and follow its AGENTS.md. I authorize the single fixture write at ' + approvedFixturePath + ' with danger-full-access for that operation only.'))
     await agent.whenIdle()
+    if (script.sharedReports && script.delegatedChildIds.size > 0) {
+      await until(() => agent.session.deriveMessages(), messages => {
+        const settled = new Set(messages.filter(message => message.source.kind === 'subagent-settled').map(message => message.source.senderSessionId))
+        return script.delegatedChildIds.size === 2 && [...script.delegatedChildIds].every(childId => settled.has(childId))
+      }, 'both delegated native child reports')
+      await agent.whenIdle()
+    }
     await Promise.all([...runningJudgments])
     const summaries = (await ctx.jev.listRecords({ sessionId: id, limit: 100 })).items
     const records = await Promise.all(summaries.map(record => ctx.jev.getRecord(record.id)))

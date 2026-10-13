@@ -30,3 +30,7 @@ jobs:
             echo '::error::runtime/ differs from the committed build. Run pnpm run build and commit runtime/.'
             exit 1
           fi
+      - name: Install smoke browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Verify formal package compatibility
+        run: pnpm run test:compatibility

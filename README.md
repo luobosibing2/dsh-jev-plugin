@@ -188,6 +188,8 @@ The repository root is the GitHub install entry; `packages/jev` retains developm
 
 The Client CSS build uses paths relative to the package for class-name hashes and sorts class mappings, so the runtime comparison does not depend on the checkout's absolute path or CSS export traversal order.
 
+Run `pnpm run test:compatibility` to build and pack the official GitHub-install entry, prepare the exact development DSH version, and check installation, Host components and the Jev Web page in a disposable profile. The [compatibility smoke guide](docs/testing/compatibility-smoke/README.md) covers Chromium setup, explicit version selection and supported-version updates. The check uses local deterministic model replies and needs no real model credentials.
+
 Maintainers can use the [DeepSWE paired-evaluation runner](bench/deepswe/README.md) for coding tasks and the [glob-ranking pipeline](bench/selection/README.md) for fixed path-selection cases. Both use isolated DSH/Pier trials and keep model execution separate from offline checks and reports. The [Chinese evaluation guide](bench/deepswe/README.zh-CN.md) covers the coding-task workflow.
 
 The [completion and skill evaluation entry](bench/completion_skill/README.md) provides four named scenarios, including `completion-recovery-16`, explicit resource manifests, new-batch preparation, keyless preflight, paid execution, and offline reports. The [new fixed diagnosis](docs/testing/2026-10-05-completion-recovery/README.md) and [historical results](docs/testing/2026-10-02-completion-skill/README.md) remain separate from validation of the maintained runner. A rerun records the runner commit and source hashes; dependencies and credentials remain local prerequisites.
