@@ -152,6 +152,7 @@ export function apply(ctx) {
     results.diagnostic = await ctx.jev.testConnection(ctx.jev.judgmentConnectionIdentity(), new AbortController().signal)
     assert(results.diagnostic.ok, 'Choice, Score and Noul diagnostic must pass')
     const simple = marker => [
+      { name: 'todo_write', arguments: { todos: [{ content: 'Project ' + marker.toUpperCase() + ': report native reads, loaded skill and observed fixture results; unverified work remains pending.', status: 'pending' }] } },
       { name: 'glob', arguments: { pattern: '*.txt' } },
       { name: 'skill', arguments: { name: 'compat-' + marker } },
       { name: 'read', arguments: { file_path: 'guide.txt' } },
@@ -191,6 +192,21 @@ export function apply(ctx) {
       assert(item.records.some(record => record.featureId === 'skill-selection' && record.status === 'succeeded'), label + ' skill judgment must complete')
       assert(item.records.some(record => record.featureId === 'file-ranking' && record.status === 'succeeded'), label + ' file judgment must complete')
       assert(item.records.some(record => record.featureId === 'instruction-guidance' && record.status === 'succeeded'), label + ' instruction judgment must complete')
+      const completion = item.records.find(record => record.featureId === 'completion-check' && record.status === 'succeeded')
+      assert(completion, label + ' native Todo must trigger a successful completion judgment')
+      const request = completion.attemptRecords.find(attempt => attempt.status === 'succeeded').request
+      assert.deepEqual(request.questions.map(question => question.id), ['assessment', 'focus'], label + ' completion must use two bounded questions')
+      assert(request.questions.every(question => question.kind === 'choice'), label + ' completion questions must both be Choice')
+      assert.deepEqual(request.questions[0].options.map(option => option.id), ['complete', 'omission', 'contradiction', 'needs-user', 'unknown'])
+      const state = request.state
+      const original = item.messages.find(message => message.role === 'user' && message.source.kind === 'user')
+      assert.equal(state.originalRequirementsAvailable, true, label + ' completion must retain original current-turn requirements')
+      assert.deepEqual(state.requirements[0], { id: original.id, content: original.content }, label + ' completion must use the actual original request')
+      assert.deepEqual(state.todos, [{ content: 'Project ' + (label.endsWith('a') ? 'A' : 'B') + ': report native reads, loaded skill and observed fixture results; unverified work remains pending.', status: 'pending' }], label + ' completion must retain the complete latest native Todo')
+      assert.equal(state.finalAnswer, 'Deterministic fixture completed with recorded native results.', label + ' completion must use the latest final answer')
+      assert.equal(state.supplementsUsed, 0, label + ' the first judgment must not consume a supplement')
+      assert(!Object.hasOwn(state, 'messages') && !Object.hasOwn(state, 'goal'), label + ' ordinary completion must exclude tool history and Goal input')
+      assert(completion.receipts.some(receipt => receipt.id === 'completion-checked' && receipt.status === 'observed'), label + ' completion adoption must be recorded')
       const visible = JSON.stringify(item.messages)
       assert(visible.includes('GUIDE_' + (label.endsWith('a') ? 'A' : 'B')), label + ' native reads must use its directory')
       assert(visible.includes('jev-instruction-guidance'), label + ' must adopt an instruction reminder')
