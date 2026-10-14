@@ -759,8 +759,10 @@ html[data-theme="shadcn"] .am-kv { border-color: var(--line); border-radius: var
 </section>
 <section class="am-panel" id="panel-C">
 <header class="am-panel-head"><span class="am-panel-id">C</span><h2>监督：有没有跑偏，记录是否支持完成</h2></header>
-<div class="am-panel-body"><div class="am-md"><p>这三项共用已记录的可见证据。材料包含用户请求、助手正文、工具调用与结果，以及适用的原生 goal。监督排除 reasoning，不追加文件读取或验证命令。</p>
-<p>每次判断都问两道 Choice：一道选结论，一道选支持结论的既有证据 ID。程序引用原始要求或记录来反馈。</p>
+<div class="am-panel-body"><div class="am-md"><p>普通完成核查使用当前 turn 的轻量报告材料。既有真实实验属于此前语义，不能证明这套核查的真实任务效果。</p>
+<p><a href="jev-completion-flow.html">完成核查流程导读</a>展示触发、判断与补充循环。<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/main/docs/explainers/jev-completion-flow.md">Markdown 源稿</a>随实现维护。</p>
+<p>跑偏与原生 Goal 仍使用已有可见记录，包含工具结果。普通完成核查改为读取本 turn 的要求、Todo 与最终回答。三项都排除 reasoning，不追加文件读取或验证命令。</p>
+<p>每次判断仍问两道 Choice：选择结论与已有材料引用。普通完成核查使用 <code>assessment</code> 和 <code>focus</code>。程序引用所选原文反馈，不让判断模型自由编写引用。</p>
 <h3>03 跑偏提醒 · drift-monitoring</h3>
 <div class="am-table-wrap"><table>
 <thead>
@@ -802,29 +804,43 @@ html[data-theme="shadcn"] .am-kv { border-color: var(--line); border-radius: var
 </thead>
 <tbody><tr>
 <td>触发</td>
-<td>最终回答已展示，进入 <code>agent/turn-stopping</code></td>
+<td>功能已启用，本 turn 用过 Todo，最终回答已展示并正常停止</td>
 </tr>
 <tr>
 <td>上下文</td>
-<td>从原始请求到本次回答的记录，含工具结果和最终事实声称</td>
+<td>本 turn 原始要求及后续调整、完整最新 Todo、最新最终回答</td>
 </tr>
 <tr>
-<td>结论选项</td>
-<td><code>complete / omission / needs-user / unknown</code>，另选证据 ID</td>
+<td>排除材料</td>
+<td>原始工具结果、完整执行轨迹、reasoning 与跨 turn 要求</td>
 </tr>
 <tr>
-<td>采用</td>
-<td>complete 正常结束；首次 omission 最多排入一次原生 steer 补做</td>
+<td>assessment</td>
+<td><code>complete / omission / contradiction / needs-user / unknown</code></td>
+</tr>
+<tr>
+<td>focus</td>
+<td>用户要求、Todo 条目或最终回答引用；complete 可选 none</td>
+</tr>
+<tr>
+<td>自动补充</td>
+<td>omission、contradiction、unknown 共用额度，默认最多 3 次</td>
 </tr>
 <tr>
 <td>停止条件</td>
-<td>再次遗漏或需要用户决定时，只记录说明，不再自动补做</td>
+<td>complete、needs-user，或额度耗尽后显示最后结论</td>
 </tr>
 </tbody></table></div>
-<p><strong>示例：</strong> 最终回答声称“测试通过”，工具结果却记录失败。这个矛盾可算 omission。补做可以纠正报告，或完成已授权的遗漏工作。</p>
+<p>本 turn 没用 Todo 就跳过，前一 turn 的清单不算。Todo 有未完成项，或本轮后来清空清单，仍可以核查。执行中的 Todo 写入不会触发核查。</p>
+<p>启用后，主模型收到简短的 Todo 更新提示。它应在已有 content 中写实际动作、路径、命令与观察结果。提示不新增字段，也不要求简单任务创建清单。</p>
+<p><strong>示例：</strong> Todo 写“测试未验证”，最终回答却说“测试通过”。Jev 可选择 contradiction，让主模型核对并更正报告。它没有核对原始工具结果，也不能据此宣称代码有缺陷。</p>
+<p>complete 表示所给报告显示要求已满足。omission 表示要求未交代、未完成或规定条件未满足。unknown 表示材料不足，可要求补充真实依据。needs-user 只用于尚未解决的用户选择或授权。每次只处理最关键问题，不保证穷举全部问题。</p>
+<p>测试要求由用户决定。“运行并如实报告测试”允许报告失败。“修复并通过指定测试”在仍失败时属于未满足条件。</p>
 </div>
-<figure class="am-diagram am-flow"><svg viewBox="0 0 687 205" width="687" height="205" role="img" aria-label="流程图：最终回答已展示、核对记录、结论、正常结束、最多一次补做、停止自动补做" xmlns="http://www.w3.org/2000/svg"><defs><marker id="am3-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g></g><g><g data-step="0"><path class="am-edge" d="M133,102.5 L144.5,102.5 Q156,102.5 167.5,102.5 L179,102.5" marker-end="url(#am3-arrow)"/></g><g data-step="1"><path class="am-edge" d="M259,102.5 L270.5,102.5 Q282,102.5 293.5,102.5 L305,102.5" marker-end="url(#am3-arrow)"/></g><g data-step="2"><path class="am-edge" d="M368.2,114.8 L422.2,144.2 Q476.3,173.5 527.9,173.5 L579.6,173.5" marker-end="url(#am3-arrow)"/><g class="am-edge-label"><rect x="446.6" y="164.5" width="59.5" height="18" rx="3"/><text x="476.3" y="173.5" text-anchor="middle" dominant-baseline="central">complete</text></g></g><g data-step="3"><path class="am-edge" d="M386,102.5 L431.1,102.5 Q476.3,102.5 521.4,102.5 L566.6,102.5" marker-end="url(#am3-arrow)"/><g class="am-edge-label"><rect x="433.3" y="93.5" width="85.9" height="18" rx="3"/><text x="476.3" y="102.5" text-anchor="middle" dominant-baseline="central">首次 omission</text></g></g><g data-step="4"><path class="am-edge" d="M368.2,90.2 L422.2,60.8 Q476.3,31.5 521.4,31.5 L566.6,31.5" marker-end="url(#am3-arrow)"/><g class="am-edge-label"><rect x="410" y="22.5" width="132.6" height="18" rx="3"/><text x="476.3" y="31.5" text-anchor="middle" dominant-baseline="central">再次遗漏或 needs-user</text></g></g></g><g><g class="am-node am-node--rect" data-key="最终回答已展示" data-step="0"><rect class="am-node-shape" x="14" y="85" width="119" height="35" rx="3"/><text x="73.5" y="102.5" text-anchor="middle" dominant-baseline="central">最终回答已展示</text></g><g class="am-node am-node--rect" data-key="核对记录" data-step="0"><rect class="am-node-shape" x="179" y="85" width="80" height="35" rx="3"/><text x="219" y="102.5" text-anchor="middle" dominant-baseline="central">核对记录</text></g><g class="am-node am-node--diamond" data-key="结论" data-step="1"><polygon class="am-node-shape" points="345.5,74.5 386,102.5 345.5,130.5 305,102.5"/><text x="345.5" y="102.5" text-anchor="middle" dominant-baseline="central">结论</text></g><g class="am-node am-node--rect" data-key="正常结束" data-step="2"><rect class="am-node-shape" x="579.6" y="156" width="80" height="35" rx="3"/><text x="619.6" y="173.5" text-anchor="middle" dominant-baseline="central">正常结束</text></g><g class="am-node am-node--rect" data-key="最多一次补做" data-step="3"><rect class="am-node-shape" x="566.6" y="85" width="106" height="35" rx="3"/><text x="619.6" y="102.5" text-anchor="middle" dominant-baseline="central">最多一次补做</text></g><g class="am-node am-node--rect" data-key="停止自动补做" data-step="4"><rect class="am-node-shape" x="566.6" y="14" width="106" height="35" rx="3"/><text x="619.6" y="31.5" text-anchor="middle" dominant-baseline="central">停止自动补做</text></g></g></svg></figure>
-<div class="am-md"><p>补做预约先持久保存，再排入消息，重启后不会因此重复补做。核查不能撤回已展示回答，也不独立重跑测试。原始任务只授权审查时，补做只能在该授权范围内行动。</p>
+<figure class="am-diagram am-flow"><svg viewBox="0 0 717 282" width="717" height="282" role="img" aria-label="流程图：最终回答已展示、完整当前材料、结论、正常结束、用户决定、同 turn 补充、显示最后问题" xmlns="http://www.w3.org/2000/svg"><defs><marker id="am3-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g></g><g><g data-step="0"><path class="am-edge" d="M133,108.5 L144.5,108.5 Q156,108.5 167.5,108.5 L179,108.5" marker-end="url(#am3-arrow)"/></g><g data-step="1"><path class="am-edge" d="M269.5,126 L288.7,135 Q308,144 325.1,144 L342.3,144" marker-end="url(#am3-arrow)"/></g><g data-step="2"><path class="am-edge" d="M401.5,159.1 L458.4,204.8 Q515.3,250.5 562.2,250.5 L609,250.5" marker-end="url(#am3-arrow)"/><g class="am-edge-label"><rect x="485.6" y="241.5" width="59.5" height="18" rx="3"/><text x="515.3" y="250.5" text-anchor="middle" dominant-baseline="central">complete</text></g></g><g data-step="3"><path class="am-edge" d="M412,151.8 L463.6,165.7 Q515.3,179.5 562.2,179.5 L609,179.5" marker-end="url(#am3-arrow)"/><g class="am-edge-label"><rect x="479.5" y="170.5" width="71.6" height="18" rx="3"/><text x="515.3" y="179.5" text-anchor="middle" dominant-baseline="central">needs-user</text></g></g><g data-step="4"><path class="am-edge" d="M403.2,130.1 L459.2,92.1 Q515.3,54 557.7,48.8 L600.2,43.5" marker-end="url(#am3-arrow)"/><g class="am-edge-label"><rect x="464.3" y="45" width="102" height="18" rx="3"/><text x="515.3" y="54" text-anchor="middle" dominant-baseline="central">其余三类且有额度</text></g></g><g data-step="5"><path class="am-edge" d="M412,136.2 L463.6,122.3 Q515.3,108.5 555.7,108.5 L596,108.5" marker-end="url(#am3-arrow)"/><g class="am-edge-label"><rect x="458.5" y="99.5" width="113.5" height="18" rx="3"/><text x="515.3" y="108.5" text-anchor="middle" dominant-baseline="central">其余三类且额度耗尽</text></g></g><g data-step="6"><path class="am-edge" d="M600.2,32.2 L557.7,27.6 Q515.3,23 449,23 Q382.8,23 345.4,23 Q308,23 277.8,57 L247.6,91" marker-end="url(#am3-arrow)"/><g class="am-edge-label"><rect x="332" y="14" width="101.5" height="18" rx="3"/><text x="382.8" y="23" text-anchor="middle" dominant-baseline="central">更新 Todo 与回答</text></g></g></g><g><g class="am-node am-node--rect" data-key="最终回答已展示" data-step="0"><rect class="am-node-shape" x="14" y="91" width="119" height="35" rx="3"/><text x="73.5" y="108.5" text-anchor="middle" dominant-baseline="central">最终回答已展示</text></g><g class="am-node am-node--rect" data-key="完整当前材料" data-step="0"><rect class="am-node-shape" x="179" y="91" width="106" height="35" rx="3"/><text x="232" y="108.5" text-anchor="middle" dominant-baseline="central">完整当前材料</text></g><g class="am-node am-node--diamond" data-key="结论" data-step="1"><polygon class="am-node-shape" points="382.8,116 423.3,144 382.8,172 342.3,144"/><text x="382.8" y="144" text-anchor="middle" dominant-baseline="central">结论</text></g><g class="am-node am-node--rect" data-key="正常结束" data-step="2"><rect class="am-node-shape" x="609" y="233" width="80" height="35" rx="3"/><text x="649" y="250.5" text-anchor="middle" dominant-baseline="central">正常结束</text></g><g class="am-node am-node--rect" data-key="用户决定" data-step="3"><rect class="am-node-shape" x="609" y="162" width="80" height="35" rx="3"/><text x="649" y="179.5" text-anchor="middle" dominant-baseline="central">用户决定</text></g><g class="am-node am-node--rect" data-key="同 turn 补充" data-step="4"><rect class="am-node-shape" x="600.2" y="20" width="97.7" height="35" rx="3"/><text x="649" y="37.5" text-anchor="middle" dominant-baseline="central">同 turn 补充</text></g><g class="am-node am-node--rect" data-key="显示最后问题" data-step="5"><rect class="am-node-shape" x="596" y="91" width="106" height="35" rx="3"/><text x="649" y="108.5" text-anchor="middle" dominant-baseline="central">显示最后问题</text></g></g></svg></figure>
+<div class="am-md"><p>“最多自动补充轮数”按 profile 保存，默认 3，接受正安全整数。非法输入保留已保存值，保存参数不自动开启功能。初次核查另算，默认最多 3 次补充、4 次正常核查。设置为 N 就允许最多 N 次补充、N+1 次正常核查。此计数独立于 Goal 的连续无进展轮数。</p>
+<p>补充仍在同一 turn，保留原始要求并读取最新 Todo 与回答。新 turn 只说“继续”时，不自动补入前一 turn 的要求。插件自己的补充消息也不是用户新增授权。</p>
+<p>补充预约与次数持久保存，重复处理不会恢复已用额度。核查保留已展示回答，不独立重跑测试或核实产物。原始任务只授权审查时，补充仍须遵守该授权。</p>
 <h3>05 持续目标监督 · goal-supervision</h3>
 <div class="am-table-wrap"><table>
 <thead>
@@ -841,16 +857,18 @@ html[data-theme="shadcn"] .am-kv { border-color: var(--line); border-radius: var
 </tr>
 <tr>
 <td><code>update_goal</code> 申请完成</td>
-<td>当前目标范围的完成证据；与完成核查相同的结论</td>
+<td>当前目标范围的完成证据；<code>complete / omission / needs-user / unknown</code></td>
 <td>complete 保留原许可；omission 拒绝本次完成申请；needs-user 还会暂停目标</td>
 </tr>
 </tbody></table></div>
 <p><strong>示例：</strong> 多轮操作没有带来新证据时，插件可以暂停目标。有效调查或排除假设也可算 progress。用户恢复目标后，停滞计数重新开始。</p>
 <p>插件使用 DSH 原生目标轮次驱动。原生目标服务仍负责状态修改和轮次上限。人工直接完成目标也由原服务处理。</p>
-<h3>证据预算为何会改变采用结果</h3>
-<p>默认预算是 <strong>24,000 字符</strong>。程序按完整消息选取证据，并记录遗漏范围。如果范围内的必要证据被预算裁掉，<code>completeEvidence=false</code>，判断不能作为可用结论采用。高概率也不能补回缺失证据。</p>
-<p>完成核查和目标监督使用交互 <code>judge</code>。unknown、证据不全或技术失败进入人工 Retry / Cancel。新请求、目标修改或取消会使旧答案失效。</p>
-<p>来源：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L88">证据与两道题</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L272">跑偏触发</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L299">完成与目标轮监督</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L343">目标完成申请</a>。</p>
+<p>Goal 不套用普通完成核查的 Todo 条件、五类结论或补充额度。原生 Goal turn 不会启动另一套普通完成补充循环。</p>
+<h3>两类材料如何使用同一字符预算</h3>
+<p>默认预算仍是 <strong>24,000 字符</strong>，上限 1,000,000。普通完成核查发送前检查完整材料，不裁剪、不自动摘要。超预算就不发送判断或补充请求。提示为“核查材料超出预算，本次完成核查未完成”。用户可调高预算后选择 Retry / Cancel。</p>
+<p>原始要求缺失、接口或答案错误也会提示核查未完成。主模型回答保留，等待用户重试或取消。重试读取当前材料和已保存配置；取消不将任务判为成功或失败。技术重试不计入 N+1 次正常核查，也不消耗或重置补充额度。有效 unknown 是业务结论，不进入技术重试。</p>
+<p>跑偏与 Goal 仍按完整消息选取已有证据，并记录遗漏范围。必要证据被预算裁掉时，<code>completeEvidence=false</code>，不能采用结论。Goal 的 unknown、证据不全或技术失败仍进入人工 Retry / Cancel。新要求、目标修改或取消会使旧判断失效。</p>
+<p>跑偏与 Goal 的既有实现来源：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L88">证据与两道题</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L272">跑偏触发</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L299">目标轮监督</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L343">目标完成申请</a>。</p>
 </div></div>
 </section>
 <section class="am-panel" id="panel-D">
@@ -1220,7 +1238,7 @@ html[data-theme="shadcn"] .am-kv { border-color: var(--line); border-radius: var
 </div>
 </div>
 </main>
-<footer class="am-colophon">Generated by Answer me with HTML 0.4.9 · 2026-10-10 00:49</footer>
+<footer class="am-colophon">Generated by Answer me with HTML 0.4.9 · 2026-10-15 00:02</footer>
 <textarea id="am-source" hidden readonly aria-hidden="true">---
 template: doc
 theme: blueprint
@@ -1461,9 +1479,13 @@ Jev 返回 6 个概率 -&gt; 插件排序并取前 5 个
 来源：[glob 判断与结构化排序](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L294)。
 ## 监督：有没有跑偏，记录是否支持完成
 
-这三项共用已记录的可见证据。材料包含用户请求、助手正文、工具调用与结果，以及适用的原生 goal。监督排除 reasoning，不追加文件读取或验证命令。
+普通完成核查使用当前 turn 的轻量报告材料。既有真实实验属于此前语义，不能证明这套核查的真实任务效果。
 
-每次判断都问两道 Choice：一道选结论，一道选支持结论的既有证据 ID。程序引用原始要求或记录来反馈。
+[完成核查流程导读](jev-completion-flow.html)展示触发、判断与补充循环。[Markdown 源稿](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/docs/explainers/jev-completion-flow.md)随实现维护。
+
+跑偏与原生 Goal 仍使用已有可见记录，包含工具结果。普通完成核查改为读取本 turn 的要求、Todo 与最终回答。三项都排除 reasoning，不追加文件读取或验证命令。
+
+每次判断仍问两道 Choice：选择结论与已有材料引用。普通完成核查使用 `assessment` 和 `focus`。程序引用所选原文反馈，不让判断模型自由编写引用。
 
 ### 03 跑偏提醒 · drift-monitoring
 
@@ -1483,42 +1505,62 @@ Jev 返回 6 个概率 -&gt; 插件排序并取前 5 个
 
 | 环节 | 实际内容 |
 | --- | --- |
-| 触发 | 最终回答已展示，进入 `agent/turn-stopping` |
-| 上下文 | 从原始请求到本次回答的记录，含工具结果和最终事实声称 |
-| 结论选项 | `complete / omission / needs-user / unknown`，另选证据 ID |
-| 采用 | complete 正常结束；首次 omission 最多排入一次原生 steer 补做 |
-| 停止条件 | 再次遗漏或需要用户决定时，只记录说明，不再自动补做 |
+| 触发 | 功能已启用，本 turn 用过 Todo，最终回答已展示并正常停止 |
+| 上下文 | 本 turn 原始要求及后续调整、完整最新 Todo、最新最终回答 |
+| 排除材料 | 原始工具结果、完整执行轨迹、reasoning 与跨 turn 要求 |
+| assessment | `complete / omission / contradiction / needs-user / unknown` |
+| focus | 用户要求、Todo 条目或最终回答引用；complete 可选 none |
+| 自动补充 | omission、contradiction、unknown 共用额度，默认最多 3 次 |
+| 停止条件 | complete、needs-user，或额度耗尽后显示最后结论 |
 
-**示例：** 最终回答声称“测试通过”，工具结果却记录失败。这个矛盾可算 omission。补做可以纠正报告，或完成已授权的遗漏工作。
+本 turn 没用 Todo 就跳过，前一 turn 的清单不算。Todo 有未完成项，或本轮后来清空清单，仍可以核查。执行中的 Todo 写入不会触发核查。
+
+启用后，主模型收到简短的 Todo 更新提示。它应在已有 content 中写实际动作、路径、命令与观察结果。提示不新增字段，也不要求简单任务创建清单。
+
+**示例：** Todo 写“测试未验证”，最终回答却说“测试通过”。Jev 可选择 contradiction，让主模型核对并更正报告。它没有核对原始工具结果，也不能据此宣称代码有缺陷。
+
+complete 表示所给报告显示要求已满足。omission 表示要求未交代、未完成或规定条件未满足。unknown 表示材料不足，可要求补充真实依据。needs-user 只用于尚未解决的用户选择或授权。每次只处理最关键问题，不保证穷举全部问题。
+
+测试要求由用户决定。“运行并如实报告测试”允许报告失败。“修复并通过指定测试”在仍失败时属于未满足条件。
 
 ```flow LR
-最终回答已展示 -&gt; 核对记录
-核对记录 -&gt; {结论}
+最终回答已展示 -&gt; 完整当前材料
+完整当前材料 -&gt; {结论}
 结论 -&gt; 正常结束: complete
-结论 -&gt; 最多一次补做: 首次 omission
-结论 -&gt; 停止自动补做: 再次遗漏或 needs-user
+结论 -&gt; 用户决定: needs-user
+结论 -&gt; 同 turn 补充: 其余三类且有额度
+结论 -&gt; 显示最后问题: 其余三类且额度耗尽
+同 turn 补充 -&gt; 完整当前材料: 更新 Todo 与回答
 ```
 
-补做预约先持久保存，再排入消息，重启后不会因此重复补做。核查不能撤回已展示回答，也不独立重跑测试。原始任务只授权审查时，补做只能在该授权范围内行动。
+“最多自动补充轮数”按 profile 保存，默认 3，接受正安全整数。非法输入保留已保存值，保存参数不自动开启功能。初次核查另算，默认最多 3 次补充、4 次正常核查。设置为 N 就允许最多 N 次补充、N+1 次正常核查。此计数独立于 Goal 的连续无进展轮数。
+
+补充仍在同一 turn，保留原始要求并读取最新 Todo 与回答。新 turn 只说“继续”时，不自动补入前一 turn 的要求。插件自己的补充消息也不是用户新增授权。
+
+补充预约与次数持久保存，重复处理不会恢复已用额度。核查保留已展示回答，不独立重跑测试或核实产物。原始任务只授权审查时，补充仍须遵守该授权。
 
 ### 05 持续目标监督 · goal-supervision
 
 | 路径 | 判断材料与答案 | 本地行动 |
 | --- | --- | --- |
 | 每个原生目标轮结束 | 当前 goal、当前和上一轮可见记录；`progress / no-progress / needs-user / unknown` | progress 清零停滞计数；默认连续 3 轮 no-progress 暂停目标 |
-| `update_goal` 申请完成 | 当前目标范围的完成证据；与完成核查相同的结论 | complete 保留原许可；omission 拒绝本次完成申请；needs-user 还会暂停目标 |
+| `update_goal` 申请完成 | 当前目标范围的完成证据；`complete / omission / needs-user / unknown` | complete 保留原许可；omission 拒绝本次完成申请；needs-user 还会暂停目标 |
 
 **示例：** 多轮操作没有带来新证据时，插件可以暂停目标。有效调查或排除假设也可算 progress。用户恢复目标后，停滞计数重新开始。
 
 插件使用 DSH 原生目标轮次驱动。原生目标服务仍负责状态修改和轮次上限。人工直接完成目标也由原服务处理。
 
-### 证据预算为何会改变采用结果
+Goal 不套用普通完成核查的 Todo 条件、五类结论或补充额度。原生 Goal turn 不会启动另一套普通完成补充循环。
 
-默认预算是 **24,000 字符**。程序按完整消息选取证据，并记录遗漏范围。如果范围内的必要证据被预算裁掉，`completeEvidence=false`，判断不能作为可用结论采用。高概率也不能补回缺失证据。
+### 两类材料如何使用同一字符预算
 
-完成核查和目标监督使用交互 `judge`。unknown、证据不全或技术失败进入人工 Retry / Cancel。新请求、目标修改或取消会使旧答案失效。
+默认预算仍是 **24,000 字符**，上限 1,000,000。普通完成核查发送前检查完整材料，不裁剪、不自动摘要。超预算就不发送判断或补充请求。提示为“核查材料超出预算，本次完成核查未完成”。用户可调高预算后选择 Retry / Cancel。
 
-来源：[证据与两道题](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L88)、[跑偏触发](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L272)、[完成与目标轮监督](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L299)、[目标完成申请](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L343)。
+原始要求缺失、接口或答案错误也会提示核查未完成。主模型回答保留，等待用户重试或取消。重试读取当前材料和已保存配置；取消不将任务判为成功或失败。技术重试不计入 N+1 次正常核查，也不消耗或重置补充额度。有效 unknown 是业务结论，不进入技术重试。
+
+跑偏与 Goal 仍按完整消息选取已有证据，并记录遗漏范围。必要证据被预算裁掉时，`completeEvidence=false`，不能采用结论。Goal 的 unknown、证据不全或技术失败仍进入人工 Retry / Cancel。新要求、目标修改或取消会使旧判断失效。
+
+跑偏与 Goal 的既有实现来源：[证据与两道题](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L88)、[跑偏触发](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L272)、[目标轮监督](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L299)、[目标完成申请](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L343)。
 
 ## 约束和协作：要求与新消息如何进入当前任务
 

@@ -6,6 +6,10 @@ The checked-in source and tests are public. Raw live-session captures, personal 
 
 公开源码包含实现和可复测测试；真实会话原始抓取、个人截图、凭据、运行环境和绑定本机的实验资料不随源码公开。
 
+Existing live completion-check results use the earlier recorded-evidence semantics; lightweight report checks have no real-task effectiveness evidence yet.
+
+已有完成核查实测使用此前的已有证据核查语义；轻量报告核查尚无真实任务效果证据。
+
 The [2026-10-09–10 Harness compatibility report](testing/2026-10-09-harness-compatibility/README.md) covers the current DSH 0.2.1-alpha.2 revision: the old package's actual installation rejection, the adapted package's official installation and Web client, new real DeepSeek Flash / Jev tasks, and scoped lifecycle tests. The older reports below retain their original runtime versions and experiment conditions.
 
 [2026-10-09–10 Harness 兼容报告](testing/2026-10-09-harness-compatibility/README.md)验证当前 DSH 0.2.1-alpha.2 适配：旧包的实际安装拒绝、适配包的正式安装与 Web 客户端、新一轮真实 DeepSeek Flash / Jev 任务及有界生命周期测试。下面的历史报告保留各自原始版本和实验条件。

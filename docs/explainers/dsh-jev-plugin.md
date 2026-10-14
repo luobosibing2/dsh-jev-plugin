@@ -238,9 +238,13 @@ Jev 返回 6 个概率 -> 插件排序并取前 5 个
 来源：[glob 判断与结构化排序](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L294)。
 ## 监督：有没有跑偏，记录是否支持完成
 
-这三项共用已记录的可见证据。材料包含用户请求、助手正文、工具调用与结果，以及适用的原生 goal。监督排除 reasoning，不追加文件读取或验证命令。
+普通完成核查使用当前 turn 的轻量报告材料。既有真实实验属于此前语义，不能证明这套核查的真实任务效果。
 
-每次判断都问两道 Choice：一道选结论，一道选支持结论的既有证据 ID。程序引用原始要求或记录来反馈。
+[完成核查流程导读](jev-completion-flow.html)展示触发、判断与补充循环。[Markdown 源稿](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/docs/explainers/jev-completion-flow.md)随实现维护。
+
+跑偏与原生 Goal 仍使用已有可见记录，包含工具结果。普通完成核查改为读取本 turn 的要求、Todo 与最终回答。三项都排除 reasoning，不追加文件读取或验证命令。
+
+每次判断仍问两道 Choice：选择结论与已有材料引用。普通完成核查使用 `assessment` 和 `focus`。程序引用所选原文反馈，不让判断模型自由编写引用。
 
 ### 03 跑偏提醒 · drift-monitoring
 
@@ -260,42 +264,62 @@ Jev 返回 6 个概率 -> 插件排序并取前 5 个
 
 | 环节 | 实际内容 |
 | --- | --- |
-| 触发 | 最终回答已展示，进入 `agent/turn-stopping` |
-| 上下文 | 从原始请求到本次回答的记录，含工具结果和最终事实声称 |
-| 结论选项 | `complete / omission / needs-user / unknown`，另选证据 ID |
-| 采用 | complete 正常结束；首次 omission 最多排入一次原生 steer 补做 |
-| 停止条件 | 再次遗漏或需要用户决定时，只记录说明，不再自动补做 |
+| 触发 | 功能已启用，本 turn 用过 Todo，最终回答已展示并正常停止 |
+| 上下文 | 本 turn 原始要求及后续调整、完整最新 Todo、最新最终回答 |
+| 排除材料 | 原始工具结果、完整执行轨迹、reasoning 与跨 turn 要求 |
+| assessment | `complete / omission / contradiction / needs-user / unknown` |
+| focus | 用户要求、Todo 条目或最终回答引用；complete 可选 none |
+| 自动补充 | omission、contradiction、unknown 共用额度，默认最多 3 次 |
+| 停止条件 | complete、needs-user，或额度耗尽后显示最后结论 |
 
-**示例：** 最终回答声称“测试通过”，工具结果却记录失败。这个矛盾可算 omission。补做可以纠正报告，或完成已授权的遗漏工作。
+本 turn 没用 Todo 就跳过，前一 turn 的清单不算。Todo 有未完成项，或本轮后来清空清单，仍可以核查。执行中的 Todo 写入不会触发核查。
+
+启用后，主模型收到简短的 Todo 更新提示。它应在已有 content 中写实际动作、路径、命令与观察结果。提示不新增字段，也不要求简单任务创建清单。
+
+**示例：** Todo 写“测试未验证”，最终回答却说“测试通过”。Jev 可选择 contradiction，让主模型核对并更正报告。它没有核对原始工具结果，也不能据此宣称代码有缺陷。
+
+complete 表示所给报告显示要求已满足。omission 表示要求未交代、未完成或规定条件未满足。unknown 表示材料不足，可要求补充真实依据。needs-user 只用于尚未解决的用户选择或授权。每次只处理最关键问题，不保证穷举全部问题。
+
+测试要求由用户决定。“运行并如实报告测试”允许报告失败。“修复并通过指定测试”在仍失败时属于未满足条件。
 
 ```flow LR
-最终回答已展示 -> 核对记录
-核对记录 -> {结论}
+最终回答已展示 -> 完整当前材料
+完整当前材料 -> {结论}
 结论 -> 正常结束: complete
-结论 -> 最多一次补做: 首次 omission
-结论 -> 停止自动补做: 再次遗漏或 needs-user
+结论 -> 用户决定: needs-user
+结论 -> 同 turn 补充: 其余三类且有额度
+结论 -> 显示最后问题: 其余三类且额度耗尽
+同 turn 补充 -> 完整当前材料: 更新 Todo 与回答
 ```
 
-补做预约先持久保存，再排入消息，重启后不会因此重复补做。核查不能撤回已展示回答，也不独立重跑测试。原始任务只授权审查时，补做只能在该授权范围内行动。
+“最多自动补充轮数”按 profile 保存，默认 3，接受正安全整数。非法输入保留已保存值，保存参数不自动开启功能。初次核查另算，默认最多 3 次补充、4 次正常核查。设置为 N 就允许最多 N 次补充、N+1 次正常核查。此计数独立于 Goal 的连续无进展轮数。
+
+补充仍在同一 turn，保留原始要求并读取最新 Todo 与回答。新 turn 只说“继续”时，不自动补入前一 turn 的要求。插件自己的补充消息也不是用户新增授权。
+
+补充预约与次数持久保存，重复处理不会恢复已用额度。核查保留已展示回答，不独立重跑测试或核实产物。原始任务只授权审查时，补充仍须遵守该授权。
 
 ### 05 持续目标监督 · goal-supervision
 
 | 路径 | 判断材料与答案 | 本地行动 |
 | --- | --- | --- |
 | 每个原生目标轮结束 | 当前 goal、当前和上一轮可见记录；`progress / no-progress / needs-user / unknown` | progress 清零停滞计数；默认连续 3 轮 no-progress 暂停目标 |
-| `update_goal` 申请完成 | 当前目标范围的完成证据；与完成核查相同的结论 | complete 保留原许可；omission 拒绝本次完成申请；needs-user 还会暂停目标 |
+| `update_goal` 申请完成 | 当前目标范围的完成证据；`complete / omission / needs-user / unknown` | complete 保留原许可；omission 拒绝本次完成申请；needs-user 还会暂停目标 |
 
 **示例：** 多轮操作没有带来新证据时，插件可以暂停目标。有效调查或排除假设也可算 progress。用户恢复目标后，停滞计数重新开始。
 
 插件使用 DSH 原生目标轮次驱动。原生目标服务仍负责状态修改和轮次上限。人工直接完成目标也由原服务处理。
 
-### 证据预算为何会改变采用结果
+Goal 不套用普通完成核查的 Todo 条件、五类结论或补充额度。原生 Goal turn 不会启动另一套普通完成补充循环。
 
-默认预算是 **24,000 字符**。程序按完整消息选取证据，并记录遗漏范围。如果范围内的必要证据被预算裁掉，`completeEvidence=false`，判断不能作为可用结论采用。高概率也不能补回缺失证据。
+### 两类材料如何使用同一字符预算
 
-完成核查和目标监督使用交互 `judge`。unknown、证据不全或技术失败进入人工 Retry / Cancel。新请求、目标修改或取消会使旧答案失效。
+默认预算仍是 **24,000 字符**，上限 1,000,000。普通完成核查发送前检查完整材料，不裁剪、不自动摘要。超预算就不发送判断或补充请求。提示为“核查材料超出预算，本次完成核查未完成”。用户可调高预算后选择 Retry / Cancel。
 
-来源：[证据与两道题](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L88)、[跑偏触发](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L272)、[完成与目标轮监督](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L299)、[目标完成申请](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L343)。
+原始要求缺失、接口或答案错误也会提示核查未完成。主模型回答保留，等待用户重试或取消。重试读取当前材料和已保存配置；取消不将任务判为成功或失败。技术重试不计入 N+1 次正常核查，也不消耗或重置补充额度。有效 unknown 是业务结论，不进入技术重试。
+
+跑偏与 Goal 仍按完整消息选取已有证据，并记录遗漏范围。必要证据被预算裁掉时，`completeEvidence=false`，不能采用结论。Goal 的 unknown、证据不全或技术失败仍进入人工 Retry / Cancel。新要求、目标修改或取消会使旧判断失效。
+
+跑偏与 Goal 的既有实现来源：[证据与两道题](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L88)、[跑偏触发](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L272)、[目标轮监督](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L299)、[目标完成申请](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/supervision.ts#L343)。
 
 ## 约束和协作：要求与新消息如何进入当前任务
 

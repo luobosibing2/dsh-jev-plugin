@@ -24,8 +24,10 @@ import * as supervision from '../src/supervision.ts'
 
 class ReviewModel extends LlmAdapter {
   readonly requests: GenerateOptions[] = []
+  beforeReply?: () => void
   async *stream(request: GenerateOptions): AsyncIterable<StreamChunk> {
     this.requests.push(request)
+    this.beforeReply?.()
     if (this.requests.length > 4) throw new Error('Unexpected repeated supplement')
     yield { type: 'block-start', index: 0, blockType: 'text' }
     yield { type: 'block-end', index: 0, block: { type: 'text', text: 'Still missing the requested verification' } }
@@ -45,11 +47,11 @@ async function harness(resume?: { root: string; id: ReturnType<typeof SessionId>
   const server = createServer(async (request, response) => {
     const chunks: Buffer[] = []
     for await (const chunk of request) chunks.push(Buffer.from(chunk))
-    const body = JSON.parse(Buffer.concat(chunks).toString()) as { questions: { evidence: { criteria: Record<string, string> } } }
+    const body = JSON.parse(Buffer.concat(chunks).toString()) as { questions: { focus: { criteria: Record<string, string> } } }
     httpCalls++
     response.writeHead(200, { 'content-type': 'application/json' })
     response.end(JSON.stringify({ answers: {
-      assessment: { choice: 'omission' }, evidence: { choice: Object.keys(body.questions.evidence.criteria)[0] },
+      assessment: { choice: 'omission' }, focus: { choice: Object.keys(body.questions.focus.criteria)[0] },
     } }))
   })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
@@ -77,7 +79,7 @@ async function harness(resume?: { root: string; id: ReturnType<typeof SessionId>
   ctx.provide('credentials', { resolve: async () => ({ value: 'localhost-only-review', source: 'fixture' }) } as never)
   await ctx.plugin(JevService, { baseUrl: `http://127.0.0.1:${address.port}/v1/systemone`, model: 'review',
     credentialRef: 'REVIEW_KEY', timeoutMs: 2000, features: { 'completion-check': true } })
-  await ctx.plugin(supervision)
+  await ctx.plugin(supervision, { maxSupplementRounds: 1 })
   await ctx.plugin(JsonlSessionPersistence, { root: join(root, 'sessions') })
   await ctx.plugin(AgentLoop, { agents: [] })
   const model = new ReviewModel()
@@ -85,7 +87,8 @@ async function harness(resume?: { root: string; id: ReturnType<typeof SessionId>
   const agent = resume === undefined
     ? await ctx.agentLoop.create(SessionId('receipt-review'), { provider: 'review', model: 'review' })
     : (await ctx.agentLoop.resume(ctx, { resumeSessionId: resume.id, agentOptions: { provider: 'review', model: 'review' } })).agent
-  const ask = vi.fn()
+  model.beforeReply = () => agent.session.append('todo/write', { todos: [{ content: 'Verification unfinished', status: 'pending' }] })
+  const ask = vi.fn(async () => ({ answers: [{ id: 'jev-resolution', selected: ['取消 / Cancel'] }] }))
   ctx.on('user-questions/request', ask)
   let closed = false
   const dispose = async () => {
@@ -140,8 +143,8 @@ describe('independent supplement receipt failure review through real AgentLoop a
     resumed.agent.steer(createUserMessage({ source: supplement.source, content: [{ type: 'text', text: 'Explicitly continue this original task after restart' }] }))
     await resumed.agent.whenIdle()
     expect(resumed.model.requests).toHaveLength(1)
-    expect(resumed.httpCalls()).toBe(1)
-    expect(resumed.ask).not.toHaveBeenCalled()
+    expect(resumed.httpCalls()).toBe(0)
+    expect(resumed.ask).toHaveBeenCalledOnce()
     expect((await resumed.records()).filter(record => record?.receipts.some(receipt => receipt.id === 'supplement-reserved'))).toHaveLength(1)
   })
 

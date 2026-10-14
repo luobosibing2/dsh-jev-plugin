@@ -611,6 +611,44 @@ describe('Jev Host through Cordis, LlmRuntime, JSON storage, and local HTTP', ()
     expect((await ctx.jev.getRecord(result.operationId!))?.receipts[0]?.status).toBe('not-adopted')
   })
 
+  it('saves complete preflight failures without transport and refreshes after manual retry', async () => {
+    const path = await root()
+    const http = await fixture([valid])
+    const { ctx, agent } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'), url: http.url })
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+    let allowed = false
+    let refreshes = 0
+    ctx.on('user-questions/request', async question => {
+      expect(http.received).toHaveLength(0)
+      expect(question.questions[0]?.detail).toContain('Review did not finish')
+      const record = await ctx.jev.getRecord((await ctx.jev.listRecords({})).items[0]!.id)
+      expect(record?.attemptRecords[0]?.request.state).toEqual({ complete: 'untouched original', version: 1 })
+      expect(record?.attemptRecords[0]?.failure?.code).toBe('FIXTURE_BUDGET')
+      allowed = true
+      return { answers: [{ id: 'jev-resolution', selected: ['重试 / Retry'] }] }
+    })
+    const result = await ctx.jev.judge({ featureId: 'fixture', link: {}, agent,
+      refresh: () => ({ ...request, state: { complete: 'untouched original', version: ++refreshes } }),
+      preflight: () => { if (!allowed) throw new JevError('FIXTURE_BUDGET', 'Review material exceeds budget') },
+      failureDetail: failure => 'Review did not finish: ' + failure.message,
+    })
+    expect(result.kind).toBe('ok')
+    expect(refreshes).toBe(2)
+    expect(http.received).toMatchObject([{ state: { complete: 'untouched original', version: 2 } }])
+  })
+
+  it('retains interactive refresh failure semantics for consumers without preflight', async () => {
+    const path = await root()
+    const http = await fixture([])
+    const { ctx, agent } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'), url: http.url })
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+    const ask = vi.fn(); ctx.on('user-questions/request', ask)
+    await expect(ctx.jev.judge({ featureId: 'fixture', link: {}, agent, refresh: () => { throw new JevError('FIXTURE_REFRESH', 'Fixture refresh failed') } }))
+      .rejects.toMatchObject({ code: 'FIXTURE_REFRESH' })
+    expect(http.received).toHaveLength(0)
+    expect(ask).not.toHaveBeenCalled()
+  })
+
   it('waits for a manual retry and refreshes the second attempt input', async () => {
     const path = await root()
     const bad = { answers: { ...valid.answers, risk: { score: 9 } } }

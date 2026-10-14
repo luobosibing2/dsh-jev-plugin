@@ -191,16 +191,16 @@ export const features = [
     limits: ['提醒不强制主模型改正。', '一次真实判断未送达，不能写成真实提醒成功。'],
   },
   {
-    slug: 'completion-check', group: 'supervision', name: '完成核查', status: '真实补做已验证', tone: 'observed',
-    summary: '固定16槽诊断中，三类脚本种错的开启组6/6经真实补做满足核心要求；准确对照2/2无需补做。',
-    intro: '最终回答先展示，所选判断模型随后核对要求、交付和可见工具证据。它可以指出遗漏并要求补充一次，但不会自己重新运行测试。',
-    homeEvidence: '新诊断：三类种错开启组6/6补齐核心要求；准确对照开启组2/2判 complete、0补做。',
+    slug: 'completion-check', group: 'supervision', name: '完成核查', status: '轻量报告核查', tone: 'caution',
+    summary: '核查本 turn 的要求、最新 Todo 与最终回答，默认最多自动补充 3 轮。',
+    intro: '最终回答先展示，所选判断模型随后核对本 turn 的完整报告材料，不读取原始工具结果。遗漏、矛盾与材料不足共用补充额度；核查不独立验证产物或重跑测试。',
+    homeEvidence: '历史诊断（旧语义）：三类种错开启组6/6补齐核心要求；准确对照开启组2/2判 complete、0补做。',
     mechanism: {
       seams: ['agent/turn-stopping'],
-      trigger: '普通非目标轮在 agent/turn-stopping、回答已可见且没有新的 inbox 输入时检查。',
-      input: '当前请求以来的可见消息、原要求、工具结果和最终答复中的交付与验证声明；证据超预算时标明遗漏，unknown 不按完成采用。',
-      handling: 'typed complete 只记录结果；明确 omission 对原请求最多 agent.steer 补充一次；needs-user 或 unknown 不触发无限补做。',
-      refs: [{ title: '完成判断与补充上限', file: 'packages/jev/src/supervision.ts', anchor: '#L176-L207' }, { title: '停止前接入', file: 'packages/jev/src/supervision.ts', anchor: '#L299-L340' }],
+      trigger: '功能已启用，普通根 Agent turn 用过 Todo，并在 agent/turn-stopping 正常停止；无 Todo、原生 Goal turn、新用户输入或已有待执行步骤不启动这套核查。',
+      input: '本 turn 原始要求及后续调整、完整最新 Todo 与最新最终回答；排除原始工具结果、reasoning 和跨 turn 要求。超预算不裁剪或摘要，提示核查未完成并等待重试或取消。',
+      handling: '一次请求只问 assessment 与 focus 两个 Choice。complete 结束，needs-user 交用户决定；omission、contradiction、unknown 共用 maxSupplementRounds，默认 3 次补充、4 次正常核查。技术重试不消耗或重置补充额度。',
+      refs: [{ title: '完整报告输入与五类结论', file: 'packages/jev/src/completion-report.ts' }, { title: '停止时核查与补充计数', file: 'packages/jev/src/supervision.ts' }, { title: '配置与处理规则', file: 'packages/jev/README.md', anchor: '#ordinary-completion-checks' }],
     },
     cases: [
       {
@@ -245,7 +245,7 @@ export const features = [
         evidence: ['completionRecovery'],
       },
     ],
-    limits: ['固定种错诊断已观察到真实模型补做；自然任务平均收益与复杂长轨迹表现尚未验证。', '历史长编码因证据裁剪而零采用、零自动补做，本轮未重跑或修复；旧“没有新增文件”负例也不同于本轮具严格前后清单的新输入。'],
+    limits: ['以下固定种错案例使用旧核查语义，保留真实补做观察；不能证明轻量报告核查的判断质量或自然任务收益。', '轻量核查的固定回答测试验证程序行为；本功能没有付费模型实测，不独立核实代码、产物或执行事实。', '历史长编码因证据裁剪而零采用、零自动补做；该历史试次未重跑，旧“没有新增文件”负例也不同于后续具严格前后清单的诊断输入。'],
     limitReferences: [{ title: '历史完成核查报告', file: 'docs/testing/2026-10-02-completion-skill/public-results.zh-CN.md' }, { title: '历史监督验收', file: 'docs/testing/2026-09-27-jev-hooks/public-results.zh-CN.md' }],
   },
   {

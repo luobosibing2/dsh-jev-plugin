@@ -7,8 +7,11 @@ const website = dirname(fileURLToPath(import.meta.url));
 const repository = resolve(website, '..');
 const output = join(website, 'dist');
 const github = 'https://github.com/luobosibing2/dsh-jev-plugin';
-const explainerDraftPath = join(repository, 'docs/explainers/dsh-jev-plugin.md');
-const explainerHtmlPath = join(website, 'src/explainers/dsh-jev-plugin.html');
+const explainerPages = ['dsh-jev-plugin', 'jev-completion-flow'].map((slug) => ({
+  slug,
+  draftPath: join(repository, 'docs/explainers', `${slug}.md`),
+  htmlPath: join(website, 'src/explainers', `${slug}.html`),
+}));
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (character) => ({
@@ -134,20 +137,19 @@ function evidencePage(source, content) {
 if (features.length !== 11 || new Set(features.map((feature) => feature.slug)).size !== features.length) {
   throw new Error('功能清单必须包含 11 个不重复的页面');
 }
-const [explainerDraft, explainerHtml] = await Promise.all([
-  readFile(explainerDraftPath, 'utf8'),
-  readFile(explainerHtmlPath, 'utf8'),
-]);
-const embeddedSource = explainerHtml.match(/<textarea\b[^>]*\bid="am-source"[^>]*>([\s\S]*?)<\/textarea>/);
-if (!embeddedSource) {
-  throw new Error('原理文章 HTML 缺少 #am-source；请用 answer-me-with-html 从 Markdown 源稿重生成');
-}
-const embeddedDraft = embeddedSource[1].replace(/&(amp|lt|gt|quot|#39);/g, (_, entity) => ({
-  amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'",
-})[entity]);
-if (embeddedDraft.replace(/\n+$/, '') !== explainerDraft.replace(/\n+$/, '')) {
-  throw new Error('原理文章 Markdown 与 HTML 的 #am-source 不一致；请重生成 HTML 并同时提交两份文件');
-}
+await Promise.all(explainerPages.map(async ({ slug, draftPath, htmlPath }) => {
+  const [draft, html] = await Promise.all([readFile(draftPath, 'utf8'), readFile(htmlPath, 'utf8')]);
+  const embeddedSource = html.match(/<textarea\b[^>]*\bid="am-source"[^>]*>([\s\S]*?)<\/textarea>/);
+  if (!embeddedSource) {
+    throw new Error(`${slug}.html 缺少 #am-source；请用 answer-me-with-html 从 Markdown 源稿重生成`);
+  }
+  const embeddedDraft = embeddedSource[1].replace(/&(amp|lt|gt|quot|#39);/g, (_, entity) => ({
+    amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'",
+  })[entity]);
+  if (embeddedDraft.replace(/\n+$/, '') !== draft.replace(/\n+$/, '')) {
+    throw new Error(`${slug} 的 Markdown 与 HTML 的 #am-source 不一致；请重生成 HTML 并同时提交两份文件`);
+  }
+}));
 const sourceContents = await Promise.all(Object.values(evidence).map(async (source) => ({
   source,
   content: await readFile(join(repository, source.file), 'utf8'),
@@ -159,7 +161,9 @@ await mkdir(join(output, 'evidence'), { recursive: true });
 await mkdir(join(output, 'connections'), { recursive: true });
 await mkdir(join(output, 'explainers'), { recursive: true });
 await copyFile(join(website, 'src/styles.css'), join(output, 'assets/site.css'));
-await copyFile(explainerHtmlPath, join(output, 'explainers/dsh-jev-plugin.html'));
+for (const { slug, htmlPath } of explainerPages) {
+  await copyFile(htmlPath, join(output, 'explainers', `${slug}.html`));
+}
 await writeFile(join(output, 'index.html'), homePage());
 await writeFile(join(output, 'connections', 'luna-decisions.html'), connectionsPage());
 for (const feature of features) {
@@ -168,4 +172,4 @@ for (const feature of features) {
 for (const { source, content } of sourceContents) {
   await writeFile(join(output, 'evidence', `${source.slug}.html`), evidencePage(source, content));
 }
-console.log(`已构建 1 个首页、1 个原理文章页、1 个判断连接页、${features.length} 个功能页、${Object.keys(evidence).length} 个公开证据页：${output}`);
+console.log(`已构建 1 个首页、${explainerPages.length} 个原理文章页、1 个判断连接页、${features.length} 个功能页、${Object.keys(evidence).length} 个公开证据页：${output}`);

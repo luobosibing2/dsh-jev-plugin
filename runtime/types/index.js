@@ -280,7 +280,7 @@ let JevService = (() => {
                         return this.cancel(operation.id);
                     const request = await this.untilAbort(Promise.resolve(options.refresh(lifetime)), lifetime);
                     validateRequest(request);
-                    const attempted = await this.tryOnce(operation.id, request, options.interpret, lifetime, options.featureId, options.connection);
+                    const attempted = await this.tryOnce(operation.id, request, options.interpret, lifetime, options.featureId, options.connection, options.preflight);
                     if (lifetime.aborted)
                         return this.cancel(operation.id);
                     if (!attempted.ok)
@@ -359,7 +359,7 @@ let JevService = (() => {
                     }
                     const request = await this.untilAbort(Promise.resolve(options.refresh(lifetime)), lifetime);
                     validateRequest(request);
-                    const attempted = await this.tryOnce(operation.id, request, options.interpret, lifetime, options.featureId);
+                    const attempted = await this.tryOnce(operation.id, request, options.interpret, lifetime, options.featureId, undefined, options.preflight);
                     if (lifetime.aborted)
                         return this.cancel(operation.id);
                     if (attempted.ok) {
@@ -376,7 +376,7 @@ let JevService = (() => {
                         return { kind: 'ok', operationId: operation.id, attemptId: attempted.attemptId, response: attempted.response };
                     }
                     await this.records().setStatus(operation.id, 'waiting');
-                    const choice = await this.ask(options.agent, lifetime, `${attempted.failure.message}. Retry with current input or cancel?`);
+                    const choice = await this.ask(options.agent, lifetime, options.failureDetail?.(attempted.failure) ?? `${attempted.failure.message}. Retry with current input or cancel?`);
                     if (choice === 'cancel')
                         return this.cancel(operation.id);
                 }
@@ -463,7 +463,7 @@ let JevService = (() => {
         judgmentConnectionIdentity() {
             return this.connectionIdentity();
         }
-        async tryOnce(operationId, request, interpret, outerSignal, featureId, expectedConnection) {
+        async tryOnce(operationId, request, interpret, outerSignal, featureId, expectedConnection, preflight) {
             let snapshot;
             try {
                 snapshot = JSON.parse(JSON.stringify(request));
@@ -484,6 +484,7 @@ let JevService = (() => {
             const timeout = AbortSignal.timeout(identity.timeoutMs);
             const signal = AbortSignal.any([timeout, ...outerSignal === undefined ? [] : [outerSignal]]);
             try {
+                preflight?.(snapshot);
                 if (!identity.baseUrl || !identity.model || !identity.credentialRef) {
                     throw new JevError('CONNECTION_MISSING', 'Jev service address, model, or credential reference is missing');
                 }

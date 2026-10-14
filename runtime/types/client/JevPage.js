@@ -289,13 +289,14 @@ function SelectionSettings({ form, notifySuccess, t }) {
 const SUPERVISION_FIELDS = [
     { key: 'driftInterval', label: 'driftInterval' },
     { key: 'noProgressRounds', label: 'noProgressRounds' },
+    { key: 'maxSupplementRounds', label: 'maxSupplementRounds' },
     { key: 'evidenceChars', label: 'evidenceChars' },
 ];
 function SupervisionSettings({ form, notifySuccess, t }) {
     const subscribe = useCallback((listener) => form.subscribe(listener), [form]);
     const getSnapshot = useCallback(() => form.getSnapshot(), [form]);
     const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-    const [draft, setDraft] = useState({ driftInterval: '', noProgressRounds: '', evidenceChars: '' });
+    const [draft, setDraft] = useState({ driftInterval: '', noProgressRounds: '', maxSupplementRounds: '', evidenceChars: '' });
     const [errors, setErrors] = useState({});
     const [saveError, setSaveError] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -308,6 +309,7 @@ function SupervisionSettings({ form, notifySuccess, t }) {
         const next = {
             driftInterval: String(snapshot.value.driftInterval),
             noProgressRounds: String(snapshot.value.noProgressRounds),
+            maxSupplementRounds: String(snapshot.value.maxSupplementRounds),
             evidenceChars: String(snapshot.value.evidenceChars),
         };
         const signature = JSON.stringify(next);
@@ -349,7 +351,7 @@ function SupervisionSettings({ form, notifySuccess, t }) {
             if (accepted) {
                 const saved = form.getSnapshot().value;
                 if (saved !== undefined) {
-                    setDraft({ driftInterval: String(saved.driftInterval), noProgressRounds: String(saved.noProgressRounds), evidenceChars: String(saved.evidenceChars) });
+                    setDraft({ driftInterval: String(saved.driftInterval), noProgressRounds: String(saved.noProgressRounds), maxSupplementRounds: String(saved.maxSupplementRounds), evidenceChars: String(saved.evidenceChars) });
                     edited.current = false;
                 }
                 notifySuccess(t('supervisionCountSaved'));

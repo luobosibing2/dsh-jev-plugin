@@ -20,6 +20,7 @@ import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import UserQuestions from '@deepseek-ai/dsh-user-questions'
 import JevService from '../src/index.ts'
+import * as todoTool from '@deepseek-ai/dsh-tool-todo'
 import * as instructions from '../src/instructions.ts'
 import * as supervision from '../src/supervision.ts'
 import * as sharedFindings from '../src/shared-findings.ts'
@@ -50,6 +51,10 @@ const call = (id: string, name: string, args: object = {}): StreamChunk[] => [
   { type: 'block-end', index: 0, block: { type: 'tool-call', id: ToolCallId(id), name, arguments: JSON.stringify(args) } },
   { type: 'finish', reason: { kind: 'tool-calls' } },
 ]
+const withTodo = (chunks: StreamChunk[]): StreamChunk[] => [
+  ...call('native-todo', 'todo_write', { todos: [{ content: 'Report the investigation result', status: 'pending' }] }).slice(0, -1),
+  ...chunks.map(chunk => 'index' in chunk ? { ...chunk, index: chunk.index + 1 } : chunk),
+]
 const user = (value: string) => createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: value }] })
 const featureIds = ['instruction-guidance', 'interjection-routing', 'shared-findings', 'drift-monitoring', 'completion-check', 'goal-supervision']
 const cleanups: Array<() => Promise<void>> = []
@@ -67,19 +72,23 @@ async function fixture(script: ModelEntry[], options: { enabled?: boolean; suppl
   await mkdir(join(dir, 'home'))
   await writeFile(join(dir, 'TEAM.md'), 'Only modify plan.md. Other files require a changed user requirement.\n')
   const requests: Wire[] = []
+  const requestListeners = new Set<() => void>()
+  const routingJudged = Promise.withResolvers<void>()
   let completion = 0
   const server = createServer(async (request, response) => {
     const parts: Buffer[] = []
     for await (const chunk of request) parts.push(Buffer.from(chunk))
     const wire = JSON.parse(Buffer.concat(parts).toString()) as Wire
     requests.push(wire)
+    for (const listener of requestListeners) listener()
     const answers: Record<string, { choice: string }> = {}
     if (wire.questions.route !== undefined) answers.route = { choice: 'correction' }
     else if (wire.questions.assessment !== undefined) {
       answers.assessment = { choice: wire.state.mode === 'completion'
         ? options.supplement && completion++ === 0 ? 'omission' : 'complete'
         : 'on-track' }
-      answers.evidence = { choice: Object.keys(wire.questions.evidence!.criteria)[0]! }
+      const reference = wire.questions.focus === undefined ? 'evidence' : 'focus'
+      answers[reference] = { choice: Object.keys(wire.questions[reference]!.criteria)[0]! }
     } else {
       await options.holdInstructions
       for (const id of Object.keys(wire.questions)) {
@@ -115,6 +124,12 @@ async function fixture(script: ModelEntry[], options: { enabled?: boolean; suppl
     config: { dshHome: join(dir, 'home'), maxBytes: 24_000, instructionFileCandidates: ['TEAM.md'], localInstructionFileCandidates: [], projectRootMarkers: ['.git'] } } }] } as never)
   await ctx.plugin(JevService, { baseUrl: `http://127.0.0.1:${address.port}/v1/systemone`, model: 'fixture-judge', credentialRef: 'FIXTURE_KEY', timeoutMs: 10_000,
     features: options.enabled ? Object.fromEntries(featureIds.map(id => [id, true])) : {} })
+  const judge = ctx.jev.judge.bind(ctx.jev)
+  vi.spyOn(ctx.jev, 'judge').mockImplementation(options => {
+    const pending = judge(options)
+    if (options.featureId === 'interjection-routing') void pending.then(() => routingJudged.resolve(), () => routingJudged.resolve())
+    return pending
+  })
   const instructionCalls: Promise<unknown>[] = []
   const judgeOnce = ctx.jev.judgeOnce.bind(ctx.jev)
   vi.spyOn(ctx.jev, 'judgeOnce').mockImplementation(options => {
@@ -122,6 +137,7 @@ async function fixture(script: ModelEntry[], options: { enabled?: boolean; suppl
     if (options.featureId === 'instruction-guidance') instructionCalls.push(pending)
     return pending
   })
+  await ctx.plugin(todoTool, { allowParallelInProgress: true })
   await ctx.plugin(supervision, { driftInterval: 1 })
   await ctx.plugin(instructions)
   await ctx.plugin(sharedFindings)
@@ -143,7 +159,10 @@ async function fixture(script: ModelEntry[], options: { enabled?: boolean; suppl
     return { answers: [{ id: 'jev-resolution', selected: ['取消 / Cancel'] }] }
   })
   const agent = await ctx.agentLoop.create(SessionId('combined-hooks'), { provider: 'fixture', model: 'fixture' }, { cwd: dir })
-  return { ctx, agent, model, requests, errors, asks, instructionCalls, dir, writes: () => writes,
+  const requestSeen = (matches: (wire: Wire) => boolean) => requests.some(matches) ? Promise.resolve() : new Promise<void>(resolve => {
+    const listener = () => { if (requests.some(matches)) { requestListeners.delete(listener); resolve() } }; requestListeners.add(listener)
+  })
+  return { routingJudged: routingJudged.promise, requestSeen, ctx, agent, model, requests, errors, asks, instructionCalls, dir, writes: () => writes,
     send: (value: string) => agent.followup(user(value)),
     messages: () => agent.session.deriveMessages(),
     records: () => ctx.jev.listRecords({ sessionId: agent.id, limit: 100 }),
@@ -168,17 +187,14 @@ it('keeps the original tool and answer path with every combined feature disabled
 it('delivers a classified correction once while completion checking performs only one supplement', async () => {
   const started = Promise.withResolvers<void>()
   const release = Promise.withResolvers<void>()
-  const h = await fixture([async () => { started.resolve(); await release.promise; return call('probe-original', 'probe') },
+  const h = await fixture([async () => { started.resolve(); await release.promise; return withTodo(call('probe-original', 'probe')) },
     text('Original answer after correction'), text('Supplement completed')], { enabled: true, supplement: true })
   cleanups.push(async () => { release.resolve() })
   h.send('Implement and verify the requested result')
   await started.promise
   const correction = user('Correction: preserve the original entry point while completing the verification.')
   h.agent.followup(correction)
-  await vi.waitFor(async () => {
-    const record = (await h.records()).items.find(item => item.featureId === 'interjection-routing')
-    expect(record?.status).toBe('succeeded')
-  })
+  await h.routingJudged
   release.resolve()
   await h.agent.whenIdle()
   expect(h.errors).toEqual([])
@@ -188,6 +204,7 @@ it('delivers a classified correction once while completion checking performs onl
   expect(h.messages().filter(message => message.role === 'user' && message.source.kind === 'jev-supervision' && message.source.action === 'supplement')).toHaveLength(1)
   expect(h.model.requests).toHaveLength(3)
   const details = await Promise.all((await h.records()).items.map(item => h.ctx.jev.getRecord(item.id)))
+  expect(details.find(item => item?.featureId === 'interjection-routing')?.status).toBe('succeeded')
   expect(details.filter(item => item?.receipts.some(receipt => receipt.id === 'supplement-reserved'))).toHaveLength(1)
   expect(h.requests.filter(request => request.state.mode === 'completion')).toHaveLength(2)
 })
@@ -196,13 +213,13 @@ it('does not turn a pending instruction reminder into a tool or model barrier wh
   const instructionReply = Promise.withResolvers<void>()
   const secondModel = Promise.withResolvers<void>()
   const releaseSecond = Promise.withResolvers<void>()
-  const h = await fixture([call('write-original', 'write', { file_path: 'product.txt', content: 'original operation completed' }),
+  const h = await fixture([withTodo(call('write-original', 'write', { file_path: 'product.txt', content: 'original operation completed' })),
     async () => { secondModel.resolve(); await releaseSecond.promise; return call('next-probe', 'probe') }, text('Finished')],
   { enabled: true, holdInstructions: instructionReply.promise })
   cleanups.push(async () => { instructionReply.resolve(); releaseSecond.resolve() })
   h.send('Carry out the requested project change and verification')
   await secondModel.promise
-  await vi.waitFor(() => expect(h.requests.some(request => request.state.operation?.name === 'write')).toBe(true))
+  await h.requestSeen(request => request.state.operation?.name === 'write')
   expect(h.writes()).toBe(1)
   expect(await readFile(join(h.dir, 'product.txt'), 'utf8')).toBe('original operation completed')
   expect(h.model.requests).toHaveLength(2)

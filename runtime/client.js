@@ -6998,7 +6998,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 218,
+						"line": 222,
 						"column": 3
 					}
 				},
@@ -7025,7 +7025,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 228,
+						"line": 232,
 						"column": 9
 					}
 				},
@@ -7052,7 +7052,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 190,
+						"line": 194,
 						"column": 9
 					}
 				},
@@ -7102,7 +7102,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 222,
+						"line": 226,
 						"column": 3
 					}
 				},
@@ -7130,7 +7130,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 206,
+						"line": 210,
 						"column": 3
 					}
 				},
@@ -7148,7 +7148,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 174,
+						"line": 178,
 						"column": 9
 					}
 				},
@@ -7175,7 +7175,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 181,
+						"line": 185,
 						"column": 9
 					}
 				},
@@ -7211,7 +7211,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 236,
+						"line": 240,
 						"column": 9
 					}
 				},
@@ -7238,7 +7238,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 212,
+						"line": 216,
 						"column": 3
 					}
 				},
@@ -7266,7 +7266,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 246,
+						"line": 250,
 						"column": 9
 					}
 				}
@@ -8004,6 +8004,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				label: "noProgressRounds"
 			},
 			{
+				key: "maxSupplementRounds",
+				label: "maxSupplementRounds"
+			},
+			{
 				key: "evidenceChars",
 				label: "evidenceChars"
 			}
@@ -8015,6 +8019,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			const [draft, setDraft] = (0, react.useState)({
 				driftInterval: "",
 				noProgressRounds: "",
+				maxSupplementRounds: "",
 				evidenceChars: ""
 			});
 			const [errors, setErrors] = (0, react.useState)({});
@@ -8028,6 +8033,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				const next = {
 					driftInterval: String(snapshot.value.driftInterval),
 					noProgressRounds: String(snapshot.value.noProgressRounds),
+					maxSupplementRounds: String(snapshot.value.maxSupplementRounds),
 					evidenceChars: String(snapshot.value.evidenceChars)
 				};
 				const signature = JSON.stringify(next);
@@ -8078,6 +8084,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 							setDraft({
 								driftInterval: String(saved.driftInterval),
 								noProgressRounds: String(saved.noProgressRounds),
+								maxSupplementRounds: String(saved.maxSupplementRounds),
 								evidenceChars: String(saved.evidenceChars)
 							});
 							edited.current = false;
@@ -10514,11 +10521,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			slowTestMs: "Slow test threshold (ms)",
 			duplicateMinLines: "Duplicate failure minimum lines",
 			duplicateMinChars: "Duplicate failure minimum characters",
-			evidenceChars: "Evidence character budget",
+			evidenceChars: "Judgment input character budget",
 			supervisionCounts: "Supervision counts",
 			driftInterval: "Completed model steps between drift checks",
 			noProgressRounds: "Consecutive goal rounds without progress",
-			supervisionCountsHint: "All three supervision features are independent and disabled by default. Native goal round limits still apply.",
+			maxSupplementRounds: "Maximum automatic supplement rounds",
+			supervisionCountsHint: "All three supervision features are independent and disabled by default. Completion supplements and goal rounds without progress are separate counts. Saving counts does not enable features; native goal round limits still apply.",
 			supervisionCountInvalid: "Enter a positive whole number.",
 			saveSupervisionCounts: "Save supervision counts",
 			supervisionCountSaved: "Supervision counts saved.",
@@ -10663,11 +10671,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			slowTestMs: "慢测试门槛（毫秒）",
 			duplicateMinLines: "重复失败详情最少行数",
 			duplicateMinChars: "重复失败详情最少字符数",
-			evidenceChars: "已有证据字符预算",
+			evidenceChars: "判断材料字符预算",
 			supervisionCounts: "执行监督次数",
 			driftInterval: "跑偏检查间隔（已完成模型步骤）",
 			noProgressRounds: "连续无进展目标轮数",
-			supervisionCountsHint: "三项监督功能独立开关，默认关闭；目标总轮数仍遵守原生上限",
+			maxSupplementRounds: "最多自动补充轮数",
+			supervisionCountsHint: "三项监督功能独立开关，默认关闭。自动补充与目标无进展轮数分别计数；保存参数不会开启功能，目标总轮数仍遵守原生上限",
 			supervisionCountInvalid: "请输入正整数",
 			saveSupervisionCounts: "保存监督次数",
 			supervisionCountSaved: "监督次数已保存",

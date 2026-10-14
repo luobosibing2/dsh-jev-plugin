@@ -3,4 +3,5 @@ export interface SupervisionConfigValues {
   driftInterval: number
   noProgressRounds: number
   evidenceChars: number
+  maxSupplementRounds: number
 }

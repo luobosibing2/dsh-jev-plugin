@@ -90,7 +90,7 @@ function selectionFormStub(options: { accept?: boolean; initial?: SelectionConfi
 function supervisionFormStub(options: { accept?: boolean; initial?: SupervisionConfigValues; loading?: boolean } = {}) {
   let snapshot: ConfigFormSnapshot<SupervisionConfigValues> = {
     status: options.loading ? 'loading' : 'ready',
-    value: options.loading ? undefined : options.initial ?? { driftInterval: 6, noProgressRounds: 3, evidenceChars: 24000 },
+    value: options.loading ? undefined : options.initial ?? { driftInterval: 6, noProgressRounds: 3, maxSupplementRounds: 3, evidenceChars: 24000 },
     base: {}, user: {}, revision: 4, writable: true, mode: 'host',
   }
   const listeners = new Set<() => void>()
@@ -408,11 +408,49 @@ describe('Jev supervision settings', () => {
     fireEvent.change(screen.getByLabelText(en.driftInterval), { target: { value: '9' } })
     fireEvent.change(screen.getByLabelText(en.noProgressRounds), { target: { value: '4' } })
     fireEvent.click(screen.getByRole('button', { name: en.saveSupervisionCounts }))
-    await waitFor(() => expect(counts.getValue()).toEqual({ driftInterval: 9, noProgressRounds: 4, evidenceChars: 24000 }))
+    await waitFor(() => expect(counts.getValue()).toEqual({ driftInterval: 9, noProgressRounds: 4, maxSupplementRounds: 3, evidenceChars: 24000 }))
     mounted.unmount(); draw()
     expect((screen.getByLabelText(en.driftInterval) as HTMLInputElement).value).toBe('9')
     expect((screen.getByLabelText(en.noProgressRounds) as HTMLInputElement).value).toBe('4')
     expect((await screen.findByRole('switch', { name: 'Disable completion-check' })).getAttribute('aria-checked')).toBe('true')
+  })
+
+  it('saves and reloads a supplement limit without enabling features or changing goal counts', async () => {
+    const publicForm = formStub()
+    const counts = supervisionFormStub()
+    const jev = remoteStub()
+    jev.listFeatures = vi.fn(async () => ['drift-monitoring', 'completion-check', 'goal-supervision'].map(id => ({ id, name: id, description: id, enabled: false })))
+    const draw = () => render(<JevPage view="page" form={publicForm.form} supervisionForm={counts.form} jev={jev} notifySuccess={() => {}} t={(key: JevLocaleKey) => en[key]} />)
+    const mounted = draw()
+    expect((screen.getByLabelText(en.maxSupplementRounds) as HTMLInputElement).value).toBe('3')
+    fireEvent.change(screen.getByLabelText(en.maxSupplementRounds), { target: { value: '2' } })
+    fireEvent.click(screen.getByRole('button', { name: en.saveSupervisionCounts }))
+    await waitFor(() => expect(counts.getValue()?.maxSupplementRounds).toBe(2))
+    expect(counts.getValue()?.noProgressRounds).toBe(3)
+    expect(publicForm.mutate).not.toHaveBeenCalled()
+    expect((await screen.findAllByRole('switch')).every(element => element.getAttribute('aria-checked') === 'false')).toBe(true)
+
+    mounted.unmount(); draw()
+    expect((screen.getByLabelText(en.maxSupplementRounds) as HTMLInputElement).value).toBe('2')
+    expect((screen.getByLabelText(en.noProgressRounds) as HTMLInputElement).value).toBe('3')
+    expect((await screen.findByRole('switch', { name: 'Enable completion-check' })).getAttribute('aria-checked')).toBe('false')
+  })
+
+  it('keeps the saved supplement limit for empty, zero, negative, fractional, nonnumeric, or unsafe input', async () => {
+    const publicForm = formStub()
+    const counts = supervisionFormStub({ initial: { driftInterval: 6, noProgressRounds: 3, maxSupplementRounds: 2, evidenceChars: 24000 } })
+    render(<JevPage view="page" form={publicForm.form} supervisionForm={counts.form} jev={remoteStub()} notifySuccess={() => {}} t={(key: JevLocaleKey) => zh[key]} />)
+    const input = screen.getByLabelText('最多自动补充轮数') as HTMLInputElement
+    expect(input.value).toBe('2')
+    for (const value of ['', '0', '-1', '1.5', 'abc', '9007199254740992']) {
+      fireEvent.change(input, { target: { value } })
+      fireEvent.click(screen.getByRole('button', { name: zh.saveSupervisionCounts }))
+      expect(input.getAttribute('aria-invalid')).toBe('true')
+      expect(screen.getByRole('alert').textContent).toBe(zh.supervisionCountInvalid)
+      expect(counts.getValue()?.maxSupplementRounds).toBe(2)
+    }
+    expect(counts.mutate).not.toHaveBeenCalled()
+    expect(publicForm.mutate).not.toHaveBeenCalled()
   })
 })
 
