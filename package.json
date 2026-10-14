@@ -203,8 +203,10 @@
     "@types/react": "18.3.1",
     "@types/react-dom": "18.3.0",
     "@testing-library/react": "16.3.0",
+    "cross-spawn": "7.0.6",
     "jsdom": "26.1.0",
     "lightningcss": "1.30.2",
+    "playwright": "1.64.0",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
     "vitest": "4.1.8",
@@ -254,6 +256,7 @@
   "scripts": {
     "typecheck": "node scripts/sync-typert-protocol.mjs && tsc -b tsconfig.host.json && node scripts/generate-typert.mjs && tsc -b tsconfig.client.json",
     "build": "node scripts/sync-typert-protocol.mjs && tsc -b tsconfig.host.json && tsdown -c tsdown.config.ts && node scripts/generate-typert.mjs && tsc -b tsconfig.client.json && tsdown --config packages/jev/tsdown.client.ts && node scripts/sync-github-runtime.mjs",
-    "test": "vitest run --exclude '**/.artifacts/**'"
+    "test": "vitest run --exclude '**/.artifacts/**'",
+    "test:compatibility": "node scripts/validation/compatibility-smoke.mjs"
   }
 }

@@ -9,6 +9,17 @@ permissions:
   contents: read
 
 jobs:
+  windows-smoke-commands:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - name: Check Windows package-manager launches
+        run: pnpm exec vitest run scripts/validation/compatibility-smoke.test.mjs
   check:
     runs-on: ubuntu-latest
     steps:
@@ -30,3 +41,7 @@ jobs:
             echo '::error::runtime/ differs from the committed build. Run pnpm run build and commit runtime/.'
             exit 1
           fi
+      - name: Install smoke browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Verify formal package compatibility
+        run: pnpm run test:compatibility
