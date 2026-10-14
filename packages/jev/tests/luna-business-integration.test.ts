@@ -33,8 +33,10 @@ import JevService, { type Config as JevConfig } from '../src/index.ts'
 import * as instructions from '../src/instructions.ts'
 import * as outputAdmission from '../src/output-admission.ts'
 import * as selection from '../src/selection.ts'
+import * as supervision from '../src/supervision.ts'
 import * as workspaceApproval from '../src/workspace-approval.ts'
 import type { JevLunaApi, Json } from '../src/types.ts'
+import { nativeRequest, routerRequest } from './fixtures/decisions-request.ts'
 
 interface NativeQuestion { name: string; type: string; instructions?: string }
 interface ProviderBody {
@@ -96,6 +98,13 @@ async function fixture(api: JevLunaApi, script: ModelEntry[], features: Record<s
       received.push(body)
       expect(body.model).toBe(api === 'openai' ? 'gpt-6-luna' : 'openai/gpt-6-luna-decisions')
       expect(Array.isArray(body.questions)).toBe(api === 'openai')
+      const validation = (api === 'openai' ? nativeRequest : routerRequest).safeParse(body)
+      if (!validation.success) {
+        handlerErrors.push(validation.error)
+        response.writeHead(400, { 'content-type': 'application/json' })
+        response.end(JSON.stringify({ error: 'Invalid Luna Decisions request' }))
+        return
+      }
       if (api === 'openai') {
         expect(typeof body.input).toBe('string')
         expect(body.state).toBeUndefined()
@@ -199,6 +208,56 @@ async function mountLogTool(ctx: Context) {
 }
 
 describe.each(['openrouter', 'openai'] as const)('existing businesses with Luna %s', api => {
+  it('sends a drift check with one recorded user requirement and a distinct insufficient-evidence option', async () => {
+    let h: Awaited<ReturnType<typeof fixture>>
+    h = await fixture(api, [call('inspect', 'probe', {}), async () => {
+      await vi.waitFor(async () => expect((await h.records('drift-monitoring'))[0]?.status).toBe('succeeded'))
+      return text('The fixture is ready')
+    }], { 'drift-monitoring': true }, body => {
+      const parsed = api === 'openai' ? nativeRequest.parse(body) : routerRequest.parse(body)
+      const evidence = Array.isArray(parsed.questions) ? parsed.questions.find(question => question.name === 'evidence') : parsed.questions.evidence
+      if (evidence?.type !== 'choice') throw new Error('Drift check must ask for evidence')
+      const evidenceIds = 'choices' in evidence ? evidence.choices.map(option => option.value) : Object.keys(evidence.criteria)
+      expect(evidenceIds).toHaveLength(2)
+      expect(evidenceIds).toContain('no-supporting-evidence')
+      const supporting = evidenceIds.find(id => id !== 'no-supporting-evidence')!
+      const selections: Record<string, string> = { assessment: 'on-track', evidence: supporting }
+      if (Array.isArray(parsed.questions)) return { answers: parsed.questions.map(question => {
+        if (question.type !== 'choice') throw new Error('Drift check must use Choice questions')
+        const choice = selections[question.name]!
+        return { name: question.name, type: 'choice', choice, confidence: 0.95,
+          probabilities: question.choices.map(option => ({ value: option.value, probability: option.value === choice ? 1 : 0 })) }
+      }) }
+      return { answers: Object.fromEntries(Object.entries(parsed.questions).map(([id, question]) => {
+        if (question.type !== 'choice') throw new Error('Drift check must use Choice questions')
+        const choice = selections[id]!
+        return [id, { choice, probabilities: Object.fromEntries(Object.keys(question.criteria).map(option => [option, option === choice ? 1 : 0])) }]
+      })) }
+    })
+    await h.ctx.plugin(supervision, { driftInterval: 1 })
+    h.ctx.tools.register(defineTool({ name: 'probe', description: 'Record an investigation result', parameters: {},
+      output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] }, execute: async () => 'Recorded result' }))
+    await h.run('Investigate and report that the fixture is ready')
+    expect(h.received).toHaveLength(1)
+    expect(h.questions).toEqual([])
+    expect(h.model.requests).toHaveLength(2)
+    const record = (await h.records('drift-monitoring'))[0]!
+    expect(record?.status).toBe('succeeded')
+    expect(record?.attemptRecords[0]?.connection.connectionId).toBe(`luna-${api}`)
+    expect(record?.attemptRecords[0]?.networkRecords).toHaveLength(1)
+    expect(record?.attemptRecords[0]?.networkRecords?.[0]?.httpStatus).toBe(200)
+  })
+
+  it('skips an ordinary completion review when the current turn has no Todo', async () => {
+    const h = await fixture(api, [text('The fixture is ready')], { 'completion-check': true }, () => { throw new Error('No Todo means no judgment request') })
+    await h.ctx.plugin(supervision)
+    await h.run('Reply that the fixture is ready')
+    expect(h.received).toHaveLength(0)
+    expect(h.questions).toEqual([])
+    expect(h.model.requests).toHaveLength(1)
+    expect(await h.records('completion-check')).toHaveLength(0)
+  })
+
   it('ranks original glob paths by Noul probability and retains tie order and configured limits', async () => {
     const h = await fixture(api, [call('glob-original', 'glob', { pattern: '*.ts' }), text('Found the requested files')],
       { 'file-ranking': true, 'skill-selection': false }, body => {

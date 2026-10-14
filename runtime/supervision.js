@@ -1,4 +1,4 @@
-import { n as JevError } from "./types-Bf-UMMSE.js";
+import { n as JevError } from "./types-CSZ3F8d6.js";
 import s from "@deepseek-ai/schemastery";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 //#region packages/jev/lib/types/completion-report.js
@@ -147,10 +147,12 @@ const choices = {
 		"unknown"
 	]
 };
+const NO_SUPPORTING_EVIDENCE = "no-supporting-evidence";
 function verdict(response, request) {
 	const assessment = response.answers.find((answer) => answer.id === "assessment");
 	const evidence = response.answers.find((answer) => answer.id === "evidence");
 	if (response.answers.length !== 2 || assessment?.kind !== "choice" || evidence?.kind !== "choice") return void 0;
+	if (evidence.optionId === NO_SUPPORTING_EVIDENCE) return void 0;
 	const question = request.questions.find((question) => question.id === "evidence");
 	if (question?.kind !== "choice") return void 0;
 	const selected = question.options.find((option) => option.id === evidence.optionId);
@@ -223,9 +225,9 @@ function evidence(ctx, agent, mode, budget, requestId) {
 		id: goalIdentity(goal),
 		description: omittedGoal ? "Goal objective exceeds evidence budget; choose unknown." : goal.objective
 	});
-	if (options.length === 0) options.push({
-		id: "no-evidence",
-		description: "No evidence fits the configured budget; choose unknown."
+	options.push({
+		id: NO_SUPPORTING_EVIDENCE,
+		description: "None of the supplied requirements or records supports a determinate assessment; choose unknown."
 	});
 	const state = JSON.parse(JSON.stringify({
 		mode,
@@ -248,24 +250,27 @@ function evidence(ctx, agent, mode, budget, requestId) {
 		unknown: "The recorded evidence is insufficient or omitted, so completion cannot be determined; do not infer success or invent missing work."
 	};
 	return {
-		state,
-		questions: [{
-			id: "assessment",
-			kind: "choice",
-			prompt: "Assess " + mode + " from the existing evidence only." + (mode === "completion" ? " Check the submitted answer and claimed deliverables, verification results, and side effects against the actual recorded tool results and applicable user requirements. A final factual claim contradicted by recorded evidence is an omission requiring correction, even if the requested investigation is otherwise finished; it cannot be complete. A supplement may correct the report or complete only work already allowed by the user. Read-only or no-repair instructions remain binding: do not require deleting artifacts, repairing files, or other unauthorized work. A reminder is not itself proof of a violation or a mandatory pause; needs-user requires an actual unresolved user decision, not merely a reminder or a correctable factual error." : ""),
-			options: mode === "completion" ? choices.completion.map((id) => ({
-				id,
-				description: completionDescriptions[id]
-			})) : choices[mode].map((id) => ({
-				id,
-				description: id
-			}))
-		}, {
-			id: "evidence",
-			kind: "choice",
-			prompt: "Which recorded requirement or message most directly supports the assessment?",
-			options
-		}]
+		hasRecords: messages.length > 0,
+		request: {
+			state,
+			questions: [{
+				id: "assessment",
+				kind: "choice",
+				prompt: "Assess " + mode + " from the existing evidence only." + (mode === "completion" ? " Check the submitted answer and claimed deliverables, verification results, and side effects against the actual recorded tool results and applicable user requirements. A final factual claim contradicted by recorded evidence is an omission requiring correction, even if the requested investigation is otherwise finished; it cannot be complete. A supplement may correct the report or complete only work already allowed by the user. Read-only or no-repair instructions remain binding: do not require deleting artifacts, repairing files, or other unauthorized work. A reminder is not itself proof of a violation or a mandatory pause; needs-user requires an actual unresolved user decision, not merely a reminder or a correctable factual error." : ""),
+				options: mode === "completion" ? choices.completion.map((id) => ({
+					id,
+					description: completionDescriptions[id]
+				})) : choices[mode].map((id) => ({
+					id,
+					description: id
+				}))
+			}, {
+				id: "evidence",
+				kind: "choice",
+				prompt: "Which recorded requirement or message most directly supports the assessment?",
+				options
+			}]
+		}
 	};
 }
 /** Install three independently enabled consumers; native goals retain exclusive continuation ownership. */
@@ -358,7 +363,10 @@ function apply(ctx, config) {
 		let identity = "";
 		let goalAtAttempt = "";
 		let request;
-		const outcome = await ctx.jev.judge({
+		let evidenceBudget = config.evidenceChars.get();
+		let evidenceUnavailable = false;
+		const hasRecords = evidence(ctx, agent, mode, evidenceBudget, state.requestId).hasRecords;
+		const options = {
 			featureId: feature ?? (mode === "completion" && ctx.goals.get(agent)?.phase !== "active" ? "completion-check" : "goal-supervision"),
 			agent,
 			signal,
@@ -369,7 +377,11 @@ function apply(ctx, config) {
 			refresh: () => {
 				identity = version(ctx, agent);
 				goalAtAttempt = goalIdentity(ctx.goals.get(agent));
-				request = evidence(ctx, agent, mode, config.evidenceChars.get(), state.requestId);
+				evidenceBudget = config.evidenceChars.get();
+				const currentEvidence = evidence(ctx, agent, mode, evidenceBudget, state.requestId);
+				evidenceUnavailable = !currentEvidence.hasRecords;
+				if (evidenceUnavailable) throw new JevError("UNDETERMINED", "No recorded evidence is available for this check");
+				request = currentEvidence.request;
 				return request;
 			},
 			interpret: (response) => {
@@ -380,7 +392,9 @@ function apply(ctx, config) {
 				};
 			},
 			canAdopt: () => current(agent, state, identity) || "Requirements, goal, or execution changed"
-		});
+		};
+		const outcome = hasRecords ? await ctx.jev.judge(options) : await ctx.jev.judgeOnce(options);
+		if (evidenceUnavailable && outcome.kind === "failed" && outcome.operationId !== void 0) await ctx.jev.noteFailure(outcome.operationId, "UNDETERMINED", `No recorded evidence was available; no assessment was made. Request: ${state.requestId}; evidence character budget: ${evidenceBudget}`);
 		if (outcome.kind === "ok") assessments.set(outcome.operationId, verdict(outcome.response, request));
 		if (outcome.kind === "cancelled" && goalIdentity(ctx.goals.get(agent)) === goalAtAttempt) pause(agent);
 		return outcome;
@@ -594,6 +608,8 @@ function apply(ctx, config) {
 			state.steps = 0;
 			let identity = "";
 			let request;
+			let evidenceBudget = config.evidenceChars.get();
+			let evidenceUnavailable = false;
 			const outcome = await ctx.jev.judgeOnce({
 				featureId: "drift-monitoring",
 				agent,
@@ -605,7 +621,11 @@ function apply(ctx, config) {
 				},
 				refresh: () => {
 					identity = version(ctx, agent);
-					request = evidence(ctx, agent, "drift", config.evidenceChars.get(), state.requestId);
+					evidenceBudget = config.evidenceChars.get();
+					const currentEvidence = evidence(ctx, agent, "drift", evidenceBudget, state.requestId);
+					evidenceUnavailable = !currentEvidence.hasRecords;
+					if (evidenceUnavailable) throw new JevError("UNDETERMINED", "No recorded evidence is available for this check");
+					request = currentEvidence.request;
 					return request;
 				},
 				interpret: (response) => {
@@ -617,6 +637,7 @@ function apply(ctx, config) {
 				},
 				canAdopt: () => current(agent, state, identity) || "Task changed or ended; no wakeup"
 			});
+			if (evidenceUnavailable && outcome.kind === "failed" && outcome.operationId !== void 0) await ctx.jev.noteFailure(outcome.operationId, "UNDETERMINED", `No recorded evidence was available; no assessment was made. Request: ${state.requestId}; evidence character budget: ${evidenceBudget}`);
 			if (outcome.kind !== "ok") return;
 			const result = verdict(outcome.response, request);
 			if (result.value === "drift") {
@@ -684,7 +705,7 @@ function apply(ctx, config) {
 		const result = await judge(agent, stateFor(agent), "completion", exec.signal, "goal-supervision");
 		if (result.kind !== "ok") return {
 			kind: "deny",
-			reason: "Jev completion check was cancelled or became stale."
+			reason: "Jev completion check did not provide usable evidence."
 		};
 		if (goalIdentity(ctx.goals.get(agent)) !== identity) {
 			await receipt(result.operationId, "goal-complete-stale", "not-adopted", "Goal revision changed");

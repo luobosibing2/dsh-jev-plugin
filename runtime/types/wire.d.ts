@@ -20,7 +20,7 @@ export declare class DecisionResponseError extends TypeError {
     readonly code: 'REFUSAL' | 'INVALID_RESPONSE';
     constructor(code: 'REFUSAL' | 'INVALID_RESPONSE', message: string);
 }
-/** Encode complete business input for the explicitly selected Decisions protocol. */
+/** Encode complete business input; Luna Choice questions require 2 to 255 unique options. */
 export declare function protocolBody(connectionId: JevConnectionId, model: string, request: JevRequest): Json;
 /** Read known counts independently of answer validation so refusals retain usage. */
 export declare function knownUsage(raw: unknown): JevUsage | undefined;

@@ -8,7 +8,7 @@ import type {} from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import { completionReport, completionVerdict, completionPreflight } from './completion-report.ts'
-import type { JevJudgeOptions, JevJudgeResult } from './index.ts'
+import { JevError, type JevJudgeOptions, type JevJudgeResult, type JevJudgeOnceResult } from './index.ts'
 import type { JevRequest, JevResponse, Json } from './types.ts'
 import type { SupervisionConfigValues } from './supervision-types.ts'
 
@@ -29,6 +29,7 @@ declare module '@deepseek-ai/dsh-llm' {
 
 type Check = 'drift-monitoring' | 'completion-check' | 'goal-supervision'
 interface Verdict { value: string; reason: string; issueKey: string }
+interface Evidence { request: JevRequest; hasRecords: boolean }
 interface State {
   steps: number
   enabled: boolean
@@ -52,11 +53,13 @@ const choices = {
   completion: ['complete', 'omission', 'needs-user', 'unknown'],
   progress: ['progress', 'no-progress', 'needs-user', 'unknown'],
 } as const
+const NO_SUPPORTING_EVIDENCE = 'no-supporting-evidence'
 
 function verdict(response: JevResponse, request: JevRequest): Verdict | undefined {
   const assessment = response.answers.find(answer => answer.id === 'assessment')
   const evidence = response.answers.find(answer => answer.id === 'evidence')
   if (response.answers.length !== 2 || assessment?.kind !== 'choice' || evidence?.kind !== 'choice') return undefined
+  if (evidence.optionId === NO_SUPPORTING_EVIDENCE) return undefined
   const question = request.questions.find(question => question.id === 'evidence')
   if (question?.kind !== 'choice') return undefined
   const selected = question.options.find(option => option.id === evidence.optionId)
@@ -90,7 +93,7 @@ function version(ctx: Context, agent: Agent): string {
 }
 
 /** Only recorded visible evidence is sent; reasoning blocks and new filesystem reads are excluded. */
-function evidence(ctx: Context, agent: Agent, mode: keyof typeof choices, budget: number, requestId: string): JevRequest {
+function evidence(ctx: Context, agent: Agent, mode: keyof typeof choices, budget: number, requestId: string): Evidence {
   const history = agent.session.deriveMessages()
   const goal = ctx.goals.get(agent)
   let start = Math.max(0, history.findIndex(message => message.id === requestId))
@@ -120,7 +123,7 @@ function evidence(ctx: Context, agent: Agent, mode: keyof typeof choices, budget
   const options: { id: string; description: string }[] = selected.map(message => ({ id: message.id,
     description: JSON.stringify(message.content).slice(0, 800) + (JSON.stringify(message.content).length > 800 ? ' [excerpt; full record above]' : '') }))
   if (goal?.phase === 'active') options.unshift({ id: goalIdentity(goal), description: omittedGoal ? 'Goal objective exceeds evidence budget; choose unknown.' : goal.objective })
-  if (options.length === 0) options.push({ id: 'no-evidence', description: 'No evidence fits the configured budget; choose unknown.' })
+  options.push({ id: NO_SUPPORTING_EVIDENCE, description: 'None of the supplied requirements or records supports a determinate assessment; choose unknown.' })
   const completionRules = 'Check the submitted answer and claimed deliverables, verification results, and side effects against the actual recorded tool results and applicable user requirements. A final factual claim contradicted by recorded evidence is an omission requiring correction, even if the requested investigation is otherwise finished; it cannot be complete. A supplement may correct the report or complete only work already allowed by the user. Read-only or no-repair instructions remain binding: do not require deleting artifacts, repairing files, or other unauthorized work. A reminder is not itself proof of a violation or a mandatory pause; needs-user requires an actual unresolved user decision, not merely a reminder or a correctable factual error.'
   const state = JSON.parse(JSON.stringify({
     mode, goal: omittedGoal ? { id: goal?.id ?? '', objectiveOmitted: true } : goal ?? null, messages, completeEvidence: !omittedGoal && omitted === 0 && messages.length > 0, omittedMessages: omitted, excludedEarlierMessages: start, evidenceScope: goal?.phase === 'active' ? mode === 'progress' ? 'current and previous goal round with current goal' : 'current goal revision rounds' : 'original user request and its subsequent work', evidenceCharacterBudget: budget,
@@ -133,12 +136,12 @@ function evidence(ctx: Context, agent: Agent, mode: keyof typeof choices, budget
     'needs-user': 'An unresolved decision or authorization from the user is necessary to finish; a report correction or other already-authorized work cannot resolve it.',
     unknown: 'The recorded evidence is insufficient or omitted, so completion cannot be determined; do not infer success or invent missing work.',
   }
-  return { state, questions: [
+  return { hasRecords: messages.length > 0, request: { state, questions: [
     { id: 'assessment', kind: 'choice', prompt: 'Assess ' + mode + ' from the existing evidence only.' + (mode === 'completion' ? ' ' + completionRules : ''), options: mode === 'completion'
       ? choices.completion.map(id => ({ id, description: completionDescriptions[id] }))
       : choices[mode].map(id => ({ id, description: id })) },
     { id: 'evidence', kind: 'choice', prompt: 'Which recorded requirement or message most directly supports the assessment?', options },
-  ] }
+  ] } }
 }
 
 /** Install three independently enabled consumers; native goals retain exclusive continuation ownership. */
@@ -184,20 +187,36 @@ export function apply(ctx: Context, config: Config): void {
   const current = (agent: Agent, state: State, identity: string) =>
     live(agent) && state.active && !state.signal?.aborted && version(ctx, agent) === identity
 
-  async function judge(agent: Agent, state: State, mode: 'completion' | 'progress', signal: AbortSignal, feature?: Check): Promise<JevJudgeResult> {
+  async function judge(agent: Agent, state: State, mode: 'completion' | 'progress', signal: AbortSignal, feature?: Check): Promise<JevJudgeOnceResult> {
     let identity = ''
     let goalAtAttempt = ''
     let request: JevRequest
-    const outcome = await ctx.jev.judge({
+    let evidenceBudget = config.evidenceChars.get()
+    let evidenceUnavailable = false
+    const hasRecords = evidence(ctx, agent, mode, evidenceBudget, state.requestId).hasRecords
+    const options: JevJudgeOptions = {
       featureId: feature ?? (mode === 'completion' && ctx.goals.get(agent)?.phase !== 'active' ? 'completion-check' : 'goal-supervision'),
       agent, signal, link: { sessionId: agent.session.id, inputVersion: state.requestId },
-      refresh: () => { identity = version(ctx, agent); goalAtAttempt = goalIdentity(ctx.goals.get(agent)); request = evidence(ctx, agent, mode, config.evidenceChars.get(), state.requestId); return request },
+      refresh: () => {
+        identity = version(ctx, agent)
+        goalAtAttempt = goalIdentity(ctx.goals.get(agent))
+        evidenceBudget = config.evidenceChars.get()
+        const currentEvidence = evidence(ctx, agent, mode, evidenceBudget, state.requestId)
+        evidenceUnavailable = !currentEvidence.hasRecords
+        if (evidenceUnavailable) throw new JevError('UNDETERMINED', 'No recorded evidence is available for this check')
+        request = currentEvidence.request
+        return request
+      },
       interpret: response => {
         const result = verdict(response, request)
         return result !== undefined && result.value !== 'unknown' ? { usable: true } : { usable: false, reason: 'Jev 无法判定 / Evidence is insufficient for this check' }
       },
       canAdopt: () => current(agent, state, identity) || 'Requirements, goal, or execution changed',
-    })
+    }
+    const outcome = hasRecords ? await ctx.jev.judge(options) : await ctx.jev.judgeOnce(options)
+    if (evidenceUnavailable && outcome.kind === 'failed' && outcome.operationId !== undefined) {
+      await ctx.jev.noteFailure(outcome.operationId, 'UNDETERMINED', `No recorded evidence was available; no assessment was made. Request: ${state.requestId}; evidence character budget: ${evidenceBudget}`)
+    }
     if (outcome.kind === 'ok') assessments.set(outcome.operationId, verdict(outcome.response, request!)!)
     if (outcome.kind === 'cancelled' && goalIdentity(ctx.goals.get(agent)) === goalAtAttempt) pause(agent)
     return outcome
@@ -368,13 +387,26 @@ export function apply(ctx: Context, config: Config): void {
       state.steps = 0
       let identity = ''
       let request: JevRequest
+      let evidenceBudget = config.evidenceChars.get()
+      let evidenceUnavailable = false
       const outcome = await ctx.jev.judgeOnce({
         featureId: 'drift-monitoring', agent, signal: AbortSignal.any([lifetime.signal, ...state.signal === undefined ? [] : [state.signal]]),
         link: { sessionId: session.id, stepId: String(event.seq), inputVersion: state.requestId },
-        refresh: () => { identity = version(ctx, agent); request = evidence(ctx, agent, 'drift', config.evidenceChars.get(), state.requestId); return request },
+        refresh: () => {
+          identity = version(ctx, agent)
+          evidenceBudget = config.evidenceChars.get()
+          const currentEvidence = evidence(ctx, agent, 'drift', evidenceBudget, state.requestId)
+          evidenceUnavailable = !currentEvidence.hasRecords
+          if (evidenceUnavailable) throw new JevError('UNDETERMINED', 'No recorded evidence is available for this check')
+          request = currentEvidence.request
+          return request
+        },
         interpret: response => { const result = verdict(response, request); return result !== undefined && result.value !== 'unknown' ? { usable: true } : { usable: false, reason: 'Drift is undetermined' } },
         canAdopt: () => current(agent, state, identity) || 'Task changed or ended; no wakeup',
       })
+      if (evidenceUnavailable && outcome.kind === 'failed' && outcome.operationId !== undefined) {
+        await ctx.jev.noteFailure(outcome.operationId, 'UNDETERMINED', `No recorded evidence was available; no assessment was made. Request: ${state.requestId}; evidence character budget: ${evidenceBudget}`)
+      }
       if (outcome.kind !== 'ok') return
       const result = verdict(outcome.response, request!)!
       if (result.value === 'drift') {
@@ -426,7 +458,7 @@ export function apply(ctx: Context, config: Config): void {
     if (goal === undefined || goal.phase === 'complete') return decision
     const identity = goalIdentity(goal)
     const result = await judge(agent, stateFor(agent), 'completion', exec.signal, 'goal-supervision')
-    if (result.kind !== 'ok') return { kind: 'deny', reason: 'Jev completion check was cancelled or became stale.' }
+    if (result.kind !== 'ok') return { kind: 'deny', reason: 'Jev completion check did not provide usable evidence.' }
     if (goalIdentity(ctx.goals.get(agent)) !== identity) {
       await receipt(result.operationId, 'goal-complete-stale', 'not-adopted', 'Goal revision changed')
       return { kind: 'deny', reason: 'Goal changed during completion check.' }

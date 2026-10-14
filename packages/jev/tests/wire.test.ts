@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { knownUsage, parseProtocolResponse, parseWireResponse, protocolBody, validateRequest, wireBody } from '../src/wire.ts'
 import type { JevRequest } from '../src/types.ts'
-import { routerRequest } from './fixtures/decisions-request.ts'
+import { nativeRequest, routerRequest } from './fixtures/decisions-request.ts'
 
 const request: JevRequest = {
   state: {},
@@ -53,6 +53,57 @@ describe('System One typed exchange', () => {
     expect(() => validateRequest({ state: {}, questions: [{ id: 'bad', kind: 'choice', prompt: 'pick', options: [] }] })).toThrow()
     expect(() => validateRequest({ state: {}, questions: [{ id: 'bad', kind: 'score', prompt: 'rate', levels: ['only'] }] })).toThrow()
   })
+
+  it('preserves the existing Jev single-option exchange', () => {
+    const input: JevRequest = { state: {}, questions: [{ id: 'only', kind: 'choice', prompt: 'Pick', options: [{ id: 'left', description: null }] }] }
+    expect(() => validateRequest(input)).not.toThrow()
+    expect(protocolBody('jev', 'jev-latest', input)).toEqual({ model: 'jev-latest', state: {},
+      questions: { only: { type: 'choice', instructions: 'Pick', criteria: { left: null } } } })
+  })
+})
+
+describe.each(['luna-openrouter', 'luna-openai'] as const)('Choice option limits for %s', connectionId => {
+  const choices = (count: number): JevRequest => ({ state: {}, questions: [{ id: 'pick', kind: 'choice', prompt: 'Pick',
+    options: Array.from({ length: count }, (_, index) => ({ id: `candidate-${index}`, description: null })),
+  }] })
+
+  it.each([0, 1, 256])('rejects %i options before serialization', count => {
+    expect(() => protocolBody(connectionId, 'luna-model', choices(count))).toThrow(TypeError)
+  })
+
+  it.each([2, 255])('preserves all %i distinct options', count => {
+    const body = protocolBody(connectionId, 'luna-model', choices(count))
+    if (connectionId === 'luna-openrouter') {
+      expect(routerRequest.safeParse(body).success).toBe(true)
+      expect(body).toMatchObject({ questions: { pick: { criteria: Object.fromEntries(
+        Array.from({ length: count }, (_, index) => [`candidate-${index}`, null]),
+      ) } } })
+    } else {
+      expect(nativeRequest.safeParse(body).success).toBe(true)
+      expect(body).toMatchObject({ questions: [{ name: 'pick', choices: Array.from({ length: count }, (_, index) => ({ value: `candidate-${index}` })) }] })
+    }
+  })
+
+  it('checks every Choice question and rejects duplicate identities', () => {
+    const input = choices(2)
+    expect(() => protocolBody(connectionId, 'luna-model', { ...input, questions: [...input.questions, {
+      id: 'second', kind: 'choice', prompt: 'Pick', options: [{ id: 'only', description: null }],
+    }] })).toThrow('Luna choice second needs 2 to 255 unique options')
+    expect(() => protocolBody(connectionId, 'luna-model', { ...input, questions: [{ id: 'duplicate', kind: 'choice', prompt: 'Pick',
+      options: [{ id: 'same', description: null }, { id: 'same', description: 'Repeated identity' }],
+    }] })).toThrow('invalid option')
+  })
+})
+
+it.each([0, 1, 2, 255, 256])('enforces Luna Choice option limits in both HTTP fixtures for %i options', count => {
+  const options = Array.from({ length: count }, (_, index) => ({ value: `candidate-${index}` }))
+  const accepted = count >= 2 && count <= 255
+  expect(routerRequest.safeParse({ model: 'openai/gpt-6-luna-decisions', state: {}, questions: {
+    pick: { type: 'choice', instructions: 'Pick', criteria: Object.fromEntries(options.map(option => [option.value, null])) },
+  } }).success).toBe(accepted)
+  expect(nativeRequest.safeParse({ model: 'gpt-6-luna', input: '{}', questions: [
+    { name: 'pick', type: 'choice', instructions: 'Pick', choices: options },
+  ] }).success).toBe(accepted)
 })
 
 describe('native Decisions exchange', () => {
@@ -124,7 +175,7 @@ it('uses accepted OpenRouter inputs for scalar state, missing score descriptions
   for (const state of [null, false, 3.5] as const) {
     for (const criteria of [{ true: 'ready' }, { true: null, false: ['original false condition'] }, {}]) {
       const input: JevRequest = { state, questions: [
-        { id: 'route', kind: 'choice', prompt: { original: [null, false] }, options: [{ id: 'false', description: null }] },
+        { id: 'route', kind: 'choice', prompt: { original: [null, false] }, options: [{ id: 'false', description: null }, { id: 'true', description: null }] },
         { id: 'risk', kind: 'score', prompt: 'Score', levels: [null, '', { original: [null, 'high'] }] },
         { id: 'ready', kind: 'noul', prompt: ['Original instructions'], criteria },
       ] }

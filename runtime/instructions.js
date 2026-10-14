@@ -1,4 +1,4 @@
-import { n as JevError } from "./types-Bf-UMMSE.js";
+import { n as JevError } from "./types-CSZ3F8d6.js";
 import "@deepseek-ai/cordis";
 import s from "@deepseek-ai/schemastery";
 import { createHash } from "node:crypto";
@@ -259,15 +259,7 @@ function request(ctx, exec, current, config) {
 			sources: current.sources.map((source) => ({ ...source })),
 			omitted: current.omitted
 		},
-		questions: current.sources.length === 0 ? [{
-			id: "no-requirements",
-			kind: "choice",
-			prompt: "No requirements were supplied.",
-			options: [{
-				id: "not-applicable",
-				description: null
-			}]
-		}] : current.sources.map((source) => ({
+		questions: current.sources.map((source) => ({
 			id: source.id,
 			kind: "choice",
 			prompt: "Does the observed operation conflict with a currently applicable requirement in " + source.id + "? Consider every source, precedence, scope, exceptions, and amendments together.",
@@ -357,6 +349,7 @@ function apply(ctx, config) {
 				refresh: async () => {
 					current = await evidence(ctx, exec, config);
 					if (current.omitted.length > 0) throw new JevError("UNDETERMINED", "Relevant evidence was omitted; no judgment sent");
+					if (current.sources.length === 0) throw new JevError("NO_REQUIREMENTS", "No user or applicable instruction originals were supplied; no judgment sent");
 					return request(ctx, exec, current, config);
 				},
 				interpret: (response) => response.answers.some((answer) => answer.kind !== "choice" || answer.optionId === "undetermined") ? {
@@ -365,6 +358,7 @@ function apply(ctx, config) {
 				} : { usable: true },
 				canAdopt: async () => agent.status !== "running" || state.epoch !== epoch ? "The original turn ended" : current?.fingerprint !== (await evidence(ctx, exec, config)).fingerprint ? "Current instructions changed" : true
 			}).then(async (result) => {
+				if (result.kind === "failed" && result.failure.code === "NO_REQUIREMENTS" && result.operationId !== void 0 && current !== void 0) await ctx.jev.noteFailure(result.operationId, "NO_REQUIREMENTS", "No user or applicable instruction originals were supplied; no applicability judgment was made. Request: " + current.requestId);
 				if (result.kind !== "ok" || current === void 0) return;
 				const conflicts = current.sources.filter((source) => result.response.answers.some((answer) => answer.id === source.id && answer.kind === "choice" && answer.optionId === "conflict"));
 				if (conflicts.length === 0) {

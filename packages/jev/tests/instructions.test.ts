@@ -41,7 +41,7 @@ class BindingRuntime extends PtcRuntime {
 }
 
 async function fixture(ptc = false, sessionDirectory = '', nativeFs = false,
-  directory: { service?: boolean; sessionCwd?: boolean } = {}) {
+  directory: { service?: boolean; sessionCwd?: boolean; userText?: string } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'jev-instructions-'))
   cleanups.push(() => rm(root, { recursive: true, force: true }))
   await mkdir(join(root, '.git'))
@@ -64,7 +64,7 @@ async function fixture(ptc = false, sessionDirectory = '', nativeFs = false,
       const writes = body.state.operation.name === 'write'
       const text = source?.text ?? ''
       const conflict = writes && text.includes('Write only in isolated workspace') && !body.state.operation.arguments.includes('plan.md')
-      return [id, { choice: override ?? (id === 'no-requirements' ? 'not-applicable' : conflict ? 'conflict' : 'no-conflict') }]
+      return [id, { choice: override ?? (conflict ? 'conflict' : 'no-conflict') }]
     }))
     response.writeHead(status, { 'content-type': 'application/json' })
     response.end(JSON.stringify({ answers }))
@@ -115,7 +115,7 @@ async function fixture(ptc = false, sessionDirectory = '', nativeFs = false,
     }))
   }
   const session = ctx.sessions.create(SessionId('instructions-' + root), { meta: directory.sessionCwd === false ? {} : { cwd } })
-  session.append('user/message', user('Update this project.'), { surfaceOp: 'append' })
+  session.append('user/message', user(directory.userText ?? 'Update this project.'), { surfaceOp: 'append' })
   session.append('turn/start', { turn: 1 })
   const agent = { ctx, id: session.id, session, status: 'running', inbox: { nextStep: [], nextTurn: [] }, options: {},
     steer: vi.fn(), followup: vi.fn(), send: vi.fn() } as never as Agent
@@ -153,6 +153,28 @@ async function fixture(ptc = false, sessionDirectory = '', nativeFs = false,
 }
 
 describe('instruction guidance with original Native/PTC pipeline and localhost Jev', () => {
+  it('records missing requirement originals without HTTP, reminders, or a human wait while the tool continues', async () => {
+    const f = await fixture(false, '', false, { userText: '' })
+    expect((await f.invoke()).isError).toBe(false)
+    await f.settled()
+    expect(f.requests).toHaveLength(0)
+    expect(f.ask).not.toHaveBeenCalled()
+    expect(f.writes()).toBe(1)
+    expect(await readFile(join(f.root, 'product.txt'), 'utf8')).toBe('written')
+    expect(await f.step()).toHaveLength(0)
+    await vi.waitFor(async () => {
+      const record = await f.ctx.jev.getRecord((await f.ctx.jev.listRecords({})).items[0]!.id)
+      expect(record?.failure?.message).toContain('no applicability judgment was made')
+    })
+    const record = await f.ctx.jev.getRecord((await f.ctx.jev.listRecords({})).items[0]!.id)
+    expect(record?.status).toBe('failed')
+    expect(record?.failure?.code).toBe('NO_REQUIREMENTS')
+    expect(record?.attemptRecords).toHaveLength(0)
+    expect(record?.failure?.message).toContain('no applicability judgment was made')
+    expect(record?.failure?.message).toContain(f.session.deriveMessages()[0]!.id)
+    expect(record?.receipts).toHaveLength(0)
+  })
+
   it('reads operation paths and rules from each legacy Session without a directory service', async () => {
     const f = await fixture(false, '', false, { service: false })
     await f.rule('Root directory instructions.')

@@ -130,11 +130,16 @@ export class DecisionResponseError extends TypeError {
 
 function text(value: Json): string { return typeof value === 'string' ? value : JSON.stringify(value) }
 
-/** Encode complete business input for the explicitly selected Decisions protocol. */
+/** Encode complete business input; Luna Choice questions require 2 to 255 unique options. */
 export function protocolBody(connectionId: JevConnectionId, model: string, request: JevRequest): Json {
   if (connectionId === 'jev') return wireBody(model, request)
+  validateRequest(request)
+  for (const question of request.questions) {
+    if (question.kind === 'choice' && (question.options.length < 2 || question.options.length > 255)) {
+      throw new TypeError(`Luna choice ${question.id} needs 2 to 255 unique options`)
+    }
+  }
   if (connectionId === 'luna-openrouter') {
-    validateRequest(request)
     return { model, state: typeof request.state === 'string' || request.state !== null && typeof request.state === 'object'
       ? request.state : JSON.stringify(request.state), questions: Object.fromEntries(request.questions.map(question => {
       if (question.kind === 'score') return [question.id, { type: 'score', instructions: question.prompt, criteria: question.levels.map(level => level ?? '') }]
@@ -145,7 +150,6 @@ export function protocolBody(connectionId: JevConnectionId, model: string, reque
       return [question.id, wireQuestion(question)]
     })) }
   }
-  validateRequest(request)
   return { model, input: text(request.state), questions: request.questions.map(question => {
     const common = { name: question.id, instructions: text(question.prompt) }
     switch (question.kind) {
