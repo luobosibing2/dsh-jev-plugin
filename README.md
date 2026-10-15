@@ -71,7 +71,7 @@ Each classification covers one complete DSH model step: its recorded reasoning, 
 
 ## Install through the Web UI (recommended)
 
-Supported DSH releases are **0.1.7-rc.1, 0.1.7-rc.2, 0.2.0-rc.1, 0.2.0-rc.2 and 0.2.1-alpha.2**. The package declares `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2`; other releases, including 0.2.1-alpha.1, are outside this declaration. Install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
+Supported DSH releases are **0.1.7-rc.1, 0.1.7-rc.2, 0.2.0-rc.1, 0.2.0-rc.2, 0.2.1-alpha.2 and 0.2.1-alpha.3**. The package declares `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3`; other releases, including 0.2.1-alpha.1, are outside this declaration. Install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
 
 1. Open **Plugins in the sidebar → Add plugin**.
 2. Paste the GitHub URL below into **Package name or address**, then click **Install**.
