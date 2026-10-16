@@ -189,10 +189,24 @@ it('does not auto-deliver a correction to an agent that never received the old o
   const f = await fixture('replacement')
   const a = await f.child('a')
   const b = await f.child('b')
+  const queued = Promise.withResolvers<void>()
+  const writeReceipt = f.ctx.jev.writeReceipt.bind(f.ctx.jev)
+  const observer = vi.spyOn(f.ctx.jev, 'writeReceipt').mockImplementation(async (operation, receipt) => {
+    try {
+      const saved = await writeReceipt(operation, receipt)
+      if (receipt.id === 'delivery-root-queued') queued.resolve()
+      return saved
+    } catch (error) {
+      if (receipt.id === 'delivery-root-queued') queued.reject(error)
+      throw error
+    }
+  })
+  cleanups.push(async () => { observer.mockRestore() })
   await f.send(a.agent, f.root, 'Tests cannot run.')
   await f.send(b.agent, f.root, 'Environment repaired; test suite now runs.\nEvidence: complete passing output.')
-  await vi.waitFor(() => expect(f.relations()[0]?.kind).toBe('replacement'))
-  await vi.waitFor(() => expect(f.relations()[0]?.deliveries[0]?.state).toMatch(/queued|model-received/))
+  await queued.promise
+  expect(f.relations()[0]?.kind).toBe('replacement')
+  expect(f.relations()[0]?.deliveries[0]?.state).toMatch(/queued|model-received/)
   expect(f.relations()[0]!.deliveries.map(item => item.recipientId)).toEqual(['root'])
   expect(f.findings()[0]!.supersededBy).toBe(f.findings()[1]!.id)
 })
