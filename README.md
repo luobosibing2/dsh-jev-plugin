@@ -171,7 +171,7 @@ Requests use the connection saved when an attempt starts. A later switch applies
 
 Selection defaults are 5 skill summaries, at most 40 glob matches eligible for ranking, and 12 displayed ranked paths. A larger glob skips judgment ranking rather than silently judging only the first 40. Supervision defaults are a drift check every 6 completed model steps, a pause after 3 native goal rounds without progress, and at most 3 automatic completion supplements. The supplement limit accepts positive safe integers and is saved in the current profile; invalid input shows an error and keeps the saved value. These independent counts can be changed without enabling the features.
 
-Long-log and test-log admission have independent switches, both off by default. Generic command logs start at 6,000 Unicode code points and recognized test logs at 4,000. The default omit-probability threshold is 0.8 and the judgment wait limit is 4 seconds. The settings page exposes these and the other admission budgets without enabling either feature.
+Long-log and test-log admission have independent switches, both off by default. Generic command logs start at 6,000 Unicode code points and recognized test logs at 4,000. The generic limit defaults to 48 eligible candidate blocks; first, last, and other retained groups do not count. With more than 48 candidates, the generic branch skips filtering at this default. The default omit-probability threshold is 0.8 and the judgment wait limit is 4 seconds. The settings page exposes these and the other admission budgets without enabling either feature.
 
 ## Behavior and limitations
 

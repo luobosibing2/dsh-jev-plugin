@@ -9,7 +9,7 @@ export interface LogSpan {
 }
 /** Count the length used by admission budgets without splitting surrogate pairs. */
 export declare function codePoints(text: string): number;
-/** Form bounded line groups; an unfamiliar or mixed group remains verbatim. */
+/** Return interior noise spans, or undefined when their count exceeds maxBlocks. */
 export declare function generalCandidates(text: string, targetChars: number, maxBlocks: number): LogSpan[] | undefined;
 export type TestRunner = 'vitest-jest' | 'pytest' | 'tap';
 /** Identify only common text protocols with unambiguous pass/fail markers. */

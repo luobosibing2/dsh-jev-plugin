@@ -21,6 +21,28 @@ describe('tool log candidates', () => {
     expect(spans.map(span => log.slice(span.start, span.end))).toEqual(['progress 10%\n'])
   })
 
+  it('does not count retained groups toward the command candidate limit', () => {
+    const retained = Array.from({ length: 60 }, (_, index) => `Artifact ${index}: ${'x'.repeat(100)}\n`)
+    const log = [...retained.slice(0, 30), 'progress 10%\n', ...retained.slice(30)].join('')
+    const spans = generalCandidates(log, 100, 48)
+    expect(spans?.map(span => log.slice(span.start, span.end))).toEqual(['progress 10%\n'])
+    expect(spans?.[0]).toMatchObject({ firstLine: 31, lastLine: 31 })
+  })
+
+  it.each([48, 49])('applies the limit to %i eligible command candidates', count => {
+    const log = ['Start\n', ...Array.from({ length: count }, (_, index) =>
+      `progress ${index}%\nArtifact ${index}\n`), 'Done\n'].join('')
+    const spans = generalCandidates(log, 100, 48)
+    if (count > 48) expect(spans).toBeUndefined()
+    else expect(spans).toHaveLength(count)
+  })
+
+  it('retains the first and last groups even when both resemble command noise', () => {
+    const log = 'progress 1%\nArtifact first\nprogress 50%\nArtifact last\nprogress 99%\n'
+    const spans = generalCandidates(log, 100, 48)
+    expect(spans?.map(span => log.slice(span.start, span.end))).toEqual(['progress 50%\n'])
+  })
+
   it('keeps failure details even when assertion text resembles a passing line', () => {
     const detail = ['AssertionError: value mismatch\n', 'expected: PASS auth.test.ts\n',
       'PASS sample.test.ts\n', '    at auth.ts:19\n', 'snapshot A\n', 'snapshot B\n', 'snapshot C\n'].join('')

@@ -107,6 +107,26 @@ async function fixture(log = ordinary, answer?: (options: JevJudgeOptions) => Pr
 }
 
 describe('output admission Hook failures and rule records', () => {
+  it('judges command candidates beyond 48 total groups while retaining protected evidence', async () => {
+    const retained = Array.from({ length: 24 }, (_, index) => `Artifact ${index}\n`)
+    const log = `progress 0%\n${retained.map(line => `${line}${'progress 10%\n'.repeat(50)}`).join('')}Artifact final\nprogress 100%\n`
+    const item = await fixture(log)
+    const result = await item.run()
+    expect(item.calls).toHaveLength(1)
+    const request = await item.calls[0]!.refresh(new AbortController().signal)
+    const state = request.state as { candidates: { text: string }[];
+      retainedEvidence: { chunks: { text: string }[] } }
+    expect(state.candidates).toHaveLength(24)
+    expect(state.candidates.every(candidate => candidate.text === 'progress 10%\n'.repeat(50))).toBe(true)
+    const evidence = state.retainedEvidence.chunks.map(chunk => chunk.text).join('')
+    for (const line of [...retained, 'progress 0%\n', 'Artifact final\nprogress 100%\n']) {
+      expect(evidence).toContain(line)
+      expect(result).toContain(line)
+    }
+    expect(result).toContain('[Jev omitted')
+    expect(item.saves).toEqual([log])
+  })
+
   it('adopts an omit answer at the default 0.8 threshold and retains one below it', async () => {
     expect(OutputConfig({}).omitProbability.get()).toBe(0.8)
     for (const [probability, adopted] of [[0.8, true], [0.799, false]] as const) {

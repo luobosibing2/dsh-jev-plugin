@@ -46,7 +46,7 @@ function noiseReason(line, seenWarnings) {
 	if (PROGRESS.test(body)) return "progress";
 	if (ROUTINE_PASS.test(body)) return "routine-pass";
 }
-/** Form bounded line groups; an unfamiliar or mixed group remains verbatim. */
+/** Return interior noise spans, or undefined when their count exceeds maxBlocks. */
 function generalCandidates(text, targetChars, maxBlocks) {
 	const rows = linesOf(text);
 	if (!rows.length) return [];
@@ -75,14 +75,14 @@ function generalCandidates(text, targetChars, maxBlocks) {
 		reason = next;
 	}
 	flush();
-	if (blocks.length > maxBlocks) return void 0;
-	return blocks.slice(1, -1).flatMap((block) => block.reason === void 0 ? [] : [{
+	const candidates = blocks.slice(1, -1).flatMap((block) => block.reason === void 0 ? [] : [{
 		start: block.rows[0].start,
 		end: block.rows.at(-1).end,
 		firstLine: block.rows[0].number,
 		lastLine: block.rows.at(-1).number,
 		reason: block.reason
 	}]);
+	return candidates.length > maxBlocks ? void 0 : candidates;
 }
 /** Identify only common text protocols with unambiguous pass/fail markers. */
 function testRunner(text) {

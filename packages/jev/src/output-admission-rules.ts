@@ -45,7 +45,7 @@ function noiseReason(line: string, seenWarnings: Set<string>): LogSpan['reason']
   return undefined
 }
 
-/** Form bounded line groups; an unfamiliar or mixed group remains verbatim. */
+/** Return interior noise spans, or undefined when their count exceeds maxBlocks. */
 export function generalCandidates(text: string, targetChars: number, maxBlocks: number): LogSpan[] | undefined {
   const rows = linesOf(text)
   if (!rows.length) return []
@@ -63,12 +63,11 @@ export function generalCandidates(text: string, targetChars: number, maxBlocks: 
     reason = next
   }
   flush()
-  if (blocks.length > maxBlocks) return undefined
-  const eligible = blocks.slice(1, -1)
-  return eligible.flatMap(block => block.reason === undefined ? [] : [{
+  const candidates = blocks.slice(1, -1).flatMap(block => block.reason === undefined ? [] : [{
     start: block.rows[0]!.start, end: block.rows.at(-1)!.end,
     firstLine: block.rows[0]!.number, lastLine: block.rows.at(-1)!.number, reason: block.reason,
   }])
+  return candidates.length > maxBlocks ? undefined : candidates
 }
 
 export type TestRunner = 'vitest-jest' | 'pytest' | 'tap'
