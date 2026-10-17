@@ -143,6 +143,8 @@ def report(batch: Path) -> dict:
                      "mean_recall_at_5": sum(recall) / len(recall) if recall else None,
                      "required_missing_top5": {row["case"]: row["required_missing_top5"] for row in skill_on
                                                if row.get("required_missing_top5") is not None},
+                     "required_missing_selected": {row["case"]: row["required_missing_selected"] for row in skill_on
+                                                   if row.get("required_missing_selected") is not None},
                      "semantic_success": {condition: sum((row.get("semantic") or {}).get("task_success") is True
                                                          for row in rows if row.get("family") == "skills"
                                                          and row.get("condition") == condition)

@@ -8,7 +8,7 @@ import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
 import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
 import { createVolatile, updateVolatile } from '@deepseek-ai/cosmokit'
-import AgentRegistry, { type Agent } from '@deepseek-ai/dsh-agent'
+import AgentRegistry, { agentEvents, type Agent } from '@deepseek-ai/dsh-agent'
 import LlmRuntime, { createUserMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import SessionStore from '@deepseek-ai/dsh-session'
@@ -17,6 +17,7 @@ import Storage from '@deepseek-ai/dsh-storage'
 import { JsonStorageBackend } from '@deepseek-ai/dsh-storage-json'
 import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
+import * as toolSkill from '@deepseek-ai/dsh-tool-skill'
 import {
   applyGlobTool, GLOB_MAX_RESULTS, RAW_OUTPUT_MAX_BYTES, SEARCH_GRACE_MS,
   SEARCH_META_MAX_BYTES, SEARCH_STDERR_MAX_BYTES, SEARCH_TIMEOUT_MS,
@@ -49,7 +50,7 @@ async function localJev(replies: Reply[]) {
   return { url: `http://127.0.0.1:${address.port}/v1/systemone`, received }
 }
 
-async function setup(url: string) {
+async function setup(url: string, skillSelection = false) {
   const root = await mkdtemp(join(tmpdir(), 'jev-selection-common-'))
   cleanups.push(() => rm(root, { recursive: true, force: true }))
   const ctx = new Context()
@@ -63,6 +64,7 @@ async function setup(url: string) {
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(ToolRuntime)
   await ctx.plugin(SkillRegistry)
+  if (skillSelection) await ctx.plugin(toolSkill)
   await ctx.plugin(UserQuestionService)
   const backend = new JsonStorageBackend(join(root, 'storage'))
   const unregister = ctx.storage.backend.register('json', backend)
@@ -93,7 +95,7 @@ async function setup(url: string) {
   } } as never)
   await ctx.plugin(JevService, {
     baseUrl: url, model: 'jev-local', credentialRef: 'JEV_TEST_KEY', timeoutMs: 10_000,
-    features: { 'skill-selection': false, 'file-ranking': true },
+    features: { 'skill-selection': skillSelection, 'file-ranking': !skillSelection },
   })
   applyGlobTool(ctx, {
     sampleOverCapGlobResults: false, maxResults: GLOB_MAX_RESULTS,
@@ -102,7 +104,7 @@ async function setup(url: string) {
     timeoutMs: SEARCH_TIMEOUT_MS,
   })
   const fileLimit = createVolatile(1)
-  apply(ctx, { skillLimit: createVolatile(5), fileCandidates: createVolatile(40), fileLimit })
+  apply(ctx, { skillLimit: createVolatile(5), skillMinProbability: createVolatile(0.5), fileCandidates: createVolatile(40), fileLimit })
   const session = ctx.sessions.create(SessionId('jev-selection-common'), { meta: { cwd: root } })
   session.append('user/message', createUserMessage({
     content: [{ type: 'text', text: 'Find the relevant TypeScript file' }], source: { kind: 'user' },
@@ -119,8 +121,67 @@ async function setup(url: string) {
     name: 'glob', arguments: { pattern: '*.ts' }, agent,
     signal: new AbortController().signal, callId: ToolCallId('jev-selection-common-glob'),
   }))
-  return { ctx, glob, fileLimit, spills }
+  const select = () => agentEvents(ctx, agent).waterfall('agent/pre-step', {
+    messages: [], turn: 1, step: 1, signal: new AbortController().signal,
+  }, () => Promise.resolve({ kind: 'enter' as const, messages: [] }))
+  return { ctx, agent, select, glob, fileLimit, spills }
 }
+
+describe('skill selection with the real Jev service', () => {
+  it('records eight low scores as empty success without a human question and publishes that Session message once', async () => {
+    const http = await localJev([{ status: 200, body: { answers: Object.fromEntries(
+      Array.from({ length: 8 }, (_, index) => ['candidate-' + index, { noul: 0.01 }]),
+    ) } }])
+    const { ctx, agent, select } = await setup(http.url, true)
+    for (let index = 0; index < 8; index++) ctx.skills.register({
+      name: 'unrelated-' + index, description: 'Unrelated summary', content: 'Unrelated body', source: 'runtime',
+    })
+    let questions = 0
+    ctx.on('user-questions/request', () => {
+      questions++
+      return { answers: [{ id: 'jev-resolution', selected: ['取消 / Cancel'] }] }
+    })
+    const decision = await select()
+    expect(decision.kind).toBe('enter')
+    if (decision.kind !== 'enter') throw new Error('Successful zero selection did not enter the step')
+    const catalog = decision.messages.find(message => message.source.kind === 'jev-skill-catalog')
+    expect(catalog?.source).toMatchObject({ entries: [], selection: { skillMinProbability: 0.5, skillLimit: 5 } })
+    for (const message of decision.messages) agent.session.append('user/message', message, { surfaceOp: 'append' })
+    const id = (await ctx.jev.listRecords({})).items[0]?.id
+    if (id === undefined) throw new Error('Jev operation was not recorded')
+    const record = await ctx.jev.getRecord(id)
+    expect(record?.status).toBe('succeeded')
+    expect(record?.attemptRecords[0]?.response?.answers).toHaveLength(8)
+    expect(record?.receipts).toContainEqual(expect.objectContaining({ id: 'skill-catalog-no-relevant', status: 'observed' }))
+    expect(questions).toBe(0)
+    const ordinary = await select()
+    expect(ordinary.kind === 'enter' && ordinary.messages.some(message => message.source.kind === 'jev-skill-catalog')).toBe(false)
+    expect(http.received).toHaveLength(1)
+    expect(agent.session.deriveMessages().filter(message => message.source.kind === 'jev-skill-catalog')).toHaveLength(1)
+  })
+
+  it.each([{ status: 200, body: { answers: {} } }, { status: 503, body: { error: 'local failure' } }])(
+    'preserves the manual cancellation path after a $status response without empty success', async reply => {
+      const http = await localJev([reply])
+      const { ctx, agent, select } = await setup(http.url, true)
+      ctx.skills.register({ name: 'alpha', description: 'Alpha', content: 'Alpha body', source: 'runtime' })
+      let questions = 0
+      ctx.on('user-questions/request', () => {
+        questions++
+        return { answers: [{ id: 'jev-resolution', selected: ['取消 / Cancel'] }] }
+      })
+      await expect(select()).rejects.toThrow('Skill selection was cancelled or could not be adopted')
+      expect(questions).toBe(1)
+      expect(http.received).toHaveLength(1)
+      const id = (await ctx.jev.listRecords({})).items[0]?.id
+      if (id === undefined) throw new Error('Jev operation was not recorded')
+      const record = await ctx.jev.getRecord(id)
+      expect(record?.status).toBe('cancelled')
+      expect(record?.receipts).toEqual([])
+      expect(agent.session.deriveMessages().some(message => message.source.kind === 'jev-skill-catalog')).toBe(false)
+    },
+  )
+})
 
 describe('glob selection with the real Jev service failure flow', () => {
   it('waits after an invalid response, then uses the current display setting on manual retry', async () => {

@@ -127,7 +127,7 @@ export function JevPage(props: JevPageProps) {
 
 interface PanelProps { form: ConfigForm<JevConfigValues>; jev: JevPageRemote; notifySuccess: (message: string) => void; t: Translate }
 
-type SelectionField = keyof SelectionConfigValues
+type SelectionField = 'skillLimit' | 'fileCandidates' | 'fileLimit'
 const SELECTION_FIELDS: readonly { key: SelectionField; label: JevLocaleKey }[] = [
   { key: 'skillLimit', label: 'skillSummaryCount' },
   { key: 'fileCandidates', label: 'fileRankingMaximum' },
@@ -325,7 +325,7 @@ function SelectionSettings({ form, notifySuccess, t }: {
   }
 
   const save = async () => {
-    const parsed = {} as SelectionConfigValues
+    const parsed = {} as Pick<SelectionConfigValues, SelectionField>
     const nextErrors: Partial<Record<SelectionField, boolean>> = {}
     for (const { key } of SELECTION_FIELDS) {
       const value = parsePositiveInteger(draft[key])

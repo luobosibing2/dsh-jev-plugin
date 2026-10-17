@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 import tarfile
 from pathlib import Path
@@ -92,8 +93,33 @@ def _catalogs(events: list[dict]) -> list[dict]:
         source = message.get("source") or {}
         if source.get("kind") in ("skill-catalog", "jev-skill-catalog"):
             catalogs.append({"kind": source["kind"], "entries": source.get("entries"),
-                             "text": _text(message), "chars": len(_text(message))})
+                             "text": _text(message), "chars": len(_text(message)),
+                             **({"selection": source["selection"]} if "selection" in source else {})})
     return catalogs
+
+
+def _selection_parameters(catalogs: list[dict]) -> dict | None:
+    """Read this single-judgment slot's recorded settings; old catalogs retain top-five rules."""
+    settings = [catalog["selection"] for catalog in catalogs
+                if catalog.get("kind") == "jev-skill-catalog" and "selection" in catalog]
+    if not settings:
+        return None
+    if len(settings) != 1 or not isinstance(settings[0], dict):
+        raise ValueError("expected one catalog with recorded selection parameters")
+    selection = settings[0]
+    minimum, limit = selection.get("skillMinProbability"), selection.get("skillLimit")
+    if type(minimum) not in (int, float) or not math.isfinite(minimum) or not 0 <= minimum <= 1 \
+            or type(limit) is not int or not 1 <= limit <= 9007199254740991:
+        raise ValueError("invalid recorded selection parameters")
+    return selection
+
+
+def _selected_names(scores: list[dict], selection: dict | None) -> list[str]:
+    """Apply recorded eligibility, stable probability order, and limit, or legacy top five."""
+    eligible = scores if selection is None else [item for item in scores
+                                                if item["probability"] >= selection["skillMinProbability"]]
+    ranked = sorted(eligible, key=lambda item: (-item["probability"], item["original_index"]))
+    return [item["name"] for item in ranked[:5 if selection is None else selection["skillLimit"]]]
 
 
 def _operation(agent: Path, session_id: str | None) -> tuple[list[dict], int]:
@@ -155,6 +181,12 @@ def inspect_skill_slot(batch: Path, case_id: str, arm: str) -> dict:
            and item.get("arguments", {}).get("name") in truth["candidate_names"] for item in tool_results):
         result["blocking_errors"].append("native skill loader failed for a present candidate")
     catalogs = _catalogs(events)
+    try:
+        selection = _selection_parameters(catalogs)
+    except ValueError as exc:
+        result["blocking_errors"].append(str(exc))
+        selection = None
+    result["selection_parameters"] = selection
     result["published_catalogs"] = catalogs
     published = [entry["name"] for catalog in catalogs for entry in (catalog["entries"] or [])
                  if isinstance(entry, dict) and isinstance(entry.get("name"), str)]
@@ -259,7 +291,10 @@ def inspect_skill_slot(batch: Path, case_id: str, arm: str) -> dict:
             result["jev_model"] = (attempt.get("rawResponse") or {}).get("model")
             result["jev_latency_ms"] = attempt.get("latencyMs")
             result["jev_usage"] = attempt.get("usage")
-            if not any(item.get("id") in ("skill-catalog-published", "skill-catalog-no-new")
+            expected_receipts = ("skill-catalog-published", "skill-catalog-no-new") if selection is None \
+                else ("skill-catalog-published",) if _selected_names(scores, selection) \
+                else ("skill-catalog-no-relevant",)
+            if not any(item.get("id") in expected_receipts
                        and item.get("status") == "observed" for item in receipts):
                 result["blocking_errors"].append("Jev catalog adoption receipt missing")
     result["scores"] = scores
@@ -273,7 +308,11 @@ def inspect_skill_slot(batch: Path, case_id: str, arm: str) -> dict:
                                 if expected_jev and result["top5_names"] else None)
     result["required_missing_top5"] = ([name for name in truth["required_names"] if name not in result["top5_names"]]
                                        if result["top5_names"] is not None else None)
-    wanted = result["top5_names"] if expected_jev else truth["candidate_names"]
+    result["selected_names"] = _selected_names(scores, selection) if expected_jev else None
+    result["required_missing_selected"] = ([name for name in truth["required_names"]
+                                           if name not in result["selected_names"]]
+                                          if result["selected_names"] is not None else None)
+    wanted = result["selected_names"] if expected_jev else truth["candidate_names"]
     result["publication_matches_expected"] = wanted is not None and published == wanted
     result["duplicate_published_names"] = sorted({name for name in published if published.count(name) > 1})
 

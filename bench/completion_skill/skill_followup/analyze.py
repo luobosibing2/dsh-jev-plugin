@@ -10,7 +10,7 @@ from collections import Counter
 from pathlib import Path
 
 from bench.completion_skill.cs_suite.collector import inspect_basic
-from bench.completion_skill.skills.analyze import _catalogs, _events, _tool_history
+from bench.completion_skill.skills.analyze import _catalogs, _events, _selected_names, _selection_parameters, _tool_history
 
 from .cases import CASE_ORDER
 
@@ -219,10 +219,18 @@ def inspect_slot(batch: Path, slot: dict) -> dict:
     basic["answer_hints"] = _mechanical_hints(case, answer, truth)
     basic["oracle"] = truth["oracle"]
     catalogs = _catalogs(events)
+    try:
+        selection = _selection_parameters(catalogs)
+    except ValueError as exc:
+        basic["blocking_errors"].append(str(exc))
+        selection = None
+    basic["selection_parameters"] = selection
     published = [entry for catalog in catalogs for entry in (catalog["entries"] or [])
                  if isinstance(entry, dict)]
     basic["published_catalogs"] = [{"kind": catalog["kind"], "entries": catalog["entries"],
-                                    "chars": catalog["chars"]} for catalog in catalogs]
+                                    "chars": catalog["chars"],
+                                    **({"selection": catalog["selection"]} if "selection" in catalog else {})}
+                                   for catalog in catalogs]
     basic["published_names"] = [entry.get("name") for entry in published]
     basic["catalog_chars"] = sum(catalog["chars"] for catalog in catalogs)
     if any(truth["candidate_descriptions"].get(entry.get("name")) != entry.get("description")
@@ -276,7 +284,10 @@ def inspect_slot(batch: Path, slot: dict) -> dict:
                 basic["blocking_errors"].append("Jev relevance input contains skill body")
             basic["jev_model"] = (attempt.get("rawResponse") or {}).get("model")
             basic["jev_latency_ms"] = attempt.get("latencyMs")
-            if not any(item["id"] in ("skill-catalog-published", "skill-catalog-no-new")
+            expected_receipts = ("skill-catalog-published", "skill-catalog-no-new") if selection is None \
+                else ("skill-catalog-published",) if _selected_names(scores, selection) \
+                else ("skill-catalog-no-relevant",)
+            if not any(item["id"] in expected_receipts
                        and item["status"] == "observed" for item in basic["jev_receipts"]):
                 basic["blocking_errors"].append("Jev publication receipt missing")
     basic["scores"] = scores
@@ -285,7 +296,11 @@ def inspect_slot(batch: Path, slot: dict) -> dict:
     basic["top5_names"] = basic["ranked_names"][:5] if eligible else None
     basic["recall_at_5"] = (sum(name in basic["top5_names"] for name in truth["relevant_names"])
                             / len(truth["relevant_names"]) if eligible and len(scores) == 24 else None)
-    expected_published = basic["top5_names"] if eligible else truth["candidate_names"]
+    basic["selected_names"] = _selected_names(scores, selection) if eligible else None
+    basic["required_missing_selected"] = ([name for name in truth["required_names"]
+                                          if name not in basic["selected_names"]]
+                                         if basic["selected_names"] is not None else None)
+    expected_published = basic["selected_names"] if eligible else truth["candidate_names"]
     basic["publication_matches_scores"] = basic["published_names"] == expected_published
     basic["duplicate_published_names"] = sorted({name for name in basic["published_names"]
                                                  if basic["published_names"].count(name) > 1})

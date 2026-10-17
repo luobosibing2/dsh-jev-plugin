@@ -99,7 +99,7 @@ describe('glob selection through the published DSH PTC bridge', () => {
       timeoutMs: SEARCH_TIMEOUT_MS,
     })
     apply(ctx, {
-      skillLimit: createVolatile(5), fileCandidates: createVolatile(40), fileLimit: createVolatile(12),
+      skillLimit: createVolatile(5), skillMinProbability: createVolatile(0.5), fileCandidates: createVolatile(40), fileLimit: createVolatile(12),
     })
 
     const events: SessionEvent[] = []

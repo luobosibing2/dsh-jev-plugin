@@ -60,8 +60,8 @@ def render(report: dict, batch: Path) -> Path:
                      ("complete", "omission", "needs-user", "unknown")) + " |")
     lines += ["", "补做通知和最终文件、测试结果分别记录；有后续 assistant 消息不等于修复。首轮真值与补做后的二次判定分开，二次判定不覆盖首轮。",
               "", "## 技能选择：目录、加载与交付", "",
-              "| 固定案例 | 候选数 | baseline任务成功 | 开启组任务成功 | recall@5 | 必需项漏入top5 | 实际加载正文 | 证据 |",
-              "| --- | ---: | --- | --- | ---: | --- | --- | --- |"]
+              "| 固定案例 | 候选数 | baseline任务成功 | 开启组任务成功 | 原始排名recall@5 | 必需项漏入top5 | 实际选择遗漏必需项 | 实际加载正文 | 证据 |",
+              "| --- | ---: | --- | --- | ---: | --- | --- | --- | --- |"]
     by_case = {}
     for row in rows:
         if row.get("family") == "skills":
@@ -74,10 +74,12 @@ def render(report: dict, batch: Path) -> Path:
                  (left.get("semantic") or {}).get("task_success"),
                  (right.get("semantic") or {}).get("task_success"), right.get("recall_at_5"),
                  ", ".join(right.get("required_missing_top5") or []) if right.get("required_missing_top5") is not None else None,
+                 ", ".join(right.get("required_missing_selected") or []) if right.get("required_missing_selected") is not None else None,
                  ", ".join(right.get("loaded_names") or []) if right.get("loaded_names") is not None else None]
         lines.append("| " + " | ".join(map(_value, cells)) + f" | {link} |")
     skill = report["skill_summary"]
-    lines += ["", f"开启组有定义的 recall@5：{_value(skill['recall_at_5_defined_cases'])}/6 类，均值 {_value(skill['mean_recall_at_5'])}。"
+    lines += ["", f"开启组有定义的原始排名 recall@5：{_value(skill['recall_at_5_defined_cases'])}/6 类，均值 {_value(skill['mean_recall_at_5'])}。"
+              "该指标按全部分数的前五名计算；实际选择还应用当次记录的阈值和数量上限，缺少新元数据的历史目录按原top5规则核对。"
               "目录发布、完整目录恢复、具名正文 SHA 加载、最终答案和 Jev 相关性分数在各 trial 记录中独立列出。",
               "", "## 原始编码任务", ""]
     coding = report["coding_pair"]

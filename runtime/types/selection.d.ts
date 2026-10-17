@@ -1,9 +1,10 @@
 import type { Context, Volatile } from '@deepseek-ai/cordis';
 import s from '@deepseek-ai/schemastery';
 import type { SelectionConfigValues } from './selection-types.ts';
-/** Profile counts edited through the Jev Web page. */
+/** Live skill-selection and glob-ranking settings for the current profile. */
 export interface Config {
     skillLimit: Volatile<number>;
+    skillMinProbability: Volatile<number>;
     fileCandidates: Volatile<number>;
     fileLimit: Volatile<number>;
 }
@@ -19,6 +20,8 @@ interface SelectedCatalogSource {
     entries: CatalogEntry[];
     /** Identity of the complete model-invocable directory at publication. */
     fullFingerprint: string;
+    /** Effective settings for this judgment; absent in catalogs recorded before probability filtering. */
+    selection?: Pick<SelectionConfigValues, 'skillMinProbability' | 'skillLimit'>;
 }
 declare module '@deepseek-ai/dsh-llm' {
     interface MessageSourceMap {

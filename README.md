@@ -26,7 +26,7 @@ The following features are in `main`. **Every feature is independently disabled 
 
 | Feature | What it does |
 | --- | --- |
-| Skill selection | Ranks skill names and summaries before catalog publication. The main agent still loads the original skill. |
+| Skill selection | Recommends up to the configured number of skills whose relevance probability reaches the minimum; a successful judgment can recommend none. The main agent still loads the original skill. |
 | File ranking | Ranks the original `glob` path results without another filesystem scan or file-content read. |
 | Drift reminders | Checks progress between model steps and can deliver one nonblocking reminder. |
 | Completion checks | Reviews the visible final answer against recorded evidence and can request at most one supplemental attempt. |
@@ -155,7 +155,7 @@ Credential status shows existence and write access, never the saved key. “Conf
 
 Requests use the connection saved when an attempt starts. A later switch applies to new attempts and explicit retries. Failures do not automatically fall back to another model or API. OpenRouter requests above 200 questions are split without dropping questions; all batches share the original timeout and complete before a business answer is delivered. Partial failures retain their actual packets and known usage. See the [package reference](packages/jev/README.md#judgment-connections) for configuration and lifecycle details.
 
-Selection defaults are 5 skill summaries, at most 40 glob matches eligible for ranking, and 12 displayed ranked paths. A larger glob skips judgment ranking rather than silently judging only the first 40. Supervision defaults are a drift check every 6 completed model steps and a pause after 3 native goal rounds without progress. These values can be changed without enabling the features.
+Selection defaults are at most 5 eligible skill summaries, a minimum skill relevance probability of 0.5, at most 40 glob matches eligible for ranking, and 12 displayed ranked paths. Set `skillMinProbability` on the `jev-selection` plugin row to a finite value in `[0, 1]`; a probability equal to the threshold qualifies. The Web count form preserves this setting. If no skill qualifies, a normal empty catalog lets the agent continue; `skill_catalog` recovers every model-invocable summary, and the original `skill` loader remains available by exact name. A larger glob skips judgment ranking rather than silently judging only the first 40. Supervision defaults are a drift check every 6 completed model steps and a pause after 3 native goal rounds without progress. These values can be changed without enabling the features.
 
 Long-log and test-log admission have independent switches, both off by default. Generic command logs start at 6,000 Unicode code points and recognized test logs at 4,000. The default omit-probability threshold is 0.8 and the judgment wait limit is 4 seconds. The settings page exposes these and the other admission budgets without enabling either feature.
 
