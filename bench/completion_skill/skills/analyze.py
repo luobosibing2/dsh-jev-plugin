@@ -181,11 +181,13 @@ def inspect_skill_slot(batch: Path, case_id: str, arm: str) -> dict:
            and item.get("arguments", {}).get("name") in truth["candidate_names"] for item in tool_results):
         result["blocking_errors"].append("native skill loader failed for a present candidate")
     catalogs = _catalogs(events)
+    selection_valid = True
     try:
         selection = _selection_parameters(catalogs)
     except ValueError as exc:
         result["blocking_errors"].append(str(exc))
         selection = None
+        selection_valid = False
     result["selection_parameters"] = selection
     result["published_catalogs"] = catalogs
     published = [entry["name"] for catalog in catalogs for entry in (catalog["entries"] or [])
@@ -256,6 +258,7 @@ def inspect_skill_slot(batch: Path, case_id: str, arm: str) -> dict:
     if len(records) != (1 if expected_jev else 0):
         result["blocking_errors"].append("Jev operation count differs from eligible skill catalog")
     scores = []
+    selected_names = None
     if expected_jev and len(records) == 1:
         record = records[0]
         attempts = record.get("attemptRecords") or []
@@ -266,15 +269,19 @@ def inspect_skill_slot(batch: Path, case_id: str, arm: str) -> dict:
             result["blocking_errors"].append("Jev skill judgment did not succeed once")
             result["provider_problem"] = True
         else:
+            errors_before = len(result["blocking_errors"])
             attempt = attempts[0]
             questions = (attempt.get("request") or {}).get("questions") or []
             answers = (attempt.get("response") or {}).get("answers") or []
+            if len(questions) != len(truth["candidate_names"]) or len(answers) != len(questions):
+                result["blocking_errors"].append("Jev did not judge all frozen candidates")
             for index, (question, answer) in enumerate(zip(questions, answers)):
                 prompt = question.get("prompt", "")
                 prefix = "Would this skill help the task? Skill: "
                 name = prompt.split(prefix, 1)[-1].split(". Description: ", 1)[0]
                 if question.get("id") != f"candidate-{index}" or answer.get("id") != question.get("id") \
-                        or answer.get("kind") != "noul" or type(answer.get("probability")) not in (int, float):
+                        or answer.get("kind") != "noul" or type(answer.get("probability")) not in (int, float) \
+                        or not math.isfinite(answer["probability"]) or not 0 <= answer["probability"] <= 1:
                     result["blocking_errors"].append("invalid Jev answer identity or probability")
                     break
                 scores.append({"name": name, "probability": answer["probability"],
@@ -291,12 +298,14 @@ def inspect_skill_slot(batch: Path, case_id: str, arm: str) -> dict:
             result["jev_model"] = (attempt.get("rawResponse") or {}).get("model")
             result["jev_latency_ms"] = attempt.get("latencyMs")
             result["jev_usage"] = attempt.get("usage")
-            expected_receipts = ("skill-catalog-published", "skill-catalog-no-new") if selection is None \
-                else ("skill-catalog-published",) if _selected_names(scores, selection) \
-                else ("skill-catalog-no-relevant",)
-            if not any(item.get("id") in expected_receipts
-                       and item.get("status") == "observed" for item in receipts):
-                result["blocking_errors"].append("Jev catalog adoption receipt missing")
+            if selection_valid and len(result["blocking_errors"]) == errors_before:
+                selected_names = _selected_names(scores, selection)
+                expected_receipts = ("skill-catalog-published", "skill-catalog-no-new") if selection is None \
+                    else ("skill-catalog-published",) if selected_names else ("skill-catalog-no-relevant",)
+                if not any(item.get("id") in expected_receipts
+                           and item.get("status") == "observed" for item in receipts):
+                    result["blocking_errors"].append("Jev catalog adoption receipt missing")
+                    selected_names = None
     result["scores"] = scores
     ranked = sorted(scores, key=lambda item: (-item["probability"], item["original_index"]))
     result["ranked_names"] = [item["name"] for item in ranked]
@@ -308,7 +317,7 @@ def inspect_skill_slot(batch: Path, case_id: str, arm: str) -> dict:
                                 if expected_jev and result["top5_names"] else None)
     result["required_missing_top5"] = ([name for name in truth["required_names"] if name not in result["top5_names"]]
                                        if result["top5_names"] is not None else None)
-    result["selected_names"] = _selected_names(scores, selection) if expected_jev else None
+    result["selected_names"] = selected_names
     result["required_missing_selected"] = ([name for name in truth["required_names"]
                                            if name not in result["selected_names"]]
                                           if result["selected_names"] is not None else None)

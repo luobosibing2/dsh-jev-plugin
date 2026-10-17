@@ -12,6 +12,7 @@ from unittest.mock import patch
 from bench.completion_skill.skills import analyze, native_probe
 from bench.completion_skill.skills.cases import CASES
 from bench.completion_skill.skill_followup import analyze as followup
+from bench.completion_skill.skill_followup import probe as followup_probe
 
 
 class RecordedSelectionTest(unittest.TestCase):
@@ -50,6 +51,20 @@ class RecordedSelectionTest(unittest.TestCase):
                  "usage_complete": True, "known_estimated_usd": 0}
         return truth, basic, events, record
 
+    def _invalidate(self, record: dict, events: list[dict], failure: str | None):
+        if failure in ("failed", "cancelled"):
+            record["status"] = failure
+        elif failure == "incomplete":
+            record["attemptRecords"][0]["response"]["answers"].pop()
+        elif failure == "invalid-probability":
+            record["attemptRecords"][0]["response"]["answers"][0]["probability"] = float("nan")
+        elif failure == "invalid-selection":
+            events[0]["data"]["source"]["selection"]["skillLimit"] = 0
+        elif failure == "not-adopted":
+            record["receipts"][0]["status"] = "not-adopted"
+        elif failure == "wrong-outcome":
+            record["receipts"][0]["id"] = "skill-catalog-no-new"
+
     def test_metadata_and_legacy_selection_are_distinct(self):
         catalogs = analyze._catalogs([{"type": "user/message", "data": {"source": {
             "kind": "jev-skill-catalog", "entries": [], "selection": {"skillMinProbability": 0.5, "skillLimit": 2}},
@@ -70,11 +85,15 @@ class RecordedSelectionTest(unittest.TestCase):
                 analyze._selection_parameters([{"kind": "jev-skill-catalog", "selection": selection}])
 
     def test_initial_analyzer_keeps_raw_rank_and_reports_actual_missing_requirement(self):
-        for selection in (None, {"skillMinProbability": 0.5, "skillLimit": 5}):
-            with self.subTest(selection=selection), tempfile.TemporaryDirectory() as temporary:
+        scenarios = [(None, None)] + [({"skillMinProbability": 0.5, "skillLimit": 5}, failure)
+                                     for failure in (None, "failed", "cancelled", "incomplete", "invalid-probability",
+                                                     "invalid-selection", "not-adopted", "wrong-outcome")]
+        for selection, failure in scenarios:
+            with self.subTest(selection=selection, failure=failure), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
                 names = [f"skill-{index}" for index in range(8)]
                 truth, basic, events, record = self._fixture(root, names, [0.4] + [0.01] * 7, selection)
+                self._invalidate(record, events, failure)
                 case = root / "skills/cases/catalog-recovery"
                 case.mkdir(parents=True)
                 (case / "truth.json").write_text(json.dumps(truth))
@@ -83,17 +102,27 @@ class RecordedSelectionTest(unittest.TestCase):
                 with patch("bench.completion_skill.cs_suite.collector.inspect_basic", return_value=(basic, events, [record])), \
                         patch.object(analyze, "_fixture_bodies", return_value={name: "unseen body" for name in names}):
                     result = analyze.inspect_skill_slot(root, "catalog-recovery", "skill_selection")
+                if failure:
+                    self.assertFalse(result["structural_ok"])
+                    self.assertIsNone(result["selected_names"])
+                    self.assertIsNone(result["required_missing_selected"])
+                    self.assertFalse(result["publication_matches_expected"])
+                    continue
                 self.assertTrue(result["structural_ok"], result["blocking_errors"])
                 self.assertTrue(result["publication_matches_expected"])
                 self.assertEqual(result["recall_at_5"], 1)
                 self.assertEqual(result["required_missing_selected"], [] if selection is None else [names[0]])
 
     def test_followup_analyzer_uses_recorded_threshold_and_preserves_old_top_five(self):
-        for selection in (None, {"skillMinProbability": 0.5, "skillLimit": 5}):
-            with self.subTest(selection=selection), tempfile.TemporaryDirectory() as temporary:
+        scenarios = [(None, None)] + [({"skillMinProbability": 0.5, "skillLimit": 5}, failure)
+                                     for failure in (None, "failed", "cancelled", "incomplete", "invalid-probability",
+                                                     "invalid-selection", "not-adopted", "wrong-outcome")]
+        for selection, failure in scenarios:
+            with self.subTest(selection=selection, failure=failure), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
                 names = [f"skill-{index:02}" for index in range(24)]
                 truth, basic, events, record = self._fixture(root, names, [0.4] + [0.01] * 23, selection)
+                self._invalidate(record, events, failure)
                 case = root / "cases/research-one"
                 case.mkdir(parents=True)
                 (case / "truth.json").write_text(json.dumps(truth))
@@ -105,19 +134,29 @@ class RecordedSelectionTest(unittest.TestCase):
                         patch.object(followup, "_mechanical_hints", return_value={}):
                     result = followup.inspect_slot(root, {"slot": 1, "repeat": 1, "pair_order": "AB",
                                                          "case": "research-one", "condition": "skill_selection"})
+                if failure:
+                    self.assertFalse(result["structural_ok"])
+                    self.assertIsNone(result["selected_names"])
+                    self.assertIsNone(result["required_missing_selected"])
+                    self.assertFalse(result["publication_matches_scores"])
+                    continue
                 self.assertTrue(result["structural_ok"], result["blocking_errors"])
                 self.assertTrue(result["publication_matches_scores"])
                 self.assertEqual(result["recall_at_5"], 1)
                 self.assertEqual(result["required_missing_selected"], [] if selection is None else [names[0]])
 
     def test_native_probe_accepts_recorded_empty_success_and_legacy_five(self):
-        for selection in (None, {"skillMinProbability": 0.5, "skillLimit": 5}):
-            with self.subTest(selection=selection), tempfile.TemporaryDirectory() as temporary:
+        scenarios = [(None, None)] + [({"skillMinProbability": 0.5, "skillLimit": 5}, failure)
+                                     for failure in (None, "failed", "cancelled", "incomplete", "invalid-probability",
+                                                     "invalid-selection", "not-adopted", "wrong-outcome")]
+        for selection, failure in scenarios:
+            with self.subTest(selection=selection, failure=failure), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
                 batch, probe = root / "batch", root / "probe"
                 case = batch / "skills/cases/all-irrelevant"
                 names = sorted(skill.name for skill in CASES["all-irrelevant"].skills)
                 truth, _, events, record = self._fixture(root, names, [0.01] * 8, selection)
+                self._invalidate(record, events, failure)
                 case.mkdir(parents=True)
                 (case / "truth.json").write_text(json.dumps(truth))
                 events.extend([{"type": "tool/call", "data": {"callId": "catalog", "name": "skill_catalog", "arguments": "{}"}},
@@ -137,8 +176,54 @@ class RecordedSelectionTest(unittest.TestCase):
                 with patch.object(native_probe, "_events", return_value=("session", events, None)), \
                         patch.object(native_probe, "_operation", return_value=([record], 0)):
                     result = native_probe._slot_result(probe, batch, "all-irrelevant", "skill_selection")
+                if failure:
+                    self.assertFalse(result["structural_ok"])
+                    continue
                 self.assertTrue(result["structural_ok"], result["errors"])
                 self.assertEqual(len(result["published_names"]), 5 if selection is None else 0)
+
+    def test_followup_probe_matches_recorded_selection_and_keeps_raw_top_five(self):
+        for selection in (None, {"skillMinProbability": 0.5, "skillLimit": 5},
+                          {"skillMinProbability": 0.5, "skillLimit": 2}):
+            with self.subTest(selection=selection), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                batch, probe = root / "batch", root / "probe"
+                names = [f"skill-{index:02}" for index in range(24)]
+                probabilities = [0.4] + [0.01] * 23 if selection is None or selection["skillLimit"] == 5 \
+                    else [0.49, 0.5, 0.9, 0.5] + [0.01] * 20
+                truth, _, events, record = self._fixture(root, names, probabilities, selection)
+                truth["required_names"] = []
+                case = batch / "cases/research-one"
+                case.mkdir(parents=True)
+                (case / "truth.json").write_text(json.dumps(truth))
+                for call_id, name, arguments, text in (
+                        ("catalog", "skill_catalog", {}, "\n".join(f"- {name}: {name}" for name in names)),
+                        ("read", "read", {"file_path": "study/source.ts"}, "sessionSettings")):
+                    events.extend([{"type": "tool/call", "data": {
+                        "callId": call_id, "name": name, "arguments": json.dumps(arguments)}},
+                        {"type": "tool/result", "data": {"message": {
+                            "source": {"callId": call_id}, "isError": False,
+                            "content": [{"type": "text", "text": text}]}}}])
+                trial = probe / "jobs/research-one/skill_selection/job/task__trial"
+                agent = trial / "agent"
+                operations = agent / "dsh-home/storages/jev_fixture/operations"
+                operations.mkdir(parents=True)
+                (trial / "result.json").write_text(json.dumps({"agent_result": {"metadata": {
+                    "termination": "normal", "dsh_exit_code": 0, "evidence_export": "complete",
+                    "fixture_integrity": "unchanged"}}}))
+                (agent / "fixture-integrity.json").write_text(
+                    '{"repo":{"status":"unchanged"},"skills":{"status":"unchanged"}}')
+                (agent / "jev-service-ready.json").write_text(json.dumps(
+                    {"features": followup_probe.expected_features("skill_selection")}))
+                (agent / "mock-model-tools.json").write_text('{"names":["skill","skill_catalog","read"]}')
+                (operations / "operation.json").write_text(json.dumps({"record": record}))
+                with patch.object(followup_probe, "_events", return_value=("session", events, None)):
+                    result = followup_probe._inspect(probe, batch, "research-one", "skill_selection")
+                self.assertTrue(result["structural_ok"], result["errors"])
+                self.assertEqual(result["mock_top5"], analyze._selected_names(
+                    [{"name": name, "probability": chance, "original_index": index}
+                     for index, (name, chance) in enumerate(zip(names, probabilities))], None))
+                self.assertEqual(result["mock_selected_names"], result["published_names"])
 
 
 if __name__ == "__main__":

@@ -78,19 +78,19 @@ export const groups = [
 export const features = [
   {
     slug: 'skill-selection', group: 'selection', name: '技能选择', status: '接入已验证', tone: 'observed',
-    summary: '先判断哪些技能摘要值得展示，加载技能仍由主 Agent 决定。',
-    intro: 'DSH 准备发布技能目录时，所选判断模型只对可供模型调用的技能名称和简介排序。它不替主模型加载技能，也不让未展示的技能失效。',
-    homeEvidence: '24 技能调查：目录摘要累计 96→20；两组各读 24 次源码、加载 6 次技能，题面事实均 4/4。',
+    summary: '先筛掉未达到最低相关概率的技能，再最多推荐指定数量的摘要；允许零推荐。',
+    intro: 'DSH 准备发布技能目录时，所选判断模型分别评估可供模型调用的技能名称和简介。插件按最低概率筛选后排序，主模型仍通过原生工具加载正文，未展示的技能仍可调用。',
+    homeEvidence: '历史 24 技能调查：目录摘要累计 96→20；两组各读 24 次源码、加载 6 次技能，题面事实均 4/4。',
     mechanism: {
       seams: ['agent/pre-step'],
       trigger: '新的直接用户请求到来，或技能目录发生变化时，在 agent/pre-step、目录进入模型前判断。',
       input: '当前技能的名称和摘要，加最近最多两条直接用户消息及一条可见助手文本；任务文本合计最多 2,000 字。技能正文、附件、工具输出和推理内容不进入这次判断。',
-      handling: '按 typed 概率选前 N 个摘要并去掉会话中已出现的目录项；主模型仍用原生 skill(name) 读正文，也能查看完整目录。',
-      refs: [{ title: '目录接入与判断输入', file: 'packages/jev/src/selection.ts', anchor: '#L226-L290' }],
+      handling: '先保留 probability ≥ skillMinProbability 的候选（默认 0.5），再按概率降序、原顺序打破平局，最多取 skillLimit 项（默认 5），最后去掉当前可见目录中的名称，不补位。有效判断无过线项时发布空目录并记 skill-catalog-no-relevant；有选择但全已可见时不新增目录，记 skill-catalog-no-new。失败沿用 Retry / Cancel，不伪装零推荐。原生 skill(name) 和 skill_catalog 完整目录恢复保持可用。',
+      refs: [{ title: '目录接入与判断输入', file: 'packages/jev/src/selection.ts', anchor: '#L243-L322' }],
     },
     cases: [
       {
-        kind: '真实主模型 + 真实 Jev', title: '两道 24 技能仓库调查，按 AB/BA 完成四对',
+        kind: '历史真实主模型 + 真实 Jev', title: '两道 24 技能仓库调查，按 AB/BA 完成四对',
         task: '两道只读仓库调查题，各有 24 项技能、两次关闭与开启配对；技能正文只提供查找步骤，答案由冻结仓库源码和独立真值核对。主模型使用真实 DeepSeek Flash/high。',
         probe: '分别核对目录发布、所需项入选、原生技能正文加载、源码 read、最终事实与引用；原生工具 schema 在八槽中一致。',
         result: '开启组四次真实 Jev 判断各评分 24 项，所需技能 6/6 次入选前五；目录摘要累计从 96 项缩至 20 项，字符从 9084 降至 4219。关闭与开启组各加载 6 次所需技能正文、确认 read 24 次源码，题面事实与引用均为 4/4。',
@@ -99,16 +99,16 @@ export const features = [
         references: [{ title: '历史结果与试次分母', file: 'docs/testing/2026-10-02-completion-skill/README.md' }, { title: '结构化结果', file: 'docs/testing/2026-10-02-completion-skill/results.json' }, { title: '具名场景与复跑指南', file: 'bench/completion_skill/README.zh-CN.md' }],
       },
       {
-        kind: '真实主模型 + 真实 Jev', title: '首批六类固定技能输入',
+        kind: '历史真实主模型 + 真实 Jev', title: '首批六类固定技能输入',
         task: '将空目录、单项、多项、近名干扰、全不相关与完整目录恢复六类案例分别运行关闭和开启组。',
         probe: '按冻结真值核对前五所需项、原生正文加载和任务事实。',
-        result: '两组各 6/6 满足任务事实；四个有相关项的案例共 9/9 所需项进入前五，两组各加载 9 次技能正文。全不相关八项虽均被评为 0.01，默认规则仍发布前五。',
-        reading: '这些是小规模固定案例。完整目录恢复题面已具名目标，不能算作排序器独立发现；近名案例的开启组附带解释误述干扰项数量。',
+        result: '两组各 6/6 满足任务事实；四个有相关项的案例共 9/9 所需项进入前五，两组各加载 9 次技能正文。全不相关八项虽均被评为 0.01，当时的无门槛规则仍发布前五。',
+        reading: '这些是旧规则的小规模固定案例，历史结果保持不变。当前修复加入默认 0.5 门槛，同样的八项 0.01 输入会得到成功零推荐；这不代表重新运行了真实模型。完整目录恢复题面已具名目标，不能算作排序器独立发现；近名案例的开启组附带解释误述干扰项数量。',
         evidence: ['completionSkill'],
         references: [{ title: '回执摘要', file: 'docs/testing/2026-10-02-completion-skill/receipts.json' }],
       },
       {
-        kind: '隔离 Web · 确定性 Jev', title: '让 7 个技能候选进入原生目录',
+        kind: '历史隔离 Web · 确定性 Jev', title: '让 7 个技能候选进入原生目录',
         task: '在隔离 DSH Web profile 加载 7 个可供模型调用的技能摘要，用测试指令触发宿主原生目录发布；判断服务返回固定排序。',
         probe: '检查模型可见目录、完整目录入口、是否读取技能正文，以及再次请求是否重新判断。',
         result: '目录发布 5 个摘要，保留完整目录入口；正文读取接口没有被调用。再次符合条件的请求发起新的 Jev 判断。',
@@ -116,7 +116,7 @@ export const features = [
         evidence: ['selection'], references: [{ title: '可复测的目录断言', file: 'packages/jev/tests/selection.test.ts', anchor: '#L137-L185' }],
       },
     ],
-    limits: ['默认展示数量为 5，可在 Jev 设置页修改。', 'Jev 的排序概率不是任务成功率。', '目录摘要缩短不等于实际源码或技能正文读取减少；四对小型仓库调查没有测得任务成功率提升。'],
+    limits: ['默认最多选择 5 项，可在 Jev 设置页修改上限；可选 0 至 5 项，去重后不补位。', '最低相关概率 skillMinProbability 默认 0.5，合法值为 [0, 1] 内有限数，等号保留；confidence 不参与筛选或排序。数量表单保存不改该门槛。', '成功零推荐、已有摘要无新增和判断失败分别记录；skill_catalog 恢复完整当前目录，不调用 Jev。', 'Jev 的排序概率不是任务成功率。', '目录摘要缩短不等于实际源码或技能正文读取减少；四对小型仓库调查没有测得任务成功率提升。'],
   },
   {
     slug: 'file-ranking', group: 'selection', name: '文件排序', status: '接入已验证', tone: 'observed',

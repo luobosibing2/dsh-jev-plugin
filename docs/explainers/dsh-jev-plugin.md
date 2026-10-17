@@ -76,6 +76,8 @@ TypeSafe 将 Jev 的训练方法称为 **RLCD**，即为校准决策训练模型
 
 ### 01 技能选择 · skill-selection
 
+本节技能规则按 2026-10-17 的零推荐修复更新。历史案例仍保留原规则和当时结果。
+
 **解决的问题：** 技能目录较大时，先发布与当前任务相关的摘要。
 
 | 环节 | 实际内容 |
@@ -83,26 +85,37 @@ TypeSafe 将 Jev 的训练方法称为 **RLCD**，即为校准决策训练模型
 | 触发 | 主 Agent 的 `agent/pre-step`，原生技能目录发布前 |
 | state | 最近最多 2 条直接用户文本、1 条助手可见文本；默认合计 2,000 字符 |
 | questions | 每个技能一道 Noul；题目包含技能名称和 description |
-| 采用 | 按相关概率排序，默认先取前 5 个，再去掉 Session 已可见的名称 |
+| 采用 | 先保留 `probability ≥ skillMinProbability` 的候选；默认门槛 0.5。再稳定排序，最多取 `skillLimit` 项（默认 5），最后去掉 Session 已可见的名称 |
 | 主模型后续行动 | 通过原生 `skill` 工具加载技能正文 |
 
 **示例：** 用户要求分析退款逻辑。插件判断代码调查技能是否相关，再把入选摘要交给主模型。Jev 没有读取技能正文、工具结果或附件。
 
-去重后不从第 6 名补位。主模型仍可直接调用未入选技能。`skill_catalog` 可恢复完整摘要目录，恢复不调用 Jev。判断失败走人工 Retry / Cancel。
+`skillMinProbability` 只能是 `[0, 1]` 内的有限数，等于门槛也保留。概率相同时保持候选原顺序。`confidence` 不参与资格判断或排序。技能数量是上限，不要求凑满；去重后也不补位。
 
-来源：[任务上下文](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L65)、[技能判断与目录采用](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L227)。
+| 判断与选择结果 | 目录与回执 |
+| --- | --- |
+| 有效判断，但没有候选达到门槛 | 发布 `entries: []` 的正常目录；回执为 `skill-catalog-no-relevant`。说明本次无适用推荐，主模型继续任务 |
+| 有合格选择，但名称都已可见 | 不新增目录消息；回执为 `skill-catalog-no-new`。已有摘要继续可用 |
+| 判断失败、回答不完整、取消或未采用 | 保持既有失败流程；失败等待人工 Retry / Cancel，不生成成功零推荐 |
+
+初始空目录不发起判断，也不记为成功零推荐。新用户请求或目录变化会重新选择；普通工具步骤不重复判断。
+
+主模型仍可通过原生 `skill` 按名称加载未入选技能，用户显式调用也保持原生权限。`skill_catalog` 恢复完整的当前可供模型调用的摘要目录，恢复不调用 Jev。新目录的 `source.selection` 保存本次门槛与上限。评测分析器据此核对新目录；旧记录缺少元数据时，仍按当时的无门槛规则核对，不改写原始结果。
+
+来源：[任务上下文](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/src/selection.ts#L80)、[资格筛选、去重与三种回执](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/src/selection.ts#L304)、[选择配置与恢复说明](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/README.md#skill-and-glob-selection)。
 
 ### 技能选择的完整输入输出示例
 
-**6 个技能摘要 → 一次请求、6 道 Noul → 6 个概率 → 默认选前 5 个。**
+**6 个技能摘要 → 一次请求、6 道 Noul → 6 个概率 → 先过 0.5 门槛 → 最多选 5 个。**
 
 本例使用 Jev / System One 协议。技能名称、简介和概率都是演示值，不是真实模型实测。假设这 6 个技能都可由当前 Agent 调用，且尚未在 Session 中展示。
 
 ```flow
 6 个技能摘要 -> 一次请求中的 6 道 Noul
 一次请求中的 6 道 Noul -> Jev 返回 6 个概率
-Jev 返回 6 个概率 -> 插件排序并取前 5 个
-插件排序并取前 5 个 -> 主模型收到入选摘要
+Jev 返回 6 个概率 -> 保留概率不小于 0.5 的候选
+保留概率不小于 0.5 的候选 -> 稳定排序并最多取 5 个
+稳定排序并最多取 5 个 -> 去掉已可见名称并发布新增摘要
 ```
 
 #### 用户提出什么任务
@@ -186,18 +199,18 @@ Jev 返回 6 个概率 -> 插件排序并取前 5 个
 }
 ```
 
-随后，本地插件按概率排序，默认取前 5 个：
+随后，本地插件先检查最低概率，再按概率稳定排序，默认最多取 5 个：
 
-| 排名 | 技能 | 相关概率（演示值） | 默认前 5 个 |
+| 排名 | 技能 | 相关概率（演示值） | 默认选择 |
 | --- | --- | --- | --- |
 | 1 | root-cause-analysis | 0.95 | 入选 |
 | 2 | unit-testing | 0.91 | 入选 |
 | 3 | code-investigation | 0.88 | 入选 |
 | 4 | code-editing | 0.83 | 入选 |
 | 5 | technical-writing | 0.61 | 入选 |
-| 6 | slide-generation | 0.03 | 不入选 |
+| 6 | slide-generation | 0.03 | 低于 0.5，不入选 |
 
-技能选择使用 Top 5，没有日志功能的 0.7 采用门槛。因此，本例中概率为 0.61 的第 5 名也会入选。若入选名称已在 Session 可见，插件会去重，不用第 6 名补位。
+本例有 5 项达到技能门槛 0.5，恰好全部入选。概率为 0.61 的第 5 名达到门槛，概率为 0.03 的候选被排除。若只有一项达到门槛，就只选一项。去重发生在数量截断之后，不从后续候选补位。
 
 #### 输出：主模型最终收到的技能摘要
 
@@ -213,11 +226,13 @@ Jev 返回 6 个概率 -> 插件排序并取前 5 个
 </available_skills>
 ```
 
-消息还要求主模型先调用原生 `skill` 工具读取正文。主模型可用 `skill_catalog` 恢复完整摘要目录。
+如果八项候选的概率都是 `0.01`，本次仍是成功判断，但没有技能达到门槛。目录为 `entries: []`，`<available_skills>` 中没有推荐名称；回执为 `skill-catalog-no-relevant`。这只描述本次判断，不证明客观上没有适用技能。
+
+消息保留原生 `skill` 正文加载和 `skill_catalog` 完整目录恢复说明。此前已可见的摘要继续保留。
 
 **到这里，插件只筛选并发布了摘要。** 主模型之后决定加载和执行哪个技能。Jev 的入选结果不会自动执行技能。
 
-格式来源：[问题组装](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L256)、[Jev 请求编码](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/wire.ts#L65)、[Noul 答案转换](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/wire.ts#L117)、[目录消息](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L140)。
+格式来源：[问题组装](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/src/selection.ts#L281)、[Jev 请求编码](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/wire.ts#L65)、[Noul 答案转换](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/wire.ts#L117)、[目录消息](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/src/selection.ts#L159)。
 
 ### 02 文件排序 · file-ranking
 

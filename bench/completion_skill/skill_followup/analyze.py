@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 import tarfile
 from collections import Counter
@@ -219,11 +220,13 @@ def inspect_slot(batch: Path, slot: dict) -> dict:
     basic["answer_hints"] = _mechanical_hints(case, answer, truth)
     basic["oracle"] = truth["oracle"]
     catalogs = _catalogs(events)
+    selection_valid = True
     try:
         selection = _selection_parameters(catalogs)
     except ValueError as exc:
         basic["blocking_errors"].append(str(exc))
         selection = None
+        selection_valid = False
     basic["selection_parameters"] = selection
     published = [entry for catalog in catalogs for entry in (catalog["entries"] or [])
                  if isinstance(entry, dict)]
@@ -242,6 +245,7 @@ def inspect_slot(batch: Path, slot: dict) -> dict:
     if len(operations) != (1 if eligible else 0):
         basic["blocking_errors"].append("Jev operation count differs from selected condition")
     scores = []
+    selected_names = None
     if eligible and len(operations) == 1:
         record = operations[0]
         attempts = record.get("attemptRecords") or []
@@ -251,6 +255,7 @@ def inspect_slot(batch: Path, slot: dict) -> dict:
                 or len(attempts) != 1 or attempts[0].get("status") != "succeeded":
             basic["blocking_errors"].append("Jev skill judgment did not succeed once")
         else:
+            errors_before = len(basic["blocking_errors"])
             attempt = attempts[0]
             questions = (attempt.get("request") or {}).get("questions") or []
             answers = (attempt.get("response") or {}).get("answers") or []
@@ -260,7 +265,8 @@ def inspect_slot(batch: Path, slot: dict) -> dict:
                 prompt = question.get("prompt", "")
                 name = prompt.split("Skill: ", 1)[-1].split(". Description: ", 1)[0]
                 if question.get("id") != f"candidate-{index}" or reply.get("id") != question.get("id") \
-                        or reply.get("kind") != "noul" or type(reply.get("probability")) not in (int, float):
+                        or reply.get("kind") != "noul" or type(reply.get("probability")) not in (int, float) \
+                        or not math.isfinite(reply["probability"]) or not 0 <= reply["probability"] <= 1:
                     basic["blocking_errors"].append("Jev candidate identity or probability invalid")
                     break
                 expected = truth["candidate_descriptions"].get(name)
@@ -284,19 +290,21 @@ def inspect_slot(batch: Path, slot: dict) -> dict:
                 basic["blocking_errors"].append("Jev relevance input contains skill body")
             basic["jev_model"] = (attempt.get("rawResponse") or {}).get("model")
             basic["jev_latency_ms"] = attempt.get("latencyMs")
-            expected_receipts = ("skill-catalog-published", "skill-catalog-no-new") if selection is None \
-                else ("skill-catalog-published",) if _selected_names(scores, selection) \
-                else ("skill-catalog-no-relevant",)
-            if not any(item["id"] in expected_receipts
-                       and item["status"] == "observed" for item in basic["jev_receipts"]):
-                basic["blocking_errors"].append("Jev publication receipt missing")
+            if selection_valid and len(basic["blocking_errors"]) == errors_before:
+                selected_names = _selected_names(scores, selection)
+                expected_receipts = ("skill-catalog-published", "skill-catalog-no-new") if selection is None \
+                    else ("skill-catalog-published",) if selected_names else ("skill-catalog-no-relevant",)
+                if not any(item["id"] in expected_receipts
+                           and item["status"] == "observed" for item in basic["jev_receipts"]):
+                    basic["blocking_errors"].append("Jev publication receipt missing")
+                    selected_names = None
     basic["scores"] = scores
     ranked = sorted(scores, key=lambda item: (-item["probability"], item["original_index"]))
     basic["ranked_names"] = [item["name"] for item in ranked]
     basic["top5_names"] = basic["ranked_names"][:5] if eligible else None
     basic["recall_at_5"] = (sum(name in basic["top5_names"] for name in truth["relevant_names"])
                             / len(truth["relevant_names"]) if eligible and len(scores) == 24 else None)
-    basic["selected_names"] = _selected_names(scores, selection) if eligible else None
+    basic["selected_names"] = selected_names
     basic["required_missing_selected"] = ([name for name in truth["required_names"]
                                           if name not in basic["selected_names"]]
                                          if basic["selected_names"] is not None else None)

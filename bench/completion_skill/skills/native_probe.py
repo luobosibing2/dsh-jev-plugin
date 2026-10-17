@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import re
 import subprocess
@@ -120,7 +121,12 @@ def _slot_result(probe_dir: Path, batch: Path, case_id: str, condition: str) -> 
     if invalid or len(records) != wanted:
         result["errors"].append("mock Jev operation count differs from eligible catalog")
     if records:
-        attempt = (records[0].get("attemptRecords") or [{}])[0]
+        record = records[0]
+        attempts = record.get("attemptRecords") or []
+        attempt = attempts[0] if attempts else {}
+        if record.get("featureId") != "skill-selection" or record.get("status") != "succeeded" \
+                or len(attempts) != 1 or attempt.get("status") != "succeeded":
+            result["errors"].append("mock Jev skill judgment did not succeed once")
         request = attempt.get("request") or {}
         result["jev_question_count"] = len(request.get("questions") or [])
         if result["jev_question_count"] != len(CASES[case_id].skills):
@@ -133,11 +139,18 @@ def _slot_result(probe_dir: Path, batch: Path, case_id: str, condition: str) -> 
         if selection is not None:
             answers = (attempt.get("response") or {}).get("answers") or []
             questions = request.get("questions") or []
-            scores = [{"name": question["prompt"].split("Skill: ", 1)[-1].split(". Description: ", 1)[0],
-                       "probability": answer["probability"], "original_index": index}
-                      for index, (question, answer) in enumerate(zip(questions, answers))]
+            scores = []
+            for index, (question, answer) in enumerate(zip(questions, answers)):
+                probability = answer.get("probability")
+                if question.get("id") != f"candidate-{index}" or answer.get("id") != question.get("id") \
+                        or answer.get("kind") != "noul" or type(probability) not in (int, float) \
+                        or not math.isfinite(probability) or not 0 <= probability <= 1:
+                    result["errors"].append("mock Jev answer identity or probability invalid")
+                    break
+                scores.append({"name": question.get("prompt", "").split("Skill: ", 1)[-1].split(". Description: ", 1)[0],
+                               "probability": probability, "original_index": index})
             expected = _selected_names(scores, selection)
-            if len(scores) != result["jev_question_count"] or published != expected:
+            if len(answers) != len(questions) or len(scores) != result["jev_question_count"] or published != expected:
                 result["errors"].append("catalog publication differs from recorded selection parameters")
             receipt_id = "skill-catalog-published" if expected else "skill-catalog-no-relevant"
             if not any(receipt.get("id") == receipt_id and receipt.get("status") == "observed"

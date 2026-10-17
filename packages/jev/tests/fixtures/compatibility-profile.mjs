@@ -177,6 +177,26 @@ export function apply(ctx) {
       { name: '$delegate', arguments: { description: 'Read second fixture finding', prompt: 'Return the same fixed factual compatibility finding.', run_in_background: false } },
       { name: 'read', arguments: { file_path: 'guide.txt' } },
     ])
+    const selectionEntry = [...ctx.loader.entries()].find(entry => entry.options.name === '@dsh-jev/plugin/selection')
+    assert(selectionEntry, 'Installed profile must own the selection Loader row')
+    const selectionConfig = selectionEntry.options.config
+    try {
+      await ctx.loader.update(selectionEntry.id, { config: { ...selectionConfig, skillMinProbability: 1 } })
+      await ctx.loader.await()
+      assert.equal(selectionEntry.fiber.config.skillMinProbability.get(), 1, 'Loader must apply the temporary threshold')
+      const empty = await runCase('skill-no-relevant', join(root, 'projects/a'), [])
+      const catalogs = empty.messages.filter(message => message.source.kind === 'jev-skill-catalog')
+      assert.equal(catalogs.length, 1, 'A valid zero selection must publish one normal catalog')
+      assert.deepEqual(catalogs[0].source.entries, [], 'The fixed 0.99 probability must not reach a threshold of 1')
+      assert.equal(catalogs[0].source.selection.skillMinProbability, 1, 'The catalog must record the effective threshold')
+      const judgment = empty.records.find(record => record.featureId === 'skill-selection')
+      assert.equal(judgment?.status, 'succeeded', 'Zero selection must remain a successful judgment')
+      assert(judgment.receipts.some(receipt => receipt.id === 'skill-catalog-no-relevant' && receipt.status === 'observed'), 'Zero selection must retain its own receipt')
+      assert(empty.messages.some(message => message.role === 'assistant' && message.content.some(block => block.type === 'text' && block.text === 'Deterministic fixture completed with recorded native results.')), 'The main Agent must finish after receiving the empty catalog')
+    } finally {
+      await ctx.loader.update(selectionEntry.id, { config: selectionConfig ?? null })
+      await ctx.loader.await()
+    }
     const selected = results.cases[0]
     const batch = await ctx.jev.startStageAnalysis({ sessionId: selected.sessionId, scope: { kind: 'all' }, mode: 'missing' })
     const stage = await until(() => ctx.jev.getStageNavigation(selected.sessionId, new AbortController().signal), value => !value.batch || !['running', 'pending'].includes(value.batch.status), 'stage classification completion')
