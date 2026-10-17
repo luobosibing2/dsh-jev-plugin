@@ -1408,7 +1408,7 @@ let JevService = (() => {
 					if (lifetime.aborted) return this.cancel(operation.id);
 					const request = await this.untilAbort(Promise.resolve(options.refresh(lifetime)), lifetime);
 					validateRequest(request);
-					const attempted = await this.tryOnce(operation.id, request, options.interpret, lifetime, options.featureId, options.connection);
+					const attempted = await this.tryOnce(operation.id, request, options.interpret, lifetime, options.featureId, options.connection, options.preflight);
 					if (lifetime.aborted) return this.cancel(operation.id);
 					if (!attempted.ok) return {
 						kind: "failed",
@@ -1504,7 +1504,7 @@ let JevService = (() => {
 					}
 					const request = await this.untilAbort(Promise.resolve(options.refresh(lifetime)), lifetime);
 					validateRequest(request);
-					const attempted = await this.tryOnce(operation.id, request, options.interpret, lifetime, options.featureId);
+					const attempted = await this.tryOnce(operation.id, request, options.interpret, lifetime, options.featureId, void 0, options.preflight);
 					if (lifetime.aborted) return this.cancel(operation.id);
 					if (attempted.ok) {
 						if (options.canAdopt !== void 0) {
@@ -1533,7 +1533,7 @@ let JevService = (() => {
 						};
 					}
 					await this.records().setStatus(operation.id, "waiting");
-					if (await this.ask(options.agent, lifetime, `${attempted.failure.message}. Retry with current input or cancel?`) === "cancel") return this.cancel(operation.id);
+					if (await this.ask(options.agent, lifetime, options.failureDetail?.(attempted.failure) ?? `${attempted.failure.message}. Retry with current input or cancel?`) === "cancel") return this.cancel(operation.id);
 				}
 			} catch (error) {
 				if (!(error instanceof JevError && (error.code === "LOG_WRITE_FAILED" || error.code === "RECEIPT_NOT_SAVED"))) await this.records().setStatus(operation.id, lifetime.aborted ? "cancelled" : "failed");
@@ -1636,7 +1636,7 @@ let JevService = (() => {
 		judgmentConnectionIdentity() {
 			return this.connectionIdentity();
 		}
-		async tryOnce(operationId, request, interpret, outerSignal, featureId, expectedConnection) {
+		async tryOnce(operationId, request, interpret, outerSignal, featureId, expectedConnection, preflight) {
 			let snapshot;
 			try {
 				snapshot = JSON.parse(JSON.stringify(request));
@@ -1661,6 +1661,7 @@ let JevService = (() => {
 			const timeout = AbortSignal.timeout(identity.timeoutMs);
 			const signal = AbortSignal.any([timeout, ...outerSignal === void 0 ? [] : [outerSignal]]);
 			try {
+				preflight?.(snapshot);
 				if (!identity.baseUrl || !identity.model || !identity.credentialRef) throw new JevError("CONNECTION_MISSING", "Jev service address, model, or credential reference is missing");
 				const key = await this.untilAbort(this.ctx.credentials.resolve(credentialRef(identity.credentialRef)), signal);
 				if (key === void 0) throw new JevError("CREDENTIAL_MISSING", "Jev credential is not configured");

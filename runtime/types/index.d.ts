@@ -30,6 +30,13 @@ export interface JevJudgeOptions {
     link: JevOperationLink;
     agent: Agent;
     refresh: (signal: AbortSignal) => JevRequest | Promise<JevRequest>;
+    /** Reject a saved complete input before transport; failures retain manual Retry/Cancel. */
+    preflight?: (request: JevRequest) => void;
+    /** Consumer-specific failure detail shown with the existing Retry/Cancel controls. */
+    failureDetail?: (failure: {
+        code: string;
+        message: string;
+    }) => string;
     interpret?: (response: JevResponse, signal: AbortSignal) => {
         usable: true;
     } | {

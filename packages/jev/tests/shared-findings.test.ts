@@ -160,14 +160,28 @@ it('keeps conflict originals and asks only the root to arrange verification', as
   const f = await fixture('conflict')
   const a = await f.child('a')
   const b = await f.child('b')
+  const queued = Promise.withResolvers<void>()
+  const writeReceipt = f.ctx.jev.writeReceipt.bind(f.ctx.jev)
+  const observer = vi.spyOn(f.ctx.jev, 'writeReceipt').mockImplementation(async (operation, receipt) => {
+    try {
+      const saved = await writeReceipt(operation, receipt)
+      if (receipt.id === 'delivery-root-queued') queued.resolve()
+      return saved
+    } catch (error) {
+      if (receipt.id === 'delivery-root-queued') queued.reject(error)
+      throw error
+    }
+  })
+  cleanups.push(async () => { observer.mockRestore() })
   await f.send(a.agent, f.root, 'Result A: test fails. Evidence log A.')
   await f.send(b.agent, f.root, 'Result B: test passes. Evidence log B.')
-  await vi.waitFor(() => expect(f.relations()[0]?.deliveries[0]?.state).toMatch(/queued|model-received/))
+  await queued.promise
+  await f.root.whenIdle()
+  expect(f.relations()[0]?.deliveries[0]?.state).toMatch(/queued|model-received/)
   expect(f.findings().map(item => item.supersededBy)).toEqual([undefined, undefined])
   expect(f.ctx.agents.get(SessionId('a'))).toBe(a.agent)
   expect(f.ctx.agents.get(SessionId('b'))).toBe(b.agent)
   expect(f.relations()[0]!.deliveries.map(item => item.recipientId)).toEqual(['root'])
-  await f.root.whenIdle()
   expect(JSON.stringify(f.model.requests.filter(request => request.sessionId === 'root'))).toContain('use your existing tools or delegation')
 })
 
@@ -175,10 +189,24 @@ it('does not auto-deliver a correction to an agent that never received the old o
   const f = await fixture('replacement')
   const a = await f.child('a')
   const b = await f.child('b')
+  const queued = Promise.withResolvers<void>()
+  const writeReceipt = f.ctx.jev.writeReceipt.bind(f.ctx.jev)
+  const observer = vi.spyOn(f.ctx.jev, 'writeReceipt').mockImplementation(async (operation, receipt) => {
+    try {
+      const saved = await writeReceipt(operation, receipt)
+      if (receipt.id === 'delivery-root-queued') queued.resolve()
+      return saved
+    } catch (error) {
+      if (receipt.id === 'delivery-root-queued') queued.reject(error)
+      throw error
+    }
+  })
+  cleanups.push(async () => { observer.mockRestore() })
   await f.send(a.agent, f.root, 'Tests cannot run.')
   await f.send(b.agent, f.root, 'Environment repaired; test suite now runs.\nEvidence: complete passing output.')
-  await vi.waitFor(() => expect(f.relations()[0]?.kind).toBe('replacement'))
-  await vi.waitFor(() => expect(f.relations()[0]?.deliveries[0]?.state).toMatch(/queued|model-received/))
+  await queued.promise
+  expect(f.relations()[0]?.kind).toBe('replacement')
+  expect(f.relations()[0]?.deliveries[0]?.state).toMatch(/queued|model-received/)
   expect(f.relations()[0]!.deliveries.map(item => item.recipientId)).toEqual(['root'])
   expect(f.findings()[0]!.supersededBy).toBe(f.findings()[1]!.id)
 })
@@ -282,7 +310,8 @@ it('records a late recipient only after its current-replacement notice reaches t
   expect(JSON.stringify(notice)).toContain('Queued finding has been superseded')
   expect(receipt.adopted).toBe('unknown')
   await f.send(reporter.agent, f.root, 'Third finding: the environment failed again.\nEvidence: fresh startup failure.')
-  await vi.waitFor(() => expect(f.relations().some(item => item.olderId === second.id && item.deliveries.some(delivery => delivery.recipientId === 'late' && delivery.state === 'queued'))).toBe(true))
+  await f.root.whenIdle()
+  expect(f.relations().some(item => item.olderId === second.id && item.deliveries.some(delivery => delivery.recipientId === 'late' && delivery.state === 'queued'))).toBe(true)
 })
 
 it('states factual-only relation rules and retains a reported restatement as support without another correction', async () => {

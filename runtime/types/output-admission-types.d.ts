@@ -3,6 +3,7 @@ export interface OutputAdmissionConfigValues {
     generalMinChars: number;
     testMinChars: number;
     generalBlockChars: number;
+    /** Maximum eligible command candidates, excluding first, last, and other retained groups. */
     maxGeneralBlocks: number;
     maxTestCandidates: number;
     maxRequestChars: number;

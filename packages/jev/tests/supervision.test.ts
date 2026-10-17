@@ -1,118 +1,41 @@
-import { createServer } from 'node:http'
-import { mkdtemp, rm } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { describe, expect, it, vi } from 'vitest'
 import { createVolatile, updateVolatile } from '@deepseek-ai/cosmokit'
-import AgentRegistry, { type Agent } from '@deepseek-ai/dsh-agent'
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import LlmRuntime, { LlmAdapter, createUserMessage, ToolCallId, type GenerateOptions, type StreamChunk } from '@deepseek-ai/dsh-llm'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
-import GoalService from '@deepseek-ai/dsh-goal'
-import * as goalDriver from '@deepseek-ai/dsh-goal-round-driver'
-import * as goalTools from '@deepseek-ai/dsh-tool-goal'
-import Storage from '@deepseek-ai/dsh-storage'
-import { JsonStorageBackend } from '@deepseek-ai/dsh-storage-json'
-import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
-import UserQuestionService from '@deepseek-ai/dsh-user-questions'
+import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { JevLedger } from '../src/ledger.ts'
-import JevService from '../src/index.ts'
 import * as supervision from '../src/supervision.ts'
-
-type Entry = StreamChunk[] | ((request: GenerateOptions) => Promise<StreamChunk[]> | StreamChunk[])
-class Model extends LlmAdapter {
-  requests: GenerateOptions[] = []
-  constructor(readonly script: Entry[]) { super() }
-  async *stream(request: GenerateOptions): AsyncIterable<StreamChunk> {
-    this.requests.push(request)
-    const entry = this.script.shift()
-    if (entry === undefined) throw new Error('Fixture script exhausted')
-    for (const chunk of typeof entry === 'function' ? await entry(request) : entry) yield chunk
-  }
-}
-const text = (value: string): StreamChunk[] => [
-  { type: 'block-start', index: 0, blockType: 'text' },
-  { type: 'block-end', index: 0, block: { type: 'text', text: value } },
-  { type: 'finish', reason: { kind: 'stop' } },
-]
-const call = (id: string, name = 'probe', args: object = {}): StreamChunk[] => [
-  { type: 'block-start', index: 0, blockType: 'tool-call' },
-  { type: 'block-end', index: 0, block: { type: 'tool-call', id: ToolCallId(id), name, arguments: args } },
-  { type: 'finish', reason: { kind: 'tool-calls' } },
-]
-const answer = (value: string) => ({ answers: { assessment: { choice: value }, evidence: { choice: '$first' } } })
-type Reply = object | (() => Promise<object>)
-const cleanups: Array<() => Promise<void>> = []
-afterEach(async () => { vi.restoreAllMocks(); for (const cleanup of cleanups.splice(0).reverse()) await cleanup() })
-
-async function harness(script: Entry[], replies: Reply[], features: Record<string, boolean> = {}, counts = {}, resume?: { root: string; id: ReturnType<typeof SessionId> }) {
-  const root = resume?.root ?? await mkdtemp(join(tmpdir(), 'jev-supervision-'))
-  if (resume === undefined) cleanups.push(() => rm(root, { recursive: true, force: true }))
-  // The fixture captures multiple wire questions and heterogeneous evidence fields for assertions.
-  const requests: any[] = []
-  const server = createServer(async (request, response) => {
-    const chunks: Buffer[] = []
-    for await (const chunk of request) chunks.push(Buffer.from(chunk))
-    requests.push(JSON.parse(Buffer.concat(chunks).toString()))
-    const reply = replies.shift() ?? answer('unknown')
-    response.writeHead(200, { 'content-type': 'application/json' })
-    const result = typeof reply === 'function' ? await reply() : reply
-    const encoded = JSON.stringify(result).replace('"$first"', JSON.stringify(Object.keys(requests.at(-1).questions.evidence.criteria)[0]))
-    response.end(encoded)
-  })
-  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-  cleanups.push(() => new Promise<void>((resolve, reject) => { server.closeAllConnections(); server.close(error => error ? reject(error) : resolve()) }))
-  const address = server.address()
-  if (address === null || typeof address === 'string') throw new Error('No fixture port')
-  const ctx = new Context()
-  const errors: unknown[] = []
-  ctx.on('agent/error', ({ error }) => { errors.push(error) })
-  await ctx.plugin(Storage)
-  await ctx.plugin(LlmRuntime)
-  await ctx.plugin(SessionStore)
-  await ctx.plugin(SessionProjectionRegistry)
-  await ctx.plugin(SystemPrompt)
-  await ctx.plugin(ToolRuntime)
-  await ctx.plugin(AgentRegistry)
-  await ctx.plugin(UserQuestionService)
-  await ctx.plugin(GoalService)
-  await ctx.plugin(goalDriver)
-  await ctx.plugin(goalTools)
-  const backend = new JsonStorageBackend(join(root, 'storage'))
-  const unregister = ctx.storage.backend.register('json', backend)
-  const facility = new DomainFacility(ctx, { backend: 'json' })
-  ctx.provide('storageDomain', facility)
-  ctx.provide('profileContext', { dir: join(root, 'profile') } as never)
-  ctx.provide('settings', { configure: () => () => {} } as never)
-  ctx.provide('credentials', { resolve: async () => ({ value: 'local-fixture-key', source: 'fixture' }) } as never)
-  const common = await ctx.plugin(JevService, {
-    baseUrl: `http://127.0.0.1:${address.port}/v1/systemone`, model: 'jev-local', credentialRef: 'JEV_TEST_KEY', timeoutMs: 2_000, features,
-  })
-  await ctx.plugin(supervision, counts)
-  await ctx.plugin(JsonlSessionPersistence, { root: join(root, 'sessions') })
-  await ctx.plugin(AgentLoop, { agents: [] })
-  const model = new Model(script)
-  ctx.llm.registerAdapter(['fixture'], model)
-  ctx.tools.register(defineTool({ name: 'probe', description: 'Record a deterministic investigation', parameters: {},
-    output: { schema: { type: 'string' }, render: (_args, result) => [{ type: 'text', text: result }] }, execute: async () => 'No source change; investigation result' }))
-  const agent = resume === undefined
-    ? await ctx.agentLoop.create(SessionId('supervision-fixture'), { provider: 'fixture', model: 'fixture' })
-    : (await ctx.agentLoop.resume(ctx, { resumeSessionId: resume.id, agentOptions: { provider: 'fixture', model: 'fixture' } })).agent
-  let disposed = false
-  const dispose = async () => { if (disposed) return; disposed = true; await ctx.fiber.dispose(); unregister(); await facility.closeAll(); await backend.close() }
-  cleanups.push(dispose)
-  const send = (value: string) => agent.followup(createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: value }] }))
-  const records = () => ctx.jev.listRecords({ sessionId: agent.id, limit: 100 })
-  return { ctx, agent, model, requests, send, records, errors, dispose, features: common.config.features, root }
-}
-const visible = (agent: Agent) => agent.session.deriveMessages().flatMap(message => message.content).filter(block => block.type === 'text').map(block => block.text).join('\n')
+import { harness, text, call, answer, visible, cleanups } from './fixtures/supervision-harness.ts'
 
 describe('supervision through real AgentLoop, goal driver, tools and HTTP Jev', () => {
+  it.each([24_000, 1])('keeps drift evidence choices valid with a %s-character budget', async evidenceChars => {
+    const h = await harness([call('one'), text('done')], [answer('on-track')], { 'drift-monitoring': true }, { driftInterval: 1, evidenceChars })
+    h.send('Investigate'); await h.agent.whenIdle()
+    await h.requestSeen(1)
+    const criteria = h.requests[0].questions.evidence.criteria
+    expect(Object.keys(criteria).length).toBeGreaterThanOrEqual(2)
+    expect(criteria['insufficient-evidence']).toContain('unknown')
+    if (evidenceChars === 1) {
+      await vi.waitFor(async () => expect((await h.records()).items[0]?.status).toBe('failed'))
+      expect(visible(h.agent)).not.toContain('Correction:')
+    } else {
+      expect(Object.values(criteria)).toContain('[{"type":"text","text":"Investigate"}]')
+    }
+    expect(h.errors).toHaveLength(0)
+  })
+
+  it('never adopts a drift correction citing the insufficient-evidence alternative', async () => {
+    let h: Awaited<ReturnType<typeof harness>>
+    h = await harness([call('one'), async () => {
+      await vi.waitFor(async () => expect((await h.records()).items[0]?.status).toBe('failed'))
+      return text('done')
+    }], [{ answers: { assessment: { choice: 'drift' }, evidence: { choice: 'insufficient-evidence' } } }],
+    { 'drift-monitoring': true }, { driftInterval: 1 })
+    h.send('Investigate'); await h.agent.whenIdle()
+    expect(visible(h.agent)).not.toContain('Correction:')
+    expect(h.errors).toHaveLength(0)
+    const record = await h.ctx.jev.getRecord((await h.records()).items[0]!.id)
+    expect(record?.attemptRecords[0]?.failure?.code).toBe('UNDETERMINED')
+  })
+
   it('registers independent disabled switches and count defaults without making requests', async () => {
     const h = await harness([text('done')], [])
     expect((await h.ctx.jev.listFeatures()).map(feature => [feature.id, feature.enabled])).toEqual([
@@ -120,6 +43,7 @@ describe('supervision through real AgentLoop, goal driver, tools and HTTP Jev', 
     ])
     expect(supervision.Config({}).driftInterval.get()).toBe(6)
     expect(supervision.Config({}).noProgressRounds.get()).toBe(3)
+    expect(supervision.Config({}).maxSupplementRounds.get()).toBe(3)
     expect(() => supervision.Config({ driftInterval: 0 })).toThrow()
     h.send('Do the task'); await h.agent.whenIdle()
     expect(h.requests).toHaveLength(0)
@@ -131,9 +55,9 @@ describe('supervision through real AgentLoop, goal driver, tools and HTTP Jev', 
     expect(h.model.requests).toHaveLength(2)
     expect(h.requests).toHaveLength(2)
     const content = visible(h.agent)
-    expect(content.indexOf('I am done')).toBeLessThan(content.indexOf('Complete these omissions once'))
-    expect(content).toContain('Correct final factual claims contradicted by recorded evidence')
-    expect(content).toContain('without unauthorized rollback, deletion, or file changes')
+    expect(content.indexOf('I am done')).toBeLessThan(content.indexOf('Supplement the current-turn report'))
+    expect(content).toContain('Address this single issue within existing authorization')
+    expect(content).toContain('do not redo unrelated completed work or invent results')
     expect(content).toContain('No further automatic work')
     const records = await h.records()
     expect(records.items).toHaveLength(2)
@@ -146,20 +70,13 @@ describe('supervision through real AgentLoop, goal driver, tools and HTTP Jev', 
     h.send('Inspect only; do not repair files'); await h.agent.whenIdle()
     expect(h.requests).toHaveLength(1)
     const request = h.requests[0]
-    expect(request.state.completeEvidence).toBe(true)
-    expect(JSON.stringify(request.state.messages)).toContain('No source change; investigation result')
-    expect(request.state.rules).toContain('A final factual claim contradicted by recorded evidence is an omission requiring correction')
-    expect(request.state.rules).toContain('complete only work already allowed by the user')
-    expect(request.state.rules).toContain('A reminder is not itself proof of a violation or a mandatory pause')
-    expect(request.questions.assessment.instructions).toContain('A final factual claim contradicted by recorded evidence is an omission requiring correction')
-    expect(request.questions.assessment.instructions).toContain('complete only work already allowed by the user')
-    expect(request.questions.assessment.instructions).toContain('A reminder is not itself proof of a violation or a mandatory pause')
-    expect(request.questions.assessment.criteria).toEqual({
-      complete: expect.stringContaining('final factual claims are supported by recorded evidence'),
-      omission: expect.stringContaining('a contradicted final factual claim'),
-      'needs-user': expect.stringContaining('An unresolved decision or authorization from the user'),
-      unknown: expect.stringContaining('recorded evidence is insufficient or omitted'),
-    })
+    expect(Object.keys(request.questions)).toEqual(['assessment', 'focus'])
+    for (const question of Object.values(request.questions) as { criteria: object }[]) expect(Object.keys(question.criteria).length).toBeGreaterThanOrEqual(2)
+    expect(request.state.requirements[0].content[0].text).toBe('Inspect only; do not repair files')
+    expect(JSON.stringify(request)).not.toContain('No source change; investigation result')
+    expect(request.state.rules).toContain('running and truthfully reporting failed tests can satisfy a run-and-report request')
+    expect(request.state.rules).toContain('a fix-and-pass request remains unmet')
+    expect(Object.keys(request.questions.assessment.criteria)).toEqual(['complete', 'omission', 'contradiction', 'needs-user', 'unknown'])
   })
 
   it('starts the sixth-step check without delaying the seventh model request and never wakes a completed task', async () => {
@@ -229,8 +146,17 @@ describe('supervision through real AgentLoop, goal driver, tools and HTTP Jev', 
       const goal = h.ctx.goals.get(h.agent)!
       return call('complete', 'update_goal', { action: 'complete', goal_id: goal.id, revision: goal.revision })
     }, text('Still pending')], [answer('omission'), answer('needs-user')], { 'goal-supervision': true })
-    h.ctx.goals.create(h.agent, { objective: 'Test changes', maxGoalRounds: 8 })
-    await vi.waitFor(() => expect(h.ctx.goals.get(h.agent)?.phase).toBe('paused'))
+    let resolvePaused!: () => void
+    const paused = new Promise<void>(resolve => { resolvePaused = resolve })
+    const unsubscribe = h.ctx.on('goal/changed', ({ agent, change }) => {
+      if (agent === h.agent && change.goal?.phase === 'paused') resolvePaused()
+    })
+    cleanups.push(async () => { unsubscribe() })
+    try {
+      h.ctx.goals.create(h.agent, { objective: 'Test changes', maxGoalRounds: 8 })
+      await paused
+    } finally { unsubscribe() }
+    expect(h.ctx.goals.get(h.agent)?.phase).toBe('paused')
     const goal = h.ctx.goals.get(h.agent)!
     expect(visible(h.agent)).toContain('Jev:')
     h.ctx.goals.complete(h.agent, { id: goal.id, revision: goal.revision })
@@ -253,11 +179,11 @@ describe('supervision through real AgentLoop, goal driver, tools and HTTP Jev', 
     const h = await harness([text('done')], [answer('complete')], { 'completion-check': true }, { evidenceChars: 30 })
     h.ctx.on('user-questions/request', async () => ({ answers: [{ id: 'jev-resolution', selected: ['取消 / Cancel'] }] }))
     h.send('Implement the full requirement with current tests'); await h.agent.whenIdle()
-    expect(h.requests[0].state.completeEvidence).toBe(false)
-    expect(h.requests[0].state.omittedMessages).toBeGreaterThan(0)
+    expect(h.requests).toHaveLength(0)
     const record = await h.ctx.jev.getRecord((await h.records()).items[0]!.id)
     expect(record?.status).toBe('cancelled')
-    expect(record?.attemptRecords[0]?.failure?.code).toBe('UNDETERMINED')
+    expect(record?.attemptRecords[0]?.failure?.code).toBe('COMPLETION_BUDGET')
+    expect(record?.attemptRecords[0]?.request.state).toMatchObject({ finalAnswer: 'done' })
     expect(record?.receipts).toHaveLength(0)
   })
 
@@ -319,13 +245,12 @@ describe('supervision through real AgentLoop, goal driver, tools and HTTP Jev', 
   })
 
   it('excludes a long finished task before budgeting the current short request', async () => {
-    const h = await harness([text('old done'), text('current done')], [answer('complete')], {}, { evidenceChars: 1_000 })
+    const h = await harness([text('old done'), text('current done')], [answer('complete')], {}, { evidenceChars: 10_000, autoTodo: true })
     h.send('Old unrelated task ' + 'x'.repeat(8_000)); await h.agent.whenIdle()
     updateVolatile(h.features, createVolatile({ 'completion-check': true }))
     h.send('Say current done'); await h.agent.whenIdle()
     expect(h.requests).toHaveLength(1)
-    expect(h.requests[0].state.completeEvidence).toBe(true)
-    expect(h.requests[0].state.excludedEarlierMessages).toBeGreaterThan(0)
+    expect(h.requests[0].state.originalRequirementsAvailable).toBe(true)
     expect(JSON.stringify(h.requests)).not.toContain('Old unrelated task')
     expect((await h.records()).items[0]?.status).toBe('succeeded')
   })
@@ -344,8 +269,9 @@ describe('supervision through real AgentLoop, goal driver, tools and HTTP Jev', 
     second.agent.steer(createUserMessage({ source: supplement.source, content: [{ type: 'text', text: 'Continue the original work once after an explicit wake' }] }))
     await second.agent.whenIdle()
     expect(second.model.requests).toHaveLength(1)
-    expect(second.requests).toHaveLength(1)
-    expect(visible(second.agent)).toContain('No further automatic work')
+    expect(second.requests).toHaveLength(0)
+    expect((await second.records()).items).toHaveLength(3)
+    expect((await second.ctx.jev.getRecord((await second.records()).items[0]!.id))?.attemptRecords[0]?.failure?.code).toBe('COMPLETION_INPUT_MISSING')
   })
 
   it('does not send or adopt an unlogged background attempt and still completes the main Agent', async () => {

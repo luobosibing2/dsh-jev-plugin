@@ -48,6 +48,10 @@ export interface JevJudgeOptions {
   link: JevOperationLink
   agent: Agent
   refresh: (signal: AbortSignal) => JevRequest | Promise<JevRequest>
+  /** Reject a saved complete input before transport; failures retain manual Retry/Cancel. */
+  preflight?: (request: JevRequest) => void
+  /** Consumer-specific failure detail shown with the existing Retry/Cancel controls. */
+  failureDetail?: (failure: { code: string; message: string }) => string
   interpret?: (response: JevResponse, signal: AbortSignal) => { usable: true } | { usable: false; reason: string } | Promise<{ usable: true } | { usable: false; reason: string }>
   canAdopt?: (response: JevResponse, signal: AbortSignal) => true | string | Promise<true | string>
   signal?: AbortSignal
@@ -284,7 +288,7 @@ export class JevService extends TypertRemoteService {
         if (lifetime.aborted) return this.cancel(operation.id)
         const request = await this.untilAbort(Promise.resolve(options.refresh(lifetime)), lifetime)
         validateRequest(request)
-        const attempted = await this.tryOnce(operation.id, request, options.interpret, lifetime, options.featureId, options.connection)
+        const attempted = await this.tryOnce(operation.id, request, options.interpret, lifetime, options.featureId, options.connection, options.preflight)
         if (lifetime.aborted) return this.cancel(operation.id)
         if (!attempted.ok) return { kind: 'failed', operationId, failure: attempted.failure }
         const current = options.canAdopt === undefined ? true
@@ -351,7 +355,7 @@ export class JevService extends TypertRemoteService {
       }
       const request = await this.untilAbort(Promise.resolve(options.refresh(lifetime)), lifetime)
       validateRequest(request)
-      const attempted = await this.tryOnce(operation.id, request, options.interpret, lifetime, options.featureId)
+      const attempted = await this.tryOnce(operation.id, request, options.interpret, lifetime, options.featureId, undefined, options.preflight)
       if (lifetime.aborted) return this.cancel(operation.id)
       if (attempted.ok) {
         if (options.canAdopt !== undefined) {
@@ -366,7 +370,7 @@ export class JevService extends TypertRemoteService {
         return { kind: 'ok', operationId: operation.id, attemptId: attempted.attemptId, response: attempted.response }
       }
       await this.records().setStatus(operation.id, 'waiting')
-      const choice = await this.ask(options.agent, lifetime, `${attempted.failure.message}. Retry with current input or cancel?`)
+      const choice = await this.ask(options.agent, lifetime, options.failureDetail?.(attempted.failure) ?? `${attempted.failure.message}. Retry with current input or cancel?`)
       if (choice === 'cancel') return this.cancel(operation.id)
       }
     } catch (error) {
@@ -458,7 +462,7 @@ export class JevService extends TypertRemoteService {
 
   private async tryOnce(
     operationId: string, request: JevRequest,
-    interpret?: JevJudgeOptions['interpret'], outerSignal?: AbortSignal, featureId?: string, expectedConnection?: JevConnectionIdentity,
+    interpret?: JevJudgeOptions['interpret'], outerSignal?: AbortSignal, featureId?: string, expectedConnection?: JevConnectionIdentity, preflight?: JevJudgeOptions['preflight'],
   ): Promise<{ ok: true; attemptId: string; response: JevResponse } | { ok: false; failure: { code: string; message: string } }> {
     let snapshot: JevRequest
     try {
@@ -479,6 +483,7 @@ export class JevService extends TypertRemoteService {
     const timeout = AbortSignal.timeout(identity.timeoutMs)
     const signal = AbortSignal.any([timeout, ...outerSignal === undefined ? [] : [outerSignal]])
     try {
+      preflight?.(snapshot)
       if (!identity.baseUrl || !identity.model || !identity.credentialRef) {
         throw new JevError('CONNECTION_MISSING', 'Jev service address, model, or credential reference is missing')
       }

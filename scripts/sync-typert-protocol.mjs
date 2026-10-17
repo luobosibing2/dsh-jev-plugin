@@ -16,5 +16,7 @@ await mkdir(output, { recursive: true })
 for (const name of await readdir(declarations)) {
   if (name.endsWith('.d.ts')) await copyFile(join(declarations, name), join(output, name))
 }
-try { await symlink('../jev/node_modules', join(reference, 'node_modules'), 'dir') }
+// Windows junctions do not require symbolic-link privileges and need an absolute target.
+const windows = process.platform === 'win32'
+try { await symlink(windows ? resolve('packages/jev/node_modules') : '../jev/node_modules', join(reference, 'node_modules'), windows ? 'junction' : 'dir') }
 catch (error) { if (error?.code !== 'EEXIST') throw error }

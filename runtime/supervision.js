@@ -1,7 +1,129 @@
+import { n as JevError } from "./types-Bf-UMMSE.js";
 import s from "@deepseek-ai/schemastery";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
+//#region packages/jev/lib/types/completion-report.js
+const assessments = {
+	complete: "The supplied report shows that the current-turn requirements are satisfied, with no obvious omission or contradiction. This is not independent verification of code or artifacts.",
+	omission: "A current-turn requirement is unreported, unfinished, or has an unmet user-specified condition. Do not invent verification or delivery requirements.",
+	contradiction: "Todo content or status and the final report disagree. This identifies a report inconsistency, not a verified code defect.",
+	"needs-user": "Completion requires an unresolved user choice or authorization. An already-authorized report correction does not require a new decision.",
+	unknown: "The supplied material is insufficient to judge reliably. This does not mean task success, task failure, or a technical request error."
+};
+/** Read only native records from the latest turn, including a cleared Todo list.
+* @param agent - live ordinary root Agent.
+* @param requestId - original direct-user identity captured at turn admission.
+* @param supplements - already used or durably reserved supplemental rounds.
+* @param maximum - current profile's supplemental round limit.
+* @param budget - character limit saved with the actual input.
+* @returns no input for a turn that has never written Todo, otherwise complete report material.
+*/
+function completionReport(agent, requestId, supplements, maximum, budget) {
+	const events = agent.session.snapshotEvents();
+	const start = events.findLastIndex((event) => event.type === "turn/start");
+	const turn = events.slice(Math.max(0, start));
+	const todo = turn.findLast((event) => event.type === "todo/write");
+	if (todo?.type !== "todo/write") return void 0;
+	const requirements = turn.flatMap((event) => event.type === "user/message" && event.data.source.kind === "user" ? [{
+		id: event.data.id,
+		content: event.data.content
+	}] : []);
+	const originalAvailable = start >= 0 && requirements.some((message) => message.id === requestId);
+	const final = turn.findLast((event) => event.type === "assistant/message");
+	const finalText = final?.type === "assistant/message" ? final.data.message.content.filter((block) => block.type === "text").map((block) => block.text).join("\n") : "";
+	const options = [
+		...requirements.map((message, index) => ({
+			id: `requirement-${index + 1}`,
+			description: JSON.stringify(message.content)
+		})),
+		...todo.data.todos.map((item, index) => ({
+			id: `todo-${index + 1}`,
+			description: `[${item.status}] ${item.content}`
+		})),
+		{
+			id: "final-answer",
+			description: finalText || "最终正文为空 / Empty final answer"
+		},
+		{
+			id: "overall",
+			description: "整体材料 / The complete supplied material"
+		},
+		{
+			id: "none",
+			description: "未发现问题 / No issue identified (complete only)"
+		}
+	];
+	return {
+		state: {
+			mode: "completion",
+			reviewPoint: String(final?.seq ?? todo.seq),
+			evidenceScope: "current turn requirements, latest Todo and latest final answer only",
+			requirements: requirements.map((message) => ({
+				id: message.id,
+				content: JSON.parse(JSON.stringify(message.content))
+			})),
+			todos: todo.data.todos.map((item) => ({
+				content: item.content,
+				status: item.status
+			})),
+			finalAnswer: finalText,
+			originalRequirementsAvailable: originalAvailable,
+			supplementsUsed: supplements,
+			maxSupplementRounds: maximum,
+			evidenceCharacterBudget: budget,
+			rules: "Review the supplied report only. The original requirements and subsequent adjustments are in chronological order; later explicit adjustments apply. Todo may contain historical work, but it does not replace the current-turn user requirements. Do not infer an earlier task from a new request saying continue. Empty Todo and empty final text are valid material. Select only the single most important issue; this is not an exhaustive review. Do not infer actual tool execution or artifact correctness from self-reported completion. Tests need to pass only if the user required that condition: running and truthfully reporting failed tests can satisfy a run-and-report request; a fix-and-pass request remains unmet while those tests fail. Todo pending status alone does not establish failure. Supplements stay within existing authorization, including read-only restrictions, and must not redo unrelated completed work, fabricate results, or force completed status. Unknown calls for truthful supporting information or an explanation of what remains unverified. Plugin notices are neither new user requirements nor new authorization."
+		},
+		questions: [{
+			id: "assessment",
+			kind: "choice",
+			prompt: "Assess the current-turn report using the supplied rules.",
+			options: Object.entries(assessments).map(([id, description]) => ({
+				id,
+				description
+			}))
+		}, {
+			id: "focus",
+			kind: "choice",
+			prompt: "Choose the most important existing requirement, Todo entry, or final answer. Use overall for material-wide uncertainty; none is permitted only for complete.",
+			options
+		}]
+	};
+}
+/** Refuse incomplete originals or oversized complete material without transport or truncation.
+* @param request - exact saved input and its reference options.
+* @param budget - live character limit for serialized material and both questions.
+*/
+function completionPreflight(request, budget) {
+	if (typeof request.state !== "object" || request.state === null || Array.isArray(request.state) || !("originalRequirementsAvailable" in request.state) || request.state.originalRequirementsAvailable !== true) throw new JevError("COMPLETION_INPUT_MISSING", "本轮原始要求缺失，本次完成核查未完成 / Original current-turn requirements are unavailable; completion review did not finish");
+	if (JSON.stringify(request).length > budget) throw new JevError("COMPLETION_BUDGET", "核查材料超出预算，本次完成核查未完成 / Review material exceeds the character budget; completion review did not finish");
+}
+/** Validate both bounded answers; valid unknown is a business conclusion.
+* @param response - normalized provider answer.
+* @param request - actual input defining all permitted references.
+* @returns the assessment and its exact selected quotation, or no verdict for invalid answers.
+*/
+function completionVerdict(response, request) {
+	const assessment = response.answers.find((answer) => answer.id === "assessment");
+	const focus = response.answers.find((answer) => answer.id === "focus");
+	if (response.answers.length !== 2 || assessment?.kind !== "choice" || focus?.kind !== "choice" || !Object.hasOwn(assessments, assessment.optionId)) return void 0;
+	const question = request.questions.find((question) => question.id === "focus");
+	const selected = question?.kind === "choice" ? question.options.find((option) => option.id === focus.optionId) : void 0;
+	if (selected === void 0 || selected.id === "none" && assessment.optionId !== "complete") return void 0;
+	return {
+		value: assessment.optionId,
+		reason: `${{
+			complete: "报告核查完成 / Report review complete",
+			omission: "发现遗漏或未满足条件 / Omission or unmet condition",
+			contradiction: "报告前后矛盾，请核对并更正 / Check and correct inconsistent reporting",
+			unknown: "材料不足，请补充真实依据或说明 / Add truthful supporting information or explain uncertainty",
+			"needs-user": "需要用户决定 / A user decision is needed"
+		}[assessment.optionId]}\n材料引用 / Material reference ${selected.id}: ${selected.description}`,
+		issueKey: selected.id
+	};
+}
+//#endregion
 //#region packages/jev/lib/types/supervision.js
 const Config = s.object({
+	maxSupplementRounds: s.number().step(1).min(1).max(Number.MAX_SAFE_INTEGER).default(3).volatile(),
 	driftInterval: s.number().step(1).min(1).max(Number.MAX_SAFE_INTEGER).default(6).volatile(),
 	evidenceChars: s.number().step(1).min(1).max(1e6).default(24e3).volatile(),
 	noProgressRounds: s.number().step(1).min(1).max(Number.MAX_SAFE_INTEGER).default(3).volatile()
@@ -32,7 +154,7 @@ function verdict(response, request) {
 	const question = request.questions.find((question) => question.id === "evidence");
 	if (question?.kind !== "choice") return void 0;
 	const selected = question.options.find((option) => option.id === evidence.optionId);
-	if (selected === void 0) return void 0;
+	if (selected === void 0 || selected.id === "insufficient-evidence") return void 0;
 	const state = request.state;
 	if (typeof state !== "object" || state === null || Array.isArray(state) || !("completeEvidence" in state) || state.completeEvidence !== true) return void 0;
 	return {
@@ -105,6 +227,10 @@ function evidence(ctx, agent, mode, budget, requestId) {
 		id: "no-evidence",
 		description: "No evidence fits the configured budget; choose unknown."
 	});
+	if (options.length < 2) options.push({
+		id: "insufficient-evidence",
+		description: "No supplied reference supports an assessment; choose unknown."
+	});
 	const state = JSON.parse(JSON.stringify({
 		mode,
 		goal: omittedGoal ? {
@@ -148,6 +274,7 @@ function evidence(ctx, agent, mode, budget, requestId) {
 }
 /** Install three independently enabled consumers; native goals retain exclusive continuation ownership. */
 function apply(ctx, config) {
+	const states = /* @__PURE__ */ new WeakMap();
 	for (const feature of [
 		{
 			id: "drift-monitoring",
@@ -157,7 +284,7 @@ function apply(ctx, config) {
 		{
 			id: "completion-check",
 			name: "完成核查 / Completion check",
-			description: "回答展示后核查，普通请求最多补做一次 / Check submitted answers; at most one supplemental attempt"
+			description: "回答展示后核查，按本轮报告核查，有限次补充 / Check current-turn reports with limited supplements"
 		},
 		{
 			id: "goal-supervision",
@@ -165,8 +292,12 @@ function apply(ctx, config) {
 			description: "核查模型完成申请；连续无进展暂停原生目标 / Guard completion and pause stalled native goals"
 		}
 	]) ctx.effect(() => ctx.jev.registerFeature(feature));
+	ctx.effect(() => ctx.systemPrompt.section({
+		name: "jev-completion-todo",
+		order: 650,
+		text: ({ agent }) => agent !== void 0 && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent) && ctx.goals.get(agent)?.phase !== "active" && !states.get(agent)?.ownsGoalTurn && ctx.jev.isFeatureEnabled("completion-check") ? "When updating an existing Todo, briefly include actual actions, artifact paths, or executed commands and observed results in its content. Keep failures, unfinished work, and unverified results truthful. Do not create a Todo for a simple task solely for this check; no extra fields, evidence report, or separate preparation round is required." : ""
+	}));
 	ctx.effect(() => ctx.settings.configure({ auto: false }, ctx.fiber), "jev-supervision.settings");
-	const states = /* @__PURE__ */ new WeakMap();
 	const tasks = /* @__PURE__ */ new Set();
 	const assessments = /* @__PURE__ */ new Map();
 	const lifetime = new AbortController();
@@ -185,6 +316,8 @@ function apply(ctx, config) {
 				active: false,
 				turn: -1,
 				requestId: "",
+				completionRequestId: "",
+				completionChecking: false,
 				reminderScope: "",
 				ownsGoalTurn: false,
 				reminded: /* @__PURE__ */ new Set(),
@@ -208,7 +341,7 @@ function apply(ctx, config) {
 			kind: "jev-supervision",
 			form: "notice",
 			summary: text,
-			requestId: state.requestId,
+			requestId: action === "supplement" || action.startsWith("completion-") || action === "supplement-unconfirmed" ? state.completionRequestId : state.requestId,
 			action,
 			operationId
 		},
@@ -256,8 +389,11 @@ function apply(ctx, config) {
 		if (outcome.kind === "cancelled" && goalIdentity(ctx.goals.get(agent)) === goalAtAttempt) pause(agent);
 		return outcome;
 	}
-	async function usedSupplement(agent, requestId) {
-		if (agent.session.deriveMessages().some((message) => message.role === "user" && message.source.kind === "jev-supervision" && message.source.requestId === requestId && message.source.action === "supplement")) return true;
+	async function supplementUsage(agent, requestId) {
+		const delivered = new Set(agent.session.snapshotEvents().flatMap((event) => event.type === "user/message" && event.data.source.kind === "jev-supervision" && event.data.source.requestId === requestId && event.data.source.action === "supplement" ? [event.data.source.operationId] : []));
+		const used = new Set(delivered);
+		const processedStops = /* @__PURE__ */ new Set();
+		let unconfirmedOperationId;
 		let cursor;
 		do {
 			const page = await ctx.jev.listRecords({
@@ -268,11 +404,109 @@ function apply(ctx, config) {
 			});
 			for (const item of page.items) {
 				const record = await ctx.jev.getRecord(item.id);
-				if (record?.link.inputVersion === requestId && record.receipts.some((item) => item.id === "supplement-reserved")) return true;
+				if (record?.link.inputVersion !== requestId) continue;
+				if (record.link.stepId !== void 0 && (record.status === "cancelled" || record.status === "succeeded") && !record.receipts.some((item) => item.status === "not-adopted")) processedStops.add(record.link.stepId);
+				if (!record.receipts.some((item) => item.id === "supplement-reserved")) continue;
+				if (record.receipts.some((item) => item.id === "supplement-stale")) continue;
+				used.add(record.id);
+				if (!delivered.has(record.id) && !record.receipts.some((item) => item.id === "supplement-queued")) unconfirmedOperationId = record.id;
 			}
 			cursor = page.nextCursor;
 		} while (cursor !== void 0);
-		return false;
+		return {
+			used: used.size,
+			processedStops,
+			...unconfirmedOperationId === void 0 ? {} : { unconfirmedOperationId }
+		};
+	}
+	const completionIdentity = (agent) => JSON.stringify([version(ctx, agent), [...agent.inbox.nextStep, ...agent.inbox.nextTurn].filter((message) => message.source.kind === "user")]);
+	const completionCurrent = (agent, state, identity) => live(agent) && state.active && !state.signal?.aborted && completionIdentity(agent) === identity && agent.inbox.nextStep.length === 0 && !agent.inbox.nextTurn.some((message) => message.source.kind === "user");
+	async function checkReport(agent, state, signal) {
+		const initial = completionReport(agent, state.completionRequestId, 0, config.maxSupplementRounds.get(), config.evidenceChars.get());
+		if (initial === void 0) return;
+		const reviewPoint = typeof initial.state === "object" && initial.state !== null && "reviewPoint" in initial.state ? String(initial.state.reviewPoint) : "";
+		const usage = await supplementUsage(agent, state.completionRequestId);
+		if (usage.unconfirmedOperationId !== void 0) {
+			if (agent.session.snapshotEvents().some((event) => event.type === "user/message" && event.data.source.kind === "jev-supervision" && event.data.source.operationId === usage.unconfirmedOperationId && event.data.source.action === "supplement-unconfirmed")) return;
+			await receipt(usage.unconfirmedOperationId, "supplement-unconfirmed", "observed", "Previous supplement has an unknown action status; do not repeat it");
+			agent.session.append("user/message", notice(state, usage.unconfirmedOperationId, "supplement-unconfirmed", "上次补充状态未确认，本次完成核查未完成 / Previous supplement remains unconfirmed; completion review did not finish"), { surfaceOp: "append" });
+			return;
+		}
+		if (usage.processedStops.has(reviewPoint)) return;
+		let identity = "";
+		let request;
+		const result = await ctx.jev.judge({
+			featureId: "completion-check",
+			agent,
+			signal,
+			link: {
+				sessionId: agent.session.id,
+				inputVersion: state.completionRequestId,
+				stepId: reviewPoint
+			},
+			refresh: () => {
+				identity = completionIdentity(agent);
+				const input = completionReport(agent, state.completionRequestId, usage.used, config.maxSupplementRounds.get(), config.evidenceChars.get());
+				if (input === void 0) throw new Error("Current turn changed during completion review");
+				request = input;
+				return request;
+			},
+			preflight: (input) => completionPreflight(input, config.evidenceChars.get()),
+			failureDetail: (failure) => `本次完成核查未完成 / Completion review did not finish: ${failure.message}. 请调整配置后重试，或取消本次核查 / Retry with current input and settings, or cancel this review.`,
+			interpret: (response) => completionVerdict(response, request) !== void 0 ? { usable: true } : {
+				usable: false,
+				reason: "完成核查响应或材料引用无效 / Invalid completion assessment or material reference"
+			},
+			canAdopt: () => completionCurrent(agent, state, identity) || "Current-turn requirements or execution changed"
+		});
+		if (result.kind !== "ok") return;
+		const assessment = completionVerdict(result.response, request);
+		if (!completionCurrent(agent, state, identity)) {
+			await receipt(result.operationId, "completion-stale", "not-adopted", "Current turn changed before action");
+			return;
+		}
+		const stop = async (reason) => {
+			await receipt(result.operationId, "completion-stopped", "observed", JSON.stringify({
+				assessment: assessment.value,
+				supplementsUsed: usage.used,
+				endingReason: reason
+			}));
+			agent.session.append("user/message", notice(state, result.operationId, "completion-stopped", "Jev 停止自动补充 / No further automatic work: " + assessment.reason + "\n" + reason), { surfaceOp: "append" });
+		};
+		if (assessment.value === "complete") {
+			await receipt(result.operationId, "completion-checked", "observed", JSON.stringify({
+				assessment: "complete",
+				supplementsUsed: usage.used,
+				endingReason: "Report satisfies current-turn requirements; not independent verification"
+			}));
+			agent.session.append("user/message", notice(state, result.operationId, "completion-checked", assessment.reason), { surfaceOp: "append" });
+			return;
+		}
+		if (assessment.value === "needs-user") {
+			await stop("需要用户选择或授权 / User choice or authorization required");
+			return;
+		}
+		if (usage.used >= config.maxSupplementRounds.get()) {
+			await stop("自动补充额度耗尽 / Supplemental round limit reached");
+			return;
+		}
+		await receipt(result.operationId, "supplement-reserved", "observed", JSON.stringify({
+			supplementsUsed: usage.used + 1,
+			assessment: assessment.value,
+			endingReason: "Supplement reserved before enqueue"
+		}));
+		if (!completionCurrent(agent, state, identity) || signal.aborted) {
+			await receipt(result.operationId, "supplement-stale", "not-adopted", "Requirements changed after reservation");
+			return;
+		}
+		agent.steer(notice(state, result.operationId, "supplement", "Jev 按本轮报告请求补充 / Supplement the current-turn report: " + assessment.reason + "\n仅处理最关键问题，在原授权内补做或更正报告；更新相关 Todo，保留失败、未完成和未验证事实，不重做无关完成项，不新增权限或编造结果 / Address this single issue within existing authorization, update the related Todo truthfully, preserve failures and unverified work, and do not redo unrelated completed work or invent results."));
+		await receipt(result.operationId, "supplement-queued", "executed", JSON.stringify({
+			supplementsUsed: usage.used + 1,
+			assessment: assessment.value,
+			endingReason: "Supplement queued in the same turn; report remains unchecked"
+		})).catch((error) => {
+			ctx.logger.warn("Jev supplement is already queued; its action receipt remains unconfirmed: " + String(error));
+		});
 	}
 	ctx.effect(() => ctx.jev.onFeatureStateChange((features) => {
 		for (const agent of ctx.agents.roots()) {
@@ -290,6 +524,9 @@ function apply(ctx, config) {
 		if (state.turn !== turn) {
 			state.turn = turn;
 			state.requestId = messages.find((message) => message.source.kind === "user")?.id ?? (lastUser(agent) || messages[0]?.id || "turn-" + turn);
+			const events = agent.session.snapshotEvents();
+			const original = events.slice(Math.max(0, events.findLastIndex((event) => event.type === "turn/start"))).find((event) => event.type === "user/message" && event.data.source.kind === "user");
+			state.completionRequestId = original?.type === "user/message" ? original.data.id : state.requestId;
 			const goal = ctx.goals.get(agent);
 			state.ownsGoalTurn = goal?.phase === "active" || messages.some((message) => message.source.kind === "goal");
 			const scope = goal?.phase === "active" ? goalIdentity(goal) : state.requestId;
@@ -430,30 +667,13 @@ function apply(ctx, config) {
 			} else await receipt(result.operationId, "progress-checked", "observed", assessment.reason);
 			return;
 		}
-		if (state.ownsGoalTurn || !await enabled("completion-check") || !state.requestId) return;
-		const result = await judge(agent, state, "completion", signal);
-		if (result.kind !== "ok") return;
-		const assessment = assessments.get(result.operationId);
-		assessments.delete(result.operationId);
-		if (assessment.value === "complete") {
-			await receipt(result.operationId, "completion-checked", "observed", "Requirements supported by recorded evidence; not an independent test run");
-			return;
-		}
-		const identity = version(ctx, agent);
-		if (assessment.value === "omission" && !await usedSupplement(agent, state.requestId)) {
-			if (signal.aborted || version(ctx, agent) !== identity || [...agent.inbox.nextStep, ...agent.inbox.nextTurn].some((message) => message.source.kind === "user")) return;
-			await receipt(result.operationId, "supplement-reserved", "observed", "One supplemental attempt reserved for this original request");
-			if (signal.aborted || version(ctx, agent) !== identity) {
-				await receipt(result.operationId, "supplement-stale", "not-adopted", "Requirements changed after reservation");
-				return;
-			}
-			agent.steer(notice(state, result.operationId, "supplement", "Jev 发现遗漏；本请求仅自动补做一次 / Complete these omissions once: " + assessment.reason));
-			await receipt(result.operationId, "supplement-queued", "executed", "Supplement queued; completion remains unverified").catch((error) => {
-				ctx.logger.warn("Jev supplement is already queued; its action receipt remains unconfirmed: " + String(error));
-			});
-		} else {
-			agent.session.append("user/message", notice(state, result.operationId, "completion-stopped", "Jev 停止自动补做 / No further automatic work: " + assessment.reason), { surfaceOp: "append" });
-			await receipt(result.operationId, "completion-stopped", "observed", assessment.reason);
+		if (state.ownsGoalTurn || !await enabled("completion-check") || !state.requestId || agent.inbox.nextTurn.some((message) => message.source.kind === "user")) return;
+		if (!state.active || state.completionChecking) return;
+		state.completionChecking = true;
+		try {
+			await checkReport(agent, state, signal);
+		} finally {
+			state.completionChecking = false;
 		}
 	});
 	ctx.on("tools/pre-execute", async (exec, next) => {
@@ -498,7 +718,8 @@ const inject = [
 	"tools",
 	"goals",
 	"sessions",
-	"settings"
+	"settings",
+	"systemPrompt"
 ];
 //#endregion
 export { Config, apply, inject, name };

@@ -7,6 +7,7 @@ export interface Config {
     driftInterval: Volatile<number>;
     noProgressRounds: Volatile<number>;
     evidenceChars: Volatile<number>;
+    maxSupplementRounds: Volatile<number>;
 }
 export declare const Config: s<SupervisionConfigValues, Config>;
 declare module '@deepseek-ai/dsh-llm' {

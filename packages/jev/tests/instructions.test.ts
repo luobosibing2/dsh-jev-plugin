@@ -41,7 +41,7 @@ class BindingRuntime extends PtcRuntime {
 }
 
 async function fixture(ptc = false, sessionDirectory = '', nativeFs = false,
-  directory: { service?: boolean; sessionCwd?: boolean } = {}) {
+  directory: { service?: boolean; sessionCwd?: boolean; requestText?: string } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'jev-instructions-'))
   cleanups.push(() => rm(root, { recursive: true, force: true }))
   await mkdir(join(root, '.git'))
@@ -115,7 +115,7 @@ async function fixture(ptc = false, sessionDirectory = '', nativeFs = false,
     }))
   }
   const session = ctx.sessions.create(SessionId('instructions-' + root), { meta: directory.sessionCwd === false ? {} : { cwd } })
-  session.append('user/message', user('Update this project.'), { surfaceOp: 'append' })
+  session.append('user/message', user(directory.requestText ?? 'Update this project.'), { surfaceOp: 'append' })
   session.append('turn/start', { turn: 1 })
   const agent = { ctx, id: session.id, session, status: 'running', inbox: { nextStep: [], nextTurn: [] }, options: {},
     steer: vi.fn(), followup: vi.fn(), send: vi.fn() } as never as Agent
@@ -153,6 +153,22 @@ async function fixture(ptc = false, sessionDirectory = '', nativeFs = false,
 }
 
 describe('instruction guidance with original Native/PTC pipeline and localhost Jev', () => {
+  it.each(['not-applicable', 'undetermined'])('offers valid choices without textual requirements and handles %s without a reminder', async value => {
+    const f = await fixture(false, '', false, { requestText: '' })
+    f.answer(value)
+    expect((await f.invoke()).isError).toBe(false)
+    await f.settled()
+    expect(f.requests).toHaveLength(1)
+    expect(f.requests[0]!.state.sources).toEqual([])
+    const question = f.requests[0]!.questions['no-requirements'] as { criteria: Record<string, unknown> }
+    expect(Object.keys(question.criteria)).toEqual(['not-applicable', 'undetermined'])
+    const record = await f.ctx.jev.getRecord((await f.ctx.jev.listRecords({})).items[0]!.id)
+    expect(record?.status).toBe(value === 'not-applicable' ? 'succeeded' : 'failed')
+    expect(await f.step()).toHaveLength(0)
+    expect(f.writes()).toBe(1)
+    expect(f.ask).not.toHaveBeenCalled()
+  })
+
   it('reads operation paths and rules from each legacy Session without a directory service', async () => {
     const f = await fixture(false, '', false, { service: false })
     await f.rule('Root directory instructions.')

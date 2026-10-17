@@ -6998,7 +6998,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 218,
+						"line": 222,
 						"column": 3
 					}
 				},
@@ -7025,7 +7025,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 228,
+						"line": 232,
 						"column": 9
 					}
 				},
@@ -7052,7 +7052,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 190,
+						"line": 194,
 						"column": 9
 					}
 				},
@@ -7102,7 +7102,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 222,
+						"line": 226,
 						"column": 3
 					}
 				},
@@ -7130,7 +7130,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 206,
+						"line": 210,
 						"column": 3
 					}
 				},
@@ -7148,7 +7148,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 174,
+						"line": 178,
 						"column": 9
 					}
 				},
@@ -7175,7 +7175,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 181,
+						"line": 185,
 						"column": 9
 					}
 				},
@@ -7211,7 +7211,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 236,
+						"line": 240,
 						"column": 9
 					}
 				},
@@ -7238,7 +7238,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 212,
+						"line": 216,
 						"column": 3
 					}
 				},
@@ -7266,7 +7266,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					},
 					sourceLocation: {
 						"file": "packages/jev/src/index.ts",
-						"line": 246,
+						"line": 250,
 						"column": 9
 					}
 				}
@@ -7298,38 +7298,38 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			const element = document.createElement("style");
 			element.dataset.plugin = "@dsh-jev/plugin";
 			element.dataset.pluginCss = tag$1;
-			element.textContent = ".r-1xzq_page{min-width:0;color:var(--dsw-alias-label-primary);flex-direction:column;gap:24px;padding:12px 0 24px;font-size:13px;line-height:20px;display:flex}.r-1xzq_tabs{max-width:420px}.r-1xzq_panel,.r-1xzq_section,.r-1xzq_form,.r-1xzq_list,.r-1xzq_record,.r-1xzq_detail,.r-1xzq_featureBody{flex-direction:column;display:flex}.r-1xzq_panel{gap:24px}.r-1xzq_section{gap:12px}.r-1xzq_form{gap:14px}.r-1xzq_list,.r-1xzq_record{gap:8px}.r-1xzq_detail{gap:12px}.r-1xzq_featureBody{gap:2px;min-width:0}.r-1xzq_heading{margin:0;font-size:14px;font-weight:500;line-height:22px}.r-1xzq_row,.r-1xzq_toolbar,.r-1xzq_feature,.r-1xzq_recordHead,.r-1xzq_filters,.r-1xzq_actions{align-items:center;gap:12px;display:flex}.r-1xzq_feature,.r-1xzq_recordHead{justify-content:space-between}.r-1xzq_feature,.r-1xzq_record{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);padding:12px}.r-1xzq_featureTitle{font-weight:500}.r-1xzq_description,.r-1xzq_hint,.r-1xzq_meta,.r-1xzq_empty{color:var(--dsw-alias-label-secondary)}.r-1xzq_description,.r-1xzq_hint,.r-1xzq_meta,.r-1xzq_empty,.r-1xzq_notice{margin:0}.r-1xzq_hint{font-size:12px}.r-1xzq_empty{padding:12px 0}.r-1xzq_loading{justify-content:center;align-items:center;min-height:80px;display:flex}.r-1xzq_toolbar,.r-1xzq_actions{flex-wrap:wrap}.r-1xzq_filters{flex-wrap:wrap;align-items:end}.r-1xzq_field{flex-direction:column;flex:160px;gap:6px;min-width:0;display:flex}.r-1xzq_field>span:first-child,.r-1xzq_field>label{font-weight:500}.r-1xzq_field input,.r-1xzq_field select{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);width:100%;min-height:36px;color:var(--dsw-alias-label-primary);font:inherit;padding:6px 10px}.r-1xzq_field input:focus-visible,.r-1xzq_field select:focus-visible{outline:var(--dsw-focus-ring-width)solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:1px}.r-1xzq_field input[aria-invalid=true]{border-color:var(--dsw-alias-state-error-primary)}.r-1xzq_notice{color:var(--dsw-alias-state-error-primary);font-size:13px}.r-1xzq_success{color:var(--dsw-alias-state-success-primary)}.r-1xzq_code{border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);white-space:pre-wrap;overflow-wrap:anywhere;margin:0;padding:10px;font-size:12px;line-height:18px;overflow:auto}.r-1xzq_detailBlock{flex-direction:column;gap:6px;display:flex}.r-1xzq_detailLabel{font-weight:500}@media (width<=600px){.r-1xzq_feature,.r-1xzq_recordHead{flex-direction:column;align-items:flex-start}.r-1xzq_filters>.r-1xzq_field{flex-basis:100%}}";
+			element.textContent = ".kZ-dVa_page{min-width:0;color:var(--dsw-alias-label-primary);flex-direction:column;gap:24px;padding:12px 0 24px;font-size:13px;line-height:20px;display:flex}.kZ-dVa_tabs{max-width:420px}.kZ-dVa_panel,.kZ-dVa_section,.kZ-dVa_form,.kZ-dVa_list,.kZ-dVa_record,.kZ-dVa_detail,.kZ-dVa_featureBody{flex-direction:column;display:flex}.kZ-dVa_panel{gap:24px}.kZ-dVa_section{gap:12px}.kZ-dVa_form{gap:14px}.kZ-dVa_list,.kZ-dVa_record{gap:8px}.kZ-dVa_detail{gap:12px}.kZ-dVa_featureBody{gap:2px;min-width:0}.kZ-dVa_heading{margin:0;font-size:14px;font-weight:500;line-height:22px}.kZ-dVa_row,.kZ-dVa_toolbar,.kZ-dVa_feature,.kZ-dVa_recordHead,.kZ-dVa_filters,.kZ-dVa_actions{align-items:center;gap:12px;display:flex}.kZ-dVa_feature,.kZ-dVa_recordHead{justify-content:space-between}.kZ-dVa_feature,.kZ-dVa_record{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);padding:12px}.kZ-dVa_featureTitle{font-weight:500}.kZ-dVa_description,.kZ-dVa_hint,.kZ-dVa_meta,.kZ-dVa_empty{color:var(--dsw-alias-label-secondary)}.kZ-dVa_description,.kZ-dVa_hint,.kZ-dVa_meta,.kZ-dVa_empty,.kZ-dVa_notice{margin:0}.kZ-dVa_hint{font-size:12px}.kZ-dVa_empty{padding:12px 0}.kZ-dVa_loading{justify-content:center;align-items:center;min-height:80px;display:flex}.kZ-dVa_toolbar,.kZ-dVa_actions{flex-wrap:wrap}.kZ-dVa_filters{flex-wrap:wrap;align-items:end}.kZ-dVa_field{flex-direction:column;flex:160px;gap:6px;min-width:0;display:flex}.kZ-dVa_field>span:first-child,.kZ-dVa_field>label{font-weight:500}.kZ-dVa_field input,.kZ-dVa_field select{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);width:100%;min-height:36px;color:var(--dsw-alias-label-primary);font:inherit;padding:6px 10px}.kZ-dVa_field input:focus-visible,.kZ-dVa_field select:focus-visible{outline:var(--dsw-focus-ring-width)solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:1px}.kZ-dVa_field input[aria-invalid=true]{border-color:var(--dsw-alias-state-error-primary)}.kZ-dVa_notice{color:var(--dsw-alias-state-error-primary);font-size:13px}.kZ-dVa_success{color:var(--dsw-alias-state-success-primary)}.kZ-dVa_code{border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);white-space:pre-wrap;overflow-wrap:anywhere;margin:0;padding:10px;font-size:12px;line-height:18px;overflow:auto}.kZ-dVa_detailBlock{flex-direction:column;gap:6px;display:flex}.kZ-dVa_detailLabel{font-weight:500}@media (width<=600px){.kZ-dVa_feature,.kZ-dVa_recordHead{flex-direction:column;align-items:flex-start}.kZ-dVa_filters>.kZ-dVa_field{flex-basis:100%}}";
 			document.head.appendChild(element);
 		}
 		var JevPage_module_css_default = {
-			"code": "r-1xzq_code",
-			"detail": "r-1xzq_detail",
-			"toolbar": "r-1xzq_toolbar",
-			"detailLabel": "r-1xzq_detailLabel",
-			"page": "r-1xzq_page",
-			"list": "r-1xzq_list",
-			"form": "r-1xzq_form",
-			"record": "r-1xzq_record",
-			"heading": "r-1xzq_heading",
-			"recordHead": "r-1xzq_recordHead",
-			"featureTitle": "r-1xzq_featureTitle",
-			"empty": "r-1xzq_empty",
-			"detailBlock": "r-1xzq_detailBlock",
-			"meta": "r-1xzq_meta",
-			"panel": "r-1xzq_panel",
-			"featureBody": "r-1xzq_featureBody",
-			"description": "r-1xzq_description",
-			"notice": "r-1xzq_notice",
-			"loading": "r-1xzq_loading",
-			"feature": "r-1xzq_feature",
-			"field": "r-1xzq_field",
-			"tabs": "r-1xzq_tabs",
-			"section": "r-1xzq_section",
-			"row": "r-1xzq_row",
-			"filters": "r-1xzq_filters",
-			"hint": "r-1xzq_hint",
-			"success": "r-1xzq_success",
-			"actions": "r-1xzq_actions"
+			"actions": "kZ-dVa_actions",
+			"code": "kZ-dVa_code",
+			"description": "kZ-dVa_description",
+			"detail": "kZ-dVa_detail",
+			"detailBlock": "kZ-dVa_detailBlock",
+			"detailLabel": "kZ-dVa_detailLabel",
+			"empty": "kZ-dVa_empty",
+			"feature": "kZ-dVa_feature",
+			"featureBody": "kZ-dVa_featureBody",
+			"featureTitle": "kZ-dVa_featureTitle",
+			"field": "kZ-dVa_field",
+			"filters": "kZ-dVa_filters",
+			"form": "kZ-dVa_form",
+			"heading": "kZ-dVa_heading",
+			"hint": "kZ-dVa_hint",
+			"list": "kZ-dVa_list",
+			"loading": "kZ-dVa_loading",
+			"meta": "kZ-dVa_meta",
+			"notice": "kZ-dVa_notice",
+			"page": "kZ-dVa_page",
+			"panel": "kZ-dVa_panel",
+			"record": "kZ-dVa_record",
+			"recordHead": "kZ-dVa_recordHead",
+			"row": "kZ-dVa_row",
+			"section": "kZ-dVa_section",
+			"success": "kZ-dVa_success",
+			"tabs": "kZ-dVa_tabs",
+			"toolbar": "kZ-dVa_toolbar"
 		};
 		//#endregion
 		//#region src/client/JevPage.tsx
@@ -8004,6 +8004,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				label: "noProgressRounds"
 			},
 			{
+				key: "maxSupplementRounds",
+				label: "maxSupplementRounds"
+			},
+			{
 				key: "evidenceChars",
 				label: "evidenceChars"
 			}
@@ -8015,6 +8019,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			const [draft, setDraft] = (0, react.useState)({
 				driftInterval: "",
 				noProgressRounds: "",
+				maxSupplementRounds: "",
 				evidenceChars: ""
 			});
 			const [errors, setErrors] = (0, react.useState)({});
@@ -8028,6 +8033,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				const next = {
 					driftInterval: String(snapshot.value.driftInterval),
 					noProgressRounds: String(snapshot.value.noProgressRounds),
+					maxSupplementRounds: String(snapshot.value.maxSupplementRounds),
 					evidenceChars: String(snapshot.value.evidenceChars)
 				};
 				const signature = JSON.stringify(next);
@@ -8078,6 +8084,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 							setDraft({
 								driftInterval: String(saved.driftInterval),
 								noProgressRounds: String(saved.noProgressRounds),
+								maxSupplementRounds: String(saved.maxSupplementRounds),
 								evidenceChars: String(saved.evidenceChars)
 							});
 							edited.current = false;
@@ -9233,56 +9240,56 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			const element = document.createElement("style");
 			element.dataset.plugin = "@dsh-jev/plugin";
 			element.dataset.pluginCss = tag;
-			element.textContent = ".HbWaDq_page{width:100%;height:calc(var(--dsh-conversation-viewport-height,100dvh) - var(--dsh-composer-height,152px));box-sizing:border-box;min-width:0;min-height:0;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-1);flex-direction:column;font-size:13px;line-height:20px;display:flex;overflow:hidden}.HbWaDq_toolbar{border-bottom:1px solid var(--dsw-alias-border-l3);flex-wrap:wrap;align-items:center;gap:8px 14px;padding:12px 20px;display:flex}.HbWaDq_toolbar h2,.HbWaDq_navigation h3,.HbWaDq_reader h3,.HbWaDq_reader h4,.HbWaDq_toolSection h4{margin:0;font-size:14px;font-weight:500;line-height:22px}.HbWaDq_toolbarActions{flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto;display:flex}.HbWaDq_scopeHint{color:var(--dsw-alias-label-secondary);flex-basis:100%;margin:0;font-size:12px}.HbWaDq_notice,.HbWaDq_progress,.HbWaDq_error{margin:0;font-size:12px}.HbWaDq_notice,.HbWaDq_progress{color:var(--dsw-alias-label-secondary)}.HbWaDq_error{color:var(--dsw-alias-state-error-primary)}.HbWaDq_mobileToggle{display:none}.HbWaDq_layout{flex:1;grid-template-columns:minmax(230px,275px) minmax(0,1fr);min-height:0;display:grid;overflow:hidden}.HbWaDq_navigation,.HbWaDq_reader{overscroll-behavior:contain;scrollbar-gutter:stable;min-height:0;overflow:auto}.HbWaDq_navigation{border-right:1px solid var(--dsw-alias-border-l3);background:var(--dsw-alias-bg-layer-2);padding:16px 12px 24px}.HbWaDq_navigation h3{padding:0 7px 12px}.HbWaDq_turnItem{margin-bottom:10px}.HbWaDq_turnButton,.HbWaDq_segmentButton,.HbWaDq_gapButton{border-radius:var(--dsw-radius-sm);width:100%;color:var(--dsw-alias-label-primary);text-align:left;font:inherit;cursor:pointer;background:0 0;border:1px solid #0000;flex-direction:column;align-items:flex-start;gap:3px;display:flex}.HbWaDq_turnButton{padding:8px}.HbWaDq_turnButton>span{-webkit-line-clamp:2;overflow-wrap:anywhere;-webkit-box-orient:vertical;display:-webkit-box;overflow:hidden}.HbWaDq_turnButton small,.HbWaDq_segmentButton small,.HbWaDq_gapButton small{color:var(--dsw-alias-label-secondary);font-size:12px}.HbWaDq_activeTurn,.HbWaDq_activeSegment{background:var(--dsw-alias-bg-layer-1);border-color:var(--dsw-alias-border-l3)}.HbWaDq_segments{border-left:1px solid var(--dsw-alias-border-l3);margin-left:13px;padding-left:8px}.HbWaDq_segmentButton,.HbWaDq_gapButton{margin:3px 0;padding:6px 8px}.HbWaDq_segmentButton{border-left:2px solid var(--dsw-alias-state-business-primary)}.HbWaDq_gapButton{color:var(--dsw-alias-label-secondary)}.HbWaDq_turnButton:hover,.HbWaDq_segmentButton:hover,.HbWaDq_gapButton:hover{background:var(--dsw-alias-bg-layer-1)}.HbWaDq_reader{padding:18px 22px 32px}.HbWaDq_readerInner{width:100%;max-width:1120px;margin:0 auto}.HbWaDq_readerHeader,.HbWaDq_readerHeading,.HbWaDq_stepHead,.HbWaDq_statusLine{flex-wrap:wrap;align-items:baseline;gap:7px 14px;display:flex}.HbWaDq_readerHeader{justify-content:space-between;margin-bottom:14px}.HbWaDq_readerHeading{justify-content:space-between;margin:20px 0 10px}.HbWaDq_request{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-2);padding:12px 14px}.HbWaDq_request h4{margin-bottom:8px}.HbWaDq_request details{margin-top:8px}.HbWaDq_search{color:var(--dsw-alias-label-secondary);align-items:center;gap:8px;display:flex}.HbWaDq_search input{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);width:220px;min-width:0;min-height:34px;color:var(--dsw-alias-label-primary);font:inherit;padding:5px 8px}.HbWaDq_textButton{color:var(--dsw-alias-state-business-primary);font:inherit;cursor:pointer;background:0 0;border:0;padding:2px 0}.HbWaDq_stepCard{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-2);margin:10px 0;padding:13px 14px}.HbWaDq_inSegment{border-left:3px solid var(--dsw-alias-state-business-primary)}.HbWaDq_focused{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}.HbWaDq_stepHead{margin-bottom:5px}.HbWaDq_stepNumber{font-weight:500}.HbWaDq_stageLabel{color:var(--dsw-alias-state-business-primary)}.HbWaDq_statusLine{margin:6px 0;font-size:12px}.HbWaDq_muted{color:var(--dsw-alias-label-secondary)}.HbWaDq_blocks{flex-direction:column;gap:6px;margin:12px 0;display:flex}.HbWaDq_message{border-top:1px solid var(--dsw-alias-border-l3);padding:8px 0}.HbWaDq_block,.HbWaDq_tool{min-width:0}.HbWaDq_blockLabel{margin:8px 0 5px;font-weight:500;display:block}.HbWaDq_sourceText{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0;font:12px/18px ui-monospace,SFMono-Regular,monospace}.HbWaDq_block>.HbWaDq_sourceText,.HbWaDq_block>details .HbWaDq_sourceText,.HbWaDq_toolBody .HbWaDq_sourceText,.HbWaDq_detailPanel .HbWaDq_sourceText{border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);padding:9px}.HbWaDq_toolSection{border-top:1px solid var(--dsw-alias-border-l3);margin-top:13px;padding-top:11px}.HbWaDq_toolSection h4{font-size:13px}.HbWaDq_tool{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);margin-top:7px;padding:7px 9px}.HbWaDq_tool summary{flex-wrap:wrap;gap:12px;display:flex}.HbWaDq_toolBody{padding-top:8px}.HbWaDq_analysisSection{border-top:1px solid var(--dsw-alias-border-l3);margin-top:12px;padding-top:9px}.HbWaDq_previousResult{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);color:var(--dsw-alias-label-secondary);flex-wrap:wrap;gap:4px 12px;margin-top:9px;padding:9px;font-size:12px;display:flex}.HbWaDq_detailPanel{padding-top:8px}.HbWaDq_empty{color:var(--dsw-alias-label-secondary);text-align:center;padding:30px 15px}.HbWaDq_loading{flex:1;justify-content:center;align-items:center;display:flex}.HbWaDq_page button:focus-visible,.HbWaDq_page input:focus-visible,.HbWaDq_page summary:focus-visible{outline:var(--dsw-focus-ring-width)solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}@media (width<=760px){.HbWaDq_toolbar{padding:10px 14px}.HbWaDq_mobileToggle{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);font:inherit;cursor:pointer;padding:5px 8px;display:inline-block}.HbWaDq_layout{flex-direction:column;display:flex}.HbWaDq_navigation{border-right:0;border-bottom:1px solid var(--dsw-alias-border-l3);flex:none;max-height:34%;padding:12px 12px 18px}.HbWaDq_navigationClosed{display:none}.HbWaDq_reader{flex:1;padding:14px 14px 22px}.HbWaDq_search{width:100%}.HbWaDq_search input{flex:1;width:auto}}";
+			element.textContent = ".ERvGua_page{width:100%;height:calc(var(--dsh-conversation-viewport-height,100dvh) - var(--dsh-composer-height,152px));box-sizing:border-box;min-width:0;min-height:0;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-1);flex-direction:column;font-size:13px;line-height:20px;display:flex;overflow:hidden}.ERvGua_toolbar{border-bottom:1px solid var(--dsw-alias-border-l3);flex-wrap:wrap;align-items:center;gap:8px 14px;padding:12px 20px;display:flex}.ERvGua_toolbar h2,.ERvGua_navigation h3,.ERvGua_reader h3,.ERvGua_reader h4,.ERvGua_toolSection h4{margin:0;font-size:14px;font-weight:500;line-height:22px}.ERvGua_toolbarActions{flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto;display:flex}.ERvGua_scopeHint{color:var(--dsw-alias-label-secondary);flex-basis:100%;margin:0;font-size:12px}.ERvGua_notice,.ERvGua_progress,.ERvGua_error{margin:0;font-size:12px}.ERvGua_notice,.ERvGua_progress{color:var(--dsw-alias-label-secondary)}.ERvGua_error{color:var(--dsw-alias-state-error-primary)}.ERvGua_mobileToggle{display:none}.ERvGua_layout{flex:1;grid-template-columns:minmax(230px,275px) minmax(0,1fr);min-height:0;display:grid;overflow:hidden}.ERvGua_navigation,.ERvGua_reader{overscroll-behavior:contain;scrollbar-gutter:stable;min-height:0;overflow:auto}.ERvGua_navigation{border-right:1px solid var(--dsw-alias-border-l3);background:var(--dsw-alias-bg-layer-2);padding:16px 12px 24px}.ERvGua_navigation h3{padding:0 7px 12px}.ERvGua_turnItem{margin-bottom:10px}.ERvGua_turnButton,.ERvGua_segmentButton,.ERvGua_gapButton{border-radius:var(--dsw-radius-sm);width:100%;color:var(--dsw-alias-label-primary);text-align:left;font:inherit;cursor:pointer;background:0 0;border:1px solid #0000;flex-direction:column;align-items:flex-start;gap:3px;display:flex}.ERvGua_turnButton{padding:8px}.ERvGua_turnButton>span{-webkit-line-clamp:2;overflow-wrap:anywhere;-webkit-box-orient:vertical;display:-webkit-box;overflow:hidden}.ERvGua_turnButton small,.ERvGua_segmentButton small,.ERvGua_gapButton small{color:var(--dsw-alias-label-secondary);font-size:12px}.ERvGua_activeTurn,.ERvGua_activeSegment{background:var(--dsw-alias-bg-layer-1);border-color:var(--dsw-alias-border-l3)}.ERvGua_segments{border-left:1px solid var(--dsw-alias-border-l3);margin-left:13px;padding-left:8px}.ERvGua_segmentButton,.ERvGua_gapButton{margin:3px 0;padding:6px 8px}.ERvGua_segmentButton{border-left:2px solid var(--dsw-alias-state-business-primary)}.ERvGua_gapButton{color:var(--dsw-alias-label-secondary)}.ERvGua_turnButton:hover,.ERvGua_segmentButton:hover,.ERvGua_gapButton:hover{background:var(--dsw-alias-bg-layer-1)}.ERvGua_reader{padding:18px 22px 32px}.ERvGua_readerInner{width:100%;max-width:1120px;margin:0 auto}.ERvGua_readerHeader,.ERvGua_readerHeading,.ERvGua_stepHead,.ERvGua_statusLine{flex-wrap:wrap;align-items:baseline;gap:7px 14px;display:flex}.ERvGua_readerHeader{justify-content:space-between;margin-bottom:14px}.ERvGua_readerHeading{justify-content:space-between;margin:20px 0 10px}.ERvGua_request{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-2);padding:12px 14px}.ERvGua_request h4{margin-bottom:8px}.ERvGua_request details{margin-top:8px}.ERvGua_search{color:var(--dsw-alias-label-secondary);align-items:center;gap:8px;display:flex}.ERvGua_search input{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);width:220px;min-width:0;min-height:34px;color:var(--dsw-alias-label-primary);font:inherit;padding:5px 8px}.ERvGua_textButton{color:var(--dsw-alias-state-business-primary);font:inherit;cursor:pointer;background:0 0;border:0;padding:2px 0}.ERvGua_stepCard{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-2);margin:10px 0;padding:13px 14px}.ERvGua_inSegment{border-left:3px solid var(--dsw-alias-state-business-primary)}.ERvGua_focused{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}.ERvGua_stepHead{margin-bottom:5px}.ERvGua_stepNumber{font-weight:500}.ERvGua_stageLabel{color:var(--dsw-alias-state-business-primary)}.ERvGua_statusLine{margin:6px 0;font-size:12px}.ERvGua_muted{color:var(--dsw-alias-label-secondary)}.ERvGua_blocks{flex-direction:column;gap:6px;margin:12px 0;display:flex}.ERvGua_message{border-top:1px solid var(--dsw-alias-border-l3);padding:8px 0}.ERvGua_block,.ERvGua_tool{min-width:0}.ERvGua_blockLabel{margin:8px 0 5px;font-weight:500;display:block}.ERvGua_sourceText{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0;font:12px/18px ui-monospace,SFMono-Regular,monospace}.ERvGua_block>.ERvGua_sourceText,.ERvGua_block>details .ERvGua_sourceText,.ERvGua_toolBody .ERvGua_sourceText,.ERvGua_detailPanel .ERvGua_sourceText{border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);padding:9px}.ERvGua_toolSection{border-top:1px solid var(--dsw-alias-border-l3);margin-top:13px;padding-top:11px}.ERvGua_toolSection h4{font-size:13px}.ERvGua_tool{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);margin-top:7px;padding:7px 9px}.ERvGua_tool summary{flex-wrap:wrap;gap:12px;display:flex}.ERvGua_toolBody{padding-top:8px}.ERvGua_analysisSection{border-top:1px solid var(--dsw-alias-border-l3);margin-top:12px;padding-top:9px}.ERvGua_previousResult{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);color:var(--dsw-alias-label-secondary);flex-wrap:wrap;gap:4px 12px;margin-top:9px;padding:9px;font-size:12px;display:flex}.ERvGua_detailPanel{padding-top:8px}.ERvGua_empty{color:var(--dsw-alias-label-secondary);text-align:center;padding:30px 15px}.ERvGua_loading{flex:1;justify-content:center;align-items:center;display:flex}.ERvGua_page button:focus-visible,.ERvGua_page input:focus-visible,.ERvGua_page summary:focus-visible{outline:var(--dsw-focus-ring-width)solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}@media (width<=760px){.ERvGua_toolbar{padding:10px 14px}.ERvGua_mobileToggle{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);font:inherit;cursor:pointer;padding:5px 8px;display:inline-block}.ERvGua_layout{flex-direction:column;display:flex}.ERvGua_navigation{border-right:0;border-bottom:1px solid var(--dsw-alias-border-l3);flex:none;max-height:34%;padding:12px 12px 18px}.ERvGua_navigationClosed{display:none}.ERvGua_reader{flex:1;padding:14px 14px 22px}.ERvGua_search{width:100%}.ERvGua_search input{flex:1;width:auto}}";
 			document.head.appendChild(element);
 		}
 		var StageNavigation_module_css_default = {
-			"readerHeader": "HbWaDq_readerHeader",
-			"progress": "HbWaDq_progress",
-			"reader": "HbWaDq_reader",
-			"detailPanel": "HbWaDq_detailPanel",
-			"toolSection": "HbWaDq_toolSection",
-			"segmentButton": "HbWaDq_segmentButton",
-			"stageLabel": "HbWaDq_stageLabel",
-			"blocks": "HbWaDq_blocks",
-			"navigationClosed": "HbWaDq_navigationClosed",
-			"navigation": "HbWaDq_navigation",
-			"toolbar": "HbWaDq_toolbar",
-			"textButton": "HbWaDq_textButton",
-			"sourceText": "HbWaDq_sourceText",
-			"loading": "HbWaDq_loading",
-			"error": "HbWaDq_error",
-			"blockLabel": "HbWaDq_blockLabel",
-			"page": "HbWaDq_page",
-			"activeTurn": "HbWaDq_activeTurn",
-			"focused": "HbWaDq_focused",
-			"message": "HbWaDq_message",
-			"turnItem": "HbWaDq_turnItem",
-			"stepCard": "HbWaDq_stepCard",
-			"mobileToggle": "HbWaDq_mobileToggle",
-			"muted": "HbWaDq_muted",
-			"empty": "HbWaDq_empty",
-			"segments": "HbWaDq_segments",
-			"layout": "HbWaDq_layout",
-			"analysisSection": "HbWaDq_analysisSection",
-			"tool": "HbWaDq_tool",
-			"scopeHint": "HbWaDq_scopeHint",
-			"activeSegment": "HbWaDq_activeSegment",
-			"previousResult": "HbWaDq_previousResult",
-			"request": "HbWaDq_request",
-			"notice": "HbWaDq_notice",
-			"readerInner": "HbWaDq_readerInner",
-			"turnButton": "HbWaDq_turnButton",
-			"search": "HbWaDq_search",
-			"stepNumber": "HbWaDq_stepNumber",
-			"toolbarActions": "HbWaDq_toolbarActions",
-			"readerHeading": "HbWaDq_readerHeading",
-			"inSegment": "HbWaDq_inSegment",
-			"block": "HbWaDq_block",
-			"statusLine": "HbWaDq_statusLine",
-			"toolBody": "HbWaDq_toolBody",
-			"stepHead": "HbWaDq_stepHead",
-			"gapButton": "HbWaDq_gapButton"
+			"activeSegment": "ERvGua_activeSegment",
+			"activeTurn": "ERvGua_activeTurn",
+			"analysisSection": "ERvGua_analysisSection",
+			"block": "ERvGua_block",
+			"blockLabel": "ERvGua_blockLabel",
+			"blocks": "ERvGua_blocks",
+			"detailPanel": "ERvGua_detailPanel",
+			"empty": "ERvGua_empty",
+			"error": "ERvGua_error",
+			"focused": "ERvGua_focused",
+			"gapButton": "ERvGua_gapButton",
+			"inSegment": "ERvGua_inSegment",
+			"layout": "ERvGua_layout",
+			"loading": "ERvGua_loading",
+			"message": "ERvGua_message",
+			"mobileToggle": "ERvGua_mobileToggle",
+			"muted": "ERvGua_muted",
+			"navigation": "ERvGua_navigation",
+			"navigationClosed": "ERvGua_navigationClosed",
+			"notice": "ERvGua_notice",
+			"page": "ERvGua_page",
+			"previousResult": "ERvGua_previousResult",
+			"progress": "ERvGua_progress",
+			"reader": "ERvGua_reader",
+			"readerHeader": "ERvGua_readerHeader",
+			"readerHeading": "ERvGua_readerHeading",
+			"readerInner": "ERvGua_readerInner",
+			"request": "ERvGua_request",
+			"scopeHint": "ERvGua_scopeHint",
+			"search": "ERvGua_search",
+			"segmentButton": "ERvGua_segmentButton",
+			"segments": "ERvGua_segments",
+			"sourceText": "ERvGua_sourceText",
+			"stageLabel": "ERvGua_stageLabel",
+			"statusLine": "ERvGua_statusLine",
+			"stepCard": "ERvGua_stepCard",
+			"stepHead": "ERvGua_stepHead",
+			"stepNumber": "ERvGua_stepNumber",
+			"textButton": "ERvGua_textButton",
+			"tool": "ERvGua_tool",
+			"toolBody": "ERvGua_toolBody",
+			"toolSection": "ERvGua_toolSection",
+			"toolbar": "ERvGua_toolbar",
+			"toolbarActions": "ERvGua_toolbarActions",
+			"turnButton": "ERvGua_turnButton",
+			"turnItem": "ERvGua_turnItem"
 		};
 		//#endregion
 		//#region src/client/StageNavigation.tsx
@@ -10503,7 +10510,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			generalMinChars: "Minimum command log characters",
 			testMinChars: "Minimum test log characters",
 			generalBlockChars: "Candidate block characters",
-			maxGeneralBlocks: "Maximum command blocks",
+			maxGeneralBlocks: "Maximum command candidates",
 			maxTestCandidates: "Maximum test candidates",
 			maxRequestChars: "Judgment request characters",
 			maxTaskChars: "Task context characters",
@@ -10514,11 +10521,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			slowTestMs: "Slow test threshold (ms)",
 			duplicateMinLines: "Duplicate failure minimum lines",
 			duplicateMinChars: "Duplicate failure minimum characters",
-			evidenceChars: "Evidence character budget",
+			evidenceChars: "Judgment input character budget",
 			supervisionCounts: "Supervision counts",
 			driftInterval: "Completed model steps between drift checks",
 			noProgressRounds: "Consecutive goal rounds without progress",
-			supervisionCountsHint: "All three supervision features are independent and disabled by default. Native goal round limits still apply.",
+			maxSupplementRounds: "Maximum automatic supplement rounds",
+			supervisionCountsHint: "All three supervision features are independent and disabled by default. Completion supplements and goal rounds without progress are separate counts. Saving counts does not enable features; native goal round limits still apply.",
 			supervisionCountInvalid: "Enter a positive whole number.",
 			saveSupervisionCounts: "Save supervision counts",
 			supervisionCountSaved: "Supervision counts saved.",
@@ -10652,7 +10660,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			generalMinChars: "命令日志最小字符数",
 			testMinChars: "测试日志最小字符数",
 			generalBlockChars: "候选块字符数",
-			maxGeneralBlocks: "命令块数量上限",
+			maxGeneralBlocks: "命令候选块数量上限",
 			maxTestCandidates: "测试候选数量上限",
 			maxRequestChars: "判断请求字符预算",
 			maxTaskChars: "任务依据字符预算",
@@ -10663,11 +10671,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			slowTestMs: "慢测试门槛（毫秒）",
 			duplicateMinLines: "重复失败详情最少行数",
 			duplicateMinChars: "重复失败详情最少字符数",
-			evidenceChars: "已有证据字符预算",
+			evidenceChars: "判断材料字符预算",
 			supervisionCounts: "执行监督次数",
 			driftInterval: "跑偏检查间隔（已完成模型步骤）",
 			noProgressRounds: "连续无进展目标轮数",
-			supervisionCountsHint: "三项监督功能独立开关，默认关闭；目标总轮数仍遵守原生上限",
+			maxSupplementRounds: "最多自动补充轮数",
+			supervisionCountsHint: "三项监督功能独立开关，默认关闭。自动补充与目标无进展轮数分别计数；保存参数不会开启功能，目标总轮数仍遵守原生上限",
 			supervisionCountInvalid: "请输入正整数",
 			saveSupervisionCounts: "保存监督次数",
 			supervisionCountSaved: "监督次数已保存",
