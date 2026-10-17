@@ -9,7 +9,7 @@ python3 -m http.server 4173 --directory website/dist
 
 浏览 `http://localhost:4173/`。构建要求仓库中的公开证据文件存在，包括 `docs/testing/2026-09-27-jev-hooks/public-results.zh-CN.md`、`docs/testing/2026-10-01-glob-ranking/public-results.zh-CN.md`、`docs/testing/2026-10-02-completion-skill/public-results.zh-CN.md` 、`docs/testing/2026-10-05-completion-recovery/public-results.zh-CN.md` 和 `docs/testing/2026-10-07-luna-decisions/public-results.zh-CN.md`。构建先清理 `website/dist/`，再把公开证据转为可在本地和 GitHub Pages 中阅读的纯文本 HTML 页。网站内部链接使用相对路径，可部署到项目子路径。构建不需要安装依赖，也不修改插件运行文件。
 
-“原理与全部功能”文章的 [Markdown 源稿](../docs/explainers/dsh-jev-plugin.md)说明 12 项功能，并包含技能选择的完整输入输出例子。[完成核查流程导读](../docs/explainers/jev-completion-flow.md)说明当前 turn 的 Todo 触发、两个 Choice、补充额度和异常处理。[日志去噪面试复习](../docs/explainers/log-admission-interview.md)说明通用与测试日志流程、设计取舍及按实际模型区分的验证边界。三篇文章的 [功能总览 HTML](src/explainers/dsh-jev-plugin.html)、[完成核查 HTML](src/explainers/jev-completion-flow.html)与[日志复习 HTML](src/explainers/log-admission-interview.html)随源稿提交。构建逐页核对 Markdown 与 HTML 内嵌的 `#am-source`，只允许末尾换行不同。缺少任一文件、缺少内嵌源稿或内容不一致时，构建失败；一致时原样复制三页到 `dist/explainers/`。首页与所有生成页的主导航链接总览和首页“快速复习”目录，现有 11 个业务案例页保留。
+“原理与全部功能”文章的 [Markdown 源稿](../docs/explainers/dsh-jev-plugin.md)说明 12 项功能，并包含技能选择的完整输入输出例子。[完成核查流程导读](../docs/explainers/jev-completion-flow.md)说明当前 turn 的 Todo 触发、两个 Choice、补充额度和异常处理。[日志去噪面试复习](../docs/explainers/log-admission-interview.md)说明通用与测试日志流程、设计取舍及按实际模型区分的验证边界。[Goal 监督与完成补做复习](../docs/explainers/goal-completion-review.md)对照两条当前流程、有限补充和送达记录。四篇文章的 [功能总览 HTML](src/explainers/dsh-jev-plugin.html)、[完成核查 HTML](src/explainers/jev-completion-flow.html)、[日志复习 HTML](src/explainers/log-admission-interview.html)与[Goal 复习 HTML](src/explainers/goal-completion-review.html)随源稿提交。构建逐页核对 Markdown 与 HTML 内嵌的 `#am-source`，只允许末尾换行不同。缺少任一文件、缺少内嵌源稿或内容不一致时，构建失败；一致时原样复制四页到 `dist/explainers/`。首页与所有生成页的主导航链接总览和首页“快速复习”目录，现有 11 个业务案例页保留。
 
 更新文章时，先编辑 Markdown 源稿，再用 `answer-me-with-html` 技能的 `am` CLI 重生成 HTML。下面的 `am` 指该技能提供的命令；它只用于文章维护，网站构建和部署不调用它，也不增加依赖。
 
@@ -17,10 +17,11 @@ python3 -m http.server 4173 --directory website/dist
 am render docs/explainers/dsh-jev-plugin.md -o website/src/explainers/dsh-jev-plugin.html --no-open
 am render docs/explainers/jev-completion-flow.md -o website/src/explainers/jev-completion-flow.html --no-open
 am render docs/explainers/log-admission-interview.md -o website/src/explainers/log-admission-interview.html --no-open
+am render docs/explainers/goal-completion-review.md -o website/src/explainers/goal-completion-review.html --no-open
 node website/build.mjs
 ```
 
-重生成后检查文章的图表、输入输出例子和相对链接，再同时提交 Markdown 与 HTML。文章的返回入口指向公开功能网站，源码入口指向仓库，网站内部导航使用相对链接。三页的发布位置为 `explainers/dsh-jev-plugin.html`、`explainers/jev-completion-flow.html` 与 `explainers/log-admission-interview.html`。日志复习页只引用公开源码和报告，不镜像本机原始判断请求或账本。
+重生成后检查文章的图表、输入输出例子和相对链接，再同时提交 Markdown 与 HTML。文章的返回入口指向公开功能网站，源码入口指向仓库，网站内部导航使用相对链接。四页发布为 `dist/explainers/` 下的同名 HTML。两篇快速复习页只引用公开源码和报告，不镜像本机原始判断请求或账本。
 
 功能资料中的 `mechanism` 记录触发、交给 Jev 的输入及宿主如何采用，可用 `seams` 列出原生接入点；`cases` 按具名任务记录执行核查、观察和结果解释。案例的 `evidence` 使用资料文件顶部的公开证据 key，`references` 指向仓库公开源码或资料。`homeEvidence` 是概览卡上的一句实测结果。页面生成器兼容旧字段，方便逐项更新资料。
 
