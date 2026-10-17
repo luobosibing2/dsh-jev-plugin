@@ -288,7 +288,7 @@ const Config = s.object({
 	maxRequestChars: s.number().step(1).min(1).max(1e6).default(48e3).volatile(),
 	maxTaskChars: s.number().step(1).min(1).max(1e6).default(12e3).volatile(),
 	waitMs: s.number().step(1).min(1).max(3e5).default(4e3).volatile(),
-	omitProbability: s.number().min(0).max(1).default(.8).volatile(),
+	omitProbability: s.number().min(0).max(1).default(.7).volatile(),
 	minSavedChars: s.number().step(1).min(1).max(1e6).default(300).volatile(),
 	minSavedRatio: s.number().min(0).max(1).default(.1).volatile(),
 	slowTestMs: s.number().step(1).min(1).max(1e6).default(300).volatile(),

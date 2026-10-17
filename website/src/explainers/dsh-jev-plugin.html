@@ -506,7 +506,7 @@ html[data-theme="shadcn"] .am-kv { border-color: var(--line); border-radius: var
 </tr>
 </tbody></table></div>
 <p>TypeSafe 将 Jev 的训练方法称为 <strong>RLCD</strong>，即为校准决策训练模型。它的目标是输出决策与概率。校准要在一组预测上衡量。本插件的有限样例没有验证概率校准。</p>
-<p>例如，日志候选得到 <code>omit</code> 后，程序还要检查概率门槛。<code>0.8</code> 是该功能的采用参数，不能直接解释为本项目有 80% 正确率。<code>confidence</code> 描述答案的不确定程度，也不代表业务结果已验证。</p>
+<p>例如，日志候选得到 <code>omit</code> 后，程序还要检查概率门槛。<code>0.7</code> 是该功能的默认采用参数，不能直接解释为本项目有 70% 正确率。<code>confidence</code> 描述答案的不确定程度，也不代表业务结果已验证。</p>
 <p>原理来源：<a href="https://docs.typesafe.ai/concepts/system-one">System One</a>、<a href="https://docs.typesafe.ai/concepts/state">State</a>、<a href="https://docs.typesafe.ai/introduction/machine-learning-primer">RLCD</a>、<a href="https://docs.typesafe.ai/confidence">概率与 confidence</a>。</p>
 <h3>公共服务让 12 项功能共用哪些能力</h3>
 <div class="am-table-wrap"><table>
@@ -708,7 +708,7 @@ html[data-theme="shadcn"] .am-kv { border-color: var(--line); border-radius: var
 <td>不入选</td>
 </tr>
 </tbody></table></div>
-<p>技能选择使用 Top 5，没有日志功能的 0.8 采用门槛。因此，本例中概率为 0.61 的第 5 名也会入选。若入选名称已在 Session 可见，插件会去重，不用第 6 名补位。</p>
+<p>技能选择使用 Top 5，没有日志功能的 0.7 采用门槛。因此，本例中概率为 0.61 的第 5 名也会入选。若入选名称已在 Session 可见，插件会去重，不用第 6 名补位。</p>
 <h4>输出：主模型最终收到的技能摘要</h4>
 <p>下面展示插件消息中的目录部分。技能顺序已经改变，演示文稿技能没有进入本次摘要。</p>
 </div>
@@ -1002,7 +1002,7 @@ html[data-theme="shadcn"] .am-kv { border-color: var(--line); border-radius: var
 </tr>
 <tr>
 <td>采用</td>
-<td>omit 的概率不小于 0.8 才考虑省略；概率缺失时读取 confidence</td>
+<td>默认在 omit 概率不小于 0.7 时考虑省略；显式配置优先，概率缺失时读取 confidence</td>
 </tr>
 <tr>
 <td>失败与限制</td>
@@ -1032,7 +1032,7 @@ html[data-theme="shadcn"] .am-kv { border-color: var(--line); border-radius: var
 </tr>
 <tr>
 <td>采用</td>
-<td>使用独立开关，共用默认 0.8 门槛与 4 秒等待</td>
+<td>使用独立开关，共用默认 0.7 门槛与 4 秒等待</td>
 </tr>
 <tr>
 <td>特殊规则</td>
@@ -1080,7 +1080,7 @@ html[data-theme="shadcn"] .am-kv { border-color: var(--line); border-radius: var
 </div>
 <figure class="am-diagram am-flow"><svg viewBox="0 0 403 606" width="403" height="606" role="img" aria-label="流程图：适用的原生提权请求、Jev 判断授权、答案、重验当前操作快照、原生 allowed-once、不采用旧批准、原人工审批、工具实际执行" xmlns="http://www.w3.org/2000/svg"><defs><marker id="am5-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g></g><g><g data-step="0"><path class="am-edge" d="M162.2,49 L162.2,60.5 Q162.2,72 162.2,83.5 L162.2,95" marker-end="url(#am5-arrow)"/></g><g data-step="1"><path class="am-edge" d="M162.2,130 L162.2,141.5 Q162.2,153 162.2,164.5 L162.2,176" marker-end="url(#am5-arrow)"/></g><g data-step="2"><path class="am-edge" d="M180.9,219.1 L208.7,241.5 Q236.5,264 236.5,280 L236.5,296" marker-end="url(#am5-arrow)"/><g class="am-edge-label"><rect x="210.3" y="255" width="52.3" height="18" rx="3"/><text x="236.5" y="264" text-anchor="middle" dominant-baseline="central">approve</text></g></g><g data-step="3"><path class="am-edge" d="M264.8,331 L290.8,347 Q316.7,363 316.7,379 L316.7,395" marker-end="url(#am5-arrow)"/><g class="am-edge-label"><rect x="294.4" y="354" width="44.5" height="18" rx="3"/><text x="316.7" y="363" text-anchor="middle" dominant-baseline="central">仍适用</text></g></g><g data-step="4"><path class="am-edge" d="M208.1,331 L182.2,347 Q156.2,363 156.2,379 L156.2,395" marker-end="url(#am5-arrow)"/><g class="am-edge-label"><rect x="134" y="354" width="44.5" height="18" rx="3"/><text x="156.2" y="363" text-anchor="middle" dominant-baseline="central">已变化</text></g></g><g data-step="5"><path class="am-edge" d="M143.5,219.1 L115.8,241.5 Q88,264 88,280 L88,296" marker-end="url(#am5-arrow)"/><g class="am-edge-label"><rect x="15" y="255" width="145.9" height="18" rx="3"/><text x="88" y="264" text-anchor="middle" dominant-baseline="central">unauthorized 或 unknown</text></g></g><g data-step="6"><path class="am-edge" d="M316.7,430 L316.7,441.5 Q316.7,453 316.7,464.5 L316.7,476" marker-end="url(#am5-arrow)"/></g><g data-step="7"><path class="am-edge" d="M316.7,511 L316.7,522.5 Q316.7,534 316.7,545.5 L316.7,557" marker-end="url(#am5-arrow)"/></g></g><g><g class="am-node am-node--rect" data-key="适用的原生提权请求" data-step="0"><rect class="am-node-shape" x="89.7" y="14" width="145" height="35" rx="3"/><text x="162.2" y="31.5" text-anchor="middle" dominant-baseline="central">适用的原生提权请求</text></g><g class="am-node am-node--rect" data-key="Jev 判断授权" data-step="0"><rect class="am-node-shape" x="108.6" y="95" width="107.3" height="35" rx="3"/><text x="162.2" y="112.5" text-anchor="middle" dominant-baseline="central">Jev 判断授权</text></g><g class="am-node am-node--diamond" data-key="答案" data-step="1"><polygon class="am-node-shape" points="162.2,176 202.7,204 162.2,232 121.7,204"/><text x="162.2" y="204" text-anchor="middle" dominant-baseline="central">答案</text></g><g class="am-node am-node--rect" data-key="重验当前操作快照" data-step="2"><rect class="am-node-shape" x="170.5" y="296" width="132" height="35" rx="3"/><text x="236.5" y="313.5" text-anchor="middle" dominant-baseline="central">重验当前操作快照</text></g><g class="am-node am-node--rect" data-key="原生 allowed-once" data-step="3"><rect class="am-node-shape" x="245.2" y="395" width="142.9" height="35" rx="3"/><text x="316.7" y="412.5" text-anchor="middle" dominant-baseline="central">原生 allowed-once</text></g><g class="am-node am-node--rect" data-key="不采用旧批准" data-step="4"><rect class="am-node-shape" x="103.2" y="395" width="106" height="35" rx="3"/><text x="156.2" y="412.5" text-anchor="middle" dominant-baseline="central">不采用旧批准</text></g><g class="am-node am-node--rect" data-key="原人工审批" data-step="5"><rect class="am-node-shape" x="41.5" y="296" width="93" height="35" rx="3"/><text x="88" y="313.5" text-anchor="middle" dominant-baseline="central">原人工审批</text></g><g class="am-node am-node--rect" data-key="工具实际执行" data-step="6"><rect class="am-node-shape" x="263.7" y="476" width="106" height="35" rx="3"/><text x="316.7" y="493.5" text-anchor="middle" dominant-baseline="central">工具实际执行</text></g><g class="am-node am-node--rect" data-key="单独记录操作结果" data-step="7"><rect class="am-node-shape" x="250.7" y="557" width="132" height="35" rx="3"/><text x="316.7" y="574.5" text-anchor="middle" dominant-baseline="central">单独记录操作结果</text></g></g></svg></figure>
 <div class="am-md"><p><strong>示例：</strong> 用户明确要求把指定内容写入一个工作区外路径。插件判断这次提权是否属于已授权操作。发放许可后，仍由原生工具执行并记录结果。</p>
-<p>这项功能没有日志功能的统一 0.8 门槛。旧批准在任务、脚本、路径或策略变化后失效。它不改变长期 sandbox 模式；一次 approve 也不能证明工具执行成功。</p>
+<p>这项功能没有日志功能的统一 0.7 门槛。旧批准在任务、脚本、路径或策略变化后失效。它不改变长期 sandbox 模式；一次 approve 也不能证明工具执行成功。</p>
 <p>来源：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/workspace-approval.ts#L117">审批输入与题目</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/workspace-approval.ts#L265">最后重验与单次许可</a>、<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/README.md#workspace-approval">审批参考</a>。</p>
 </div></div>
 </section>
@@ -1238,7 +1238,7 @@ html[data-theme="shadcn"] .am-kv { border-color: var(--line); border-radius: var
 </div>
 </div>
 </main>
-<footer class="am-colophon">Generated by Answer me with HTML 0.4.9 · 2026-10-15 00:02</footer>
+<footer class="am-colophon">Generated by Answer me with HTML 0.4.9 · 2026-10-17 13:54</footer>
 <textarea id="am-source" hidden readonly aria-hidden="true">---
 template: doc
 theme: blueprint
@@ -1290,7 +1290,7 @@ DSH --&gt; 功能插件: 记录实际采用与执行结果
 
 TypeSafe 将 Jev 的训练方法称为 **RLCD**，即为校准决策训练模型。它的目标是输出决策与概率。校准要在一组预测上衡量。本插件的有限样例没有验证概率校准。
 
-例如，日志候选得到 `omit` 后，程序还要检查概率门槛。`0.8` 是该功能的采用参数，不能直接解释为本项目有 80% 正确率。`confidence` 描述答案的不确定程度，也不代表业务结果已验证。
+例如，日志候选得到 `omit` 后，程序还要检查概率门槛。`0.7` 是该功能的默认采用参数，不能直接解释为本项目有 70% 正确率。`confidence` 描述答案的不确定程度，也不代表业务结果已验证。
 
 原理来源：[System One](https://docs.typesafe.ai/concepts/system-one)、[State](https://docs.typesafe.ai/concepts/state)、[RLCD](https://docs.typesafe.ai/introduction/machine-learning-primer)、[概率与 confidence](https://docs.typesafe.ai/confidence)。
 
@@ -1438,7 +1438,7 @@ Jev 返回 6 个概率 -&gt; 插件排序并取前 5 个
 | 5 | technical-writing | 0.61 | 入选 |
 | 6 | slide-generation | 0.03 | 不入选 |
 
-技能选择使用 Top 5，没有日志功能的 0.8 采用门槛。因此，本例中概率为 0.61 的第 5 名也会入选。若入选名称已在 Session 可见，插件会去重，不用第 6 名补位。
+技能选择使用 Top 5，没有日志功能的 0.7 采用门槛。因此，本例中概率为 0.61 的第 5 名也会入选。若入选名称已在 Session 可见，插件会去重，不用第 6 名补位。
 
 #### 输出：主模型最终收到的技能摘要
 
@@ -1642,7 +1642,7 @@ Jev 判断保留或省略 -&gt; {是否满足采用条件}
 | 触发 | 可识别的长命令日志；默认从 6,000 个 Unicode 码点开始 |
 | 输入 | 当前任务、命令信息、受保护上下文和候选进度或重复提示片段 |
 | 问题 | 对候选问 Choice：`omit / keep / unknown` |
-| 采用 | omit 的概率不小于 0.8 才考虑省略；概率缺失时读取 confidence |
+| 采用 | 默认在 omit 概率不小于 0.7 时考虑省略；显式配置优先，概率缺失时读取 confidence |
 | 失败与限制 | 默认最多等待 4 秒；失败、未知、低概率或存储失败都保留原结果 |
 
 **示例：** 构建输出数百条数字进度。插件保护错误、摘要、首尾与关键行，再判断进度候选是否仍有用。没有识别到候选时直接旁路。
@@ -1654,7 +1654,7 @@ Jev 判断保留或省略 -&gt; {是否满足采用条件}
 | 触发 | 可识别测试日志；默认从 4,000 个 Unicode 码点开始 |
 | 输入 | 任务与测试日志候选；本地先保护失败、摘要、点名测试和慢测试 |
 | 问题 | 对普通通过明细问 Choice：`omit / keep / unknown` |
-| 采用 | 使用独立开关，共用默认 0.8 门槛与 4 秒等待 |
+| 采用 | 使用独立开关，共用默认 0.7 门槛与 4 秒等待 |
 | 特殊规则 | 完全相同的重复失败详情可由确定性规则合并，不必调用 Jev |
 
 **示例：** 一百条通过明细和一条失败详情。失败详情先被保护，Jev 只判断普通通过候选。日志变短不必然来自模型判断。
@@ -1692,7 +1692,7 @@ Jev 判断授权 -&gt; {答案}
 
 **示例：** 用户明确要求把指定内容写入一个工作区外路径。插件判断这次提权是否属于已授权操作。发放许可后，仍由原生工具执行并记录结果。
 
-这项功能没有日志功能的统一 0.8 门槛。旧批准在任务、脚本、路径或策略变化后失效。它不改变长期 sandbox 模式；一次 approve 也不能证明工具执行成功。
+这项功能没有日志功能的统一 0.7 门槛。旧批准在任务、脚本、路径或策略变化后失效。它不改变长期 sandbox 模式；一次 approve 也不能证明工具执行成功。
 
 来源：[审批输入与题目](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/workspace-approval.ts#L117)、[最后重验与单次许可](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/workspace-approval.ts#L265)、[审批参考](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/README.md#workspace-approval)。
 

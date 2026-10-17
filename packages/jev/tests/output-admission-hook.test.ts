@@ -9,6 +9,7 @@ import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
 import { apply, Config as OutputConfig, type Config } from '../src/output-admission.ts'
 import type { JevJudgeOptions, JevJudgeOnceResult } from '../src/index.ts'
 import type { JevActionReceipt } from '../src/types.ts'
+import type { OutputAdmissionConfigValues } from '../src/output-admission-types.ts'
 
 const progress = Array.from({ length: 48 }, (_, index) => `progress ${index}: ${'.'.repeat(140)}\n`).join('')
 const ordinary = `Start\n${progress}Evidence: do not discard\nDone\n`
@@ -30,7 +31,8 @@ interface Fixture {
 }
 
 async function fixture(log = ordinary, answer?: (options: JevJudgeOptions) => Promise<JevJudgeOnceResult>,
-  userText = 'Build the fixture and preserve errors.', waitMs = 4000): Promise<Fixture> {
+  userText = 'Build the fixture and preserve errors.', waitMs = 4000,
+  overrides: Partial<OutputAdmissionConfigValues> = {}): Promise<Fixture> {
   const ctx = new Context()
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(ToolRuntime)
@@ -87,11 +89,7 @@ async function fixture(log = ordinary, answer?: (options: JevJudgeOptions) => Pr
   } }, render: (_args, value) => [{ type: 'text', text: value.text }] },
   execute: args => ({ text: log, job: { kind: args.kind, status: 'completed', label: 'fixture build' } }),
   }))
-  const config = Object.fromEntries(Object.entries({ generalMinChars: 6000, testMinChars: 4000,
-    generalBlockChars: 1200, maxGeneralBlocks: 48, maxTestCandidates: 24, maxRequestChars: 48000,
-    maxTaskChars: 12000, waitMs, omitProbability: 0.8, minSavedChars: 300, minSavedRatio: 0.1,
-    slowTestMs: 300, duplicateMinLines: 6, duplicateMinChars: 200,
-  }).map(([key, value]) => [key, createVolatile(value)])) as Config
+  const config = OutputConfig({ waitMs, ...overrides })
   apply(ctx, config)
   cleanup.push(async () => { await ctx.fiber.dispose() })
   let sequence = 0
@@ -127,19 +125,28 @@ describe('output admission Hook failures and rule records', () => {
     expect(item.saves).toEqual([log])
   })
 
-  it('adopts an omit answer at the default 0.8 threshold and retains one below it', async () => {
-    expect(OutputConfig({}).omitProbability.get()).toBe(0.8)
-    for (const [probability, adopted] of [[0.8, true], [0.799, false]] as const) {
-      const item = await fixture(ordinary, async options => {
+  it.each([
+    { log: ordinary, branch: 'output-admission' },
+    { log: testProgress, branch: 'test-log-admission' },
+  ])('uses the shared default and explicit omit threshold for $branch', async ({ log, branch }) => {
+    expect(OutputConfig({}).omitProbability.get()).toBe(0.7)
+    expect(OutputConfig({ omitProbability: 0.8 }).omitProbability.get()).toBe(0.8)
+    for (const [probability, threshold, adopted] of [
+      [0.69, undefined, false], [0.7, undefined, true], [0.7, 0.8, false], [0.8, 0.8, true],
+    ] as const) {
+      const item = await fixture(log, async options => {
         const request = await options.refresh(options.signal ?? new AbortController().signal)
         return { kind: 'ok', operationId: `probability-${probability}`, attemptId: 'one', response: {
           answers: request.questions.map(question => ({ id: question.id, kind: 'choice', optionId: 'omit',
-            probabilities: { omit: probability, keep: 1 - probability, unknown: 0 } })),
+            probabilities: { omit: probability, keep: 1 - probability, unknown: 0 }, confidence: 0.99 })),
         } }
-      })
+      }, 'Summarize the verification.', 4000, threshold === undefined ? {} : { omitProbability: threshold })
       const result = await item.run()
+      expect(item.calls).toHaveLength(1)
+      expect(item.calls[0]?.featureId).toBe(branch)
       expect(result.includes('[Jev original log:')).toBe(adopted)
       expect(item.saves.length > 0).toBe(adopted)
+      if (!adopted) expect(result).toBe(log)
     }
   })
 

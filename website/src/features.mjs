@@ -412,14 +412,14 @@ export const features = [
       seams: ['tools/post-execute'],
       trigger: '同一 tools/post-execute，在可识别的测试日志达到默认 4,000 字符时进入独立 test-log-admission 分支。',
       input: '任务和工具意图、候选通过/进度片段，以及固定保留的失败详情、汇总、慢测与用户点名结果；精确重复失败正文带来源行号。',
-      handling: 'typed omit 达默认 0.8 等采用门槛，且原文保存成功才省略候选；未识别格式、低分或判断失败时保留原结果。失败详情受保护；规则性压缩精确重复详情不等于 Jev 的失败诊断。',
+      handling: 'typed omit 达默认 0.7 等采用门槛，且原文保存成功才省略候选；未识别格式、低分或判断失败时保留原结果。失败详情受保护；规则性压缩精确重复详情不等于 Jev 的失败诊断。',
       refs: [{ title: '测试日志分支', file: 'packages/jev/src/output-admission.ts', anchor: '#L230-L300' }, { title: '测试证据保护', file: 'packages/jev/src/output-admission-rules.ts', anchor: '#L74-L132' }],
     },
     cases: [
       {
         kind: '真实主模型 + 真实 Jev', title: '180 项全部通过，但没有删普通明细',
         task: '在隔离 profile 跑 180 项 Vitest，通过中性任务措辞触发测试日志分支；输出含 20,543 字符。',
-        probe: '检查 Jev 是否真的判断、候选省略概率是否达到默认 0.8，以及 Session 持久结果是否缩短。',
+        probe: '检查 Jev 是否真的判断、候选省略概率是否达到当时的默认 0.8，以及 Session 持久结果是否缩短。',
         result: '18 个候选得到 0.66–0.71，全部低于门槛；Session 保留完整 20,543 字符和“180 passed”。',
         reading: '本次真实运行验证分支触发与保守交付，没有证明测试日志已经净缩减。', evidence: ['logs'],
       },

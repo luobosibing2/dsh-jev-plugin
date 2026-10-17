@@ -22,7 +22,7 @@ export const Config: s<OutputAdmissionConfigValues, Config> = s.object({
   maxRequestChars: s.number().step(1).min(1).max(1_000_000).default(48000).volatile(),
   maxTaskChars: s.number().step(1).min(1).max(1_000_000).default(12000).volatile(),
   waitMs: s.number().step(1).min(1).max(300_000).default(4000).volatile(),
-  omitProbability: s.number().min(0).max(1).default(0.8).volatile(),
+  omitProbability: s.number().min(0).max(1).default(0.7).volatile(),
   minSavedChars: s.number().step(1).min(1).max(1_000_000).default(300).volatile(),
   minSavedRatio: s.number().min(0).max(1).default(0.1).volatile(),
   slowTestMs: s.number().step(1).min(1).max(1_000_000).default(300).volatile(),

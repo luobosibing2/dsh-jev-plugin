@@ -49,7 +49,7 @@ DSH --> 功能插件: 记录实际采用与执行结果
 
 TypeSafe 将 Jev 的训练方法称为 **RLCD**，即为校准决策训练模型。它的目标是输出决策与概率。校准要在一组预测上衡量。本插件的有限样例没有验证概率校准。
 
-例如，日志候选得到 `omit` 后，程序还要检查概率门槛。`0.8` 是该功能的采用参数，不能直接解释为本项目有 80% 正确率。`confidence` 描述答案的不确定程度，也不代表业务结果已验证。
+例如，日志候选得到 `omit` 后，程序还要检查概率门槛。`0.7` 是该功能的默认采用参数，不能直接解释为本项目有 70% 正确率。`confidence` 描述答案的不确定程度，也不代表业务结果已验证。
 
 原理来源：[System One](https://docs.typesafe.ai/concepts/system-one)、[State](https://docs.typesafe.ai/concepts/state)、[RLCD](https://docs.typesafe.ai/introduction/machine-learning-primer)、[概率与 confidence](https://docs.typesafe.ai/confidence)。
 
@@ -197,7 +197,7 @@ Jev 返回 6 个概率 -> 插件排序并取前 5 个
 | 5 | technical-writing | 0.61 | 入选 |
 | 6 | slide-generation | 0.03 | 不入选 |
 
-技能选择使用 Top 5，没有日志功能的 0.8 采用门槛。因此，本例中概率为 0.61 的第 5 名也会入选。若入选名称已在 Session 可见，插件会去重，不用第 6 名补位。
+技能选择使用 Top 5，没有日志功能的 0.7 采用门槛。因此，本例中概率为 0.61 的第 5 名也会入选。若入选名称已在 Session 可见，插件会去重，不用第 6 名补位。
 
 #### 输出：主模型最终收到的技能摘要
 
@@ -401,7 +401,7 @@ Jev 判断保留或省略 -> {是否满足采用条件}
 | 触发 | 可识别的长命令日志；默认从 6,000 个 Unicode 码点开始 |
 | 输入 | 当前任务、命令信息、受保护上下文和候选进度或重复提示片段 |
 | 问题 | 对候选问 Choice：`omit / keep / unknown` |
-| 采用 | omit 的概率不小于 0.8 才考虑省略；概率缺失时读取 confidence |
+| 采用 | 默认在 omit 概率不小于 0.7 时考虑省略；显式配置优先，概率缺失时读取 confidence |
 | 失败与限制 | 默认最多等待 4 秒；失败、未知、低概率或存储失败都保留原结果 |
 
 **示例：** 构建输出数百条数字进度。插件保护错误、摘要、首尾与关键行，再判断进度候选是否仍有用。没有识别到候选时直接旁路。
@@ -413,7 +413,7 @@ Jev 判断保留或省略 -> {是否满足采用条件}
 | 触发 | 可识别测试日志；默认从 4,000 个 Unicode 码点开始 |
 | 输入 | 任务与测试日志候选；本地先保护失败、摘要、点名测试和慢测试 |
 | 问题 | 对普通通过明细问 Choice：`omit / keep / unknown` |
-| 采用 | 使用独立开关，共用默认 0.8 门槛与 4 秒等待 |
+| 采用 | 使用独立开关，共用默认 0.7 门槛与 4 秒等待 |
 | 特殊规则 | 完全相同的重复失败详情可由确定性规则合并，不必调用 Jev |
 
 **示例：** 一百条通过明细和一条失败详情。失败详情先被保护，Jev 只判断普通通过候选。日志变短不必然来自模型判断。
@@ -451,7 +451,7 @@ Jev 判断授权 -> {答案}
 
 **示例：** 用户明确要求把指定内容写入一个工作区外路径。插件判断这次提权是否属于已授权操作。发放许可后，仍由原生工具执行并记录结果。
 
-这项功能没有日志功能的统一 0.8 门槛。旧批准在任务、脚本、路径或策略变化后失效。它不改变长期 sandbox 模式；一次 approve 也不能证明工具执行成功。
+这项功能没有日志功能的统一 0.7 门槛。旧批准在任务、脚本、路径或策略变化后失效。它不改变长期 sandbox 模式；一次 approve 也不能证明工具执行成功。
 
 来源：[审批输入与题目](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/workspace-approval.ts#L117)、[最后重验与单次许可](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/workspace-approval.ts#L265)、[审批参考](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/README.md#workspace-approval)。
 
