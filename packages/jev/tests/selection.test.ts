@@ -86,7 +86,9 @@ async function fixture(counts: { skillLimit: number; skillMinProbability?: numbe
     requests.push(request)
     return { kind: 'ok', operationId: 'operation-' + requests.length, attemptId: 'attempt', response: {
       answers: request.questions.map((question, index) => ({
-        id: question.id, kind: 'noul', probability: index === 0 ? options.featureId === 'skill-selection' ? 0.6 : 0.1 : 0.9,
+        id: question.id, kind: 'noul', probability: options.featureId === 'file-ranking'
+          ? question.prompt === 'Is this path relevant to the task? Path: beta.ts' ? 0.9 : 0.1
+          : index === 0 ? 0.6 : 0.9,
       })),
     } }
   })
@@ -313,6 +315,15 @@ describe('selection hooks through host plugin paths', () => {
 
   it('ranks the original glob output twice, preserves the structured paths and reports omitted results', async () => {
     const { ctx, agent, root, requests } = await fixture()
+    const candidates: string[][] = []
+    ctx.on('tools/execute', async (exec, next) => {
+      const result = await next()
+      if (exec.name !== 'glob' || result.isError) return result
+      const value = result.value as { root: string; paths: string[] }
+      const paths = candidates.length === 0 ? value.paths : candidates[0]!.toReversed()
+      candidates.push([...paths])
+      return { ...result, value: { ...value, paths } }
+    })
     await writeFile(join(root, 'alpha.ts'), '')
     await writeFile(join(root, 'beta.ts'), '')
     await step(ctx, agent, [user('Find beta source')])
@@ -323,9 +334,16 @@ describe('selection hooks through host plugin paths', () => {
     const rendered = first.content[0]?.type === 'text' ? first.content[0].text : ''
     expect(rendered).toMatchInlineSnapshot(`"0.9 beta.ts\nJev evaluated 2 of 2 candidate paths; showing 1; omitted 1. Scores estimate path relevance only.\nFull ranked result stored at: saved/jev-glob-ranked.txt. Read this file for all scored paths."`)
     expect(first.additionalContexts).toBeUndefined()
-    await invoke(ctx, agent, 'glob', { pattern: '*.ts' })
-    expect(requests.filter(request => request.state !== null && typeof request.state === 'object'
-      && 'pattern' in request.state)).toHaveLength(2)
+    const second = await invoke(ctx, agent, 'glob', { pattern: '*.ts' })
+    expect(second.isError).toBe(false)
+    if (second.isError) return
+    expect(second.value).toEqual(first.value)
+    expect(second.content).toEqual(first.content)
+    const rankings = requests.filter(request => request.state !== null && typeof request.state === 'object'
+      && 'pattern' in request.state)
+    expect(rankings).toHaveLength(2)
+    expect(rankings.map(request => request.questions.map(question => question.prompt)))
+      .toEqual(candidates.map(paths => paths.map(path => 'Is this path relevant to the task? Path: ' + path)))
   })
 
   it('skips Jev above the match cap and on empty results without changing glob output', async () => {

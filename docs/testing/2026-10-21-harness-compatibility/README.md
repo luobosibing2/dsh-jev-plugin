@@ -72,6 +72,6 @@ node website/build.mjs
 
 ## 边界与验证
 
-本轮只使用可丢弃 profile、本地主模型 adapter 和回环判断服务。真实 DeepSeek、Jev、Luna 或其他付费模型调用数为 **0**。安装、Host 激活、Web 页面和固定回复的集成检查不证明判断模型质量、自然任务收益、平均费用或未运行平台的兼容性。本轮没有运行 Windows、Linux、Desktop 或 Hub 安装链路。
+本轮只使用可丢弃 profile、本地主模型 adapter 和回环判断服务。真实 DeepSeek、Jev、Luna 或其他付费模型调用数为 **0**。安装、Host 激活、Web 页面和固定回复的集成检查不证明判断模型质量、自然任务收益、平均费用或未运行平台的兼容性。七版本正式包矩阵在 macOS 上执行；Linux / Windows CI 的独立检查范围与结果见 [PR #44 checks](https://github.com/luobosibing2/dsh-jev-plugin/pull/44/checks)。这些 CI 检查不代表 Windows 完整安装、Desktop 或 Hub 安装链路已通过。
 
 [2026-10-11 旧版本矩阵](../2026-10-11-harness-version-compatibility/README.md)和[2026-10-09–10 真实模型报告](../2026-10-09-harness-compatibility/README.md)保留当时的源码、版本与实验条件；本次不重写其中的历史结果。公开网站只镜像本报告，不读取原始 Session、临时认证地址、用户凭据或本机实验路径。
