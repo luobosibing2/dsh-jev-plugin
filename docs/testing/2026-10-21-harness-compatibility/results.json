@@ -8,7 +8,7 @@
   "dshSource": "687f282e8625c6b8d11ff58211a90524be2e4317",
   "pluginBase": "0f3555445c432152cd4091ab75dc62c2052f5dae",
   "formalPackage": true,
-  "realModelCalls": 0,
+  "realModelCalls": 13,
   "package": {
     "manifestMatches": true,
     "comparedFiles": 87,
@@ -175,5 +175,9 @@
       "consoleErrors": 0,
       "importErrors": 0
     }
-  ]
+  ],
+  "deterministicMatrixRealModelCalls": 0,
+  "realSmoke": {
+    "summary": "real-smoke-results.json"
+  }
 }
