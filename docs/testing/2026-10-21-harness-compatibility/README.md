@@ -14,6 +14,8 @@
 
 构建使用 rc.2 官方 Typert 生成器，并等待异步 `writeBundle` 完成。新生成的 Host 与 Remote 入口需要官方 `remote-info` helper；旧 DSH 没有该运行子路径，因此正式包随带官方无运行依赖的 helper，并让生成入口引用本地文件。对应 MIT 声明见[根安装包通知](../../../THIRD_PARTY_NOTICES.md)与[workspace 包通知](../../../packages/jev/THIRD_PARTY_NOTICES.md)。构建还固定 Zod `4.4.3`，与 rc.2 `storage-domain` 使用的版本一致，避免不同版本声明导致类型不兼容。
 
+[根构建命令](../../../package.json#L258)的 Host 编译使用 `tsc -b tsconfig.host.json --force`，每次从完整类型图重新生成声明，使保留编译缓存的工作区与干净 CI 构建生成一致的声明。
+
 rc.2 的原生 PTC `run_code` 将派发取消和 sandbox 取消组合为新的审批请求 signal；原来的严格 signal 对象比较因此漏过该原生请求。本次仅允许 `run_code` 使用派生 signal，其他支持工具仍要求同一 signal。匹配继续要求精确 Agent、call、tool、原生提权参数与 reason、唯一活跃派发及唯一匹配的原生审批记录；Jev 判断、最终采用检查和准备转交阶段同时监听派发、请求及消费者生命周期的取消。调用原生 `next()` 转交人工后，由原生请求 signal 负责取消；卸载 Jev 不取消已经交给人工的请求。公开 API 不提供 signal 祖先查询，本次通过上述派发和审批记录关联请求。该适配不增加工具种类或长期许可。
 
 实现见[生成入口](../../../scripts/generate-typert.mjs#L6)、[官方 helper 打包](../../../scripts/generated-remote-runtime.mjs#L12)与[工作区审批](../../../packages/jev/src/workspace-approval.ts#L59)。
@@ -29,8 +31,8 @@ rc.2 新生成的 Remote 声明引用 `TypertRemoteInfo` 与 `TypertRemoteMethod
 | `pnpm install --frozen-lockfile` | 通过 |
 | `pnpm run typecheck` | 通过；Host 与 Client 使用 rc.2 开发依赖 |
 | `pnpm test` | 31 个文件、420 个用例通过 |
-| `pnpm run build` | 通过；重新生成正式安装入口的 tracked `runtime/`，再次构建无差异 |
-| 最终正式根包一致性 | tarball manifest 与根清单完全一致；87 个 runtime、声明和 Cordis patch 文件逐字节相同 |
+| `pnpm run build` | 连续两次常规构建通过；85 个 tracked runtime 文件的逐文件 SHA-256 一致；49 个 JavaScript 文件相对该构建修复前全部不变 |
+| 最终正式根包一致性 | tarball manifest 与根清单完全一致；87 个 runtime、声明和 Cordis patch 文件逐字节相同；全部 95 个打包文件均已比对一致 |
 | 工作区审批定向回归 | 28/28 通过，包含原生 `run_code` 派生 signal 和 policy-change 取消 |
 | 阶段导航集成回归 | 7/7 通过 |
 | `node website/build.mjs` | 通过；生成 1 个首页、4 个原理文章页、1 个判断连接页、11 个功能页和 10 个公开证据页，共 27 页 |
@@ -38,7 +40,7 @@ rc.2 新生成的 Remote 声明引用 `TypertRemoteInfo` 与 `TypertRemoteMethod
 | 网站桌面与手机布局 | 1440 和 390 像素宽度下，页面 `scrollWidth` 分别为 1440 和 390；截图已目检，未发现横向溢出 |
 | 网站入口语法 | `node --check website/build.mjs` 与 `node --check website/src/features.mjs` 通过 |
 
-本轮用于正式兼容检查的同一根包 SHA-256 为 `d3bca8355bdfea7ad9cf45fbc3a48c0f952335e059bd29614192e45e55d84c31`。
+本轮用于正式兼容检查的同一根包 SHA-256 为 `6599f20b14ea8a88d07570b06f5240e3c3a6c49b1ee601223c6f7afb5c768f34`。
 
 ## 七个发布版本的正式包检查
 

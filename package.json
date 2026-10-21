@@ -255,7 +255,7 @@
   "packageManager": "pnpm@11.7.0",
   "scripts": {
     "typecheck": "node scripts/sync-typert-protocol.mjs && tsc -b tsconfig.host.json && node scripts/generate-typert.mjs && tsc -b tsconfig.client.json",
-    "build": "node scripts/sync-typert-protocol.mjs && tsc -b tsconfig.host.json && tsdown -c tsdown.config.ts && node scripts/generate-typert.mjs && tsc -b tsconfig.client.json && tsdown --config packages/jev/tsdown.client.ts && node scripts/sync-github-runtime.mjs",
+    "build": "node scripts/sync-typert-protocol.mjs && tsc -b tsconfig.host.json --force && tsdown -c tsdown.config.ts && node scripts/generate-typert.mjs && tsc -b tsconfig.client.json && tsdown --config packages/jev/tsdown.client.ts && node scripts/sync-github-runtime.mjs",
     "test": "vitest run --exclude '**/.artifacts/**'",
     "test:compatibility": "node scripts/validation/compatibility-smoke.mjs"
   }

@@ -12,7 +12,8 @@
   "package": {
     "manifestMatches": true,
     "comparedFiles": 87,
-    "sha256": "d3bca8355bdfea7ad9cf45fbc3a48c0f952335e059bd29614192e45e55d84c31"
+    "allPackedFiles": 95,
+    "sha256": "6599f20b14ea8a88d07570b06f5240e3c3a6c49b1ee601223c6f7afb5c768f34"
   },
   "localChecks": {
     "typecheck": true,
