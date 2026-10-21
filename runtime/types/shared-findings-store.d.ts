@@ -50,8 +50,8 @@ declare const relationSchema: z.ZodObject<{
     }>;
     kind: z.ZodOptional<z.ZodEnum<{
         unknown: "unknown";
-        conflict: "conflict";
         replacement: "replacement";
+        conflict: "conflict";
         support: "support";
         unrelated: "unrelated";
     }>>;
@@ -126,7 +126,7 @@ export declare function sharedFindingsSpec(profileDir: string): {
                 reason?: string | undefined;
             }[];
             at: string;
-            kind?: "unknown" | "conflict" | "replacement" | "support" | "unrelated" | undefined;
+            kind?: "unknown" | "replacement" | "conflict" | "support" | "unrelated" | undefined;
             basis?: string | undefined;
             operationId?: string | undefined;
         }>;

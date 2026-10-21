@@ -32,3 +32,5 @@ node website/build.mjs
 Jev / Luna 判断连接页为 `connections/luna-decisions.html`，通过所有页面的主导航、首页介绍、验证口径和安装段进入。该页说明 Jev 原连接、Luna / OpenRouter 与 Luna / OpenAI 的端点、请求模型和凭据引用，以及先保存连接、再保存密钥和显式诊断的流程。连接选择不作为第 12 个业务案例页，也不改变原功能机制；现有 11 个页面全部保留。
 
 Luna 公开报告映射到 `evidence/luna-decisions-results.html`，正文逐字取自[公开中文验真报告](../docs/testing/2026-10-07-luna-decisions/public-results.zh-CN.md)。首页优先展示真实 DeepSeek Flash 任务与官方 Luna 的日志省略和单次许可，再分别保留早期固定主模型的两条授权未批准负例、真实任务五路径全得 1 的无区分力结果、OpenRouter 403 访问限制及未新测 cold stage 的边界。文件排序、长日志准入和工作区审批页引用相同公开报告；旧 Jev 案例不删除，也不作为 Luna 效果依据。方法和结构化结果链接仓库公开文件，不把私有验证材料或凭据镜像进网站。
+
+DSH 版本兼容入口位于首页 `#compatibility`，安装段列出当前声明的精确版本，所有生成页的“版本与验证”导航均回到该入口。[2026-10-21 兼容报告](../docs/testing/2026-10-21-harness-compatibility/README.md)映射到 `evidence/harness-compatibility-2026-10-21.html`，沿用公开 Markdown 原文镜像。当前开发基线为 `0.2.1-rc.2`；本轮确定性安装、Host 和 Web 结果与旧真实模型实验分开记录。修改版本、支持范围或验证结论时，同时更新根 README、兼容报告和首页说明。

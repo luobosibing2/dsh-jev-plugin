@@ -1,0 +1,178 @@
+{
+  "date": "2026-10-21",
+  "environment": {
+    "platform": "darwin",
+    "node": "24.14.1",
+    "pnpm": "11.7.0"
+  },
+  "dshSource": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "pluginBase": "0f3555445c432152cd4091ab75dc62c2052f5dae",
+  "formalPackage": true,
+  "realModelCalls": 0,
+  "package": {
+    "manifestMatches": true,
+    "comparedFiles": 87,
+    "sha256": "d3bca8355bdfea7ad9cf45fbc3a48c0f952335e059bd29614192e45e55d84c31"
+  },
+  "localChecks": {
+    "typecheck": true,
+    "testFiles": 31,
+    "testsPassed": 420,
+    "build": true,
+    "frozenInstall": true
+  },
+  "website": {
+    "pages": 27,
+    "internalLinks": 345,
+    "brokenLinks": 0,
+    "browserPageErrors": 0,
+    "desktopWidth": 1440,
+    "mobileWidth": 390,
+    "horizontalOverflow": false
+  },
+  "versions": [
+    {
+      "version": "0.1.7-rc.1",
+      "officialCliVersion": "0.1.7-rc.1",
+      "installExitCode": 0,
+      "hostPassed": true,
+      "activeHostComponents": 9,
+      "caseLabels": [
+        "session-a",
+        "session-b",
+        "native-goal",
+        "shared-reports",
+        "skill-no-relevant"
+      ],
+      "webPassed": true,
+      "featureSwitches": 12,
+      "recordsVisible": true,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "importErrors": 0
+    },
+    {
+      "version": "0.1.7-rc.2",
+      "officialCliVersion": "0.1.7-rc.2",
+      "installExitCode": 0,
+      "hostPassed": true,
+      "activeHostComponents": 9,
+      "caseLabels": [
+        "session-a",
+        "session-b",
+        "native-goal",
+        "shared-reports",
+        "skill-no-relevant"
+      ],
+      "webPassed": true,
+      "featureSwitches": 12,
+      "recordsVisible": true,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "importErrors": 0
+    },
+    {
+      "version": "0.2.0-rc.1",
+      "officialCliVersion": "0.2.0-rc.1",
+      "installExitCode": 0,
+      "hostPassed": true,
+      "activeHostComponents": 9,
+      "caseLabels": [
+        "session-a",
+        "session-b",
+        "native-goal",
+        "shared-reports",
+        "skill-no-relevant"
+      ],
+      "webPassed": true,
+      "featureSwitches": 12,
+      "recordsVisible": true,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "importErrors": 0
+    },
+    {
+      "version": "0.2.0-rc.2",
+      "officialCliVersion": "0.2.0-rc.2",
+      "installExitCode": 0,
+      "hostPassed": true,
+      "activeHostComponents": 9,
+      "caseLabels": [
+        "session-a",
+        "session-b",
+        "native-goal",
+        "shared-reports",
+        "skill-no-relevant"
+      ],
+      "webPassed": true,
+      "featureSwitches": 12,
+      "recordsVisible": true,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "importErrors": 0
+    },
+    {
+      "version": "0.2.1-alpha.2",
+      "officialCliVersion": "0.2.1-alpha.2",
+      "installExitCode": 0,
+      "hostPassed": true,
+      "activeHostComponents": 9,
+      "caseLabels": [
+        "session-a",
+        "session-b",
+        "native-cwd-switch",
+        "native-goal",
+        "shared-reports",
+        "skill-no-relevant"
+      ],
+      "webPassed": true,
+      "featureSwitches": 12,
+      "recordsVisible": true,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "importErrors": 0
+    },
+    {
+      "version": "0.2.1-alpha.3",
+      "officialCliVersion": "0.2.1-alpha.3",
+      "installExitCode": 0,
+      "hostPassed": true,
+      "activeHostComponents": 9,
+      "caseLabels": [
+        "session-a",
+        "session-b",
+        "native-cwd-switch",
+        "native-goal",
+        "shared-reports",
+        "skill-no-relevant"
+      ],
+      "webPassed": true,
+      "featureSwitches": 12,
+      "recordsVisible": true,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "importErrors": 0
+    },
+    {
+      "version": "0.2.1-rc.2",
+      "officialCliVersion": "0.2.1-rc.2",
+      "installExitCode": 0,
+      "hostPassed": true,
+      "activeHostComponents": 9,
+      "caseLabels": [
+        "session-a",
+        "session-b",
+        "native-cwd-switch",
+        "native-goal",
+        "shared-reports",
+        "skill-no-relevant"
+      ],
+      "webPassed": true,
+      "featureSwitches": 12,
+      "recordsVisible": true,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "importErrors": 0
+    }
+  ]
+}

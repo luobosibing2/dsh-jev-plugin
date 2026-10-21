@@ -10,7 +10,7 @@ import SessionController from '@deepseek-ai/dsh-api-session-controller'
 import LlmRuntime, { createAssistantMessage, createToolResultMessage, createUserMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
 import SessionStore, { Session, SessionId } from '@deepseek-ai/dsh-session'
 import type { SessionEvent } from '@deepseek-ai/dsh-session'
-import JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import * as JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
 import SessionQueryEngine from '@deepseek-ai/dsh-session-query'
 import Storage from '@deepseek-ai/dsh-storage'
@@ -112,7 +112,7 @@ async function host(root: string, endpoint: string, options: { config?: Partial<
   ctx.provide('profileContext', { dir: join(root, 'profile') } as never)
   ctx.provide('settings', { configure: () => () => {} } as never)
   ctx.provide('credentials', { resolve: options.resolve ?? (async () => ({ value: 'localhost-stage-fixture', source: 'fixture' })) } as never)
-  ctx.provide('typert', { lookups: { configure: () => () => {} }, contexts: { configureHost: () => () => {} } } as never)
+  ctx.provide('typert', { lookups: { configure: () => () => {} }, contexts: { configureHost: () => () => {} }, resources: { register: () => () => {} } } as never)
   ctx.provide('agentDefaultModel', { currentSelection: () => ({ provider: 'fixture', model: 'fixture' }) } as never)
   ctx.provide('attachments', { imageLimits: {}, admitPromptContent: async (content: unknown[]) => content } as never)
   ctx.provide('fileUploads', { registerAgentResolver: () => () => {}, resolve: () => undefined,

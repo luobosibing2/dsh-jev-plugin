@@ -35,7 +35,7 @@ const limits: OutputAdmissionConfigValues = {
 
 function formStub<T extends object>(initial: T, accept: boolean = true) {
   let snapshot: ConfigFormSnapshot<T> = {
-    status: 'ready', value: structuredClone(initial), base: {}, user: {}, revision: 3, writable: true, mode: 'host',
+    status: 'ready', value: structuredClone(initial), base: {}, user: {}, revision: 3, writable: true,
   }
   const listeners = new Set<() => void>()
   const mutate = vi.fn(async (ops: readonly { op: string; path: readonly string[]; value?: unknown }[], revision?: number) => {

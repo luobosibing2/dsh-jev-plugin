@@ -9,7 +9,7 @@ import { watchStageView } from '../src/client/stage-registration.ts'
 function form() {
   let snapshot: ConfigFormSnapshot<JevConfigValues> = {
     status: 'ready', value: clientConfig({ baseUrl: '', model: '', credentialRef: '' }),
-    base: {}, user: {}, revision: 1, writable: true, mode: 'host',
+    base: {}, user: {}, revision: 1, writable: true,
   }
   const listeners = new Set<() => void>()
   const source: Pick<ConfigForm<JevConfigValues>, 'getSnapshot' | 'subscribe'> = {

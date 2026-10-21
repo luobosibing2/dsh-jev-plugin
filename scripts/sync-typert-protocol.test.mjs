@@ -19,7 +19,7 @@ afterEach(async () => {
   }
 })
 
-async function fixture(version = '0.2.1-alpha.2') {
+async function fixture(version = '0.2.1-rc.2') {
   await mkdir(artifacts, { recursive: true })
   const root = await mkdtemp(join(artifacts, 'checkout-'))
   roots.push(root)
@@ -41,6 +41,7 @@ it('prepares a fresh reference with resolvable dependencies and supports repeate
   const { root, reference, modules, installed } = await fixture()
   for (let run = 0; run < 2; run++) {
     await execute(process.execPath, [script], { cwd: root, timeout: 10_000 })
+    expect(await readFile(join(reference, 'src/facade.d.ts'), 'utf8')).toBe("export { Remote, TypertRemoteService } from './index.js'\n")
     expect(await readFile(join(reference, 'src/index.d.ts'), 'utf8')).toBe("export type { Sample } from './sample.js'\n")
     expect(await readFile(join(reference, 'src/sample.d.ts'), 'utf8')).toBe(`export interface Sample { value: ${run === 0 ? 'string' : 'number'} }\n`)
     await expect(lstat(join(reference, 'src/ignored.txt'))).rejects.toMatchObject({ code: 'ENOENT' })
@@ -56,7 +57,7 @@ it('rejects an unexpected protocol version before preparing the reference', asyn
   const { root, reference } = await fixture('0.2.1-alpha.3')
   const result = await execute(process.execPath, [script], { cwd: root, timeout: 10_000 }).catch(error => error)
   expect(result.code).toBe(1)
-  expect(result.stderr).toContain('Expected @deepseek-ai/dsh-typert-protocol@0.2.1-alpha.2, found 0.2.1-alpha.3')
+  expect(result.stderr).toContain('Expected @deepseek-ai/dsh-typert-protocol@0.2.1-rc.2, found 0.2.1-alpha.3')
   await expect(lstat(join(reference, 'src'))).rejects.toMatchObject({ code: 'ENOENT' })
   await expect(lstat(join(reference, 'node_modules'))).rejects.toMatchObject({ code: 'ENOENT' })
 })

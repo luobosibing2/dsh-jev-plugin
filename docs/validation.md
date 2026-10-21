@@ -10,9 +10,13 @@ Existing live completion-check results use the earlier recorded-evidence semanti
 
 已有完成核查实测使用此前的已有证据核查语义；轻量报告核查尚无真实任务效果证据。
 
-The [2026-10-09–10 Harness compatibility report](testing/2026-10-09-harness-compatibility/README.md) covers the current DSH 0.2.1-alpha.2 revision: the old package's actual installation rejection, the adapted package's official installation and Web client, new real DeepSeek Flash / Jev tasks, and scoped lifecycle tests. The older reports below retain their original runtime versions and experiment conditions.
+The [2026-10-21 Harness compatibility report](testing/2026-10-21-harness-compatibility/README.md) covers the DSH 0.2.1-rc.2 upgrade with deterministic official-package, Host and Web integration checks and zero live model calls.
 
-[2026-10-09–10 Harness 兼容报告](testing/2026-10-09-harness-compatibility/README.md)验证当前 DSH 0.2.1-alpha.2 适配：旧包的实际安装拒绝、适配包的正式安装与 Web 客户端、新一轮真实 DeepSeek Flash / Jev 任务及有界生命周期测试。下面的历史报告保留各自原始版本和实验条件。
+[2026-10-21 Harness 兼容报告](testing/2026-10-21-harness-compatibility/README.md)记录 DSH 0.2.1-rc.2 升级，检查正式包、Host 与 Web 的确定性接入，真实模型调用为 0。
+
+The [2026-10-09–10 Harness compatibility report](testing/2026-10-09-harness-compatibility/README.md) covers the earlier DSH 0.2.1-alpha.2 revision: the old package's actual installation rejection, the adapted package's official installation and Web client, new real DeepSeek Flash / Jev tasks, and scoped lifecycle tests. The older reports below retain their original runtime versions and experiment conditions.
+
+[2026-10-09–10 Harness 兼容报告](testing/2026-10-09-harness-compatibility/README.md)验证此前 DSH 0.2.1-alpha.2 适配：旧包的实际安装拒绝、适配包的正式安装与 Web 客户端、新一轮真实 DeepSeek Flash / Jev 任务及有界生命周期测试。下面的历史报告保留各自原始版本和实验条件。
 
 The [Jev / Luna public report](testing/2026-10-07-luna-decisions/public-results.md) separates fixed protocol/installation checks, controlled live samples, and real main-model tasks. Both Luna APIs are supported in `main`; the executed official samples and the failed OpenRouter access attempt retain different conclusions.
 

@@ -1,6 +1,6 @@
 # Third-party notices
 
-The built Web client includes Zod code. Typert-generated code and the build-time protocol reference use DeepSeek Harness tooling. Their MIT notices are reproduced below. Mu inspired the feature research; its MIT notice is included for any adapted design examples or prompt wording. This list does not replace the licenses distributed with external dependencies.
+The built Web client includes Zod code. The package also distributes the official Typert Remote runtime helper from DeepSeek Harness. Typert-generated code and the build-time protocol reference use DeepSeek Harness tooling. Their MIT notices are reproduced below. Mu inspired the feature research; its MIT notice is included for any adapted design examples or prompt wording. This list does not replace the licenses distributed with external dependencies.
 
 ## Zod
 

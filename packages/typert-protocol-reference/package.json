@@ -1,11 +1,11 @@
 {
   "name": "@deepseek-ai/dsh-typert-protocol",
-  "version": "0.2.1-alpha.2",
+  "version": "0.2.1-rc.2",
   "private": true,
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/index.d.ts",
+      "types": "./src/facade.d.ts",
       "default": "./src/index.js"
     }
   }

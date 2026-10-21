@@ -12,9 +12,9 @@ import { SandboxedFileSystem } from '@deepseek-ai/dsh-fs-sandbox'
 import { createUserMessage, LlmAdapter, ToolCallId, type GenerateOptions, type StreamChunk } from '@deepseek-ai/dsh-llm'
 import { PtcRuntime, type PtcRunRequest, type PtcRunResult, type PtcRunSpec } from '@deepseek-ai/dsh-ptc-runtime'
 import { ShellExecutor, type ShellExecRequest, type ShellExecSpec, type ShellExecution } from '@deepseek-ai/dsh-shell'
-import SandboxPolicy from '@deepseek-ai/dsh-sandbox-policy'
+import SandboxPolicy, { setSandboxMode } from '@deepseek-ai/dsh-sandbox-policy'
 import { SessionId } from '@deepseek-ai/dsh-session'
-import JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import * as JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import Storage from '@deepseek-ai/dsh-storage'
 import { JsonStorageBackend } from '@deepseek-ai/dsh-storage-json'
 import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
@@ -220,7 +220,7 @@ it('does not consult Jev for a pre-execute hook ask or a monotonic guard refusal
   await expect(readFile(join(guard.workspace, 'guarded.txt'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
 })
 
-it('does not reuse an active write for another call id or plugin_manager request', async () => {
+it('does not reuse an active write for another call, tool, or cancellation signal', async () => {
   const h = await fixture([call('accurate', 'write', { file_path: 'accurate.txt', content: 'native', sandbox_permissions: 'danger-full-access', justification: 'Write file' }), text('done')], [{ choice: 'approve' }])
   let human = 0
   h.ctx.on('approval/request', () => { human++; return Promise.resolve<ApprovalOutcome>('rejected') })
@@ -230,13 +230,17 @@ it('does not reuse an active write for another call id or plugin_manager request
         reason: 'escalate sandbox to danger-full-access: Write file', signal: exec.signal })).toBe('rejected')
       expect(await h.ctx.approval.request({ agent: exec.agent!, callId: exec.callId, toolName: 'plugin_manager',
         reason: 'escalate sandbox to danger-full-access: Write file', signal: exec.signal })).toBe('rejected')
+      expect(await h.ctx.approval.request({ agent: exec.agent!, callId: exec.callId, toolName: 'write',
+        reason: 'escalate sandbox to danger-full-access: Write file', signal: new AbortController().signal })).toBe('rejected')
+      expect(await h.ctx.approval.request({ agent: exec.agent!, callId: exec.callId, toolName: 'write',
+        reason: 'escalate sandbox to danger-full-access: Write file' })).toBe('rejected')
     }
     return next()
   })
   await h.send()
-  expect(human).toBe(2)
+  expect(human).toBe(4)
   expect(h.received).toHaveLength(1)
-  expect(h.outcomes()).toEqual(['rejected', 'rejected', 'allowed-once'])
+  expect(h.outcomes()).toEqual(['rejected', 'rejected', 'rejected', 'rejected', 'allowed-once'])
 })
 
 it('leaves an invalid native write with its fixed validation failure before approval', async () => {
@@ -530,6 +534,28 @@ it('judges PTC outer and inner native tool escalations as separate calls', async
   expect(h.outcomes()).toEqual(['allowed-once', 'allowed-once'])
   expect(h.ptc?.runs).toBe(1)
   expect(await readFile(join(h.workspace, 'inner.txt'), 'utf8')).toBe('inside')
+})
+
+it('cancels a PTC judgment after a native sandbox-mode change without granting or running the program', async () => {
+  const entered = Promise.withResolvers<void>()
+  const response = Promise.withResolvers<{ choice: 'approve' }>()
+  const h = await fixture([call('ptc-mode-change', 'run_code', { code: 'return 1', description: 'Run validation',
+    sandbox_permissions: 'danger-full-access', justification: 'Write build cache' }), text('done')],
+  [async () => { entered.resolve(); return response.promise }], { ptc: true })
+  const pending = h.send()
+  await entered.promise
+  setSandboxMode(h.agent.session, 'read-only')
+  response.resolve({ choice: 'approve' })
+  await pending
+  expect(h.received).toHaveLength(1)
+  expect(h.outcomes()).toEqual(['cancelled'])
+  expect(h.ptc?.runs).toBe(0)
+  const record = (await h.ctx.jev.listRecords({ featureId: 'workspace-approval' })).items[0]!
+  await vi.waitFor(async () => {
+    const detail = await h.ctx.jev.getRecord(record.id)
+    expect(detail?.status).toBe('cancelled')
+    expect(detail?.receipts.some(receipt => receipt.id === 'grant-issued')).toBe(false)
+  })
 })
 
 it.each([

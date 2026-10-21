@@ -24,6 +24,8 @@ The [2026-10-09–10 Harness compatibility report](docs/testing/2026-10-09-harne
 
 The [2026-10-11 version compatibility report](docs/testing/2026-10-11-harness-version-compatibility/README.md) checks the current plugin on four older DSH releases and 0.2.1-alpha.2. It records official installation, nine Host components, native tools and local deterministic judgment flows, plus browser checks on the oldest release, 0.2.0-rc.2 and 0.2.1-alpha.2. These checks establish version integration in the tested environment, not judgment-model quality.
 
+The [2026-10-21 Harness compatibility report](docs/testing/2026-10-21-harness-compatibility/README.md) covers the DSH **0.2.1-rc.2** upgrade. This run checks the official package, Host components and Web integration with deterministic local model replies; no live model service is called. Earlier reports retain their original versions and experiment conditions.
+
 ## What is included?
 
 The plugin provides the following features. **Every feature is independently disabled by default.** Installing the package does not enable them.
@@ -79,7 +81,7 @@ Before stage analysis is sent or logged, JSON tool arguments are decoded for cre
 
 ## Install through the Web UI (recommended)
 
-Supported DSH releases are **0.1.7-rc.1, 0.1.7-rc.2, 0.2.0-rc.1, 0.2.0-rc.2, 0.2.1-alpha.2 and 0.2.1-alpha.3**. The package declares `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3`; other releases, including 0.2.1-alpha.1, are outside this declaration. Install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
+Supported DSH releases are **0.1.7-rc.1, 0.1.7-rc.2, 0.2.0-rc.1, 0.2.0-rc.2, 0.2.1-alpha.2, 0.2.1-alpha.3 and 0.2.1-rc.2**. The package declares `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-rc.2`; other releases, including 0.2.1-alpha.1, are outside this declaration. Install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
 
 1. Open **Plugins in the sidebar → Add plugin**.
 2. Paste the GitHub URL below into **Package name or address**, then click **Install**.
@@ -106,13 +108,15 @@ Use the following steps when modifying or building the plugin yourself. Existing
 
 - Node.js **24.11 or later** is recommended; the publication build is checked on Node 24.14.1.
 - pnpm **11.7.0** available on `PATH`.
-- Development baseline: DeepSeek Harness CLI and development packages **0.2.1-alpha.2**, with Cordis **4.0.5-alpha.1**. These exact build versions are separate from the supported installation range above. Use the explicit version below because npm's `latest` tag can point to a different release.
+- Development baseline: DeepSeek Harness CLI and development packages **0.2.1-rc.2**, with Cordis **4.0.5**. These exact build versions are separate from the supported installation range above. Use the explicit version below because npm's `latest` tag can point to a different release.
 - A configured main-model provider in DSH, plus credentials for your selected Jev-compatible System One service or Luna API.
+
+Legacy DSH support covers installing and running the built package. Source builds and TypeScript consumers of the generated Remote declarations use the rc.2 development baseline.
 
 If needed, install the tools:
 
 ```sh
-npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.1-alpha.2
+npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.1-rc.2
 ```
 
 ### Build the package

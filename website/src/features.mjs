@@ -1,4 +1,5 @@
 export const evidence = {
+  harnessCompatibility: { title: 'DSH 0.2.1-rc.2：版本兼容与安装验证', file: 'docs/testing/2026-10-21-harness-compatibility/README.md', slug: 'harness-compatibility-2026-10-21' },
   lunaDecisions: { title: 'Jev / Luna Decisions：接入与实测验真', file: 'docs/testing/2026-10-07-luna-decisions/public-results.zh-CN.md', slug: 'luna-decisions-results' },
   validation: { title: '验证范围与边界', file: 'docs/validation.md', slug: 'validation' },
   selection: { title: '技能选择与文件排序：公开验收摘要', file: 'docs/testing/jev-selection/public-results.zh-CN.md', slug: 'selection-results' },
