@@ -235,6 +235,7 @@ pnpm exec vitest run packages/jev/tests/host.test.ts packages/jev/tests/wire.tes
 Run the focused tests for the feature you change. Do not enable real-provider experiments or use someone else's credentials without explicit authorization. Development fixtures and tests are excluded from the installable tarball.
 
 - [Package reference and consumer API](packages/jev/README.md)
+- [Planning, decision, and delivery records](.agents/notes/README.md)
 - [Workspace-approval integration tests](packages/jev/tests/workspace-approval.test.ts)
 - [Workspace-approval QA cases](packages/jev/tests/workspace-approval-qa.md)
 - [Tool-output admission report](docs/reports/2026-09-27-tool-output-admission.md)

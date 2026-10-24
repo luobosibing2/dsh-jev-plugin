@@ -235,6 +235,7 @@ pnpm exec vitest run packages/jev/tests/host.test.ts packages/jev/tests/wire.tes
 按改动运行相关测试。没有明确授权时，不开启真实服务实验或使用他人的凭据。开发夹具和测试不会进入可安装 tarball。
 
 - [包参考与消费者 API](packages/jev/README.md)
+- [规划、决策与交付记录](.agents/notes/README.md)
 - [工作区审批集成测试](packages/jev/tests/workspace-approval.test.ts)
 - [工作区审批 QA 用例](packages/jev/tests/workspace-approval-qa.md)
 - [工具输出准入报告](docs/reports/2026-09-27-tool-output-admission.zh-CN.md)
