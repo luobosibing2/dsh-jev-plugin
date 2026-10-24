@@ -1,5 +1,7 @@
+import { Context } from "@deepseek-ai/cordis";
 import s from "@deepseek-ai/schemastery";
 import { trySaveFormattedResult } from "@deepseek-ai/dsh-tool-fs-search";
+import { estimateContent } from "@deepseek-ai/dsh-token-meter/estimate";
 //#region packages/jev/lib/types/output-admission-rules.js
 /** Conservative, byte-preserving candidates from command and test logs. */
 const visible = (text) => text.replace(/\x1b\[[0-9;]*m/g, "");
@@ -278,6 +280,131 @@ function retainedEvidenceFor(raw, semantic, rules, branch, anchored, slowMs) {
 	};
 }
 //#endregion
+//#region packages/jev/lib/types/output-admission-spill-budget.js
+/** Native Spill budgets captured for one tool execution and invalidated by policy changes. */
+/** Preserve the exact service and Agent filtering used by the tool event dispatcher. */
+function visibility(receiver) {
+	const filter = Reflect.get(receiver, Context.filter);
+	if (filter === void 0) return () => true;
+	if (typeof filter !== "function") throw new Error("Tool event listener filter is unavailable");
+	return (context) => filter.call(receiver, context) === true;
+}
+/**
+* Observe native policy identity without activating it or requiring the optional package to load.
+* @param ctx - admission plugin context; all observers belong to its fiber.
+* @returns an execution-scoped guard; unknown or changing policy state keeps the original result.
+*/
+function createSpillBudgetGuard(ctx) {
+	let native;
+	let unavailable = "Native Spill policy identity is unavailable";
+	const ready = import("@deepseek-ai/dsh-spill-policy").then((module) => {
+		native = module;
+	}, (error) => {
+		unavailable = `Native Spill policy identity is unavailable: ${String(error)}`;
+	});
+	const snapshots = /* @__PURE__ */ new Map();
+	ctx.effect(() => () => {
+		snapshots.clear();
+	}, "jev-output-admission.spill-budgets");
+	function observe(visible) {
+		if (native === void 0) return {
+			budget: {
+				kind: "unknown",
+				reason: unavailable
+			},
+			policies: []
+		};
+		const policies = [];
+		for (const fiber of ctx.registry.get(native)?.fibers ?? []) {
+			if (fiber.uid === null || !visible(fiber.ctx)) continue;
+			if (fiber.state !== 2) return {
+				budget: {
+					kind: "unknown",
+					reason: "Native Spill policy is not active"
+				},
+				policies
+			};
+			const config = fiber.config;
+			policies.push({
+				fiber,
+				config,
+				maxTokens: config.maxInlineTokens
+			});
+		}
+		const bounded = policies.filter((policy) => policy.maxTokens !== void 0);
+		return {
+			budget: bounded.length > 1 ? {
+				kind: "unknown",
+				reason: "Multiple native Spill budgets apply to this tool execution"
+			} : bounded.length === 1 ? {
+				kind: "bounded",
+				maxTokens: bounded[0].maxTokens
+			} : { kind: "unbounded" },
+			policies
+		};
+	}
+	function changed(fiber) {
+		if (native === void 0 || fiber.runtime?.callback !== native.apply) return;
+		for (const snapshot of snapshots.values()) if (snapshot.policies.some((policy) => policy.fiber === fiber) || snapshot.visible(fiber.ctx)) snapshot.invalidated = "Native Spill policy changed during tool execution";
+	}
+	ctx.on("internal/plugin", changed, { global: true });
+	ctx.on("internal/status", changed, { global: true });
+	ctx.on("loader/patch-context", (_entry, next) => {
+		for (const snapshot of snapshots.values()) snapshot.invalidated = "Loader context changed during tool execution";
+		next();
+	}, {
+		global: true,
+		prepend: true
+	});
+	ctx.on("tools/pre-execute", async function(exec, next) {
+		await ready;
+		try {
+			const visible = visibility(this);
+			snapshots.set(exec.token, {
+				...observe(visible),
+				visible
+			});
+		} catch (error) {
+			snapshots.set(exec.token, {
+				budget: {
+					kind: "unknown",
+					reason: String(error)
+				},
+				policies: [],
+				visible: () => false
+			});
+		}
+		return next();
+	}, { prepend: true });
+	ctx.on("tools/result", (exec) => {
+		snapshots.delete(exec.token);
+	});
+	return { allows(exec, receiver, content) {
+		const snapshot = snapshots.get(exec.token);
+		if (snapshot === void 0) {
+			ctx.logger.warn("Jev output admission kept original tool result: native Spill execution snapshot is unavailable");
+			return false;
+		}
+		let reason = snapshot.invalidated ?? (snapshot.budget.kind === "unknown" ? snapshot.budget.reason : void 0);
+		if (reason === void 0) {
+			const current = observe(visibility(receiver));
+			if (current.budget.kind === "unknown") reason = current.budget.reason;
+			else if (current.policies.length !== snapshot.policies.length || current.policies.some((policy, index) => {
+				const previous = snapshot.policies[index];
+				return policy.fiber !== previous.fiber || policy.config !== previous.config || policy.maxTokens !== previous.maxTokens;
+			})) reason = "Native Spill policy or visibility changed during tool execution";
+		}
+		if (reason !== void 0) {
+			if (!snapshot.reported) {
+				snapshot.reported = true;
+				ctx.logger.warn(`Jev output admission kept original tool result: ${reason}`);
+			}
+			return false;
+		}
+		return content === void 0 || snapshot.budget.kind !== "bounded" || estimateContent(content) <= snapshot.budget.maxTokens;
+	} };
+}
+//#endregion
 //#region packages/jev/lib/types/output-admission.js
 const Config = s.object({
 	generalMinChars: s.number().step(1).min(1).max(1e6).default(6e3).volatile(),
@@ -506,6 +633,7 @@ function apply(ctx, config) {
 	ctx.effect(() => () => {
 		lifetime.abort();
 	}, "jev-output-admission.lifetime");
+	const spillBudget = createSpillBudgetGuard(ctx);
 	const pending = /* @__PURE__ */ new Map();
 	ctx.on("tools/result", (exec, result) => {
 		const record = pending.get(exec.token);
@@ -544,7 +672,8 @@ function apply(ctx, config) {
 		settingsDescription: "Recognizes common Vitest/Jest, pytest, and Node TAP text; Jev failure lets the original result continue."
 	}));
 	ctx.effect(() => ctx.settings.configure({ auto: false }, ctx.fiber), "jev-output-admission.settings");
-	ctx.on("tools/post-execute", async (exec, result, next) => {
+	ctx.on("tools/post-execute", async function(exec, result, next) {
+		const receiver = this;
 		const decision = await next();
 		try {
 			const agent = exec.agent;
@@ -554,6 +683,10 @@ function apply(ctx, config) {
 			if (!generalOn && !testOn) return decision;
 			const current = target(exec, result, decision);
 			if (current === void 0) return decision;
+			if (!spillBudget.allows(exec, receiver, [{
+				type: "text",
+				text: current.original
+			}])) return decision;
 			const settings = configValues(config);
 			const task = textOf(agent);
 			const intent = commandIntent(exec, result);
@@ -617,7 +750,7 @@ function apply(ctx, config) {
 								usable: false,
 								reason: "Incomplete or invalid log admission answers"
 							},
-							canAdopt: () => !signal.aborted && textOf(agent).version === task.version && liveRoot(ctx, agent) ? true : "Tool result or task changed while judging"
+							canAdopt: () => !signal.aborted && textOf(agent).version === task.version && liveRoot(ctx, agent) ? spillBudget.allows(exec, receiver) || "Native Spill policy changed while judging" : "Tool result or task changed while judging"
 						});
 						if (timeout.aborted && !exec.signal.aborted && !lifetime.signal.aborted && (outcome.kind === "cancelled" || outcome.kind === "failed") && outcome.operationId !== void 0) await ctx.jev.noteFailure(outcome.operationId, "ADMISSION_TIMEOUT", "Log admission wait limit expired; the original tool result continued through the Host.").catch((error) => {
 							ctx.logger.warn(`Jev output admission timeout note failed: ${String(error)}`);
@@ -629,7 +762,7 @@ function apply(ctx, config) {
 					}
 				}
 			}
-			if (exec.signal.aborted || lifetime.signal.aborted || !liveRoot(ctx, agent) || textOf(agent).version !== task.version) return decision;
+			if (exec.signal.aborted || lifetime.signal.aborted || !liveRoot(ctx, agent) || textOf(agent).version !== task.version || !spillBudget.allows(exec, receiver)) return decision;
 			const replacements = [...rules.map((span) => ({
 				span,
 				marker: marker(span, current.raw, span.reason === "repeated-failure" ? `exact duplicate of original lines ${span.originalFirstLine}-${span.originalFirstLine + span.lastLine - span.firstLine}` : "unneeded progress with no known task target")
@@ -647,9 +780,13 @@ function apply(ctx, config) {
 			const estimated = codePoints(current.raw) - codePoints(filtered) - codePoints("\n[Jev original log: {locator}. {hint}]") - 200;
 			if (estimated < settings.minSavedChars || estimated / size < settings.minSavedRatio) return decision;
 			const saved = await trySaveFormattedResult(ctx, exec, "jev-original-tool-log.txt", current.original);
-			if (saved === void 0 || exec.signal.aborted || lifetime.signal.aborted || !liveRoot(ctx, agent) || textOf(agent).version !== task.version) return decision;
+			if (saved === void 0 || exec.signal.aborted || lifetime.signal.aborted || !liveRoot(ctx, agent) || textOf(agent).version !== task.version || !spillBudget.allows(exec, receiver)) return decision;
 			filtered = withRecovery(filtered, `[Jev original log: ${saved.locator}. ${saved.retrievalHint}]`);
 			const delivered = current.compose(filtered);
+			if (!spillBudget.allows(exec, receiver, [{
+				type: "text",
+				text: delivered
+			}])) return decision;
 			if (codePoints(current.compose(current.raw)) - codePoints(delivered) < settings.minSavedChars || (codePoints(current.compose(current.raw)) - codePoints(delivered)) / codePoints(current.compose(current.raw)) < settings.minSavedRatio) return decision;
 			if (operationId === void 0) {
 				if (!ctx.jev.isFeatureEnabled(branch)) return decision;
@@ -658,7 +795,7 @@ function apply(ctx, config) {
 					inputVersion: String(exec.callId)
 				})).id;
 			}
-			if (exec.signal.aborted || lifetime.signal.aborted || !liveRoot(ctx, agent) || textOf(agent).version !== task.version) return decision;
+			if (exec.signal.aborted || lifetime.signal.aborted || !liveRoot(ctx, agent) || textOf(agent).version !== task.version || !spillBudget.allows(exec, receiver)) return decision;
 			pending.set(exec.token, {
 				operationId,
 				branch,

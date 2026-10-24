@@ -123,13 +123,18 @@
     "@deepseek-ai/dsh-user-approval": ">=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-rc.2",
     "@deepseek-ai/dsh-working-directory": ">=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-rc.2",
     "@deepseek-ai/dsh-system-prompt": ">=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-rc.2",
-    "@deepseek-ai/dsh-tool-todo": ">=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-rc.2"
+    "@deepseek-ai/dsh-tool-todo": ">=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-rc.2",
+    "@deepseek-ai/dsh-spill-policy": ">=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-rc.2",
+    "@deepseek-ai/dsh-token-meter": ">=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-rc.2"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/dsh-working-directory": {
       "optional": true
     },
     "@deepseek-ai/dsh-tool-todo": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-spill-policy": {
       "optional": true
     }
   },
@@ -214,7 +219,8 @@
     "@deepseek-ai/cordis-plugin-group": "1.0.5",
     "@deepseek-ai/dsh-working-directory": "0.2.1-rc.2",
     "@deepseek-ai/dsh-tool-working-directory": "0.2.1-rc.2",
-    "@deepseek-ai/dsh-tool-todo": "0.2.1-rc.2"
+    "@deepseek-ai/dsh-tool-todo": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-token-meter": "0.2.1-rc.2"
   },
   "files": [
     "runtime/**/*.js",

@@ -9,6 +9,7 @@ import type { JevRequest, JevResponse } from './types.ts'
 import type { OutputAdmissionConfigValues } from './output-admission-types.ts'
 import { codePoints, generalCandidates, groupCandidates, replaceSpans, testCandidates, testRunner, type LogSpan } from './output-admission-rules.ts'
 import { retainedEvidenceFor, type RetainedEvidence } from './output-admission-evidence.ts'
+import { createSpillBudgetGuard } from './output-admission-spill-budget.ts'
 
 /** Live profile limits. Feature switches belong to the shared Jev service. */
 export interface Config { [key: string]: Volatile<number> }
@@ -193,6 +194,7 @@ function configValues(config: Config): OutputAdmissionConfigValues {
 export function apply(ctx: Context, config: Config): void {
   const lifetime = new AbortController()
   ctx.effect(() => () => { lifetime.abort() }, 'jev-output-admission.lifetime')
+  const spillBudget = createSpillBudgetGuard(ctx)
   const pending = new Map<ToolExecution['token'], { operationId: string; branch: Branch; inputChars: number;
     proposedChars: number; rules: number; jev: number; locator: string }>()
   ctx.on('tools/result', (exec, result) => {
@@ -214,7 +216,8 @@ export function apply(ctx: Context, config: Config): void {
     settingsDescription: 'Recognizes common Vitest/Jest, pytest, and Node TAP text; Jev failure lets the original result continue.' }))
   ctx.effect(() => ctx.settings.configure({ auto: false }, ctx.fiber), 'jev-output-admission.settings')
 
-  ctx.on('tools/post-execute', async (exec, result, next): Promise<PostToolDecision> => {
+  ctx.on('tools/post-execute', async function (exec, result, next): Promise<PostToolDecision> {
+    const receiver = this
     const decision = await next()
     try {
     const agent = exec.agent
@@ -224,6 +227,7 @@ export function apply(ctx: Context, config: Config): void {
     if (!generalOn && !testOn) return decision
     const current = target(exec, result, decision)
     if (current === undefined) return decision
+    if (!spillBudget.allows(exec, receiver, [{ type: 'text', text: current.original }])) return decision
     const settings = configValues(config)
     const task = textOf(agent)
     const intent = commandIntent(exec, result)
@@ -280,7 +284,8 @@ export function apply(ctx: Context, config: Config): void {
           interpret: response => valid(response, candidates.length)
             ? { usable: true } : { usable: false, reason: 'Incomplete or invalid log admission answers' },
           canAdopt: () => !signal.aborted && textOf(agent).version === task.version && liveRoot(ctx, agent)
-            ? true : 'Tool result or task changed while judging',
+            ? spillBudget.allows(exec, receiver) || 'Native Spill policy changed while judging'
+            : 'Tool result or task changed while judging',
         })
         if (timeout.aborted && !exec.signal.aborted && !lifetime.signal.aborted
           && (outcome.kind === 'cancelled' || outcome.kind === 'failed') && outcome.operationId !== undefined) {
@@ -296,7 +301,8 @@ export function apply(ctx: Context, config: Config): void {
         }
       }
     }
-    if (exec.signal.aborted || lifetime.signal.aborted || !liveRoot(ctx, agent) || textOf(agent).version !== task.version) return decision
+    if (exec.signal.aborted || lifetime.signal.aborted || !liveRoot(ctx, agent) || textOf(agent).version !== task.version
+      || !spillBudget.allows(exec, receiver)) return decision
     const replacements = [...rules.map(span => ({ span, marker: marker(span, current.raw,
       span.reason === 'repeated-failure'
         ? `exact duplicate of original lines ${span.originalFirstLine}-${span.originalFirstLine! + span.lastLine - span.firstLine}`
@@ -310,9 +316,10 @@ export function apply(ctx: Context, config: Config): void {
     if (estimated < settings.minSavedChars || estimated / size < settings.minSavedRatio) return decision
     const saved = await trySaveFormattedResult(ctx, exec, 'jev-original-tool-log.txt', current.original)
     if (saved === undefined || exec.signal.aborted || lifetime.signal.aborted || !liveRoot(ctx, agent)
-      || textOf(agent).version !== task.version) return decision
+      || textOf(agent).version !== task.version || !spillBudget.allows(exec, receiver)) return decision
     filtered = withRecovery(filtered, `[Jev original log: ${saved.locator}. ${saved.retrievalHint}]`)
     const delivered = current.compose(filtered)
+    if (!spillBudget.allows(exec, receiver, [{ type: 'text', text: delivered }])) return decision
     if (codePoints(current.compose(current.raw)) - codePoints(delivered) < settings.minSavedChars
       || (codePoints(current.compose(current.raw)) - codePoints(delivered)) / codePoints(current.compose(current.raw)) < settings.minSavedRatio) return decision
     if (operationId === undefined) {
@@ -321,7 +328,7 @@ export function apply(ctx: Context, config: Config): void {
       operationId = observed.id
     }
     if (exec.signal.aborted || lifetime.signal.aborted || !liveRoot(ctx, agent)
-      || textOf(agent).version !== task.version) return decision
+      || textOf(agent).version !== task.version || !spillBudget.allows(exec, receiver)) return decision
     pending.set(exec.token, { operationId, branch, inputChars: codePoints(current.original),
       proposedChars: codePoints(delivered), rules: rules.length, jev: omitted.length, locator: saved.locator })
     return { kind: 'accept', content: [{ type: 'text', text: delivered }],

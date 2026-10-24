@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
+import Loader from '@deepseek-ai/cordis-plugin-loader'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
@@ -12,8 +13,10 @@ import GoalService from '@deepseek-ai/dsh-goal'
 import { createUserMessage, LlmAdapter, ToolCallId, type GenerateOptions, type StreamChunk } from '@deepseek-ai/dsh-llm'
 import { PtcRuntime, type PtcRunRequest, type PtcRunResult, type PtcRunSpec } from '@deepseek-ai/dsh-ptc-runtime'
 import { SessionId } from '@deepseek-ai/dsh-session'
+import { createScope } from '@deepseek-ai/dsh-scope'
 import * as JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import * as SpillPolicy from '@deepseek-ai/dsh-spill-policy'
+import { estimateContent } from '@deepseek-ai/dsh-token-meter/estimate'
 import * as ToolBash from '@deepseek-ai/dsh-tool-bash'
 import Storage from '@deepseek-ai/dsh-storage'
 import { JsonStorageBackend } from '@deepseek-ai/dsh-storage-json'
@@ -23,6 +26,7 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import UserQuestions from '@deepseek-ai/dsh-user-questions'
 import JevService from '../src/index.ts'
 import * as outputAdmission from '../src/output-admission.ts'
+import type { OutputAdmissionConfigValues } from '../src/output-admission-types.ts'
 
 type ModelEntry = StreamChunk[] | ((request: GenerateOptions) => Promise<StreamChunk[]>)
 class Model extends LlmAdapter {
@@ -54,6 +58,10 @@ const requestToolText = (request: GenerateOptions | undefined) => {
 }
 const progress = Array.from({ length: 500 }, (_, index) => `Building ${index + 1}/500\n`).join('')
 const rawLog = `Start fixture build\n${progress}DISTINCT EVIDENCE: package complete\nFinished fixture build\n`
+const tokens = (value: string) => estimateContent([{ type: 'text', text: value }])
+const omitAnswers = (wire: FixtureWire) => Object.fromEntries(Object.keys(wire.questions).map(id => [id, {
+  choice: 'omit', probabilities: { omit: 0.95, keep: 0.03, unknown: 0.02 },
+}]))
 const passingLog = `PASS fixture.test.ts\n${Array.from({ length: 180 }, (_, index) =>
   `✓ src/feature/case-${index}.test.ts > handles scenario ${index} (12ms)\n`).join('')}Tests 180 passed\n`
 const fastest = [17, 42, 143] as const
@@ -146,12 +154,14 @@ class FixturePtcRuntime extends PtcRuntime {
   readonly language = 'typescript'
   readonly isolation = 'test'
   innerValue: unknown
+  log = rawLog
+  result = 'PROGRAM_RESULT_UNCHANGED'
   resolve(request: PtcRunRequest): PtcRunSpec {
     return { ...request, cwd: request.cwd ?? process.cwd(), timeoutMs: request.timeoutMs ?? 120_000 }
   }
   async run(request: PtcRunRequest): Promise<PtcRunResult> {
     this.innerValue = await request.bindings[0]!.functions.bash!({ command: 'fixture build', description: 'Build fixture' })
-    return { logs: [rawLog], value: { result: 'PROGRAM_RESULT_UNCHANGED' } }
+    return { logs: [this.log], value: { result: this.result } }
   }
 }
 
@@ -159,13 +169,16 @@ interface HarnessOptions {
   enabled?: boolean
   ptc?: boolean
   maxInlineTokens?: number
+  spillPolicy?: boolean
+  spillRetrievalHint?: string
+  ptcResult?: string
   answer?: (wire: FixtureWire) => object | Promise<object>
-  beforeAdmission?: (ctx: Context) => void
+  beforeAdmission?: (ctx: Context) => void | Promise<void>
   realBashExit?: number
   log?: string
   script?: ModelEntry[]
   failSpill?: boolean
-  admissionConfig?: { maxRequestChars?: number }
+  admissionConfig?: Partial<OutputAdmissionConfigValues>
 }
 
 async function harness(options: HarnessOptions = {}) {
@@ -176,7 +189,12 @@ async function harness(options: HarnessOptions = {}) {
   const ctx = new Context()
   cleanups.push(async () => { await ctx.fiber.dispose() })
   await mountAgentLoopTestDependencies(ctx, { workingDirectory: true, ...options.ptc ? { tools: { mode: 'ptc' } } : {} })
-  if (options.ptc) await ctx.plugin(FixturePtcRuntime)
+  if (options.ptc) {
+    await ctx.plugin(FixturePtcRuntime)
+    const runtime = ctx.ptcRuntime as FixturePtcRuntime
+    runtime.log = log
+    runtime.result = options.ptcResult ?? 'PROGRAM_RESULT_UNCHANGED'
+  }
   await ctx.plugin(Storage)
   await ctx.plugin(GoalService)
   await ctx.plugin(UserQuestions)
@@ -224,14 +242,15 @@ async function harness(options: HarnessOptions = {}) {
     await mkdir(join(root, 'spill'), { recursive: true })
     await writeFile(locator, input.content)
     savePaths.push(locator)
-    return { locator, bytes: Buffer.byteLength(input.content), retrievalHint: 'Read the fixture spill path.' }
+    return { locator, bytes: Buffer.byteLength(input.content), retrievalHint: options.spillRetrievalHint ?? 'Read the fixture spill path.' }
   } } as never)
   await ctx.plugin(JevService, {
     baseUrl: http.url, model: 'fixture-judge', credentialRef: 'FIXTURE_KEY', timeoutMs: 10_000,
     features: options.enabled ? { 'output-admission': true, 'test-log-admission': true } : {},
   })
-  options.beforeAdmission?.(ctx)
-  await ctx.plugin(SpillPolicy, { maxInlineTokens: options.maxInlineTokens })
+  await options.beforeAdmission?.(ctx)
+  const spillPolicy = options.spillPolicy === false ? undefined
+    : await ctx.plugin(SpillPolicy, { maxInlineTokens: options.maxInlineTokens })
   await ctx.plugin(outputAdmission, options.admissionConfig ?? {})
   if (options.realBashExit !== undefined) await ctx.plugin(ToolBash, { enableRunInBackground: false })
   const model = new Model(options.script ?? [call(options.ptc ? 'run_code' : 'bash', options.ptc
@@ -255,7 +274,7 @@ async function harness(options: HarnessOptions = {}) {
     agent.followup(user('Build the fixture and summarize the result.'))
     await agent.whenIdle()
   }
-  return { ctx, agent, model, run, calls: () => calls, saves, savePaths, spillAttempts: () => spillAttempts,
+  return { ctx, agent, model, run, calls: () => calls, saves, savePaths, spillPolicy, spillAttempts: () => spillAttempts,
     received: http.received, root,
     runtime: options.ptc ? ctx.ptcRuntime as FixturePtcRuntime : undefined }
 }
@@ -369,7 +388,7 @@ describe('output admission through published DSH paths', () => {
   })
 
   it('retains unshown candidate lines when the request budget removes candidates', async () => {
-    const h = await harness({ enabled: true, admissionConfig: { maxRequestChars: 6000 } })
+    const h = await harness({ enabled: true, maxInlineTokens: tokens(rawLog), admissionConfig: { maxRequestChars: 6000 } })
     await h.run()
     expect(h.received).toHaveLength(1)
     const wire = h.received[0]!
@@ -386,7 +405,7 @@ describe('output admission through published DSH paths', () => {
   })
 
   it('sends no Jev request when necessary retained evidence cannot fit the request budget', async () => {
-    const h = await harness({ enabled: true, admissionConfig: { maxRequestChars: 128 } })
+    const h = await harness({ enabled: true, maxInlineTokens: tokens(rawLog), admissionConfig: { maxRequestChars: 128 } })
     await h.run()
     expect(h.received).toHaveLength(0)
     const result = h.agent.session.snapshotEvents().find(event => event.type === 'tool/result')
@@ -394,22 +413,327 @@ describe('output admission through published DSH paths', () => {
     expect(contentText(result.data.message.content)).toBe(rawLog)
   })
 
-  it('lets native spill bound the already-admitted text', async () => {
+  it('passes an over-budget original directly to native spill for one recoverable save', async () => {
     const h = await harness({ enabled: true, maxInlineTokens: 100 })
     await h.run()
-    expect(h.received).toHaveLength(1)
-    expect(h.saves).toHaveLength(2)
+    expect(h.received).toHaveLength(0)
+    expect(h.saves).toHaveLength(1)
     expect(h.saves[0]?.content).toBe(rawLog)
-    expect(h.saves[1]?.content.length).toBeLessThan(rawLog.length)
+    expect(h.saves[0]?.source).toMatchObject({ toolName: 'bash', label: 'result' })
     const result = h.agent.session.snapshotEvents().find(event => event.type === 'tool/result')
     if (result?.type !== 'tool/result') throw new Error('No durable tool result')
-    expect(contentText(result.data.message.content)).toContain(h.savePaths[1]!)
-    expect(requestToolText(h.model.requests[1])).toContain(h.savePaths[1]!)
-    expect(await readFile(h.savePaths[1]!, 'utf8')).toBe(h.saves[1]!.content)
+    const delivered = contentText(result.data.message.content)
+    expect(delivered).toContain(h.savePaths[0]!)
+    expect(delivered).not.toContain('Jev omitted')
+    expect(tokens(delivered)).toBeLessThanOrEqual(100)
+    expect(requestToolText(h.model.requests[1])).toBe(delivered)
+    expect(await readFile(h.savePaths[0]!, 'utf8')).toBe(rawLog)
+    expect((await h.ctx.jev.listRecords({ featureId: 'output-admission', sessionId: h.agent.id })).items).toEqual([])
+  })
+
+  it.each([['below', 1], ['equal', 0]] as const)('admits a long result %s the actual native budget', async (_label, slack) => {
+    const budget = tokens(rawLog) + slack
+    const h = await harness({ enabled: true, maxInlineTokens: budget })
+    await h.run()
+    expect(h.received).toHaveLength(1)
+    expect(h.saves.map(save => save.content)).toEqual([rawLog])
+    const result = h.agent.session.snapshotEvents().find(event => event.type === 'tool/result')
+    if (result?.type !== 'tool/result') throw new Error('No durable tool result')
+    const delivered = contentText(result.data.message.content)
+    expect(delivered).toContain('[Jev original log:')
+    expect(tokens(delivered)).toBeLessThanOrEqual(budget)
+    expect(Array.from(rawLog).length - Array.from(delivered).length).toBeGreaterThanOrEqual(300)
+    expect(delivered.length / rawLog.length).toBeLessThanOrEqual(0.9)
+    expect(requestToolText(h.model.requests[1])).toBe(delivered)
+    expect(await readFile(h.savePaths[0]!, 'utf8')).toBe(rawLog)
+    await h.ctx.sessionPersistence.flush()
+    const reader = await h.ctx.sessionPersistence.open(h.agent.id, 'read')
+    const persisted = await reader.read()
+    await reader.close()
+    expect(persisted.events.filter(event => event.type === 'tool/result')).toEqual([result])
+  })
+
+  it('uses each profile budget for the same original instead of a fixed threshold', async () => {
+    for (const [budget, requests] of [[tokens(rawLog) - 1, 0], [tokens(rawLog), 1]] as const) {
+      const h = await harness({ enabled: true, maxInlineTokens: budget })
+      await h.run()
+      expect(h.received).toHaveLength(requests)
+      expect(h.saves).toHaveLength(1)
+      expect(h.saves[0]?.content).toBe(rawLog)
+    }
+  })
+
+  it('uses native UTF-16 pricing for non-BMP retained evidence', async () => {
+    const log = rawLog.replace('DISTINCT EVIDENCE: package complete', `DISTINCT EVIDENCE: ${'🧭'.repeat(1000)}`)
+    const budget = tokens(Array.from(log).map(char => char.length === 2 ? 'x' : char).join(''))
+    expect(tokens(log)).toBeGreaterThan(budget)
+    const h = await harness({ enabled: true, log, maxInlineTokens: budget })
+    await h.run()
+    expect(h.received).toHaveLength(0)
+    expect(h.saves.map(save => save.content)).toEqual([log])
+    expect(requestToolText(h.model.requests[1])).not.toContain('Jev omitted')
+  })
+
+  it('keeps a small budget-compliant output without invoking Jev or storage', async () => {
+    const log = 'Build complete\n'
+    const h = await harness({ enabled: true, log, maxInlineTokens: tokens(log) })
+    await h.run()
+    expect(h.received).toEqual([])
+    expect(h.saves).toEqual([])
+    expect(requestToolText(h.model.requests[1])).toBe(log)
+  })
+
+  it.each([false, true])('preserves semantic and rule-only admission when spill policy loaded=%s has no budget', async spillPolicy => {
+    const semantic = await harness({ enabled: true, spillPolicy })
+    await semantic.run()
+    expect(semantic.received).toHaveLength(1)
+    expect(requestToolText(semantic.model.requests[1])).toContain('[Jev original log:')
+    const log = `Test Files 1 passed\n${'progress 10%\n'.repeat(400)}Tests 1 passed\n`
+    const rules = await harness({ enabled: true, spillPolicy, log })
+    rules.agent.followup(user('Continue.'))
+    await rules.agent.whenIdle()
+    expect(rules.received).toEqual([])
+    expect(rules.saves.map(save => save.content)).toEqual([log])
+    expect(requestToolText(rules.model.requests[1])).toContain('unneeded progress with no known task target')
+    expect((await rules.ctx.jev.listRecords({ featureId: 'test-log-admission', sessionId: rules.agent.id })).items).toHaveLength(1)
+  })
+
+  it.each([
+    ['semantic', passingLog],
+    ['rule-only', `Test Files 1 passed\n${'progress 10%\n'.repeat(400)}Tests 1 passed\n`],
+  ])('admits %s test logs equal to the native budget', async (branch, log) => {
+    const h = await harness({ enabled: true, log, maxInlineTokens: tokens(log) })
+    if (branch === 'rule-only') {
+      h.agent.followup(user('Continue.'))
+      await h.agent.whenIdle()
+    } else await h.run()
+    expect(h.received).toHaveLength(branch === 'rule-only' ? 0 : 1)
+    expect(h.saves.map(save => save.content)).toEqual([log])
+    const delivered = requestToolText(h.model.requests[1])
+    expect(delivered).toContain('[Jev original log:')
+    expect(tokens(delivered)).toBeLessThanOrEqual(tokens(log))
+  })
+
+  it.each([
+    ['general', rawLog], ['passing tests', passingLog],
+    ['rule-only tests', `Test Files 1 passed\n${'progress 10%\n'.repeat(400)}Tests 1 passed\n`],
+  ])('skips judgment and every Jev rule for over-budget %s', async (branch, log) => {
+    const h = await harness({ enabled: true, log, maxInlineTokens: 100 })
+    if (branch === 'rule-only tests') {
+      h.agent.followup(user('Continue.'))
+      await h.agent.whenIdle()
+    } else await h.run()
+    expect(h.received).toEqual([])
+    expect(h.saves.map(save => save.content)).toEqual([log])
+    expect(requestToolText(h.model.requests[1])).not.toContain('Jev omitted')
+    for (const featureId of ['output-admission', 'test-log-admission']) {
+      expect((await h.ctx.jev.listRecords({ featureId, sessionId: h.agent.id })).items).toEqual([])
+    }
+  })
+
+  it('treats zero as a finite native budget and preserves native notice-failure behavior', async () => {
+    const h = await harness({ enabled: true, maxInlineTokens: 0 })
+    await h.run()
+    expect(h.received).toEqual([])
+    expect(h.saves.map(save => save.content)).toEqual([rawLog])
+    expect(requestToolText(h.model.requests[1])).toBe(rawLog)
+  })
+
+  it('prices the run_code outer result together with its explicit logs before judging', async () => {
+    const h = await harness({ enabled: true, ptc: true, maxInlineTokens: tokens(rawLog),
+      ptcResult: 'PROGRAM_RESULT_UNCHANGED' + 'x'.repeat(2000) })
+    await h.run()
+    expect(h.received).toEqual([])
+    const saved = h.saves.find(save => save.source.toolName === 'run_code')
+    expect(saved?.content).toContain(rawLog)
+    expect(saved?.content).toContain('PROGRAM_RESULT_UNCHANGED')
+    expect(saved?.content).not.toContain('Jev omitted')
+    expect(tokens(saved!.content)).toBeGreaterThan(tokens(rawLog))
+    expect(h.runtime?.innerValue).toMatchObject({ stdout: { text: rawLog } })
+  })
+
+  it.each([false, true])('includes the actual recovery hint and outer result in final native pricing (ptc=%s)', async ptc => {
+    const spillRetrievalHint = '🧭'.repeat(5000)
+    const original = await harness({ enabled: true, ptc, spillRetrievalHint })
+    await original.run()
+    const proposed = requestToolText(original.model.requests[1])
+    expect(proposed).toContain('[Jev original log:')
+    expect(proposed).toContain(spillRetrievalHint)
+    expect(Array.from(original.saves[0]!.content).length - Array.from(proposed).length).toBeGreaterThanOrEqual(300)
+    const budget = tokens(original.saves[0]!.content)
+    expect(tokens(proposed)).toBeGreaterThan(budget)
+    const bounded = await harness({ enabled: true, ptc, spillRetrievalHint, maxInlineTokens: budget })
+    await bounded.run()
+    expect(bounded.received).toHaveLength(1)
+    expect(bounded.saves).toHaveLength(1)
+    const delivered = requestToolText(bounded.model.requests[1])
+    expect(delivered).toBe(bounded.saves[0]!.content)
+    expect(delivered).not.toContain('[Jev original log:')
+    expect(tokens(delivered)).toBeLessThanOrEqual(budget)
+    const result = bounded.agent.session.snapshotEvents().find(event => event.type === 'tool/result')
+    if (result?.type !== 'tool/result') throw new Error('No durable tool result')
+    expect(contentText(result.data.message.content)).toBe(delivered)
+    expect(await readFile(bounded.savePaths[0]!, 'utf8')).toBe(delivered)
+  })
+
+  it('rejects a final run_code replacement whose log and recovery hint fit but outer suffix exceeds the budget', async () => {
+    const ptcResult = 'PROGRAM_RESULT_UNCHANGED' + 'x'.repeat(2000)
+    const probe = await harness({ enabled: true, ptc: true, ptcResult })
+    await probe.run()
+    const original = probe.saves[0]!.content
+    const base = requestToolText(probe.model.requests[1])
+    const hintLength = Math.ceil((original.length - base.length + 'Read the fixture spill path.'.length + 8) / 2)
+    const spillRetrievalHint = '🧭'.repeat(hintLength)
+    const unbounded = await harness({ enabled: true, ptc: true, ptcResult, spillRetrievalHint })
+    await unbounded.run()
+    const proposed = requestToolText(unbounded.model.requests[1])
+    const suffix = unbounded.received[0]!.state.outerResultSuffix!.text
+    const budget = tokens(original)
+    expect(proposed.endsWith(suffix)).toBe(true)
+    expect(tokens(proposed.slice(0, -suffix.length))).toBeLessThanOrEqual(budget)
+    expect(tokens(proposed)).toBeGreaterThan(budget)
+    expect(Array.from(original).length - Array.from(proposed).length).toBeGreaterThanOrEqual(300)
+    const bounded = await harness({ enabled: true, ptc: true, ptcResult, spillRetrievalHint, maxInlineTokens: budget })
+    await bounded.run()
+    expect(bounded.received).toHaveLength(1)
+    expect(bounded.saves).toHaveLength(1)
+    expect(requestToolText(bounded.model.requests[1])).toBe(original)
+  })
+
+  it('keeps the original when the actual recovery hint defeats the existing net-saving threshold', async () => {
+    const h = await harness({ enabled: true, maxInlineTokens: tokens(rawLog) + 1000,
+      spillRetrievalHint: 'x'.repeat(rawLog.length) })
+    await h.run()
+    expect(h.received).toHaveLength(1)
+    expect(h.saves.map(save => save.content)).toEqual([rawLog])
+    expect(requestToolText(h.model.requests[1])).toBe(rawLog)
+  })
+
+  it('ignores a finite spill policy in a different event scope', async () => {
+    const h = await harness({ enabled: true, spillPolicy: false, beforeAdmission: async ctx => {
+      const other = createScope(ctx, {})
+      await other.ctx.plugin(SpillPolicy, { maxInlineTokens: 0 })
+    } })
+    await h.run()
+    expect(h.received).toHaveLength(1)
+    expect(h.saves.map(save => save.content)).toEqual([rawLog])
+    expect(requestToolText(h.model.requests[1])).toContain('[Jev original log:')
+  })
+
+  it('keeps the original when multiple finite spill policies are visible', async () => {
+    const h = await harness({ enabled: true, maxInlineTokens: tokens(rawLog), beforeAdmission: async ctx => {
+      await ctx.plugin(SpillPolicy, { maxInlineTokens: tokens(rawLog) + 100 })
+    } })
+    await h.run()
+    expect(h.received).toEqual([])
+    expect(h.saves).toEqual([])
+    expect(requestToolText(h.model.requests[1])).toBe(rawLog)
+  })
+
+  it('invalidates an in-flight judgment across a normal budget reload and uses the new stable budget next time', async () => {
+    const started = Promise.withResolvers<void>()
+    const release = Promise.withResolvers<void>()
+    cleanups.push(async () => { release.resolve() })
+    const h = await harness({ enabled: true, maxInlineTokens: tokens(rawLog),
+      script: [call('bash', { command: 'fixture build', description: 'Build fixture' }), text('First complete'),
+        call('bash', { command: 'fixture build', description: 'Build fixture' }), text('Second complete')],
+      answer: async wire => { started.resolve(); await release.promise; return omitAnswers(wire) } })
+    const running = h.run()
+    await started.promise
+    h.spillPolicy!.update({ maxInlineTokens: tokens(rawLog) - 1 })
+    await h.spillPolicy!.await()
+    release.resolve()
+    await running
+    expect(h.received).toHaveLength(1)
+    expect(h.saves).toEqual([])
+    expect(requestToolText(h.model.requests[1])).toBe(rawLog)
+    await h.run()
+    expect(h.calls()).toBe(2)
+    expect(h.received).toHaveLength(1)
+    expect(h.saves.map(save => save.content)).toEqual([rawLog])
+    expect(requestToolText(h.model.requests[3])).not.toContain('Jev omitted')
+  })
+
+  it.each(['restart', 'temporary-extra-policy', 'unload-policy', 'activate-policy'] as const)(
+    'rejects a late answer after %s even when the final budget or identity can match', async change => {
+      const started = Promise.withResolvers<void>()
+      const release = Promise.withResolvers<void>()
+      cleanups.push(async () => { release.resolve() })
+      const h = await harness({ enabled: true, spillPolicy: change !== 'activate-policy', maxInlineTokens: tokens(rawLog),
+        answer: async wire => { started.resolve(); await release.promise; return omitAnswers(wire) } })
+      const running = h.run()
+      await started.promise
+      if (change === 'restart') {
+        const identity = h.spillPolicy
+        await h.spillPolicy!.restart()
+        expect(h.spillPolicy).toBe(identity)
+        expect(h.spillPolicy!.config.maxInlineTokens).toBe(tokens(rawLog))
+      } else if (change === 'temporary-extra-policy') {
+        const extra = await h.ctx.plugin(SpillPolicy, { maxInlineTokens: tokens(rawLog) })
+        await extra.dispose()
+      } else if (change === 'unload-policy') {
+        await h.spillPolicy!.dispose()
+      } else {
+        await h.ctx.plugin(SpillPolicy, { maxInlineTokens: tokens(rawLog) })
+      }
+      release.resolve()
+      await running
+      expect(h.calls()).toBe(1)
+      expect(h.received).toHaveLength(1)
+      expect(h.saves).toEqual([])
+      expect(requestToolText(h.model.requests[1])).toBe(rawLog)
+    },
+  )
+
+  it('rejects a late answer when Loader refreshes the active spill entry context', async () => {
+    const started = Promise.withResolvers<void>()
+    const release = Promise.withResolvers<void>()
+    cleanups.push(async () => { release.resolve() })
+    let entryId = ''
+    const h = await harness({ enabled: true, spillPolicy: false,
+      beforeAdmission: async ctx => {
+        ctx.baseUrl = new URL('../', import.meta.url).href
+        await ctx.plugin(Loader)
+        entryId = await ctx.loader.create({ id: 'native-spill', name: '@deepseek-ai/dsh-spill-policy',
+          config: { maxInlineTokens: tokens(rawLog) } })
+        await ctx.loader.await()
+      },
+      answer: async wire => { started.resolve(); await release.promise; return omitAnswers(wire) },
+    })
+    const running = h.run()
+    await started.promise
+    const entry = h.ctx.loader.resolve(entryId)
+    const fiber = entry.fiber
+    const config = fiber!.config
+    await entry.update({ config: { maxInlineTokens: tokens(rawLog) } }, false, true)
+    await h.ctx.loader.await()
+    expect(entry.fiber).toBe(fiber)
+    expect(entry.fiber!.config).toBe(config)
+    release.resolve()
+    await running
+    expect(h.received).toHaveLength(1)
+    expect(h.saves).toEqual([])
+    expect(requestToolText(h.model.requests[1])).toBe(rawLog)
+  })
+
+  it('keeps the original when a task revision arrives during a finite-budget judgment', async () => {
+    const started = Promise.withResolvers<void>()
+    const release = Promise.withResolvers<void>()
+    cleanups.push(async () => { release.resolve() })
+    const h = await harness({ enabled: true, maxInlineTokens: tokens(rawLog),
+      answer: async wire => { started.resolve(); await release.promise; return omitAnswers(wire) } })
+    const running = h.run()
+    await started.promise
+    h.agent.session.append('user/message', user('Preserve the build timing details for the revised task.'), { surfaceOp: 'append' })
+    release.resolve()
+    await running
+    expect(h.received).toHaveLength(1)
+    expect(h.saves).toEqual([])
+    expect(requestToolText(h.model.requests[1])).toBe(rawLog)
   })
 
   it('passes the complete result onward when Jev original storage fails', async () => {
-    const h = await harness({ enabled: true, failSpill: true })
+    const h = await harness({ enabled: true, maxInlineTokens: tokens(rawLog), failSpill: true })
     await h.run()
     expect(h.received).toHaveLength(1)
     expect(h.spillAttempts()).toBe(1)
@@ -423,7 +747,7 @@ describe('output admission through published DSH paths', () => {
   it('ends an unanswered Jev decision at the four-second budget and records the cancellation', async () => {
     const release = Promise.withResolvers<object>()
     cleanups.push(async () => { release.resolve({}) })
-    const h = await harness({ enabled: true, answer: () => release.promise })
+    const h = await harness({ enabled: true, maxInlineTokens: tokens(rawLog), answer: () => release.promise })
     const started = performance.now()
     await h.run()
     const elapsed = performance.now() - started
@@ -517,7 +841,7 @@ describe('output admission through published DSH paths', () => {
     const started = Promise.withResolvers<void>()
     const release = Promise.withResolvers<void>()
     cleanups.push(async () => { release.resolve() })
-    const h = await harness({ enabled: true, answer: async wire => {
+    const h = await harness({ enabled: true, maxInlineTokens: tokens(rawLog), answer: async wire => {
       started.resolve()
       await release.promise
       return Object.fromEntries(Object.keys(wire.questions).map(id => [id, {

@@ -171,6 +171,9 @@ importers:
       '@deepseek-ai/dsh-system-prompt':
         specifier: 0.2.1-rc.2
         version: 0.2.1-rc.2(@deepseek-ai/cordis@4.0.5)(@deepseek-ai/dsh-llm@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-scope@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))
+      '@deepseek-ai/dsh-token-meter':
+        specifier: 0.2.1-rc.2
+        version: 0.2.1-rc.2(e7ba863eb387b2222cc78a6a6257d49b)
       '@deepseek-ai/dsh-tool-bash':
         specifier: 0.2.1-rc.2
         version: 0.2.1-rc.2(e0001e2e068e70fadf64f50cc6fb8563)
@@ -421,6 +424,9 @@ importers:
       '@deepseek-ai/dsh-system-prompt':
         specifier: 0.2.1-rc.2
         version: 0.2.1-rc.2(@deepseek-ai/cordis@4.0.5)(@deepseek-ai/dsh-llm@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-scope@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))
+      '@deepseek-ai/dsh-token-meter':
+        specifier: 0.2.1-rc.2
+        version: 0.2.1-rc.2(e7ba863eb387b2222cc78a6a6257d49b)
       '@deepseek-ai/dsh-tool-bash':
         specifier: 0.2.1-rc.2
         version: 0.2.1-rc.2(e0001e2e068e70fadf64f50cc6fb8563)
