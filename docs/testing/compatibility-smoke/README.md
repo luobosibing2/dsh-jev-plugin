@@ -1,8 +1,8 @@
 ## 直接答案
 
-`pnpm run test:compatibility` 从当前源码重新构建正式根安装包，准备精确版本的官方 DSH CLI，再在新的临时 profile 中检查官方安装、九个 Jev Host 组件和真实 Web 客户端。默认版本取根 `package.json` 的 DSH 开发依赖，目前为 `0.2.1-rc.2`。它不要求预先准备 CLI 路径表或安装包，不放宽正式 peer 声明。
+`pnpm run test:compatibility` 从当前源码重新构建正式根安装包，准备精确版本的官方 DSH CLI，再在新的临时 profile 中检查官方安装、九个 Jev Host 组件和真实 Web 客户端。默认版本取根 `package.json` 的 DSH 开发依赖，目前为 `0.2.1-rc.3`。它不要求预先准备 CLI 路径表或安装包，不放宽正式 peer 声明。
 
-`pnpm run test:compatibility` builds and packs the root GitHub-install entry, prepares an exact published DSH CLI, and checks official installation, all nine Jev Host components and the real Web client in a new disposable profile. The default comes from the root DSH development dependency, currently `0.2.1-rc.2`. No pre-existing runtime map or tarball is needed, and the package keeps its declared peer versions.
+`pnpm run test:compatibility` builds and packs the root GitHub-install entry, prepares an exact published DSH CLI, and checks official installation, all nine Jev Host components and the real Web client in a new disposable profile. The default comes from the root DSH development dependency, currently `0.2.1-rc.3`. No pre-existing runtime map or tarball is needed, and the package keeps its declared peer versions.
 
 ## 准备与运行
 

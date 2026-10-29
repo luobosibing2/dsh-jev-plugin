@@ -95,6 +95,12 @@ export function apply(ctx) {
         action.name = tool.name
         if (!Object.hasOwn(tool.parameters.properties, 'run_in_background')) delete action.arguments.run_in_background
       }
+      // The Host registers one shell tool per platform; the script names the POSIX one.
+      if (action.name === 'bash') {
+        const shell = request.tools.find(tool => tool.name === 'bash' || tool.name === 'pwsh')
+        assert(shell, 'Standard preset must expose a native shell tool')
+        action.name = shell.name
+      }
       if (action.name === 'update_goal') {
         const goal = ctx.goals.get(agents.get(id))
         assert(goal, 'Native goal must exist before completion')
@@ -160,7 +166,8 @@ export function apply(ctx) {
     ]
     await runCase('session-a', join(root, 'projects/a'), [...simple('a'),
       { name: 'bash', arguments: { command: 'node build.mjs', description: 'Run the isolated deterministic build log fixture' } },
-      { name: 'bash', arguments: { command: 'node --test --test-reporter=tap checks.test.mjs', description: 'Run the isolated deterministic test log fixture' } },
+      // The test reporter forks a child; a sandboxed Windows shell cannot spawn twice.
+      { name: 'bash', arguments: { command: 'node --test-reporter=tap --experimental-test-isolation=none checks.test.mjs', description: 'Run the isolated deterministic test log fixture' } },
       { name: 'write', arguments: { file_path: join(root, 'approval-outside.txt'), content: 'COMPAT_APPROVAL_OK', sandbox_permissions: 'danger-full-access', justification: 'Write the exact isolated file authorized in the fixture user request' } },
       { name: 'read', arguments: { file_path: 'guide.txt' } },
     ], true)
