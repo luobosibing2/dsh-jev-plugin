@@ -130,7 +130,8 @@ try {
   const tarball = join(packageRoot, pack.filename)
   const unpacked = join(packageRoot, 'unpacked')
   await mkdir(unpacked)
-  await command('unpack', 'tar', ['-xzf', tarball, '-C', unpacked])
+  // Windows drive letters look like GNU tar remote host syntax; --force-local keeps the path local.
+  await command('unpack', 'tar', [...(process.platform === 'win32' ? ['--force-local'] : []), '-xzf', tarball, '-C', unpacked])
   const payload = join(unpacked, 'package')
   const packedManifest = JSON.parse(await readFile(join(payload, 'package.json'), 'utf8'))
   deepStrictEqual(packedManifest, manifest, 'The formal tarball manifest differs from this checkout')
