@@ -175,7 +175,7 @@ for (const version of versions) {
       while (!webUrl && !outcome && Date.now() < deadline) await new Promise(done => setTimeout(done, 50))
       if (!webUrl || !new URL(webUrl).searchParams.get('token')) throw new Error('Host did not print an authenticated loopback Web URL')
       phase = 'browser-check'
-      item.web = await checkCompatibilityBrowser({ url: webUrl, endpoint, model: 'fixture', timeoutMs: 5000, featureCount: 12 })
+      item.web = await checkCompatibilityBrowser({ url: webUrl, endpoint, model: 'fixture', timeoutMs: 5000, featureCount: 12, stageSnapshot: item.fixture.stage.snapshot })
       if (!item.web.ok) throw new Error('Browser ' + item.web.phase + ' failed: ' + item.web.failure.message)
       if (outcome) throw new Error('Host exited during browser verification')
     }

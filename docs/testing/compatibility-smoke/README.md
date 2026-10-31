@@ -1,8 +1,8 @@
 ## 直接答案
 
-`pnpm run test:compatibility` 从当前源码重新构建正式根安装包，准备精确版本的官方 DSH CLI，再在新的临时 profile 中检查官方安装、九个 Jev Host 组件和真实 Web 客户端。默认版本取根 `package.json` 的 DSH 开发依赖，目前为 `0.2.1-rc.3`。它不要求预先准备 CLI 路径表或安装包，不放宽正式 peer 声明。
+`pnpm run test:compatibility` 从当前源码重新构建正式根安装包，准备精确版本的官方 DSH CLI，再在新的临时 profile 中检查官方安装、九个 Jev Host 组件和真实 Web 客户端。默认版本取根 `package.json` 的 DSH 开发依赖，目前为 `0.2.1-rc.5`。它不要求预先准备 CLI 路径表或安装包，不放宽正式 peer 声明。
 
-`pnpm run test:compatibility` builds and packs the root GitHub-install entry, prepares an exact published DSH CLI, and checks official installation, all nine Jev Host components and the real Web client in a new disposable profile. The default comes from the root DSH development dependency, currently `0.2.1-rc.3`. No pre-existing runtime map or tarball is needed, and the package keeps its declared peer versions.
+`pnpm run test:compatibility` builds and packs the root GitHub-install entry, prepares an exact published DSH CLI, and checks official installation, all nine Jev Host components and the real Web client in a new disposable profile. The default comes from the root DSH development dependency, currently `0.2.1-rc.5`. No pre-existing runtime map or tarball is needed, and the package keeps its declared peer versions.
 
 ## 准备与运行
 
@@ -42,9 +42,9 @@ The [installation guide](../../../README.md#install-through-the-web-ui-recommend
 
 The check validates the newly built tarball's manifest, Host and Client runtime, and Cordis patch before invoking the official installer. It reuses the [compatibility matrix](../../../scripts/validation/compatibility-matrix.mjs) and [profile fixture](../../../packages/jev/tests/fixtures/compatibility-profile.mjs), with a local deterministic main model and loopback Jev HTTP replies.
 
-浏览器在 Host 仍运行时打开官方认证地址，通过插件卡进入 Jev 页面，等待设置与功能数据，并检查判断记录页。只启动 Web profile 或只看到 Host 激活不足以得到客户端通过结果。浏览器导入、页面错误、安装拒绝、Host 失败和超时均使命令以非零状态退出。结束或失败时关闭本轮浏览器、Host 和回环服务。
+浏览器在 Host 仍运行时打开官方认证地址，通过插件卡进入 Jev 页面，等待设置与功能数据，并检查判断记录页。随后打开夹具的真实 Session，进入 Jev 阶段导航，读取已分类步骤，再返回对话。只启动 Web profile 或只看到 Host 激活不足以得到客户端通过结果。浏览器导入、页面错误、安装拒绝、Host 失败和超时均使命令以非零状态退出。结束或失败时关闭本轮浏览器、Host 和回环服务。
 
-While the Host is running, the browser opens its authenticated Web address, enters the Jev page through the plugin card, waits for settings and feature data, and checks decision records. Web profile startup and Host activation alone do not establish Client success. Import or page errors, installer rejection, Host failure and timeouts produce a nonzero exit. The run closes its browser, Host and loopback server on success or failure.
+While the Host is running, the browser opens its authenticated Web address, enters the Jev page through the plugin card, waits for settings and feature data, and checks decision records. It then opens the fixture Session, reads classified steps in Jev stage navigation, and returns to Chat. Web profile startup and Host activation alone do not establish Client success. Import or page errors, installer rejection, Host failure and timeouts produce a nonzero exit. The run closes its browser, Host and loopback server on success or failure.
 
 ## 更新支持版本
 

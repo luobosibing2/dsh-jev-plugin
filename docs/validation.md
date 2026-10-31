@@ -10,9 +10,13 @@ Existing live completion-check results use the earlier recorded-evidence semanti
 
 已有完成核查实测使用此前的已有证据核查语义；轻量报告核查尚无真实任务效果证据。
 
+The [2026-10-30 Harness compatibility report](testing/2026-10-30-harness-compatibility/README.md) covers the DSH 0.2.1-rc.5 upgrade with deterministic official-package, Host and Web integration checks and zero live model calls.
+
 The [2026-10-29 Harness compatibility report](testing/2026-10-29-harness-compatibility/README.md) covers the DSH 0.2.1-rc.3 upgrade on Windows with deterministic official-package, Host and Web integration checks and zero live model calls.
 
 The [2026-10-21 Harness compatibility report](testing/2026-10-21-harness-compatibility/README.md) covers the earlier DSH 0.2.1-rc.2 upgrade with deterministic official-package, Host and Web integration checks and zero live model calls.
+
+[2026-10-30 Harness 兼容报告](testing/2026-10-30-harness-compatibility/README.md)记录 DSH 0.2.1-rc.5 升级，检查正式包、Host 与 Web 的确定性接入，真实模型调用为 0。
 
 [2026-10-29 Harness 兼容报告](testing/2026-10-29-harness-compatibility/README.md)记录 Windows 上 DSH 0.2.1-rc.3 升级，检查正式包、Host 与 Web 的确定性接入，真实模型调用为 0。
 

@@ -19,7 +19,7 @@ afterEach(async () => {
   }
 })
 
-async function fixture(version = '0.2.1-rc.3') {
+async function fixture(version = '0.2.1-rc.5') {
   await mkdir(artifacts, { recursive: true })
   const root = await mkdtemp(join(artifacts, 'checkout-'))
   roots.push(root)
@@ -57,7 +57,7 @@ it('rejects an unexpected protocol version before preparing the reference', asyn
   const { root, reference } = await fixture('0.2.1-alpha.3')
   const result = await execute(process.execPath, [script], { cwd: root, timeout: 10_000 }).catch(error => error)
   expect(result.code).toBe(1)
-  expect(result.stderr).toContain('Expected @deepseek-ai/dsh-typert-protocol@0.2.1-rc.3, found 0.2.1-alpha.3')
+  expect(result.stderr).toContain('Expected @deepseek-ai/dsh-typert-protocol@0.2.1-rc.5, found 0.2.1-alpha.3')
   await expect(lstat(join(reference, 'src'))).rejects.toMatchObject({ code: 'ENOENT' })
   await expect(lstat(join(reference, 'node_modules'))).rejects.toMatchObject({ code: 'ENOENT' })
 })

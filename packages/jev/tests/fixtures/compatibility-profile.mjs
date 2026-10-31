@@ -7,7 +7,7 @@ import LlmRuntime, { LlmAdapter, createUserMessage } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
 
 export const name = 'jev-compatibility-profile'
-export const inject = ['loader', 'jev', 'llm', 'agentLoop', 'agents', 'sessions', 'agentPresets', 'goals']
+export const inject = ['loader', 'jev', 'llm', 'agentLoop', 'agents', 'sessions', 'agentPresets', 'goals', 'workspaceRegistry']
 const user = text => createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text }] })
 
 async function until(read, accept, description) {
@@ -205,6 +205,8 @@ export function apply(ctx) {
       await ctx.loader.await()
     }
     const selected = results.cases[0]
+    const workspace = await ctx.workspaceRegistry.create(selected.initialCwd, 'Jev compatibility fixture')
+    await workspace.attachSession(selected.sessionId)
     const batch = await ctx.jev.startStageAnalysis({ sessionId: selected.sessionId, scope: { kind: 'all' }, mode: 'missing' })
     const stage = await until(() => ctx.jev.getStageNavigation(selected.sessionId, new AbortController().signal), value => !value.batch || !['running', 'pending'].includes(value.batch.status), 'stage classification completion')
     results.stage = { batch, snapshot: stage }
