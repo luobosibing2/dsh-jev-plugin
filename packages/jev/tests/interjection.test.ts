@@ -10,10 +10,11 @@ import AgentRegistry, { type Agent } from '@deepseek-ai/dsh-agent'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import LlmRuntime, { LlmAdapter, createUserMessage, ToolCallId, type GenerateOptions, type StreamChunk } from '@deepseek-ai/dsh-llm'
 import SessionStore, { SessionId, type SessionHeader, type SessionEvent } from '@deepseek-ai/dsh-session'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import * as JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
+import * as NativeExecutor from '@deepseek-ai/dsh-tool-executor-native'
 import GoalService from '@deepseek-ai/dsh-goal'
 import * as goalDriver from '@deepseek-ai/dsh-goal-round-driver'
 import * as goalTools from '@deepseek-ai/dsh-tool-goal'
@@ -43,7 +44,7 @@ const text = (value: string): StreamChunk[] => [
 ]
 const call = (id: string, name = 'probe', args: object = {}): StreamChunk[] => [
   { type: 'block-start', index: 0, blockType: 'tool-call' },
-  { type: 'block-end', index: 0, block: { type: 'tool-call', id: ToolCallId(id), name, arguments: args } },
+  { type: 'block-end', index: 0, block: { type: 'tool-call', id: ToolCallId(id), name, arguments: JSON.stringify(args) } },
   { type: 'finish', reason: { kind: 'tool-calls' } },
 ]
 const answer = (value: string) => ({ answers: { route: { choice: value } } })
@@ -51,7 +52,7 @@ type Reply = object | (() => Promise<object>)
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => { vi.restoreAllMocks(); for (const cleanup of cleanups.splice(0).reverse()) await cleanup() })
 
-async function harness(script: Entry[], replies: Reply[], features: Record<string, boolean> = {}, counts = {}, resume?: { root: string; id: ReturnType<typeof SessionId>; seed?: { header: SessionHeader; events: readonly SessionEvent[] } }) {
+async function harness(script: Entry[], replies: Reply[], features: Record<string, boolean> = {}, counts = {}, resume?: { root: string; id: ReturnType<typeof SessionId>; seed?: { header: SessionHeader; events: readonly SessionEvent[] } }, control: 'recording' | 'missing' = 'recording') {
   const root = resume?.root ?? await mkdtemp(join(tmpdir(), 'jev-routing-'))
   if (resume === undefined) cleanups.push(() => rm(root, { recursive: true, force: true }))
   // The fixture captures multiple wire questions and heterogeneous evidence fields for assertions.
@@ -79,6 +80,7 @@ async function harness(script: Entry[], replies: Reply[], features: Record<strin
   await ctx.plugin(SessionProjectionRegistry)
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(ToolRuntime)
+  await ctx.plugin(NativeExecutor)
   await ctx.plugin(AgentRegistry)
   await ctx.plugin(UserQuestionService)
   await ctx.plugin(GoalService)
@@ -105,6 +107,12 @@ async function harness(script: Entry[], replies: Reply[], features: Record<strin
     await commonEntry.update({ config })
     await commonEntry.fiber!.await()
   }
+  // Released Hosts have no response control; this spy covers routing policy, not native interruption.
+  const interruptRequests = vi.fn(() => false)
+  ctx.on('agent/created', ({ agent }) => {
+    if (control === 'recording' && !('interruptResponse' in agent)) Object.defineProperty(agent, 'interruptResponse', { value: interruptRequests, configurable: true })
+    return undefined
+  }, { prepend: true })
   await ctx.plugin(interjection, counts)
   await ctx.plugin(JsonlSessionPersistence, { root: join(root, 'sessions') })
   await ctx.plugin(AgentLoop, { agents: [] })
@@ -113,15 +121,15 @@ async function harness(script: Entry[], replies: Reply[], features: Record<strin
   ctx.tools.register(defineTool({ name: 'probe', description: 'Record a deterministic investigation', parameters: {},
     output: { schema: { type: 'string' }, render: (_args, result) => [{ type: 'text', text: result }] }, execute: async () => 'No source change; investigation result' }))
   if (resume?.seed !== undefined) { const writer = await ctx.sessionPersistence.create(resume.seed.header); await writer.append(resume.seed.events); await writer.close() }
-  const agent = resume === undefined
-    ? await ctx.agentLoop.create(SessionId('routing-fixture'), { provider: 'fixture', model: 'fixture' })
-    : (await ctx.agentLoop.resume(ctx, { resumeSessionId: resume.id, agentOptions: { provider: 'fixture', model: 'fixture' } })).agent
   let disposed = false
   const dispose = async () => { if (disposed) return; disposed = true; await ctx.fiber.dispose(); unregister(); await facility.closeAll(); await backend.close() }
   cleanups.push(dispose)
+  const agent = resume === undefined
+    ? await ctx.agentLoop.create(SessionId('routing-fixture'), { provider: 'fixture', model: 'fixture' })
+    : (await ctx.agentLoop.resume(ctx, { resumeSessionId: resume.id, agentOptions: { provider: 'fixture', model: 'fixture' } })).agent
   const send = (value: string) => agent.followup(createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: value }] }))
   const records = () => ctx.jev.listRecords({ sessionId: agent.id, limit: 100 })
-  return { ctx, agent, model, requests, send, records, errors, dispose, features: common.config.features, common, setFeatures, root }
+  return { ctx, agent, model, requests, send, records, errors, dispose, features: common.config.features, common, setFeatures, root, interruptRequests }
 }
 const visible = (agent: Agent) => agent.session.deriveMessages().flatMap(message => message.content).filter(block => block.type === 'text').map(block => block.text).join('\n')
 
@@ -145,7 +153,45 @@ async function running(replies: Reply[], enabled = true, more: Entry[] = []) {
   return { ...h, release }
 }
 
-describe('interjection business routing through published AgentLoop and HTTP Jev', () => {
+describe('interjection routing through published inbox hooks and a response-control fixture', () => {
+  it('keeps the disabled feature loadable without native response interruption', async () => {
+    const h = await harness([text('ordinary answer')], [], {}, {}, undefined, 'missing')
+    h.send('Ordinary task'); await h.agent.whenIdle()
+    expect(h.requests).toHaveLength(0)
+    expect(h.errors).toEqual([])
+  })
+
+  it('rejects enabled routing explicitly when the Host lacks response interruption', async () => {
+    await expect(harness([text('must not run')], [], { 'interjection-routing': true }, {}, undefined, 'missing'))
+      .rejects.toThrow('interruptResponse')
+  })
+
+  it('requests interruption as soon as classification finishes while a response still has no output', async () => {
+    const h = await running([answer('interrupt-steer')])
+    // The native no-output cancellation path is exercised separately by the source-profile integration runner.
+    const interrupt = vi.fn(() => true)
+    Object.defineProperty(h.agent, 'interruptResponse', { value: interrupt, configurable: true })
+    const message = input('The repository is wrong; inspect Jev now')
+    h.agent.followup(message)
+    await vi.waitFor(() => expect(interrupt).toHaveBeenCalledTimes(1))
+    expect(h.model.requests).toHaveLength(1)
+    expect(committed(h.agent, message.id)).toHaveLength(0)
+    expect(h.requests).toHaveLength(1)
+    expect(h.requests[0].state.activity).toBe('model-response')
+    expect(h.requests[0].state.taskMessages.map((item: { text: string }) => item.text)).toEqual(['Original task'])
+    expect(Object.keys(h.requests[0].questions.route.criteria)).toEqual(['follow-up', 'steer', 'interrupt-steer', 'unknown'])
+    await vi.waitFor(async () => {
+      const list = await h.records()
+      const record = await h.ctx.jev.getRecord(list.items[0]!.id)
+      expect(record?.receipts.some(receipt => receipt.id === 'interrupt-requested')).toBe(true)
+      expect(record?.receipts.some(receipt => receipt.id === 'delivered')).toBe(false)
+    })
+    h.release.resolve(); await h.agent.whenIdle()
+    expect(committed(h.agent, message.id)).toHaveLength(1)
+    expect(deliveryTurn(h.agent, message.id)).toBe(1)
+    expect(h.requests).toHaveLength(1)
+  })
+
   it('keeps default-off and idle input on the original Host path', async () => {
     const h = await harness([text('idle answer')], [], {})
     expect((await h.ctx.jev.listFeatures()).find(feature => feature.id === 'interjection-routing')?.enabled).toBe(false)
@@ -159,7 +205,7 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
   })
 
   it('moves an original queue correction into the active turn and an original steer addition into a later turn', async () => {
-    const h = await running([answer('correction'), answer('queue')])
+    const h = await running([answer('steer'), answer('follow-up')])
     const correction = input('Wrong direction, inspect X first')
     const later = input('After finishing, add an example')
     h.agent.followup(correction); h.agent.steer(later)
@@ -170,6 +216,7 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
     expect(committed(h.agent, correction.id)).toHaveLength(1)
     expect(committed(h.agent, later.id)).toHaveLength(1)
     expect(h.requests).toHaveLength(2)
+    expect(h.interruptRequests).not.toHaveBeenCalled()
   })
 
   it('waits before the dependent model step while the already-started tool finishes', async () => {
@@ -180,19 +227,19 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
     await vi.waitFor(() => expect(h.agent.session.snapshotEvents().some(event => event.type === 'tool/result')).toBe(true))
     expect(h.model.requests).toHaveLength(1)
     expect(committed(h.agent, message.id)).toHaveLength(0)
-    deferred.resolve(answer('correction'))
+    deferred.resolve(answer('interrupt-steer'))
     await h.agent.whenIdle()
     expect(deliveryTurn(h.agent, message.id)).toBe(1)
   })
 
   it('retains editable pending identities and classifies the edited content instead of the old response', async () => {
     const deferred = Promise.withResolvers<object>()
-    const h = await running([() => deferred.promise, answer('correction')])
+    const h = await running([() => deferred.promise, answer('steer')])
     const message = input('Add an example later')
     h.agent.steer(message); h.release.resolve()
     await vi.waitFor(() => expect(h.requests).toHaveLength(1))
     expect(h.agent.inbox.replace(message.id, { ...message, content: [{ type: 'text', text: 'Actually correct the current direction' }] })).toBe(true)
-    deferred.resolve(answer('queue'))
+    deferred.resolve(answer('follow-up'))
     await h.agent.whenIdle()
     expect(h.errors).toEqual([])
     expect(committed(h.agent, message.id)).toHaveLength(1)
@@ -210,10 +257,11 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
     expect(h.agent.inbox.remove(message.id)).toBe(true)
     h.agent.cancel({ kind: 'user' })
     h.release.resolve(); await h.agent.whenIdle()
-    deferred.resolve(answer('correction'))
+    deferred.resolve(answer('steer'))
     await new Promise(resolve => setTimeout(resolve, 10))
     expect(committed(h.agent, message.id)).toHaveLength(0)
     expect(h.model.requests).toHaveLength(1)
+    expect(h.interruptRequests).not.toHaveBeenCalled()
   })
 
   it('preserves arrival order per destination despite out-of-order answers and equal text', async () => {
@@ -224,7 +272,7 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
     const a = input('Same text'), b = input('Later work'), c = input('Same text')
     h.agent.followup(a); h.agent.steer(b); h.agent.followup(c)
     await vi.waitFor(() => expect(h.requests).toHaveLength(3))
-    third.resolve(answer('correction')); second.resolve(answer('queue')); first.resolve(answer('correction'))
+    third.resolve(answer('interrupt-steer')); second.resolve(answer('follow-up')); first.resolve(answer('steer'))
     h.release.resolve(); await h.agent.whenIdle()
     const delivered = h.agent.session.deriveMessages().filter(message => [a.id, b.id, c.id].includes(message.id)).map(message => message.id)
     expect(delivered).toEqual([a.id, c.id, b.id])
@@ -234,7 +282,7 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
   })
 
   it('cancels only the failed message after a real human-resolution response', async () => {
-    const h = await running([{ answers: {} }, answer('queue')])
+    const h = await running([{ answers: {} }, answer('follow-up')])
     h.ctx.on('user-questions/request', async () => ({ answers: [{ id: 'jev-resolution', selected: ['取消 / Cancel'] }] }))
     const bad = input('Unclassifiable input'), good = input('Later request')
     h.agent.steer(bad); h.agent.followup(good)
@@ -245,7 +293,7 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
   })
 
   it('records synchronous enablement intervals before subsequent running user input', async () => {
-    const h = await running([answer('correction')], false)
+    const h = await running([answer('steer')], false)
     await h.setFeatures({ 'interjection-routing': true })
     const message = input('Correction after hot update')
     h.agent.followup(message); h.release.resolve(); await h.agent.whenIdle()
@@ -268,7 +316,7 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
     expect(prefix.at(-1)?.type).toBe('agent/inbox/spliced')
     const root = await mkdtemp(join(tmpdir(), 'jev-routing-prefix-'))
     cleanups.push(() => rm(root, { recursive: true, force: true }))
-    h.agent.cancel({ kind: 'user' }); h.release.resolve(); deferred.resolve(answer('correction')); await h.agent.whenIdle()
+    h.agent.cancel({ kind: 'user' }); h.release.resolve(); deferred.resolve(answer('steer')); await h.agent.whenIdle()
     const restored = await harness([text('new task')], [], { 'interjection-routing': true }, {}, { root, id: h.agent.id, seed: { header: h.agent.session.header, events: prefix } })
     expect(restored.requests).toHaveLength(0)
     expect(restored.model.requests).toHaveLength(0)
@@ -359,7 +407,7 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
     own[Context.filter] = owner => owner.fiber === h.common
     updateVolatile(h.features, createVolatile({ 'interjection-routing': false }))
     h.common.ctx.emit(own, 'loader/volatile-update', [['features']])
-    deferred.resolve(answer('correction')); h.release.resolve(); await h.agent.whenIdle()
+    deferred.resolve(answer('steer')); h.release.resolve(); await h.agent.whenIdle()
     expect(deliveryTurn(h.agent, message.id)).toBe(1)
   })
 
@@ -374,7 +422,7 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
       h.ctx.agents.withInitiator(h.agent, () => h.ctx.goals.pause(h.agent, { id: goal.id, revision: goal.revision }))
       return text('corrected goal work')
     }], [() => deferred.promise], { 'interjection-routing': true })
-    cleanups.push(async () => { release.resolve(); deferred.resolve(answer('correction')) })
+    cleanups.push(async () => { release.resolve(); deferred.resolve(answer('steer')) })
     h.ctx.goals.create(h.agent, { objective: 'Goal work', maxGoalRounds: 5 })
     await started.promise
     const message = input('Correct this direction before doing anything else')
@@ -382,7 +430,7 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
     await vi.waitFor(() => expect(h.requests).toHaveLength(1))
     expect(h.ctx.goals.get(h.agent)?.roundsStarted).toBe(1)
     expect(h.model.requests).toHaveLength(1)
-    deferred.resolve(answer('correction')); await h.agent.whenIdle()
+    deferred.resolve(answer('steer')); await h.agent.whenIdle()
     expect(h.errors).toEqual([])
     expect(deliveryTurn(h.agent, message.id)).toBe(1)
     expect(h.ctx.goals.get(h.agent)?.roundsStarted).toBe(1)
@@ -391,7 +439,7 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
   })
 
   it('gives a classified correction to downstream guards and preserves their rejection', async () => {
-    const h = await running([answer('correction')])
+    const h = await running([answer('steer')])
     const message = input('Do not modify files yet')
     let observed = false
     h.ctx.on('agent/pre-step', async ({ messages }, next) => {
@@ -406,7 +454,7 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
   })
 
   it('reclassifies an edit made while a downstream pre-step guard is awaiting', async () => {
-    const h = await running([answer('correction'), answer('queue')])
+    const h = await running([answer('steer'), answer('follow-up')])
     const message = input('Correct the work')
     const entered = Promise.withResolvers<void>(), release = Promise.withResolvers<void>()
     let once = true
@@ -425,14 +473,14 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
 
 
   it('preserves the protected system head when input arrives before the first model request', async () => {
-    const h = await harness([text('combined answer')], [answer('correction')], { 'interjection-routing': true })
+    const h = await harness([text('combined answer')], [answer('steer')], { 'interjection-routing': true })
     h.send('Original not yet committed task')
     const message = input('Correct the initial direction')
     h.agent.followup(message)
     await h.agent.whenIdle()
     expect(h.errors).toEqual([])
     expect(deliveryTurn(h.agent, message.id)).toBe(1)
-    expect(JSON.stringify(h.requests[0].state.context)).toContain('Original not yet committed task')
+    expect(JSON.stringify(h.requests[0].state.taskMessages)).toContain('Original not yet committed task')
     await h.ctx.sessionPersistence.flush()
     const reader = await h.ctx.sessionPersistence.open(h.agent.id, 'read')
     const persisted = await reader.read()
@@ -450,7 +498,7 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
     await vi.waitFor(() => expect(h.requests).toHaveLength(1))
     expect(h.agent.inbox.remove(message.id)).toBe(true)
     h.agent.steer(message)
-    deferred.resolve(answer('queue')); h.release.resolve(); await h.agent.whenIdle()
+    deferred.resolve(answer('follow-up')); h.release.resolve(); await h.agent.whenIdle()
     expect(h.errors).toEqual([])
     expect(committed(h.agent, message.id)).toHaveLength(1)
     expect(deliveryTurn(h.agent, message.id)).toBe(2)
@@ -472,7 +520,7 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
     expect(committed(h.agent, message.id)).toHaveLength(0)
     expect(h.agent.inbox.nextTurn.some(item => item.id === unrelated.id)).toBe(true)
     expect(h.model.requests).toHaveLength(1)
-    deferred.resolve(answer('correction'))
+    deferred.resolve(answer('steer'))
   })
 
 
@@ -490,7 +538,7 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
     h.agent.followup(message); release.resolve()
     await vi.waitFor(() => expect(h.requests).toHaveLength(1))
     expect(h.model.requests).toHaveLength(1)
-    deferred.resolve(answer('correction')); await h.agent.whenIdle()
+    deferred.resolve(answer('steer')); await h.agent.whenIdle()
     expect(h.errors).toEqual([])
     expect(committed(h.agent, message.id)).toHaveLength(1)
     expect(h.model.requests).toHaveLength(2)
@@ -498,7 +546,7 @@ describe('interjection business routing through published AgentLoop and HTTP Jev
 
 
   it('cancels classification when Host stop arrives before the first pre-step hook', async () => {
-    const h = await harness([text('must not run')], [answer('correction')], { 'interjection-routing': true })
+    const h = await harness([text('must not run')], [answer('steer')], { 'interjection-routing': true })
     h.send('Initial task')
     const message = input('Immediate correction')
     h.agent.followup(message)

@@ -9,7 +9,8 @@ import { afterEach, expect, it } from 'vitest'
 const execute = promisify(execFile)
 const project = fileURLToPath(new URL('../..', import.meta.url))
 const smoke = join(project, 'scripts/validation/compatibility-smoke.mjs')
-const manifest = JSON.parse(await readFile(join(project, 'package.json'), 'utf8'))
+// These command-shim cases exercise the formal release matrix independently of the development Host.
+const version = '0.2.1-alpha.2'
 const temporaryRoots = []
 
 afterEach(async () => {
@@ -35,7 +36,7 @@ if (command === 'npm' && process.env.SMOKE_STUB_PHASE === 'build') {
   const cliRoot = join(process.cwd(), 'node_modules/@deepseek-ai/dsh')
   mkdirSync(cliRoot, { recursive: true })
   writeFileSync(join(cliRoot, 'package.json'), JSON.stringify({
-    name: '@deepseek-ai/dsh', version: ${JSON.stringify(manifest.devDependencies['@deepseek-ai/dsh'])}, bin: { dsh: 'cli.mjs' },
+    name: '@deepseek-ai/dsh', version: ${JSON.stringify(version)}, bin: { dsh: 'cli.mjs' },
   }))
 } else process.exitCode = 42
 `)
@@ -49,9 +50,8 @@ if (command === 'npm' && process.env.SMOKE_STUB_PHASE === 'build') {
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => key.toLowerCase() !== 'path'))
   env.PATH = bin + delimiter + (Object.entries(process.env).find(([key]) => key.toLowerCase() === 'path')?.[1] ?? '')
   env.SMOKE_STUB_PHASE = phase
-  let args = [smoke, '--artifacts', artifacts]
+  let args = [smoke, '--version', version, '--artifacts', artifacts]
   if (phase === 'payload-pack') {
-    const version = manifest.devDependencies['@deepseek-ai/dsh']
     const runtimeMap = join(root, 'runtime-map.json')
     await writeFile(runtimeMap, JSON.stringify({ [version]: join(root, 'unused-cli.mjs') }))
     args = [join(project, 'scripts/validation/compatibility-matrix.mjs'), '--runtime-map', runtimeMap, '--version', version, '--artifacts', artifacts]

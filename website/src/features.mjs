@@ -311,16 +311,16 @@ export const features = [
     limits: ['不透明脚本效果和未解析的相对 shell 目标会标为未判定。', '提醒不取消已启动的操作，也不授予或撤销权限。'],
   },
   {
-    slug: 'interjection-routing', group: 'coordination', name: '中途插话分流', status: '双向路由已观察', tone: 'observed',
-    summary: '当前任务的纠正进入下一模型步骤，补充请求留到后续轮次。',
-    intro: '主 Agent 运行时，用户发来的文字可能是眼前任务的纠正，也可能是新要求。插件在原生 inbox 中保留同一条消息身份，再判断应该进入哪个时机。',
-    homeEvidence: '真实样例：纠正进入当前轮，补充留到下一轮，原工具完整执行。',
+    slug: 'interjection-routing', group: 'coordination', name: '中途插话分流', status: '三路分流需配套 Host', tone: 'caution',
+    summary: '区分后续任务、当前补充和即时纠正；即时纠正可中断模型响应并在同一回合继续。',
+    intro: '主 Agent 运行时，插件保留原消息身份，按原始任务与已记录事实判断投递时机。即时纠正要求 Host 提供 Agent.interruptResponse；版本号本身不能证明已具备该能力。',
+    homeEvidence: '历史真实样例验证两个投递方向；新增响应中断须单独验证，不沿用旧样例作为证据。',
     mechanism: {
-      seams: ['agent/inbox/inserted', 'agent/pre-step'],
-      trigger: 'agent/inbox/inserted 捕捉运行中的直接用户消息；在 agent/pre-step 准备入模前等待分类结果。',
-      input: '原消息文本、附件类型、有限的已记录上下文及当前 Goal 目标；不会读取附件正文。',
-      handling: 'typed correction 进入最近的 next-step；queue 留给后续轮次。已启动工具不取消，原消息在 Session 中只交付一次。',
-      refs: [{ title: 'inbox 接入与分流', file: 'packages/jev/src/interjection.ts', anchor: '#L271-L379' }],
+      seams: ['agent/inbox/inserted', 'Agent.interruptResponse', 'agent/pre-step'],
+      trigger: '运行中的直接用户消息触发一次分类；有效即时纠正判定后立即请求中断，不等下一次 pre-step 才执行。',
+      input: '代码提取原始用户任务与修改、可用 Goal、近期助手正文、必要工具事实和执行阶段；不调用摘要模型，不随流块重判，不读取附件正文。',
+      handling: 'follow-up 进入 next-turn；steer 进入最近的 next-step；interrupt-steer 请求中断模型响应或重试等待后，同回合准入原文。已启动工具不取消，原消息只交付一次。',
+      refs: [{ title: 'inbox 接入与分流', file: 'packages/jev/src/interjection.ts', anchor: '#L1' }, { title: '有界原始事实投影', file: 'packages/jev/src/interjection-context.ts', anchor: '#L1' }],
     },
     cases: [
       {
@@ -339,7 +339,7 @@ export const features = [
         references: [{ title: '双向路由测试', file: 'packages/jev/tests/interjection.test.ts', anchor: '#L161-L187' }],
       },
     ],
-    limits: ['消息被模型接收不等于模型采纳。', '上下文不足或附件内容不可见时不假装已理解消息。'],
+    limits: ['消息被模型接收不等于模型采纳；请求中断不等于工具已停止。', '上下文不足或附件内容不可见时不假装已理解消息。', '未打配套补丁的已发布 DSH 0.2.2-alpha.2 没有响应中断方法；缺少能力时开启分流会明确报错。'],
   },
   {
     slug: 'shared-finding-corrections', group: 'coordination', name: '共享发现纠正', status: '真实纠正送达', tone: 'caution',

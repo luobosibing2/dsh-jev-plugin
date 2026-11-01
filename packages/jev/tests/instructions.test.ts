@@ -18,6 +18,8 @@ import { JsonStorageBackend } from '@deepseek-ai/dsh-storage-json'
 import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
+import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
+import * as PtcToolExecutor from '@deepseek-ai/dsh-tool-executor-ptc'
 import UserQuestionService from '@deepseek-ai/dsh-user-questions'
 import * as ToolFs from '@deepseek-ai/dsh-tool-fs'
 import * as ToolWorkingDirectory from '@deepseek-ai/dsh-tool-working-directory'
@@ -78,8 +80,9 @@ async function fixture(ptc = false, sessionDirectory = '', nativeFs = false,
   await ctx.plugin(LocalFileSystem, { cwd: root })
   await ctx.plugin(SessionProjectionRegistry)
   if (directory.service !== false) await ctx.plugin(WorkingDirectory)
-  await ctx.plugin(ToolRuntime, { mode: ptc ? 'ptc' : 'native' })
+  await ctx.plugin(ToolRuntime)
   if (ptc) await ctx.plugin(BindingRuntime)
+  await ctx.plugin(ptc ? PtcToolExecutor : NativeToolExecutor)
   const backend = new JsonStorageBackend(join(root, 'storage'))
   const unregister = ctx.storage.backend.register('json', backend)
   const facility = new DomainFacility(ctx, { backend: 'json' })
@@ -123,10 +126,16 @@ async function fixture(ptc = false, sessionDirectory = '', nativeFs = false,
   const ask = vi.fn()
   ctx.on('user-questions/request', ask)
   let calls = 0
-  const invoke = (path = 'product.txt', tool = 'write') => ctx.agents.withInitiator(agent, () => ctx.tools.execute({
-    name: ptc ? 'run_code' : tool, arguments: ptc ? { description: 'Write fixture', code: 'await tools.write({file_path:"product.txt",content:"ptc wrote"})' } : tool === 'read' ? { file_path: path } : { file_path: path, content: 'written' },
-    agent, signal: new AbortController().signal, callId: ToolCallId('instruction-' + ++calls),
-  }))
+  const invoke = async (path = 'product.txt', tool = 'write') => {
+    const args = ptc ? { description: 'Write fixture', code: 'await tools.write({file_path:"product.txt",content:"ptc wrote"})' }
+      : tool === 'read' ? { file_path: path } : { file_path: path, content: 'written' }
+    const batch = await ctx.agents.withInitiator(agent, () => ctx.tools.execute({
+      calls: [{ type: 'tool-call', name: ptc ? 'run_code' : tool, arguments: JSON.stringify(args), id: ToolCallId('instruction-' + ++calls) }],
+      agent, signal: new AbortController().signal,
+    }))
+    expect(batch.results).toHaveLength(1)
+    return batch.results[0]!.result
+  }
   const step = async (messages: UserMessage[] = []) => {
     const decision = await agentEvents(ctx, agent).waterfall('agent/pre-step', { messages, turn: 1, step: 2, signal: new AbortController().signal },
       () => Promise.resolve({ kind: 'enter' as const, messages }))
@@ -182,10 +191,12 @@ describe('instruction guidance with original Native/PTC pipeline and localhost J
     f.ctx.agents.enter(other, undefined)
     expect((await f.invoke()).isError).toBe(false)
     await f.settled()
-    const second = await f.ctx.agents.withInitiator(other, () => f.ctx.tools.execute({
-      name: 'write', arguments: { file_path: 'product.txt', content: 'other written' }, agent: other,
-      signal: new AbortController().signal, callId: ToolCallId('legacy-other-instructions'),
+    const secondBatch = await f.ctx.agents.withInitiator(other, () => f.ctx.tools.execute({
+      calls: [{ type: 'tool-call', name: 'write', arguments: JSON.stringify({ file_path: 'product.txt', content: 'other written' }), id: ToolCallId('legacy-other-instructions') }],
+      agent: other, signal: new AbortController().signal,
     }))
+    expect(secondBatch.results).toHaveLength(1)
+    const second = secondBatch.results[0]!.result
     expect(second.isError).toBe(false)
     await f.settled(2)
     expect(f.requests).toHaveLength(2)
@@ -230,10 +241,12 @@ describe('instruction guidance with original Native/PTC pipeline and localhost J
     await f.rule('Changed directory instructions.', 'changed/TEAM.md')
     await f.ctx.plugin(ToolWorkingDirectory)
     f.enabled(false)
-    const moved = await f.ctx.agents.withInitiator(f.agent, () => f.ctx.tools.execute({
-      name: 'working_directory', arguments: { cd: 'changed' }, agent: f.agent,
-      signal: new AbortController().signal, callId: ToolCallId('change-instructions-directory'),
+    const movedBatch = await f.ctx.agents.withInitiator(f.agent, () => f.ctx.tools.execute({
+      calls: [{ type: 'tool-call', name: 'working_directory', arguments: JSON.stringify({ cd: 'changed' }), id: ToolCallId('change-instructions-directory') }],
+      agent: f.agent, signal: new AbortController().signal,
     }))
+    expect(movedBatch.results).toHaveLength(1)
+    const moved = movedBatch.results[0]!.result
     expect(moved.isError).toBe(false)
     expect(moved.value).toEqual({ cwd: changed })
     f.enabled(true)

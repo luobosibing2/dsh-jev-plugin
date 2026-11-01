@@ -22,6 +22,7 @@ import {
   SEARCH_META_MAX_BYTES, SEARCH_STDERR_MAX_BYTES, SEARCH_TIMEOUT_MS,
 } from '@deepseek-ai/dsh-tool-fs-search'
 import ToolRuntime from '@deepseek-ai/dsh-tools'
+import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
 import UserQuestionService from '@deepseek-ai/dsh-user-questions'
 import JevService from '../src/index.ts'
 import { apply } from '../src/selection.ts'
@@ -62,6 +63,7 @@ async function setup(url: string) {
   await ctx.plugin(SessionStore)
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(ToolRuntime)
+  await ctx.plugin(NativeToolExecutor)
   await ctx.plugin(SkillRegistry)
   await ctx.plugin(UserQuestionService)
   const backend = new JsonStorageBackend(join(root, 'storage'))
@@ -115,10 +117,14 @@ async function setup(url: string) {
     await facility.closeAll()
     await backend.close()
   })
-  const glob = () => ctx.agents.withInitiator(agent, () => ctx.tools.execute({
-    name: 'glob', arguments: { pattern: '*.ts' }, agent,
-    signal: new AbortController().signal, callId: ToolCallId('jev-selection-common-glob'),
-  }))
+  const glob = async () => {
+    const batch = await ctx.agents.withInitiator(agent, () => ctx.tools.execute({
+      calls: [{ type: 'tool-call', name: 'glob', arguments: JSON.stringify({ pattern: '*.ts' }), id: ToolCallId('jev-selection-common-glob') }],
+      agent, signal: new AbortController().signal,
+    }))
+    expect(batch.results).toHaveLength(1)
+    return batch.results[0]!.result
+  }
   return { ctx, glob, fileLimit, spills }
 }
 

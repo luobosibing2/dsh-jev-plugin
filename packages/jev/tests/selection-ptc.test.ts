@@ -17,6 +17,7 @@ import {
   SEARCH_META_MAX_BYTES, SEARCH_STDERR_MAX_BYTES, SEARCH_TIMEOUT_MS,
 } from '@deepseek-ai/dsh-tool-fs-search'
 import ToolRuntime from '@deepseek-ai/dsh-tools'
+import * as PtcToolExecutor from '@deepseek-ai/dsh-tool-executor-ptc'
 import { apply } from '../src/selection.ts'
 import type { JevJudgeOptions, JevJudgeResult } from '../src/index.ts'
 import type { JevRequest } from '../src/types.ts'
@@ -53,8 +54,9 @@ describe('glob selection through the published DSH PTC bridge', () => {
     await ctx.plugin(AgentRegistry)
     await ctx.plugin(SessionStore)
     await ctx.plugin(SystemPrompt)
-    await ctx.plugin(ToolRuntime, { mode: 'ptc' })
+    await ctx.plugin(ToolRuntime)
     await ctx.plugin(BindingRuntime)
+    await ctx.plugin(PtcToolExecutor)
     const runtime = ctx.ptcRuntime as BindingRuntime
 
     ctx.provide('subprocess', {
@@ -113,11 +115,12 @@ describe('glob selection through the published DSH PTC bridge', () => {
     const agent = { ctx, id: 'jev-selection-ptc', session } as Agent
     ctx.agents.enter(agent, undefined)
 
-    const result = await ctx.agents.withInitiator(agent, () => ctx.tools.execute({
-      name: 'run_code',
-      arguments: { code: 'return await tools.glob({ pattern: "*.ts" })', description: 'Find files' },
-      agent, signal: new AbortController().signal, callId: ToolCallId('jev-selection-ptc-call'),
+    const batch = await ctx.agents.withInitiator(agent, () => ctx.tools.execute({
+      calls: [{ type: 'tool-call', name: 'run_code', arguments: JSON.stringify({ code: 'return await tools.glob({ pattern: "*.ts" })', description: 'Find files' }), id: ToolCallId('jev-selection-ptc-call') }],
+      agent, signal: new AbortController().signal,
     }))
+    expect(batch.results).toHaveLength(1)
+    const result = batch.results[0]!.result
 
     expect(result.isError).toBe(false)
     expect(requests).toHaveLength(1)

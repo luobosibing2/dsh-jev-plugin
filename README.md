@@ -32,7 +32,7 @@ The plugin provides the following features. **Every feature is independently dis
 | Completion checks | Checks the current turn's requirements, latest Todo and final answer, with at most 3 automatic supplements by default. |
 | Goal supervision | Checks native goal completion and pauses after a configurable run of rounds without progress. |
 | Instruction guidance | Reads current user instructions and applicable agent rules, then supplies a nonblocking reminder when needed. |
-| Interjection routing | Routes a running user's correction to the next step; queues other messages for a later turn. |
+| Interjection routing | Chooses later work, a current-task addition, or immediate model-response interruption followed by same-turn continuation. |
 | Shared-finding corrections | Compares reports and messages already shared, then sends corrections to affected recipients. |
 | Long-log admission | Can remove clearly unneeded progress or repeated notices after a command returns, with an original-output recovery reference. |
 | Test-log admission | Protects failures, summaries, named and slow tests while judging whether ordinary passing details are needed. |
@@ -42,6 +42,8 @@ The plugin provides the following features. **Every feature is independently dis
 ![Jev settings page with independent feature switches for selection, supervision, corrections, and workspace approval](docs/images/jev-feature-toggles.png)
 
 *Example feature settings from an earlier build. The screenshot shows nine switches and user-selected states; current `main` includes the twelve features listed above, all disabled on a fresh installation.*
+
+Interjection routing requires a Host with the public `Agent.interruptResponse()` capability. The unpatched published DSH 0.2.2-alpha.2 package does not provide it. Keep routing off on Hosts without that capability; enabling it reports an explicit Host-capability error before classification. The local source integration uses the matching DSH source change, not a published-release capability claim.
 
 All features share a connection, profile-scoped settings, decision records, and operation receipts. Most agent-facing features target live Web root sessions; correcting a child agent does not enable every feature inside that child.
 
@@ -71,7 +73,7 @@ Each classification covers one complete DSH model step: its recorded reasoning, 
 
 ## Install through the Web UI (recommended)
 
-Supported DSH releases are **0.1.7-rc.1, 0.1.7-rc.2, 0.2.0-rc.1, 0.2.0-rc.2, 0.2.1-alpha.2 and 0.2.1-alpha.3**. The package declares `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3`; other releases, including 0.2.1-alpha.1, are outside this declaration. Install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
+The package declares `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.2-alpha.2`. The earlier compatibility reports cover the six older releases. The exact 0.2.2-alpha.2 entry additionally permits the locally validated source Host; it does not make the unpatched published release capable of response interruption. Other versions, including 0.2.1-alpha.1, remain outside this declaration. Install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
 
 1. Open **Plugins in the sidebar → Add plugin**.
 2. Paste the GitHub URL below into **Package name or address**, then click **Install**.
@@ -98,13 +100,13 @@ Use the following steps when modifying or building the plugin yourself. Existing
 
 - Node.js **24.11 or later** is recommended; the publication build is checked on Node 24.14.1.
 - pnpm **11.7.0** available on `PATH`.
-- Development baseline: DeepSeek Harness CLI and development packages **0.2.1-alpha.2**, with Cordis **4.0.5-alpha.1**. These exact build versions are separate from the supported installation range above. Use the explicit version below because npm's `latest` tag can point to a different release.
+- Development baseline: DeepSeek Harness CLI and development packages **0.2.2-alpha.2**, with Cordis **4.0.6-alpha.1**. These exact build versions are separate from the supported installation range above. Use the explicit version below because npm's `latest` tag can point to a different release.
 - A configured main-model provider in DSH, plus credentials for your selected Jev-compatible System One service or Luna API.
 
 If needed, install the tools:
 
 ```sh
-npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.1-alpha.2
+npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.2-alpha.2
 ```
 
 ### Build the package

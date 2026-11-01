@@ -42,7 +42,8 @@ function nativeArgs(exec) {
 	return args;
 }
 function matches(entry, req) {
-	return entry.exec.agent === req.agent && entry.exec.callId === req.callId && entry.exec.name === req.toolName && req.signal === entry.exec.signal && req.reason === `escalate sandbox to ${TARGET}: ${entry.args.justification}` && !entry.exec.signal.aborted && !req.signal.aborted && !entry.claimed;
+	const signalMatches = req.signal !== void 0 && (entry.exec.name === "run_code" || req.signal === entry.exec.signal);
+	return entry.exec.agent === req.agent && entry.exec.callId === req.callId && entry.exec.name === req.toolName && signalMatches && req.reason === `escalate sandbox to ${TARGET}: ${entry.args.justification}` && !entry.exec.signal.aborted && !req.signal?.aborted && !entry.claimed;
 }
 function directScript(command) {
 	const raw = /^(?:(?:python(?:3(?:\.\d+)?)?|node|bash|sh|pwsh(?:\.exe)?\s+-File)\s+|&\s+)(?:("[^"$`]*"|'[^'$`]*'|[^\s'";&|`$()<>]+))(?:\s+[^;&|`$()<>]*)?$/i.exec(command.trim())?.[1];
@@ -222,9 +223,9 @@ function apply(ctx, config) {
 		await Promise.allSettled([...receipts]);
 	});
 	const eligible = (agent, signal) => !stopped && !signal?.aborted && ctx.agents.get(agent.id) === agent && ctx.jev.isFeatureEnabled(FEATURE) && ctx.sandboxPolicy.resolve({ session: agent.session }).mode === "workspace-write" && (ctx.approval.overrideOf(agent.session) ?? ctx.approval.config.policy ?? "ask") === "ask";
-	const handoff = (req, next, leave) => {
+	const handoff = (req, next, leave, signal) => {
 		leave();
-		if (stopped || req.signal?.aborted || ctx.agents.get(req.agent.id) !== req.agent) return Promise.resolve("cancelled");
+		if (stopped || signal.aborted || ctx.agents.get(req.agent.id) !== req.agent) return Promise.resolve("cancelled");
 		if ((ctx.approval.overrideOf(req.agent.session) ?? ctx.approval.config.policy ?? "ask") !== "ask") return Promise.resolve("rejected");
 		return next();
 	};
@@ -294,13 +295,18 @@ function apply(ctx, config) {
 		}
 		entry.claimed = true;
 		entry.approvalId = [...asked][0];
+		const cancellation = AbortSignal.any([
+			entry.exec.signal,
+			req.signal,
+			lifetime.signal
+		]);
 		let basis;
 		let judged;
 		try {
 			judged = await ctx.jev.judge({
 				featureId: FEATURE,
 				agent: req.agent,
-				signal: AbortSignal.any([req.signal, lifetime.signal]),
+				signal: cancellation,
 				link: {
 					sessionId: req.agent.session.id,
 					runId: String(entry.exec.callId),
@@ -311,15 +317,15 @@ function apply(ctx, config) {
 					return basis.request;
 				},
 				canAdopt: async (_response, signal) => {
-					if (!eligible(req.agent, req.signal) || !entries.has(entry)) return "Approval request is no longer current";
+					if (!eligible(req.agent, cancellation) || !entries.has(entry)) return "Approval request is no longer current";
 					return (await snapshot(ctx, fs, entry, req, () => epoch, () => config.maxScriptBytes.get(), signal)).fingerprint === basis?.fingerprint ? true : "Task, policy, operation, or script changed during judgment";
 				}
 			});
 		} catch {
-			return lifetime.signal.aborted || req.signal?.aborted ? "cancelled" : "unavailable";
+			return cancellation.aborted ? "cancelled" : "unavailable";
 		}
-		if (judged.kind === "cancelled" || req.signal?.aborted || entry.exec.signal.aborted || stopped) return "cancelled";
-		if (judged.kind === "not-adopted" || !eligible(req.agent, req.signal) || !entries.has(entry)) return handoff(req, next, leave);
+		if (judged.kind === "cancelled" || cancellation.aborted) return "cancelled";
+		if (judged.kind === "not-adopted" || !eligible(req.agent, cancellation) || !entries.has(entry)) return handoff(req, next, leave, cancellation);
 		const choice = decision(judged.response);
 		if (choice !== "approve") {
 			await track(ctx.jev.writeReceipt(judged.operationId, {
@@ -328,7 +334,7 @@ function apply(ctx, config) {
 				reason: `${choice}: delegated to native answerer`,
 				at: (/* @__PURE__ */ new Date()).toISOString()
 			})).catch(() => {});
-			return handoff(req, next, leave);
+			return handoff(req, next, leave, cancellation);
 		}
 		try {
 			await track(ctx.jev.writeReceipt(judged.operationId, {
@@ -338,7 +344,7 @@ function apply(ctx, config) {
 				at: (/* @__PURE__ */ new Date()).toISOString()
 			}));
 		} catch {
-			return handoff(req, next, leave);
+			return handoff(req, next, leave, cancellation);
 		}
 		const finalHandoff = async (reason) => {
 			await track(ctx.jev.writeReceipt(judged.operationId, {
@@ -347,15 +353,15 @@ function apply(ctx, config) {
 				reason,
 				at: (/* @__PURE__ */ new Date()).toISOString()
 			})).catch(() => {});
-			return handoff(req, next, leave);
+			return handoff(req, next, leave, cancellation);
 		};
-		if (!eligible(req.agent, req.signal) || !entries.has(entry)) return finalHandoff("Approval conditions changed before the final check");
+		if (!eligible(req.agent, cancellation) || !entries.has(entry)) return finalHandoff("Approval conditions changed before the final check");
 		try {
-			if ((await snapshot(ctx, fs, entry, req, () => epoch, () => config.maxScriptBytes.get(), AbortSignal.any([req.signal, lifetime.signal]))).fingerprint !== basis?.fingerprint) return finalHandoff("Task, policy, operation, or script changed before grant");
+			if ((await snapshot(ctx, fs, entry, req, () => epoch, () => config.maxScriptBytes.get(), cancellation)).fingerprint !== basis?.fingerprint) return finalHandoff("Task, policy, operation, or script changed before grant");
 		} catch {
 			return finalHandoff("Final approval information could not be refreshed");
 		}
-		if (!eligible(req.agent, req.signal) || !entries.has(entry)) return finalHandoff("Approval conditions changed before grant");
+		if (!eligible(req.agent, cancellation) || !entries.has(entry)) return finalHandoff("Approval conditions changed before grant");
 		entry.approved = judged.operationId;
 		return "allowed-once";
 	};

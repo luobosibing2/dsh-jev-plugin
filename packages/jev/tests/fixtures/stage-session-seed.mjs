@@ -11,7 +11,7 @@ import {
   createUserMessage,
 } from '@deepseek-ai/dsh-llm'
 import { SESSION_FORMAT_VERSION, Session, SessionId } from '@deepseek-ai/dsh-session'
-import JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import * as JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..')
 const artifacts = join(root, '.artifacts/stage-validation')

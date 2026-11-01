@@ -4,13 +4,13 @@ import { mkdtemp, mkdir, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context, Service } from '@deepseek-ai/cordis'
 import AgentRegistry from '@deepseek-ai/dsh-agent'
 import SessionController from '@deepseek-ai/dsh-api-session-controller'
 import LlmRuntime, { createAssistantMessage, createToolResultMessage, createUserMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
 import SessionStore, { Session, SessionId } from '@deepseek-ai/dsh-session'
 import type { SessionEvent } from '@deepseek-ai/dsh-session'
-import JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import * as JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
 import SessionQueryEngine from '@deepseek-ai/dsh-session-query'
 import Storage from '@deepseek-ai/dsh-storage'
@@ -29,6 +29,10 @@ import { assembleStageHistory } from '../src/stage-history.ts'
 class ColdQuery extends SessionQueryEngine {
   override searchSessions(): Promise<never> { return Promise.reject(new Error('Search is outside this fixture')) }
   override searchEvents(): Promise<never> { return Promise.reject(new Error('Search is outside this fixture')) }
+}
+
+class InitializedSessionController extends SessionController {
+  initialize(): Promise<void> { return this[Service.init]() }
 }
 
 const cleanups: Array<() => Promise<void>> = []
@@ -100,9 +104,9 @@ async function host(root: string, endpoint: string, options: { config?: Partial<
   const ctx = new Context()
   cleanups.push(() => ctx.fiber.dispose())
   await ctx.plugin(SessionStore)
-  await ctx.plugin(AgentRegistry)
   await ctx.plugin(LlmRuntime)
   await ctx.plugin(SessionProjectionRegistry)
+  await ctx.plugin(AgentRegistry)
   new ColdQuery(ctx)
   await ctx.plugin(JsonlPersistence, { root: join(root, 'sessions') })
   await ctx.plugin(Storage)
@@ -112,12 +116,14 @@ async function host(root: string, endpoint: string, options: { config?: Partial<
   ctx.provide('profileContext', { dir: join(root, 'profile') } as never)
   ctx.provide('settings', { configure: () => () => {} } as never)
   ctx.provide('credentials', { resolve: options.resolve ?? (async () => ({ value: 'localhost-stage-fixture', source: 'fixture' })) } as never)
-  ctx.provide('typert', { lookups: { configure: () => () => {} }, contexts: { configureHost: () => () => {} } } as never)
+  ctx.provide('typert', { lookups: { configure: () => () => {} }, contexts: { configureHost: () => () => {} },
+    resources: { register: () => () => {} } } as never)
   ctx.provide('agentDefaultModel', { currentSelection: () => ({ provider: 'fixture', model: 'fixture' }) } as never)
   ctx.provide('attachments', { imageLimits: {}, admitPromptContent: async (content: unknown[]) => content } as never)
   ctx.provide('fileUploads', { registerAgentResolver: () => () => {}, resolve: () => undefined,
     bindPrompt: () => ({ commit: () => {}, [Symbol.dispose]: () => {} }), retirePrompt: () => {} } as never)
-  const controller = new SessionController(ctx, { nativeOpen: false })
+  const controller = new InitializedSessionController(ctx, { nativeOpen: false })
+  await controller.initialize()
   const jevFiber = await ctx.plugin(JevService, { baseUrl: endpoint, model: 'stage-fixture', credentialRef: 'STAGE_FIXTURE_KEY',
     timeoutMs: 10_000, features: { 'stage-navigation': true }, ...options.config })
   const loaderExport = (StageNavigation as typeof StageNavigation & { default?: typeof StageNavigation.apply }).default ?? StageNavigation
