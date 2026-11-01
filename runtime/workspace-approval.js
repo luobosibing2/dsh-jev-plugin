@@ -114,14 +114,15 @@ function visibleContext(agent) {
 		pending
 	}));
 }
-function operationCwd(entry, workspaceRoot) {
+function operationCwd(entry, currentDirectory) {
 	const workdir = entry.args.workdir;
-	return (entry.exec.name === "bash" || entry.exec.name === "pwsh") && typeof workdir === "string" ? isAbsolute(workdir) ? workdir : resolve(workspaceRoot, workdir) : workspaceRoot;
+	return (entry.exec.name === "bash" || entry.exec.name === "pwsh") && typeof workdir === "string" ? isAbsolute(workdir) ? workdir : resolve(currentDirectory, workdir) : currentDirectory;
 }
 async function snapshot(ctx, fs, entry, req, epoch, maxScriptBytes, signal) {
 	const agent = entry.exec.agent;
 	const policy = ctx.sandboxPolicy.resolve({ session: agent.session });
-	const cwd = operationCwd(entry, policy.workspaceRoot);
+	const directory = ctx.get("workingDirectory");
+	const cwd = operationCwd(entry, directory === void 0 ? agent.session.header.cwd ?? policy.workspaceRoot : await directory.ensure(agent, signal));
 	const argumentsJson = JSON.parse(JSON.stringify(entry.args));
 	const script = await scriptEvidence(fs, entry, cwd, maxScriptBytes(), signal);
 	const currentPolicy = ctx.sandboxPolicy.resolve({ session: agent.session });
@@ -136,7 +137,7 @@ async function snapshot(ctx, fs, entry, req, epoch, maxScriptBytes, signal) {
 			arguments: argumentsJson,
 			cwd,
 			workspaceRoot: policy.workspaceRoot,
-			...typeof entry.args.file_path === "string" ? { target: resolve(policy.workspaceRoot, entry.args.file_path) } : {},
+			...typeof entry.args.file_path === "string" ? { target: resolve(cwd, entry.args.file_path) } : {},
 			reason: req.reason ?? "",
 			requestedMode: TARGET
 		},

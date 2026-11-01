@@ -11,11 +11,11 @@ export function redactWebSecrets(text) {
 }
 
 /**
- * Open one private browser context and read the installed plugin's live settings.
- * @param options - Authenticated Host URL and the disposable fixture settings.
+ * Verify installed settings, records and classified Session steps in a private browser context.
+ * @param options - Authenticated Host URL, disposable settings and the classified fixture snapshot.
  * @returns Sanitized browser observations, including any failed phase.
  */
-export async function checkCompatibilityBrowser({ url, endpoint, model, timeoutMs, featureCount }) {
+export async function checkCompatibilityBrowser({ url, endpoint, model, timeoutMs, featureCount, stageSnapshot }) {
   const result = { ok: false, pageErrors: [], consoleErrors: [], importErrors: [] }
   let phase = 'playwright-import'
   let browser, context, page, timer
@@ -114,6 +114,40 @@ export async function checkCompatibilityBrowser({ url, endpoint, model, timeoutM
       await records.getByRole('button', { name: /^(Details|详情)$/ }).first().waitFor({ state: 'visible' })
       assert.equal(await records.getByRole('alert').count(), 0, 'Jev records must load without an error notice')
       result.recordsVisible = true
+      phase = 'fixture-session-navigation'
+      const classifiedTurn = stageSnapshot.turns.find(turn => turn.steps.some(step => step.analysis.status === 'succeeded'))
+      assert(classifiedTurn, 'The Host fixture must supply a classified native turn')
+      const classifiedSteps = classifiedTurn.steps.filter(step => step.analysis.status === 'succeeded')
+      const workspace = page.locator('[data-row-key^="workspace:"]').filter({ hasText: 'Jev compatibility fixture' })
+      await workspace.waitFor({ state: 'visible' })
+      if (await workspace.getAttribute('aria-expanded') !== 'true') await workspace.click()
+      await page.locator(`[data-row-key="session:${stageSnapshot.sessionId}"]`).click()
+      const conversation = page.locator('[data-conversation-content]')
+      await conversation.waitFor({ state: 'visible' })
+      const displayedSession = await conversation.getAttribute('data-conversation-session')
+      if (displayedSession !== null) assert.equal(displayedSession, stageSnapshot.sessionId, 'Conversation must show the fixture Session')
+      phase = 'jev-stage-navigation'
+      const stageName = /^(Stage navigation|阶段导航)$/
+      const stageTab = page.getByRole('tab', { name: stageName })
+      if (await stageTab.isVisible()) await stageTab.click()
+      else {
+        await page.getByRole('button', { name: /^(More conversation views|更多会话视图)$/ }).click()
+        await page.getByRole('menuitem', { name: stageName }).click()
+      }
+      const stage = page.getByRole('region', { name: stageName })
+      await stage.waitFor({ state: 'visible' })
+      const turns = stage.getByRole('navigation', { name: /^(Turns and stages|轮次与阶段)$/ })
+      await turns.getByRole('button', { name: new RegExp('^(Turn|第) ' + classifiedTurn.turn + ' ·') }).click()
+      for (const step of classifiedSteps) {
+        await stage.locator(`[data-step-id="${step.id}"]`).getByText(/^(Classification status: Classified|分类状态: 已分类)$/).waitFor({ state: 'visible' })
+      }
+      assert.equal(await stage.getByRole('alert').count(), 0, 'Stage navigation must load without an error notice')
+      result.stageNavigation = { sessionId: stageSnapshot.sessionId, turn: classifiedTurn.turn, classifiedStepIds: classifiedSteps.map(step => step.id) }
+      phase = 'return-to-chat'
+      await page.getByRole('tab', { name: /^(Chat|对话)$/ }).click()
+      await stage.waitFor({ state: 'hidden' })
+      await conversation.getByText('Deterministic fixture completed with recorded native results.', { exact: true }).last().waitFor({ state: 'visible' })
+      result.returnedToChat = true
       phase = 'complete'
     }
     await Promise.race([verify(), browserFailure])

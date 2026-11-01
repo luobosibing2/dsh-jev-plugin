@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import re
 import subprocess
@@ -13,7 +14,7 @@ from bench.deepswe.config import digest
 from bench.completion_skill.cs_suite.profile import profile_rows
 from bench.completion_skill.resources import REPO_ROOT, PACKAGE
 
-from .analyze import _catalogs, _events, _operation, _tool_history
+from .analyze import _catalogs, _events, _operation, _selected_names, _selection_parameters, _tool_history
 from .cases import CASES
 
 
@@ -68,6 +69,12 @@ def _slot_result(probe_dir: Path, batch: Path, case_id: str, condition: str) -> 
     if any(not item["call_linked"] or not item["call_ids_agree"] for item in tool_results):
         result["errors"].append("native tool result did not link to its call")
     catalogs = _catalogs(events)
+    try:
+        selection = _selection_parameters(catalogs)
+    except ValueError as exc:
+        result["errors"].append(str(exc))
+        selection = None
+    result["selection_parameters"] = selection
     truth = json.loads((batch / "skills" / "cases" / case_id / "truth.json").read_text())
     published = [entry["name"] for catalog in catalogs for entry in (catalog["entries"] or [])]
     result["published_names"] = published
@@ -104,7 +111,7 @@ def _slot_result(probe_dir: Path, batch: Path, case_id: str, condition: str) -> 
             result["errors"].append("scripted main did not finish from catalog evidence")
     if case_id == "empty-directory" and published:
         result["errors"].append("empty snapshot published a skill")
-    if case_id != "empty-directory" and not published:
+    if case_id != "empty-directory" and not published and selection is None:
         result["errors"].append("nonempty snapshot published no skill summaries")
     if any(item["is_error"] for item in tool_results):
         result["errors"].append("native tool error")
@@ -114,7 +121,12 @@ def _slot_result(probe_dir: Path, batch: Path, case_id: str, condition: str) -> 
     if invalid or len(records) != wanted:
         result["errors"].append("mock Jev operation count differs from eligible catalog")
     if records:
-        attempt = (records[0].get("attemptRecords") or [{}])[0]
+        record = records[0]
+        attempts = record.get("attemptRecords") or []
+        attempt = attempts[0] if attempts else {}
+        if record.get("featureId") != "skill-selection" or record.get("status") != "succeeded" \
+                or len(attempts) != 1 or attempt.get("status") != "succeeded":
+            result["errors"].append("mock Jev skill judgment did not succeed once")
         request = attempt.get("request") or {}
         result["jev_question_count"] = len(request.get("questions") or [])
         if result["jev_question_count"] != len(CASES[case_id].skills):
@@ -124,7 +136,27 @@ def _slot_result(probe_dir: Path, batch: Path, case_id: str, condition: str) -> 
         result["mock_jev_response_model"] = (attempt.get("rawResponse") or {}).get("model")
         if result["mock_jev_response_model"] != "jev-1.13.0-local-fixture":
             result["errors"].append("native probe Jev response was not the local fixture")
-    if condition == "skill_selection" and case_id == "all-irrelevant" and len(published) != 5:
+        if selection is not None:
+            answers = (attempt.get("response") or {}).get("answers") or []
+            questions = request.get("questions") or []
+            scores = []
+            for index, (question, answer) in enumerate(zip(questions, answers)):
+                probability = answer.get("probability")
+                if question.get("id") != f"candidate-{index}" or answer.get("id") != question.get("id") \
+                        or answer.get("kind") != "noul" or type(probability) not in (int, float) \
+                        or not math.isfinite(probability) or not 0 <= probability <= 1:
+                    result["errors"].append("mock Jev answer identity or probability invalid")
+                    break
+                scores.append({"name": question.get("prompt", "").split("Skill: ", 1)[-1].split(". Description: ", 1)[0],
+                               "probability": probability, "original_index": index})
+            expected = _selected_names(scores, selection)
+            if len(answers) != len(questions) or len(scores) != result["jev_question_count"] or published != expected:
+                result["errors"].append("catalog publication differs from recorded selection parameters")
+            receipt_id = "skill-catalog-published" if expected else "skill-catalog-no-relevant"
+            if not any(receipt.get("id") == receipt_id and receipt.get("status") == "observed"
+                       for receipt in records[0].get("receipts") or []):
+                result["errors"].append("catalog outcome receipt differs from recorded selection")
+    if condition == "skill_selection" and case_id == "all-irrelevant" and selection is None and len(published) != 5:
         result["errors"].append("all-irrelevant case did not retain default top five")
     if len([event for event in events if event.get("type") == "turn/end"
             and ((event.get("data") or {}).get("reason") or {}).get("kind") == "completed"]) != 1:

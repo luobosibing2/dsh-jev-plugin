@@ -192,6 +192,40 @@ describe('interjection routing through published inbox hooks and a response-cont
     expect(h.requests).toHaveLength(1)
   })
 
+  it.each<{ budget: number; current?: string; expected: Array<{ text: string; excerpt: boolean }> }>([
+    { budget: 1, expected: [{ text: 'C', excerpt: true }] },
+    { budget: 12, expected: [{ text: 'Current task', excerpt: false }] },
+    { budget: 20, expected: [{ text: 'Current task', excerpt: false }, { text: 'Earlier ', excerpt: true }] },
+    { budget: 28, expected: [{ text: 'Current task', excerpt: false }, { text: 'Earlier request ', excerpt: true }] },
+    { budget: 12_000, current: 'Current task'.repeat(1_000), expected: [{ text: 'Current task'.repeat(1_000), excerpt: false }] },
+  ])('bounds actual routing context to $budget characters across prior turns', async ({ budget, current = 'Current task', expected }) => {
+    const started = Promise.withResolvers<void>()
+    const release = Promise.withResolvers<void>()
+    const earlier = 'Earlier request '.repeat(2_000)
+    const h = await harness([text('Earlier response'), async () => {
+      started.resolve(); await release.promise; return call('probe')
+    }, text('current done')], [answer('steer')], { 'interjection-routing': true }, { contextChars: budget })
+    cleanups.push(async () => { release.resolve() })
+    h.send(earlier); await h.agent.whenIdle()
+    h.send(current); await started.promise
+    const correction = input('Inspect the current approach')
+    h.agent.followup(correction)
+    await vi.waitFor(() => expect(h.requests).toHaveLength(1))
+    const state = h.requests[0].state
+    const context = [...state.taskMessages, ...state.recentAssistant === null ? [] : [state.recentAssistant], ...state.previousTask]
+    expect(context.reduce((size: number, item: { text: string }) => size + item.text.length, 0)).toBeLessThanOrEqual(budget)
+    expect(context.map(({ text, excerpt }: { text: string; excerpt: boolean }) => ({ text, excerpt }))).toEqual(expected)
+    expect(h.requests[0].state.message).toBe('Inspect the current approach')
+    release.resolve(); await h.agent.whenIdle()
+    expect(h.errors).toEqual([])
+    expect(committed(h.agent, correction.id)).toHaveLength(1)
+    expect(deliveryTurn(h.agent, correction.id)).toBe(2)
+    const records = await h.records()
+    const record = await h.ctx.jev.getRecord(records.items[0]!.id)
+    expect(record?.attemptRecords[0]?.request.state).toMatchObject({ taskMessages: state.taskMessages, recentAssistant: state.recentAssistant, previousTask: state.previousTask })
+    expect(visible(h.agent)).toContain(earlier)
+  })
+
   it('keeps default-off and idle input on the original Host path', async () => {
     const h = await harness([text('idle answer')], [], {})
     expect((await h.ctx.jev.listFeatures()).find(feature => feature.id === 'interjection-routing')?.enabled).toBe(false)

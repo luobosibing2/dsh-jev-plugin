@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import re
 import shutil
@@ -12,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from bench.deepswe.config import digest
-from bench.completion_skill.skills.analyze import _catalogs, _events, _tool_history
+from bench.completion_skill.skills.analyze import _catalogs, _events, _selected_names, _selection_parameters, _tool_history
 
 from .analyze import _step_usage
 from .cases import CASE_ORDER
@@ -126,6 +127,14 @@ def _inspect(probe_dir: Path, batch: Path, case: str, condition: str) -> dict:
     if not output["feature_flags_match"]:
         output["errors"].append("native Jev feature state differs from paired profile")
     catalogs = _catalogs(events)
+    selection_valid = True
+    try:
+        selection = _selection_parameters(catalogs)
+    except ValueError as exc:
+        output["errors"].append(str(exc))
+        selection = None
+        selection_valid = False
+    output["selection_parameters"] = selection
     published = [entry["name"] for catalog in catalogs for entry in (catalog["entries"] or [])]
     output["published_names"] = published
     expected = truth["candidate_names"] if condition == "baseline" else None
@@ -166,6 +175,7 @@ def _inspect(probe_dir: Path, batch: Path, case: str, condition: str) -> dict:
     elif len(records) != 1:
         output["errors"].append("selection arm did not record one mock Jev operation")
     else:
+        errors_before = len(output["errors"])
         record = json.loads(records[0].read_text(encoding="utf-8"))["record"]
         attempt = (record.get("attemptRecords") or [{}])[0]
         questions = (attempt.get("request") or {}).get("questions") or []
@@ -190,18 +200,29 @@ def _inspect(probe_dir: Path, batch: Path, case: str, condition: str) -> dict:
                 break
         if names != truth["candidate_names"]:
             output["errors"].append("mock Jev candidate order differs from complete directory")
-        if not any(item["id"] == "skill-catalog-published" and item["status"] == "observed"
-                   for item in output["jev_receipts"]):
-            output["errors"].append("mock Jev publication receipt missing")
         if any(value in json.dumps(attempt.get("request") or {}) for value in
                ("Start at the authenticated", "Start at the payment", "Follow the payment settlement")):
             output["errors"].append("Jev relevance request included a skill body")
-        ranked = sorted(zip(truth["candidate_names"], answers),
-                        key=lambda pair: -pair[1].get("probability", 0))
-        expected_top5 = [name for name, _answer in ranked[:5]]
-        output["mock_top5"] = expected_top5
-        if published != expected_top5:
-            output["errors"].append("published top five differs from mock score order")
+        scores = []
+        for index, (name, reply) in enumerate(zip(names, answers)):
+            probability = reply.get("probability")
+            if reply.get("kind") != "noul" or type(probability) not in (int, float) \
+                    or not math.isfinite(probability) or not 0 <= probability <= 1:
+                output["errors"].append("mock Jev probability invalid")
+                break
+            scores.append({"name": name, "probability": probability, "original_index": index})
+        output["mock_top5"] = _selected_names(scores, None)
+        output["mock_selected_names"] = None
+        if selection_valid and len(output["errors"]) == errors_before:
+            selected_names = _selected_names(scores, selection)
+            receipt_id = "skill-catalog-published" if selected_names else "skill-catalog-no-relevant"
+            if not any(item["id"] == receipt_id and item["status"] == "observed"
+                       for item in output["jev_receipts"]):
+                output["errors"].append("mock Jev publication receipt missing")
+            else:
+                output["mock_selected_names"] = selected_names
+                if published != selected_names:
+                    output["errors"].append("published skills differ from recorded selection parameters")
     output["tool_calls"] = [call["name"] for call in calls]
     output["final_answer"] = answer
     output["structural_ok"] = not output["errors"]

@@ -45,7 +45,7 @@ afterEach(async () => {
   if (failures.length > 0) throw new AggregateError(failures, 'Stage integration cleanup failed')
 })
 
-async function persistedSession(root: string, userText = 'Review the stage fixture. Fake secret: sk-0123456789abcdefghijklmnopqrstuvwxyz'): Promise<{ id: string; cursor: number }> {
+async function persistedSession(root: string, userText = 'Review the stage fixture. Fake secret: sk-0123456789abcdefghijklmnopqrstuvwxyz', argumentsA = '{"id":"a"}'): Promise<{ id: string; cursor: number }> {
   const context = new Context()
   await context.plugin(JsonlPersistence, { root: join(root, 'sessions') })
   const id = SessionId('stage-integration-cold')
@@ -67,11 +67,11 @@ async function persistedSession(root: string, userText = 'Review the stage fixtu
   emit(1, 1, [
     ...Array.from({ length: 17 }, (_, index) => ({ type: 'reasoning' as const, text: `STAGE_T1S1 Think ${index + 1}` })),
     { type: 'text', text: 'STAGE_T1S1 two probes' },
-    { type: 'tool-call', id: callA, name: 'stage_probe', arguments: '{"id":"a"}' },
+    { type: 'tool-call', id: callA, name: 'stage_probe', arguments: argumentsA },
     { type: 'tool-call', id: callB, name: 'stage_probe', arguments: '{"id":"b"}' },
   ])
   for (const [id, marker] of [[callA, 'a'], [callB, 'b']] as const) {
-    session.append('tool/call', { turn: 1, step: 1, callId: id, name: 'stage_probe', arguments: `{"id":"${marker}"}` })
+    session.append('tool/call', { turn: 1, step: 1, callId: id, name: 'stage_probe', arguments: id === callA ? argumentsA : `{"id":"${marker}"}` })
     session.append('tool/result', { turn: 1, step: 1,
       message: createToolResultMessage({ callId: id, content: [{ type: 'text', text: `probe ${marker} done` }], isError: false }),
     }, { surfaceOp: 'append' })
@@ -318,6 +318,32 @@ it('redacts every saved connection credential before native dispatch and keeps o
     expect(JSON.stringify(detail)).not.toContain(secret)
     expect(JSON.stringify(snapshot.turns)).toContain(secret)
   }
+  expect(http.calls).toHaveLength(2)
+  expect(http.errors).toEqual([])
+})
+
+it('redacts JSON tool arguments before HTTP dispatch and ledger storage without changing durable history', async () => {
+  const dir = await stageRoot()
+  const secret = 'configured\\dummy"credential'
+  const argumentsA = JSON.stringify({ command: 'API_KEY="synthetic two word secret" npm run build',
+    nested: [{ value: secret, api_key: 'nested dummy key' }], cwd: '/workspace', flags: [true, 2, null] })
+  const seeded = await persistedSession(dir, 'Review this synthetic tool call.', argumentsA)
+  const http = await stageFixture()
+  const { ctx } = await host(dir, http.endpoint, { resolve: async () => ({ value: secret, source: 'fixture' }) })
+  const signal = new AbortController().signal
+  await ctx.jev.startStageAnalysis({ sessionId: seeded.id, scope: { kind: 'turn', turn: 1 }, mode: 'missing' })
+  await vi.waitFor(async () => { expect((await ctx.jev.getStageNavigation(seeded.id, signal)).batch?.status).toBe('completed') })
+  const snapshot = await ctx.jev.getStageNavigation(seeded.id, signal)
+  const step = snapshot.turns[0]!.steps[0]!
+  expect(step.analysis.status).toBe('succeeded')
+  expect(step.tools[0]!.arguments).toBe(argumentsA)
+  const detail = await ctx.jev.getStageAnalysisRecord(seeded.id, step.id)
+  const saved = detail?.request?.state as { target: { tools: { arguments: string }[] } }
+  const sent = http.calls[0] as { state: typeof saved }
+  const expected = { command: 'API_KEY="[REDACTED]" npm run build',
+    nested: [{ value: '[REDACTED]', api_key: '[REDACTED]' }], cwd: '/workspace', flags: [true, 2, null] }
+  expect(JSON.parse(saved.target.tools[0]!.arguments)).toEqual(expected)
+  expect(JSON.parse(sent.state.target.tools[0]!.arguments)).toEqual(expected)
   expect(http.calls).toHaveLength(2)
   expect(http.errors).toEqual([])
 })

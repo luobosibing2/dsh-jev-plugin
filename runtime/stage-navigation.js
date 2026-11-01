@@ -123,7 +123,7 @@ function assembleStageHistory(sessionId, events) {
 //#region packages/jev/lib/types/stage-input.js
 /** Complete step requests with bounded, explicitly marked preceding context. */
 const STAGE_RULE_VERSION = "whole-step-v1";
-const STAGE_REDACTION_VERSION = "credential-patterns-v2";
+const STAGE_REDACTION_VERSION = "credential-patterns-v3";
 const labels = [
 	["input_parsing", "Identify initial task input and constraints"],
 	["problem_understanding", "Establish facts, investigate causes, or resolve open questions"],
@@ -139,6 +139,20 @@ function redact(value, secrets) {
 	for (const secret of secrets) if (secret.length >= 4) text = text.replaceAll(secret, "[REDACTED]");
 	return text.replace(/\b(Bearer|Basic)\s+[^\s"']+/gi, "$1 [REDACTED]").replace(/\b(?:sk|key|token|apikey)[-_][A-Za-z0-9_-]{12,}\b/gi, "[REDACTED]").replace(/((?:["']?(?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|passwd|authorization|auth[_-]?token)["']?)\s*[:=]\s*)(["'])(.*?)\2/gi, "$1$2[REDACTED]$2").replace(/((?:["']?(?:password|passwd|authorization)["']?)\s*[:=]\s*)(?!["'])[^\r\n,;}\]]+/gi, "$1[REDACTED]").replace(/((?:["']?(?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|passwd|authorization|auth[_-]?token)["']?)\s*[:=]\s*)(?!["'])[^\s,"';}]+/gi, "$1[REDACTED]").replace(/([?&#](?:api[_-]?key|access[_-]?token|refresh[_-]?token|key|token|secret|auth)\s*=)[^&#\s"']+/gi, "$1[REDACTED]").replace(/(https?:\/\/)[^\s/@]+:[^\s/@]+@/gi, "$1[REDACTED]@");
 }
+/** Redact decoded strings so JSON escaping cannot hide credentials from the text rules. */
+function redactArgumentValue(value, secrets) {
+	if (typeof value === "string") return redact(value, secrets);
+	if (value === null || typeof value !== "object") return value;
+	if (Array.isArray(value)) return value.map((item) => redactArgumentValue(item, secrets));
+	return Object.fromEntries(Object.entries(value).map(([key, item]) => [redact(key, secrets), /^(?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|passwd|authorization|auth[_-]?token)$/i.test(key) ? "[REDACTED]" : redactArgumentValue(item, secrets)]));
+}
+function redactArguments(value, secrets) {
+	try {
+		return JSON.stringify(redactArgumentValue(JSON.parse(value), secrets));
+	} catch {
+		return "[REDACTED: invalid JSON tool arguments]";
+	}
+}
 function visibleBlocks(blocks, secrets) {
 	return blocks.map((block) => {
 		switch (block.type) {
@@ -150,7 +164,7 @@ function visibleBlocks(blocks, secrets) {
 			case "tool-call": return {
 				type: block.type,
 				name: redact(block.name, secrets),
-				arguments: redact(block.arguments, secrets)
+				arguments: redactArguments(block.arguments, secrets)
 			};
 			case "image": return {
 				type: "image",
@@ -215,7 +229,7 @@ function buildStageInput(turns, target, limits, connectionIdentity, secrets = []
 		seq: tool.seq,
 		callId: tool.callId,
 		name: redact(tool.name, secrets),
-		arguments: redact(tool.arguments, secrets),
+		arguments: redactArguments(tool.arguments, secrets),
 		dispatched: tool.dispatched,
 		result: tool.result === void 0 ? null : {
 			seq: tool.result.seq,

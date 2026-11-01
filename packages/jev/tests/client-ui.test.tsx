@@ -58,7 +58,7 @@ function formStub(accept = true, initial = clientConfig()) {
 function selectionFormStub(options: { accept?: boolean; initial?: SelectionConfigValues; loading?: boolean } = {}) {
   let snapshot: ConfigFormSnapshot<SelectionConfigValues> = {
     status: options.loading ? 'loading' : 'ready',
-    value: options.loading ? undefined : options.initial ?? { skillLimit: 5, fileCandidates: 40, fileLimit: 12 },
+    value: options.loading ? undefined : options.initial ?? { skillLimit: 5, skillMinProbability: 0.5, fileCandidates: 40, fileLimit: 12 },
     base: {}, user: {}, revision: 4, writable: true, mode: 'host',
   }
   const listeners = new Set<() => void>()
@@ -310,15 +310,15 @@ describe('Jev selection counts', () => {
     const selection = selectionFormStub({ loading: true })
     renderPage(form, remoteStub(), selection.form)
     expect(screen.queryByLabelText(en.skillSummaryCount)).toBeNull()
-    selection.load({ skillLimit: 8, fileCandidates: 60, fileLimit: 16 })
+    selection.load({ skillLimit: 8, skillMinProbability: 0.8, fileCandidates: 60, fileLimit: 16 })
     await waitFor(() => { expect((screen.getByLabelText(en.skillSummaryCount) as HTMLInputElement).value).toBe('8') })
     expect((screen.getByLabelText(en.fileRankingMaximum) as HTMLInputElement).value).toBe('60')
     expect((screen.getByLabelText(en.rankedPathCount) as HTMLInputElement).value).toBe('16')
   })
 
-  it('saves all three counts in one revision-aware mutation', async () => {
+  it('saves all three counts without changing the configured probability threshold', async () => {
     const { form } = formStub()
-    const selection = selectionFormStub()
+    const selection = selectionFormStub({ initial: { skillLimit: 5, skillMinProbability: 0.8, fileCandidates: 40, fileLimit: 12 } })
     const notifySuccess = vi.fn()
     renderPage(form, remoteStub(), selection.form, notifySuccess)
     await waitFor(() => { expect((screen.getByLabelText(en.skillSummaryCount) as HTMLInputElement).value).toBe('5') })
@@ -332,7 +332,7 @@ describe('Jev selection counts', () => {
       { op: 'set', path: ['fileCandidates'], value: 50 },
       { op: 'set', path: ['fileLimit'], value: 18 },
     ], 4)
-    expect(selection.getValue()).toEqual({ skillLimit: 9, fileCandidates: 50, fileLimit: 18 })
+    expect(selection.getValue()).toEqual({ skillLimit: 9, skillMinProbability: 0.8, fileCandidates: 50, fileLimit: 18 })
     expect(notifySuccess).toHaveBeenCalledWith(en.selectionCountSaved)
   })
 
@@ -347,7 +347,7 @@ describe('Jev selection counts', () => {
       expect(screen.getByLabelText(en.skillSummaryCount).getAttribute('aria-invalid')).toBe('true')
       expect(selection.mutate).not.toHaveBeenCalled()
     }
-    expect(selection.getValue()).toEqual({ skillLimit: 5, fileCandidates: 40, fileLimit: 12 })
+    expect(selection.getValue()).toEqual({ skillLimit: 5, skillMinProbability: 0.5, fileCandidates: 40, fileLimit: 12 })
   })
 
   it('keeps edits and saved values when the form refuses a revision write', async () => {
@@ -491,7 +491,7 @@ describe('saved Jev and Luna connections', () => {
   it('saves and restores all three connections without changing feature switches or shared limits', async () => {
     const initial = clientConfig({ features: { example: true, 'test-log-admission': false }, timeoutMs: 24000 })
     const { form, mutate } = formStub(true, initial)
-    const selection = selectionFormStub({ initial: { skillLimit: 8, fileCandidates: 77, fileLimit: 19 } })
+    const selection = selectionFormStub({ initial: { skillLimit: 8, skillMinProbability: 0.8, fileCandidates: 77, fileLimit: 19 } })
     const jev = remoteStub()
     renderPage(form, jev, selection.form)
     await screen.findByText(en.noFeatures)

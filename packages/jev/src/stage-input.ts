@@ -5,7 +5,7 @@ import type { JevRequest, Json } from './types.ts'
 import type { StageStep, StageTurn } from './stage-types.ts'
 
 export const STAGE_RULE_VERSION = 'whole-step-v1'
-export const STAGE_REDACTION_VERSION = 'credential-patterns-v2'
+export const STAGE_REDACTION_VERSION = 'credential-patterns-v3'
 
 const labels = [
   ['input_parsing', 'Identify initial task input and constraints'],
@@ -35,6 +35,22 @@ function redact(value: string, secrets: readonly string[]): string {
     .replace(/(https?:\/\/)[^\s/@]+:[^\s/@]+@/gi, '$1[REDACTED]@')
 }
 
+/** Redact decoded strings so JSON escaping cannot hide credentials from the text rules. */
+function redactArgumentValue(value: Json, secrets: readonly string[]): Json {
+  if (typeof value === 'string') return redact(value, secrets)
+  if (value === null || typeof value !== 'object') return value
+  if (Array.isArray(value)) return value.map(item => redactArgumentValue(item, secrets))
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => [redact(key, secrets),
+    /^(?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|passwd|authorization|auth[_-]?token)$/i.test(key)
+      ? '[REDACTED]' : redactArgumentValue(item, secrets)]))
+}
+
+function redactArguments(value: string, secrets: readonly string[]): string {
+  try { return JSON.stringify(redactArgumentValue(JSON.parse(value) as Json, secrets)) }
+  // Interrupted calls can contain incomplete JSON. Do not dispatch undecodable credential text.
+  catch { return '[REDACTED: invalid JSON tool arguments]' }
+}
+
 function visibleBlocks(blocks: readonly ContentBlock[], secrets: readonly string[]): Json[] {
   return blocks.map((block): Json => {
     switch (block.type) {
@@ -42,7 +58,7 @@ function visibleBlocks(blocks: readonly ContentBlock[], secrets: readonly string
       case 'reasoning':
         return { type: block.type, text: redact(block.text, secrets) }
       case 'tool-call':
-        return { type: block.type, name: redact(block.name, secrets), arguments: redact(block.arguments, secrets) }
+        return { type: block.type, name: redact(block.name, secrets), arguments: redactArguments(block.arguments, secrets) }
       case 'image':
         return { type: 'image', present: true, understoodByJev: false,
           mediaType: block.attachment.mediaType, bytes: block.attachment.bytes,
@@ -90,7 +106,7 @@ export function buildStageInput(
   const assistant = target.messages.map(message => ({ seq: message.seq, interrupted: message.interrupted,
     content: visibleBlocks(message.content.filter(block => block.type !== 'tool-call'), secrets) }))
   const tools = target.tools.map(tool => ({
-    seq: tool.seq, callId: tool.callId, name: redact(tool.name, secrets), arguments: redact(tool.arguments, secrets),
+    seq: tool.seq, callId: tool.callId, name: redact(tool.name, secrets), arguments: redactArguments(tool.arguments, secrets),
     dispatched: tool.dispatched,
     result: tool.result === undefined ? null : {
       seq: tool.result.seq, isError: tool.result.isError,

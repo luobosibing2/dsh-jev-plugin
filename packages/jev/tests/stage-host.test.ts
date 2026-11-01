@@ -98,6 +98,52 @@ describe('complete historical step assembly and Jev input', () => {
     expect(wire).toContain(STAGE_REDACTION_VERSION)
   })
 
+  it.each([
+    { command: 'API_KEY="synthetic two word secret" npm run build', secrets: [], leaked: 'synthetic two word secret' },
+    { command: 'echo configured\\dummy', secrets: ['configured\\dummy'], leaked: 'configured\\dummy' },
+    { command: 'echo configured"dummy', secrets: ['configured"dummy'], leaked: 'configured"dummy' },
+  ])('redacts decoded tool argument strings: $command', ({ command, secrets, leaked }) => {
+    const argumentsText = JSON.stringify({ command, cwd: '/workspace', timeout: 1000, env: { api_key: 'nested dummy key' } })
+    const turns = assembleStageHistory('session-json', [
+      event(0, 'turn/start', { turn: 1 }), event(1, 'step/start', { turn: 1, step: 1 }),
+      event(2, 'assistant/message', { turn: 1, step: 1, message: assistant([
+        { type: 'tool-call', id: 'json-call', name: 'bash', arguments: argumentsText },
+      ]), stream: [], interrupted: true }),
+      event(3, 'turn/end', { turn: 1, reason: { kind: 'aborted', reason: { kind: 'user' } } }),
+    ])
+    const original = JSON.stringify(turns)
+    const input = buildStageInput(turns, turns[0]!.steps[0]!,
+      { previousSteps: 0, previousChars: 700, maxRequestChars: 48_000 }, 'connection', secrets)
+    expect(input.kind).toBe('ready')
+    if (input.kind !== 'ready') return
+    const state = input.request.state as { target: { tools: { arguments: string; dispatched: boolean }[] } }
+    const args = JSON.parse(state.target.tools[0]!.arguments)
+    expect(args.command).not.toContain(leaked)
+    expect(args.command).toContain('[REDACTED]')
+    expect(args).toMatchObject({ cwd: '/workspace', timeout: 1000, env: { api_key: '[REDACTED]' } })
+    if (command.includes('npm run build')) expect(args.command).toContain('npm run build')
+    expect(state.target.tools[0]!.dispatched).toBe(false)
+    expect(JSON.stringify(turns)).toBe(original)
+  })
+
+  it('withholds incomplete tool arguments instead of sending undecodable credential text', () => {
+    const argumentsText = '{"command":"API_KEY=\\"unfinished dummy secret'
+    const turns = assembleStageHistory('session-incomplete', [
+      event(0, 'turn/start', { turn: 1 }), event(1, 'step/start', { turn: 1, step: 1 }),
+      event(2, 'assistant/message', { turn: 1, step: 1, message: assistant([
+        { type: 'tool-call', id: 'partial', name: 'bash', arguments: argumentsText },
+      ]), stream: [], interrupted: true }),
+      event(3, 'turn/end', { turn: 1, reason: { kind: 'aborted', reason: { kind: 'user' } } }),
+    ])
+    const input = buildStageInput(turns, turns[0]!.steps[0]!,
+      { previousSteps: 0, previousChars: 700, maxRequestChars: 48_000 }, 'connection')
+    expect(input.kind).toBe('ready')
+    if (input.kind !== 'ready') return
+    expect(JSON.stringify(input.request)).not.toContain('unfinished dummy secret')
+    expect(JSON.stringify(input.request)).toContain('[REDACTED: invalid JSON tool arguments]')
+    expect(turns[0]!.steps[0]!.tools[0]!.arguments).toBe(argumentsText)
+  })
+
   it('bounds only previous context; a long target stays complete or is explicitly skipped', () => {
     const long = 'x'.repeat(2000)
     const turns = assembleStageHistory('session-d', [

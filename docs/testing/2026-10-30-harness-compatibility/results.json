@@ -1,0 +1,293 @@
+{
+  "date": "2026-10-30",
+  "environment": {
+    "platform": "darwin",
+    "node": "24.14.1",
+    "pnpm": "11.7.0",
+    "chromium": "156.0.8078.4"
+  },
+  "dshSource": "b830ec950faba0a46dda564be3e2d854afed94f1",
+  "pluginBase": "691720993291a0949caf11444bfd60df53ebe351",
+  "developmentVersion": "0.2.1-rc.5",
+  "formalPackage": true,
+  "realModelCalls": 0,
+  "localChecks": {
+    "frozenInstall": true,
+    "typecheck": true,
+    "testFiles": 31,
+    "testsPassed": 458
+  },
+  "runtime": {
+    "trackedFiles": 87,
+    "changedFromBase": false
+  },
+  "versions": [
+    {
+      "version": "0.1.7-rc.1",
+      "officialCliVersion": "0.1.7-rc.1",
+      "passed": true,
+      "package": {
+        "name": "@dsh-jev/plugin",
+        "version": "0.1.0",
+        "manifestMatches": true,
+        "comparedFiles": 89,
+        "sha256": "71a44df8a706a16c8fe4853090761bc7dfe3a8426bd9b94b0b238ca53294cc2f"
+      },
+      "experimentalManifest": false,
+      "installExitCode": 0,
+      "hostPassed": true,
+      "activeHostComponents": 9,
+      "caseLabels": [
+        "session-a",
+        "session-b",
+        "native-goal",
+        "shared-reports",
+        "skill-no-relevant"
+      ],
+      "webPassed": true,
+      "featureSwitches": 12,
+      "settingsVisible": true,
+      "recordsVisible": true,
+      "classifiedStepsVisible": 10,
+      "returnedToChat": true,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "importErrors": 0
+    },
+    {
+      "version": "0.1.7-rc.2",
+      "officialCliVersion": "0.1.7-rc.2",
+      "passed": true,
+      "package": {
+        "name": "@dsh-jev/plugin",
+        "version": "0.1.0",
+        "manifestMatches": true,
+        "comparedFiles": 89,
+        "sha256": "71a44df8a706a16c8fe4853090761bc7dfe3a8426bd9b94b0b238ca53294cc2f"
+      },
+      "experimentalManifest": false,
+      "installExitCode": 0,
+      "hostPassed": true,
+      "activeHostComponents": 9,
+      "caseLabels": [
+        "session-a",
+        "session-b",
+        "native-goal",
+        "shared-reports",
+        "skill-no-relevant"
+      ],
+      "webPassed": true,
+      "featureSwitches": 12,
+      "settingsVisible": true,
+      "recordsVisible": true,
+      "classifiedStepsVisible": 10,
+      "returnedToChat": true,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "importErrors": 0
+    },
+    {
+      "version": "0.2.0-rc.1",
+      "officialCliVersion": "0.2.0-rc.1",
+      "passed": true,
+      "package": {
+        "name": "@dsh-jev/plugin",
+        "version": "0.1.0",
+        "manifestMatches": true,
+        "comparedFiles": 89,
+        "sha256": "71a44df8a706a16c8fe4853090761bc7dfe3a8426bd9b94b0b238ca53294cc2f"
+      },
+      "experimentalManifest": false,
+      "installExitCode": 0,
+      "hostPassed": true,
+      "activeHostComponents": 9,
+      "caseLabels": [
+        "session-a",
+        "session-b",
+        "native-goal",
+        "shared-reports",
+        "skill-no-relevant"
+      ],
+      "webPassed": true,
+      "featureSwitches": 12,
+      "settingsVisible": true,
+      "recordsVisible": true,
+      "classifiedStepsVisible": 10,
+      "returnedToChat": true,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "importErrors": 0
+    },
+    {
+      "version": "0.2.0-rc.2",
+      "officialCliVersion": "0.2.0-rc.2",
+      "passed": true,
+      "package": {
+        "name": "@dsh-jev/plugin",
+        "version": "0.1.0",
+        "manifestMatches": true,
+        "comparedFiles": 89,
+        "sha256": "71a44df8a706a16c8fe4853090761bc7dfe3a8426bd9b94b0b238ca53294cc2f"
+      },
+      "experimentalManifest": false,
+      "installExitCode": 0,
+      "hostPassed": true,
+      "activeHostComponents": 9,
+      "caseLabels": [
+        "session-a",
+        "session-b",
+        "native-goal",
+        "shared-reports",
+        "skill-no-relevant"
+      ],
+      "webPassed": true,
+      "featureSwitches": 12,
+      "settingsVisible": true,
+      "recordsVisible": true,
+      "classifiedStepsVisible": 10,
+      "returnedToChat": true,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "importErrors": 0
+    },
+    {
+      "version": "0.2.1-alpha.2",
+      "officialCliVersion": "0.2.1-alpha.2",
+      "passed": true,
+      "package": {
+        "name": "@dsh-jev/plugin",
+        "version": "0.1.0",
+        "manifestMatches": true,
+        "comparedFiles": 89,
+        "sha256": "71a44df8a706a16c8fe4853090761bc7dfe3a8426bd9b94b0b238ca53294cc2f"
+      },
+      "experimentalManifest": false,
+      "installExitCode": 0,
+      "hostPassed": true,
+      "activeHostComponents": 9,
+      "caseLabels": [
+        "session-a",
+        "session-b",
+        "native-cwd-switch",
+        "native-goal",
+        "shared-reports",
+        "skill-no-relevant"
+      ],
+      "webPassed": true,
+      "featureSwitches": 12,
+      "settingsVisible": true,
+      "recordsVisible": true,
+      "classifiedStepsVisible": 10,
+      "returnedToChat": true,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "importErrors": 0
+    },
+    {
+      "version": "0.2.1-alpha.3",
+      "officialCliVersion": "0.2.1-alpha.3",
+      "passed": true,
+      "package": {
+        "name": "@dsh-jev/plugin",
+        "version": "0.1.0",
+        "manifestMatches": true,
+        "comparedFiles": 89,
+        "sha256": "71a44df8a706a16c8fe4853090761bc7dfe3a8426bd9b94b0b238ca53294cc2f"
+      },
+      "experimentalManifest": false,
+      "installExitCode": 0,
+      "hostPassed": true,
+      "activeHostComponents": 9,
+      "caseLabels": [
+        "session-a",
+        "session-b",
+        "native-cwd-switch",
+        "native-goal",
+        "shared-reports",
+        "skill-no-relevant"
+      ],
+      "webPassed": true,
+      "featureSwitches": 12,
+      "settingsVisible": true,
+      "recordsVisible": true,
+      "classifiedStepsVisible": 10,
+      "returnedToChat": true,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "importErrors": 0
+    },
+    {
+      "version": "0.2.1-rc.2",
+      "officialCliVersion": "0.2.1-rc.2",
+      "passed": true,
+      "package": {
+        "name": "@dsh-jev/plugin",
+        "version": "0.1.0",
+        "manifestMatches": true,
+        "comparedFiles": 89,
+        "sha256": "71a44df8a706a16c8fe4853090761bc7dfe3a8426bd9b94b0b238ca53294cc2f"
+      },
+      "experimentalManifest": false,
+      "installExitCode": 0,
+      "hostPassed": true,
+      "activeHostComponents": 9,
+      "caseLabels": [
+        "session-a",
+        "session-b",
+        "native-cwd-switch",
+        "native-goal",
+        "shared-reports",
+        "skill-no-relevant"
+      ],
+      "webPassed": true,
+      "featureSwitches": 12,
+      "settingsVisible": true,
+      "recordsVisible": true,
+      "classifiedStepsVisible": 10,
+      "returnedToChat": true,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "importErrors": 0
+    },
+    {
+      "version": "0.2.1-rc.5",
+      "officialCliVersion": "0.2.1-rc.5",
+      "passed": true,
+      "package": {
+        "name": "@dsh-jev/plugin",
+        "version": "0.1.0",
+        "manifestMatches": true,
+        "comparedFiles": 89,
+        "sha256": "71a44df8a706a16c8fe4853090761bc7dfe3a8426bd9b94b0b238ca53294cc2f"
+      },
+      "experimentalManifest": false,
+      "installExitCode": 0,
+      "hostPassed": true,
+      "activeHostComponents": 9,
+      "caseLabels": [
+        "session-a",
+        "session-b",
+        "native-cwd-switch",
+        "native-goal",
+        "shared-reports",
+        "skill-no-relevant"
+      ],
+      "webPassed": true,
+      "featureSwitches": 12,
+      "settingsVisible": true,
+      "recordsVisible": true,
+      "classifiedStepsVisible": 10,
+      "returnedToChat": true,
+      "pageErrors": 0,
+      "consoleErrors": 0,
+      "importErrors": 0
+    }
+  ],
+  "website": {
+    "pages": 28,
+    "internalLinks": 355,
+    "brokenLinks": 0,
+    "syntaxCheck": true,
+    "build": true
+  }
+}

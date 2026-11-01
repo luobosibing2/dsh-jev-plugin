@@ -49,7 +49,7 @@ DSH --> 功能插件: 记录实际采用与执行结果
 
 TypeSafe 将 Jev 的训练方法称为 **RLCD**，即为校准决策训练模型。它的目标是输出决策与概率。校准要在一组预测上衡量。本插件的有限样例没有验证概率校准。
 
-例如，日志候选得到 `omit` 后，程序还要检查概率门槛。`0.8` 是该功能的采用参数，不能直接解释为本项目有 80% 正确率。`confidence` 描述答案的不确定程度，也不代表业务结果已验证。
+例如，日志候选得到 `omit` 后，程序还要检查概率门槛。`0.7` 是该功能的默认采用参数，不能直接解释为本项目有 70% 正确率。`confidence` 描述答案的不确定程度，也不代表业务结果已验证。
 
 原理来源：[System One](https://docs.typesafe.ai/concepts/system-one)、[State](https://docs.typesafe.ai/concepts/state)、[RLCD](https://docs.typesafe.ai/introduction/machine-learning-primer)、[概率与 confidence](https://docs.typesafe.ai/confidence)。
 
@@ -76,6 +76,8 @@ TypeSafe 将 Jev 的训练方法称为 **RLCD**，即为校准决策训练模型
 
 ### 01 技能选择 · skill-selection
 
+本节技能规则按 2026-10-17 的零推荐修复更新。历史案例仍保留原规则和当时结果。
+
 **解决的问题：** 技能目录较大时，先发布与当前任务相关的摘要。
 
 | 环节 | 实际内容 |
@@ -83,26 +85,37 @@ TypeSafe 将 Jev 的训练方法称为 **RLCD**，即为校准决策训练模型
 | 触发 | 主 Agent 的 `agent/pre-step`，原生技能目录发布前 |
 | state | 最近最多 2 条直接用户文本、1 条助手可见文本；默认合计 2,000 字符 |
 | questions | 每个技能一道 Noul；题目包含技能名称和 description |
-| 采用 | 按相关概率排序，默认先取前 5 个，再去掉 Session 已可见的名称 |
+| 采用 | 先保留 `probability ≥ skillMinProbability` 的候选；默认门槛 0.5。再稳定排序，最多取 `skillLimit` 项（默认 5），最后去掉 Session 已可见的名称 |
 | 主模型后续行动 | 通过原生 `skill` 工具加载技能正文 |
 
 **示例：** 用户要求分析退款逻辑。插件判断代码调查技能是否相关，再把入选摘要交给主模型。Jev 没有读取技能正文、工具结果或附件。
 
-去重后不从第 6 名补位。主模型仍可直接调用未入选技能。`skill_catalog` 可恢复完整摘要目录，恢复不调用 Jev。判断失败走人工 Retry / Cancel。
+`skillMinProbability` 只能是 `[0, 1]` 内的有限数，等于门槛也保留。概率相同时保持候选原顺序。`confidence` 不参与资格判断或排序。技能数量是上限，不要求凑满；去重后也不补位。
 
-来源：[任务上下文](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L65)、[技能判断与目录采用](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L227)。
+| 判断与选择结果 | 目录与回执 |
+| --- | --- |
+| 有效判断，但没有候选达到门槛 | 发布 `entries: []` 的正常目录；回执为 `skill-catalog-no-relevant`。说明本次无适用推荐，主模型继续任务 |
+| 有合格选择，但名称都已可见 | 不新增目录消息；回执为 `skill-catalog-no-new`。已有摘要继续可用 |
+| 判断失败、回答不完整、取消或未采用 | 保持既有失败流程；失败等待人工 Retry / Cancel，不生成成功零推荐 |
+
+初始空目录不发起判断，也不记为成功零推荐。新用户请求或目录变化会重新选择；普通工具步骤不重复判断。
+
+主模型仍可通过原生 `skill` 按名称加载未入选技能，用户显式调用也保持原生权限。`skill_catalog` 恢复完整的当前可供模型调用的摘要目录，恢复不调用 Jev。新目录的 `source.selection` 保存本次门槛与上限。评测分析器据此核对新目录；旧记录缺少元数据时，仍按当时的无门槛规则核对，不改写原始结果。
+
+来源：[任务上下文](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/src/selection.ts#L80)、[资格筛选、去重与三种回执](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/src/selection.ts#L304)、[选择配置与恢复说明](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/README.md#skill-and-glob-selection)。
 
 ### 技能选择的完整输入输出示例
 
-**6 个技能摘要 → 一次请求、6 道 Noul → 6 个概率 → 默认选前 5 个。**
+**6 个技能摘要 → 一次请求、6 道 Noul → 6 个概率 → 先过 0.5 门槛 → 最多选 5 个。**
 
 本例使用 Jev / System One 协议。技能名称、简介和概率都是演示值，不是真实模型实测。假设这 6 个技能都可由当前 Agent 调用，且尚未在 Session 中展示。
 
 ```flow
 6 个技能摘要 -> 一次请求中的 6 道 Noul
 一次请求中的 6 道 Noul -> Jev 返回 6 个概率
-Jev 返回 6 个概率 -> 插件排序并取前 5 个
-插件排序并取前 5 个 -> 主模型收到入选摘要
+Jev 返回 6 个概率 -> 保留概率不小于 0.5 的候选
+保留概率不小于 0.5 的候选 -> 稳定排序并最多取 5 个
+稳定排序并最多取 5 个 -> 去掉已可见名称并发布新增摘要
 ```
 
 #### 用户提出什么任务
@@ -186,18 +199,18 @@ Jev 返回 6 个概率 -> 插件排序并取前 5 个
 }
 ```
 
-随后，本地插件按概率排序，默认取前 5 个：
+随后，本地插件先检查最低概率，再按概率稳定排序，默认最多取 5 个：
 
-| 排名 | 技能 | 相关概率（演示值） | 默认前 5 个 |
+| 排名 | 技能 | 相关概率（演示值） | 默认选择 |
 | --- | --- | --- | --- |
 | 1 | root-cause-analysis | 0.95 | 入选 |
 | 2 | unit-testing | 0.91 | 入选 |
 | 3 | code-investigation | 0.88 | 入选 |
 | 4 | code-editing | 0.83 | 入选 |
 | 5 | technical-writing | 0.61 | 入选 |
-| 6 | slide-generation | 0.03 | 不入选 |
+| 6 | slide-generation | 0.03 | 低于 0.5，不入选 |
 
-技能选择使用 Top 5，没有日志功能的 0.8 采用门槛。因此，本例中概率为 0.61 的第 5 名也会入选。若入选名称已在 Session 可见，插件会去重，不用第 6 名补位。
+本例有 5 项达到技能门槛 0.5，恰好全部入选。概率为 0.61 的第 5 名达到门槛，概率为 0.03 的候选被排除。若只有一项达到门槛，就只选一项。去重发生在数量截断之后，不从后续候选补位。
 
 #### 输出：主模型最终收到的技能摘要
 
@@ -213,11 +226,13 @@ Jev 返回 6 个概率 -> 插件排序并取前 5 个
 </available_skills>
 ```
 
-消息还要求主模型先调用原生 `skill` 工具读取正文。主模型可用 `skill_catalog` 恢复完整摘要目录。
+如果八项候选的概率都是 `0.01`，本次仍是成功判断，但没有技能达到门槛。目录为 `entries: []`，`<available_skills>` 中没有推荐名称；回执为 `skill-catalog-no-relevant`。这只描述本次判断，不证明客观上没有适用技能。
+
+消息保留原生 `skill` 正文加载和 `skill_catalog` 完整目录恢复说明。此前已可见的摘要继续保留。
 
 **到这里，插件只筛选并发布了摘要。** 主模型之后决定加载和执行哪个技能。Jev 的入选结果不会自动执行技能。
 
-格式来源：[问题组装](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L256)、[Jev 请求编码](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/wire.ts#L65)、[Noul 答案转换](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/wire.ts#L117)、[目录消息](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/selection.ts#L140)。
+格式来源：[问题组装](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/src/selection.ts#L281)、[Jev 请求编码](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/wire.ts#L65)、[Noul 答案转换](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/wire.ts#L117)、[目录消息](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/src/selection.ts#L159)。
 
 ### 02 文件排序 · file-ranking
 
@@ -401,7 +416,7 @@ Jev 判断保留或省略 -> {是否满足采用条件}
 | 触发 | 可识别的长命令日志；默认从 6,000 个 Unicode 码点开始 |
 | 输入 | 当前任务、命令信息、受保护上下文和候选进度或重复提示片段 |
 | 问题 | 对候选问 Choice：`omit / keep / unknown` |
-| 采用 | omit 的概率不小于 0.8 才考虑省略；概率缺失时读取 confidence |
+| 采用 | 默认在 omit 概率不小于 0.7 时考虑省略；显式配置优先，概率缺失时读取 confidence |
 | 失败与限制 | 默认最多等待 4 秒；失败、未知、低概率或存储失败都保留原结果 |
 
 **示例：** 构建输出数百条数字进度。插件保护错误、摘要、首尾与关键行，再判断进度候选是否仍有用。没有识别到候选时直接旁路。
@@ -413,7 +428,7 @@ Jev 判断保留或省略 -> {是否满足采用条件}
 | 触发 | 可识别测试日志；默认从 4,000 个 Unicode 码点开始 |
 | 输入 | 任务与测试日志候选；本地先保护失败、摘要、点名测试和慢测试 |
 | 问题 | 对普通通过明细问 Choice：`omit / keep / unknown` |
-| 采用 | 使用独立开关，共用默认 0.8 门槛与 4 秒等待 |
+| 采用 | 使用独立开关，共用默认 0.7 门槛与 4 秒等待 |
 | 特殊规则 | 完全相同的重复失败详情可由确定性规则合并，不必调用 Jev |
 
 **示例：** 一百条通过明细和一条失败详情。失败详情先被保护，Jev 只判断普通通过候选。日志变短不必然来自模型判断。
@@ -451,7 +466,7 @@ Jev 判断授权 -> {答案}
 
 **示例：** 用户明确要求把指定内容写入一个工作区外路径。插件判断这次提权是否属于已授权操作。发放许可后，仍由原生工具执行并记录结果。
 
-这项功能没有日志功能的统一 0.8 门槛。旧批准在任务、脚本、路径或策略变化后失效。它不改变长期 sandbox 模式；一次 approve 也不能证明工具执行成功。
+这项功能没有日志功能的统一 0.7 门槛。旧批准在任务、脚本、路径或策略变化后失效。它不改变长期 sandbox 模式；一次 approve 也不能证明工具执行成功。
 
 来源：[审批输入与题目](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/workspace-approval.ts#L117)、[最后重验与单次许可](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/src/workspace-approval.ts#L265)、[审批参考](https://github.com/luobosibing2/dsh-jev-plugin/blob/79cdf65083f19bf5d9c76e3adfa0f3030f057bad/packages/jev/README.md#workspace-approval)。
 

@@ -14,11 +14,17 @@
 
 [原理与全部功能](https://luobosibing2.github.io/dsh-jev-plugin/explainers/dsh-jev-plugin.html)文章说明全部 12 项功能，并展示技能选择的完整输入输出例子。[Markdown 源稿](docs/explainers/dsh-jev-plugin.md)在本仓库维护。
 
+[快速复习目录](https://luobosibing2.github.io/dsh-jev-plugin/#quick-review)集中列出源码导读。[长日志去噪面试复习](https://luobosibing2.github.io/dsh-jev-plugin/explainers/log-admission-interview.html)说明通用与测试日志流程、设计取舍、真实模型结果及其边界；[Markdown 源稿](docs/explainers/log-admission-interview.md)在本仓库维护。
+
+[Goal 监督与完成补做复习](https://luobosibing2.github.io/dsh-jev-plugin/explainers/goal-completion-review.html)沿入口、判断、采纳、有限补充和送达记录回看当前两条流程。[Markdown 源稿](docs/explainers/goal-completion-review.md)区分当前行为与历史真实模型结果。
+
 `main` 支持 Jev，以及通过 OpenRouter 或 OpenAI 使用 Luna Decisions；每个 profile 独立保存三套连接。[2026-10-07 公开报告](docs/testing/2026-10-07-luna-decisions/README.md)区分固定协议及安装、受控真实样例与真实 DeepSeek Flash 任务。官方 OpenAI 在这些有限样例中调用成功；OpenRouter 的唯一真实诊断返回提供方访问限制的 HTTP 403 后停止。这些结果不建立通用判断准确率或稳定任务收益。
 
 [2026-10-09–10 Harness 兼容报告](docs/testing/2026-10-09-harness-compatibility/README.md)记录从 DSH 0.1.7-rc.2 升至 0.2.1-alpha.2 的适配、正式安装与 Web 检查，以及新一轮真实 DeepSeek Flash / Jev 任务。原始插件被新版安装器的版本检查拒绝；本次修改同步依赖并适配受影响的公开 API。报告分别记录真实任务、固定初始遗漏的完成诊断、确定性生命周期测试及本轮未实测的提供方渠道。
 
 [2026-10-11 版本兼容报告](docs/testing/2026-10-11-harness-version-compatibility/README.md)检查当前插件在四个旧发布版本和 0.2.1-alpha.2 上的接入。报告记录正式安装、九个 Host 组件、原生工具和本地确定性判断流程，以及最早版本、0.2.0-rc.2 和 0.2.1-alpha.2 的浏览器检查。这些检查验证所测环境中的版本接入，不评估判断模型质量。
+
+[2026-10-21 Harness 兼容报告](docs/testing/2026-10-21-harness-compatibility/README.md)记录 DSH **0.2.1-rc.2** 升级。本轮使用本地确定性模型回复检查正式安装包、Host 组件与 Web 接入，不调用真实模型服务。较早报告保留各自原始版本和实验条件。
 
 ## 包含哪些功能？
 
@@ -26,7 +32,7 @@
 
 | 功能 | 作用 |
 | --- | --- |
-| 技能选择（Skill selection） | 在技能目录发布前，对名称和摘要排序；主 Agent 仍通过原生 skill 加载正文。 |
+| 技能选择（Skill selection） | 推荐概率达到最低值的技能，数量不超过配置上限；成功判断也可以零推荐。主 Agent 仍通过原生 skill 加载正文。 |
 | 文件排序（File ranking） | 对原生 glob 返回的路径排序，不追加文件扫描或正文读取。 |
 | 跑偏提醒（Drift monitoring） | 在模型步骤之间检查进展，必要时提供一次非阻塞提醒。 |
 | 完成核查（Completion checks） | 核查本 turn 的要求、最新 Todo 与最终回答，默认最多自动补充 3 轮。 |
@@ -44,6 +50,8 @@
 *较早版本的功能设置示例。截图展示 9 个开关及用户自行选择的状态；当前 `main` 包含上表中的 12 项功能，新安装时默认全部关闭。*
 
 所有功能共用连接、按 profile 保存的设置、判断记录与操作回执。多数 Agent 功能面向存活的 Web 主会话；向子 Agent 发送纠正，不等于子 Agent 自动拥有其他 Jev 增强。
+
+中途插话分流让任务、Goal、近期助手正文和工具文本共用插件组件的 `contextChars` 预算（默认 12,000 字符）。当前用户要求优先保留，选中的要求按原始顺序呈现。当前消息另用 `messageChars` 限制；原始 Session 历史仍保留。
 
 **功能分支不等于已合入 main。** 工具输出筛选已进入 `main`；`codex/jev-tool-output-admission` 保留开发快照。原生网页执行在 `codex/jev-native-web-execution`，该方向目前**暂停，普通网站效果未通过验收**。其他历史分支保留早期实现。切换前请看[分支状态](docs/branches.md)。
 
@@ -71,9 +79,11 @@
 
 每次分类覆盖一个完整 DSH 模型 step：已记录的 Think、正文、全部工具调用与配对结果。Jev 从六阶段及 `mixed`、`unknown` 中选一个；程序只在同一轮内合并连续相同标签。页面左侧保留多轮目录，右侧定位完整 step 原文，并可核对实际分类输入与回答。标签和 confidence 不表示工具成功或分类正确率。输入、保存与失败处理见[包参考](packages/jev/README.md#stage-navigation)。
 
+阶段分析发送或写入日志前，先解码 JSON 工具参数、脱敏凭据，再重新序列化。不完整或无效的参数 JSON 会替换为明确的脱敏标记。原始 Session 记录保持不变；更新后的脱敏规则使先前分类显示为过期，但不会删除已保存记录。
+
 ## 网页端安装（推荐）
 
-安装包声明 `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.2-alpha.2`。此前兼容报告覆盖前六个发布版本；新增的精确 0.2.2-alpha.2 声明允许本地验证的配套源码 Host，不代表未打补丁的发布包具备响应中断能力。其他版本，包括 0.2.1-alpha.1，不在声明范围内。直接填写 GitHub 仓库地址即可，无需克隆源码、手动打包或登录 npm。
+安装包声明 `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-rc.2 || 0.2.1-rc.5 || 0.2.2-alpha.2`。兼容报告覆盖前八个发布版本，包括 0.2.1-rc.2 和 0.2.1-rc.5；新增的精确 0.2.2-alpha.2 声明允许本地验证的配套源码 Host，不代表未打补丁的发布包具备响应中断能力。其他版本，包括 0.2.1-alpha.1，不在声明范围内。直接填写 GitHub 仓库地址即可，无需克隆源码、手动打包或登录 npm。
 
 1. 打开 **侧边栏「插件」→「添加插件」**。
 2. 在 **「包名或地址」** 中粘贴下面的 GitHub 地址，点击 **「安装」**。
@@ -102,6 +112,8 @@ https://github.com/luobosibing2/deepseek-harness-jev
 - `PATH` 中可用的 pnpm **11.7.0**。
 - 开发基线：DeepSeek Harness CLI 和开发依赖 **0.2.2-alpha.2**，以及 Cordis **4.0.6-alpha.1**。这些精确构建版本与上面的安装兼容范围分开维护；请使用下面的精确版本号，npm 的 `latest` 标签可能指向另一版本。
 - 在 DSH 中配置好主模型，以及所选 Jev 兼容 System One 服务或 Luna API 的凭据。
+
+旧版 DSH 支持针对已构建正式包的安装与运行。从源码构建，以及使用新生成 Remote 声明的 TypeScript 项目，使用 0.2.2-alpha.2 开发基线。
 
 如尚未安装工具：
 
@@ -171,19 +183,21 @@ dsh --profile jev
 
 每次尝试使用开始时已保存的连接；之后的切换用于新尝试和人工重试。故障不会自动转向其他模型或 API。OpenRouter 超过 200 题时完整分批，所有批次共用原超时，全部完成后才向业务交付答案；部分失败仍保留实际网络数据和已知用量。配置及生命周期详情见[包参考](packages/jev/README.md#judgment-connections)。
 
-选择功能默认取 5 个技能摘要，最多对 40 个 glob 命中排序，展示 12 条路径。超过上限时直接跳过判断排序，不会悄悄只判断前 40 个。监督功能默认每 6 个完成的模型步骤检查一次跑偏，连续 3 个原生目标轮次无进展则暂停；完成核查默认最多自动补充 3 轮。补充轮数接受正安全整数，按当前 profile 保存；非法输入显示错误并保留已保存值。这些计数互相独立，保存参数不会自动开启功能。
+选择功能默认最多推荐 5 个合格技能摘要，最低相关概率为 0.5；最多对 40 个 glob 命中排序，展示 12 条路径。在 `jev-selection` 插件行配置 `skillMinProbability`，取值须为 `[0, 1]` 内的有限数，概率恰等于阈值也合格。Web 数量表单保存时保留该阈值。没有技能合格时，正常发布空目录，主 Agent 可继续任务；`skill_catalog` 可恢复全部可供模型调用的摘要，原生 `skill` 仍可按准确名称加载。glob 超过上限时直接跳过判断排序，不会悄悄只判断前 40 个。监督功能默认每 6 个完成的模型步骤检查一次跑偏，连续 3 个原生目标轮次无进展则暂停；完成核查默认最多自动补充 3 轮。补充轮数接受正安全整数，按当前 profile 保存；非法输入显示错误并保留已保存值。这些计数互相独立，保存参数不会自动开启功能。
 
-通用长日志准入和测试日志准入有独立开关，均默认关闭。命令日志从 6,000 个 Unicode 码点、可识别测试日志从 4,000 个码点开始处理。通用分支默认最多允许 48 个可判断候选块；首尾及其他保留分组不计入名额。默认设置下，候选超过 48 个时放弃本次通用过滤。默认省略概率门槛为 0.8，判断最多等待 4 秒。设置页可调整这些及其他准入预算，保存预算不会开启功能。
+通用长日志准入和测试日志准入有独立开关，均默认关闭。命令日志从 6,000 个 Unicode 码点、可识别测试日志从 4,000 个码点开始处理。通用分支默认最多允许 48 个可判断候选块；首尾及其他保留分组不计入名额。默认设置下，候选超过 48 个时放弃本次通用过滤。两分支共用默认省略概率门槛 0.7，profile 显式配置值优先。判断最多等待 4 秒。取值依据和限制见[阈值评估](docs/reports/2026-10-17-log-admission-threshold.zh-CN.md)。设置页可调整这些及其他准入预算，保存预算不会开启功能。
+
+原生 Spill 配置了 `maxInlineTokens` 时，准入先用宿主共享估算器和本次执行实际生效的预算，检查整个模型可见结果。超过预算就跳过判断请求及规则省略，原样交给原生 Spill；等于预算可继续接受已有检查。Jev 的文本处理位置仍在 Spill 裁剪之前。策略未加载或未配置预算时，沿用现有 Jev 处理，不增加这项限制；`0` 仍是有效预算。采用结果也必须在计入省略标记、恢复提示和外层结果后符合预算。这项功能用于原生预算内的任务相关性去噪，不保证真实 token 节省或任务收益。配置变化及策略状态无法确定时的行为见[包参考](packages/jev/README.md#tool-log-admission)。
 
 ## 行为与限制
 
 - **提醒是建议。** 跑偏和约束提醒不会阻塞、取消工具，也不会强制主模型遵守。即使只有一个引用或没有文字要求，证据选择题也至少保留两个选项；不确定选项不能作为纠正提醒的依据。
 - **完成核查的固定16槽诊断。** 初始错误由脚本种入，开启组的6/6个错误案例经真实Jev判断和DeepSeek补做满足核心要求；2/2个准确对照判为完成，均无补做。见[新诊断结果](docs/testing/2026-10-05-completion-recovery/public-results.zh-CN.md)。这些试次使用此前的已有证据核查语义，不能证明轻量报告核查的真实任务效果，也不能推出自然任务错误率或编码平均收益。历史长编码试次因默认证据预算裁掉原始要求，判断零采用、零自动补做，最终转入人工Retry/Cancel，见[旧报告](docs/testing/2026-10-02-completion-skill/README.md)。
-- **审批只针对一次操作。** 不改变会话沙箱模式，不覆盖宿主固定检查。有效 approve 可返回 allowed-once，unauthorized 或 unknown 回原人工审批；技术故障保留人工 Retry/Cancel。
+- **审批只针对一次操作。** 不改变会话沙箱模式，不覆盖宿主固定检查。操作路径和直接脚本证据使用原生当前工作目录，包含相对 shell `workdir` 覆盖；原始工作区仍为沙箱边界。有效 approve 可返回 allowed-once，unauthorized 或 unknown 回原人工审批；技术故障保留人工 Retry/Cancel。
 - **共享纠正有明确范围。** 它只处理已经共享的报告和消息，不读取所有 Agent 的内部探索；自动投递限当前存活的主 Agent 及其活跃、可继续的直接子 Agent。同一发现以不同形式上报时，仍可能产生重复纠正。
 - **插话判断使用原始事实。** 分流发送新消息、有界的原始任务及修改要求、可用 Goal、近期助手正文、必要工具事实和代码确定的执行阶段。准备输入不调用摘要模型；稳定消息正常只分类一次。响应中断不会取消已经启动的工具。
 - **判断成功不等于执行成功。** 日志分别记录判断、采纳、许可发放和实际操作结果。
-- **日志准入保留原文入口。** 它只在工具执行后调整符合条件的模型可见文本；DSH 即时 spill、工具输出上限和之后的上下文压缩仍生效。隔离真实 profile 的一次构建将 8,510 字符日志缩短了 75.7%。一次中性措辞的 180 项测试触发了测试日志判断，但省略概率低于 0.8，因此完整保留；该次不证明测试日志已有实际缩减效果。见[工具输出准入报告](docs/reports/2026-09-27-tool-output-admission.zh-CN.md)。
+- **日志准入保留原文入口。** 它只在工具执行后调整符合条件的模型可见文本；DSH 即时 spill、工具输出上限和之后的上下文压缩仍生效。隔离真实 profile 的一次构建将 8,510 字符日志缩短了 75.7%。一次中性措辞的 180 项测试触发了测试日志判断，但省略概率低于当时配置的 0.8 门槛，因此完整保留；该次不证明测试日志已有实际缩减效果。见[工具输出准入报告](docs/reports/2026-09-27-tool-output-admission.zh-CN.md)。
 - **验证有范围。** 确定性测试证明集成流程，有限真实样例不能证明普遍语义准确率。详见[验证说明](docs/validation.md)。
 - **Luna 任务结果保留未达预期与限制。** 前两个受控审批样例返回 `unauthorized`；后来的真实任务得到 `approve` 并执行一次原生 `allowed-once` 写入。真实构建日志在原默认参数下由 8,407 缩至 2,122 码点（74.76%），五个同分文件概率则未改变排序。[双语 Luna 报告](docs/testing/2026-10-07-luna-decisions/README.md)同时记录这些结果、原文恢复和未验证功能。
 
@@ -224,6 +238,7 @@ pnpm exec vitest run packages/jev/tests/host.test.ts packages/jev/tests/wire.tes
 按改动运行相关测试。没有明确授权时，不开启真实服务实验或使用他人的凭据。开发夹具和测试不会进入可安装 tarball。
 
 - [包参考与消费者 API](packages/jev/README.md)
+- [规划、决策与交付记录](.agents/notes/README.md)
 - [工作区审批集成测试](packages/jev/tests/workspace-approval.test.ts)
 - [工作区审批 QA 用例](packages/jev/tests/workspace-approval-qa.md)
 - [工具输出准入报告](docs/reports/2026-09-27-tool-output-admission.zh-CN.md)

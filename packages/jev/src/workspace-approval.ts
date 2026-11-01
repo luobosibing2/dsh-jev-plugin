@@ -11,6 +11,7 @@ import type { ToolCallId } from '@deepseek-ai/dsh-llm'
 import type { ToolDispatchExecution } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-sandbox-policy'
 import type {} from '@deepseek-ai/dsh-settings'
+import type {} from '@deepseek-ai/dsh-working-directory'
 import s from '@deepseek-ai/schemastery'
 import type {} from './index.ts'
 import type { JevRequest, JevResponse, Json } from './types.ts'
@@ -109,17 +110,20 @@ function visibleContext(agent: Agent): Json {
   return JSON.parse(JSON.stringify({ messages, pending })) as Json
 }
 
-function operationCwd(entry: Entry, workspaceRoot: string): string {
+function operationCwd(entry: Entry, currentDirectory: string): string {
   const workdir = entry.args.workdir
   return (entry.exec.name === 'bash' || entry.exec.name === 'pwsh') && typeof workdir === 'string'
-    ? isAbsolute(workdir) ? workdir : resolve(workspaceRoot, workdir)
-    : workspaceRoot
+    ? isAbsolute(workdir) ? workdir : resolve(currentDirectory, workdir)
+    : currentDirectory
 }
 
 async function snapshot(ctx: Context, fs: FileSystem, entry: Entry, req: ApprovalRequestEvent, epoch: () => number, maxScriptBytes: () => number, signal: AbortSignal): Promise<Snapshot> {
   const agent = entry.exec.agent!
   const policy = ctx.sandboxPolicy.resolve({ session: agent.session })
-  const cwd = operationCwd(entry, policy.workspaceRoot)
+  const directory = ctx.get('workingDirectory')
+  const currentDirectory = directory === undefined
+    ? agent.session.header.cwd ?? policy.workspaceRoot : await directory.ensure(agent, signal)
+  const cwd = operationCwd(entry, currentDirectory)
   const argumentsJson = JSON.parse(JSON.stringify(entry.args)) as Json
   const script = await scriptEvidence(fs, entry, cwd, maxScriptBytes(), signal)
   const currentPolicy = ctx.sandboxPolicy.resolve({ session: agent.session })
@@ -128,7 +132,7 @@ async function snapshot(ctx: Context, fs: FileSystem, entry: Entry, req: Approva
     operation: { agentId: agent.id, sessionId: agent.session.id, callId: entry.exec.callId,
       rootCallId: entry.exec.rootCallId, tool: entry.exec.name, arguments: argumentsJson,
       cwd, workspaceRoot: policy.workspaceRoot,
-      ...typeof entry.args.file_path === 'string' ? { target: resolve(policy.workspaceRoot, entry.args.file_path) } : {},
+      ...typeof entry.args.file_path === 'string' ? { target: resolve(cwd, entry.args.file_path) } : {},
       reason: req.reason ?? '', requestedMode: TARGET },
     script,
     currentPolicy: { sandboxMode: currentPolicy.mode, approvalPolicy: ctx.approval.overrideOf(agent.session) ?? ctx.approval.config.policy ?? 'ask' },
