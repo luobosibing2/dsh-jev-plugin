@@ -28,6 +28,7 @@ const summary = {
       totalHostRows: fixture.finalHostRows.length, sessionDirectoryIsolation: true,
       nativeDirectorySwitch: fixture.cases.some(test => test.label === 'native-cwd-switch'),
       protocolDiagnosticPassed: fixture.diagnostic.ok, logOmissionsAdopted: fixture.logOmissionsAdopted,
+      featureCoverage: fixture.featureCoverage ?? null, hostCapabilities: fixture.hostCapabilities ?? null,
       hostExportsResolved: fixture.hostExports?.length,
       instructionAdoption: fixture.cases.map(test => ({
         case: test.label,
@@ -50,7 +51,7 @@ const summary = {
   limits: [
     'Deterministic local model and Jev responses verify integration and adoption, not judgment accuracy or natural-task benefit.',
     'This matrix ran on ' + matrix.platform + '; other operating systems, Desktop carrier and Hub were not tested.',
-    'All twelve features were enabled in disposable profiles; production feature defaults were not changed.',
+    'Feature enablement and capability exclusions are recorded per version; production feature defaults were not changed.',
     'Drift used an interval of one and supervision used a larger evidence budget to avoid deliberately truncating fixture logs.',
     'Goal smoke covers the native completion gate; repeated no-progress pauses and every failure/retry lifecycle remain outside this matrix.',
     'Shared-finding smoke covers two native child reports and a support relation, not every correction recipient or cold-resume path.',

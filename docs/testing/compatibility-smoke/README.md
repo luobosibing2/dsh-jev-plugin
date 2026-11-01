@@ -1,8 +1,12 @@
 ## 直接答案
 
-`pnpm run test:compatibility` 从当前源码重新构建正式根安装包，准备精确版本的官方 DSH CLI，再在新的临时 profile 中检查官方安装、九个 Jev Host 组件和真实 Web 客户端。默认版本取根 `package.json` 的 DSH 开发依赖，目前为 `0.2.1-rc.5`。它不要求预先准备 CLI 路径表或安装包，不放宽正式 peer 声明。
+`pnpm run test:compatibility` 从当前源码重新构建正式根安装包，准备精确版本的官方 DSH CLI，再在新的临时 profile 中检查官方安装、九个 Jev Host 组件和真实 Web 客户端。默认版本取[验证版本列表](../../../scripts/validation/compatibility-versions.mjs)的最后一个发布版本，目前为 `0.2.1-rc.5`，与源码构建的 `0.2.2-alpha.2` 开发依赖分开。它不要求预先准备 CLI 路径表或安装包，不放宽正式 peer 声明。
 
-`pnpm run test:compatibility` builds and packs the root GitHub-install entry, prepares an exact published DSH CLI, and checks official installation, all nine Jev Host components and the real Web client in a new disposable profile. The default comes from the root DSH development dependency, currently `0.2.1-rc.5`. No pre-existing runtime map or tarball is needed, and the package keeps its declared peer versions.
+`pnpm run test:compatibility` builds and packs the root GitHub-install entry, prepares an exact published DSH CLI, and checks official installation, all nine Jev Host components and the real Web client in a new disposable profile. It defaults to the last published target in the [verification version list](../../../scripts/validation/compatibility-versions.mjs), currently `0.2.1-rc.5`, independently of the `0.2.2-alpha.2` source-build dependencies. No pre-existing runtime map or tarball is needed, and the package keeps its declared peer versions.
+
+发布版检查启用其余 11 项功能，明确关闭 `interjection-routing`。中途插话分流需要配套源码 Host 的公开 `Agent.interruptResponse()`；本检查不将发布版本号视为该能力的证明。Host 夹具记录实际功能开关与 Agent 能力，拒绝误开的分流配置，并确认没有分流判断记录。Web 检查核对 12 个开关中 11 开、分流关闭。结果与摘要保留该未验证项；三路分流由独立源码联动实验验证。
+
+Published-release checks enable the other 11 features and explicitly disable `interjection-routing`. Routing requires the paired source Host's public `Agent.interruptResponse()`; a release number alone does not establish this capability. The Host fixture records actual switches and Agent capabilities, rejects enabled routing and checks that no routing judgment was made. The Web check verifies 12 switches with 11 enabled and routing disabled. Results and summaries retain this unverified capability; the separate source integration experiment verifies three-way routing.
 
 ## 准备与运行
 
@@ -48,9 +52,9 @@ While the Host is running, the browser opens its authenticated Web address, ente
 
 ## 更新支持版本
 
-DSH 升级时，先更新根包与 workspace 包中实际使用的精确开发依赖，按已验证兼容性维护两份 peer 声明和[安装说明](../../../README.md#install-through-the-web-ui-recommended)。将新目标加入[验证版本列表](../../../scripts/validation/compatibility-versions.mjs)，再运行默认命令与需要保留支持的各个精确旧版本；新版本和旧版本都通过后再提交声明与生成 runtime。
+DSH 升级时，按源码构建需求更新根包与 workspace 包中的精确开发依赖，按已验证兼容性维护两份 peer 声明和[安装说明](../../../README.md#install-through-the-web-ui-recommended)。发布版验证目标单独维护：将新目标加入[验证版本列表](../../../scripts/validation/compatibility-versions.mjs)末尾，再运行默认命令与需要保留支持的各个精确旧版本；新版本和旧版本都通过后再提交声明与生成 runtime。新增宿主能力须单独验证，不能仅因发布版安装通过便扩大功能覆盖声明。
 
-For a DSH upgrade, update the exact development dependencies in the root and workspace packages. Maintain both peer declarations and the [installation guide](../../../README.md#install-through-the-web-ui-recommended) from observed compatibility. Add the new target to the [verification version list](../../../scripts/validation/compatibility-versions.mjs), then run the default command and each older version retained in the support declaration. Commit the declarations and generated runtime after those checks pass.
+For a DSH upgrade, update exact development dependencies for the source build. Maintain both peer declarations and the [installation guide](../../../README.md#install-through-the-web-ui-recommended) from observed compatibility. Maintain published verification targets separately: append the new release to the [verification version list](../../../scripts/validation/compatibility-versions.mjs), then run the default command and each older version retained in the support declaration. Commit the declarations and generated runtime after those checks pass. Verify new Host capabilities separately; a successful release installation does not expand feature-coverage claims.
 
 ## 边界与验证
 

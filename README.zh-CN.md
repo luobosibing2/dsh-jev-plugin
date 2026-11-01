@@ -221,7 +221,7 @@ Client CSS 构建用包内相对路径计算类名哈希，并对类名映射排
 
 协议参考准备步骤在 Windows 上使用目录联接（junction），因此 `pnpm run typecheck` 和 `pnpm run build` 创建该依赖链接时无需管理员权限或开发者模式。其他平台仍使用相对目录符号链接。该准备步骤的回归检查在 Windows CI 作业和常规测试套件中运行。
 
-运行 `pnpm run test:compatibility`，即可构建并打包正式 GitHub 安装入口、准备精确开发版本的 DSH，并在临时 profile 中检查官方安装、Host 组件和 Jev 网页。[兼容性 smoke 指南](docs/testing/compatibility-smoke/README.md)说明 Chromium 准备、指定版本及更新支持版本的方法。检查使用本地确定性模型回复，无需真实模型凭据。
+运行 `pnpm run test:compatibility`，即可构建并打包正式 GitHub 安装入口、准备验证目标列表中最新的 DSH 发布版本，并在临时 profile 中检查官方安装、Host 组件和 Jev 网页。检查启用其余 11 项功能；中途插话分流保持关闭，因为它需要配套源码 Host 的 `Agent.interruptResponse()`。[兼容性 smoke 指南](docs/testing/compatibility-smoke/README.md)说明 Chromium 准备、指定版本及更新支持版本的方法。检查使用本地确定性模型回复，无需真实模型凭据。
 
 维护者可用 [DeepSWE 配对评测入口](bench/deepswe/README.zh-CN.md)评测编码任务，用 [glob 排序管线](bench/selection/README.zh-CN.md)验证固定路径选择案例。两者采用隔离的 DSH/Pier trial，将模型执行与离线检查、报告分开。[英文评测指南](bench/deepswe/README.md)提供编码任务工作流。
 

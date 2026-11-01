@@ -15,7 +15,7 @@ export function redactWebSecrets(text) {
  * @param options - Authenticated Host URL, disposable settings and the classified fixture snapshot.
  * @returns Sanitized browser observations, including any failed phase.
  */
-export async function checkCompatibilityBrowser({ url, endpoint, model, timeoutMs, featureCount, stageSnapshot }) {
+export async function checkCompatibilityBrowser({ url, endpoint, model, timeoutMs, featureCount, enabledFeatureCount, disabledFeatureNames, stageSnapshot }) {
   const result = { ok: false, pageErrors: [], consoleErrors: [], importErrors: [] }
   let phase = 'playwright-import'
   let browser, context, page, timer
@@ -96,8 +96,14 @@ export async function checkCompatibilityBrowser({ url, endpoint, model, timeoutM
         const inputs = [...(panel?.querySelectorAll('input') ?? [])].map(input => input.value)
         const switches = [...(panel?.querySelectorAll('[role="switch"]') ?? [])]
         return inputs.includes(expected.endpoint) && inputs.includes(expected.model) && inputs.includes(String(expected.timeoutMs))
-          && switches.length === expected.featureCount && switches.every(control => control.getAttribute('aria-checked') === 'true')
-      }, { endpoint, model, timeoutMs, featureCount })
+          && switches.length === expected.featureCount
+          && switches.filter(control => control.getAttribute('aria-checked') === 'true').length === expected.enabledFeatureCount
+          && switches.filter(control => control.getAttribute('aria-checked') === 'false').length === expected.featureCount - expected.enabledFeatureCount
+      }, { endpoint, model, timeoutMs, featureCount, enabledFeatureCount })
+      for (const name of disabledFeatureNames) {
+        const control = settings.getByRole('switch', { name: new RegExp(RegExp.escape(name) + '$') })
+        assert.equal(await control.getAttribute('aria-checked'), 'false', name + ' must remain disabled on this published Host')
+      }
       assert.equal(await settings.getByRole('alert').count(), 0, 'Jev settings must load without an error notice')
       result.settingsVisible = true
       result.settings = {
@@ -106,6 +112,7 @@ export async function checkCompatibilityBrowser({ url, endpoint, model, timeoutM
         timeoutMs: Number(await settings.getByRole('spinbutton', { name: /^(Timeout \(ms\)|超时（毫秒）)$/ }).inputValue()),
         featureCount: await settings.getByRole('switch').count(),
         enabledFeatureCount: await settings.locator('[role="switch"][aria-checked="true"]').count(),
+        disabledFeatureNames,
       }
       phase = 'jev-records'
       await page.locator('#jev-records-tab').click()
