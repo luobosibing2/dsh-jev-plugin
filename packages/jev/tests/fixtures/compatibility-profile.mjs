@@ -5,6 +5,7 @@ import { join, relative } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import LlmRuntime, { LlmAdapter, createUserMessage } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
+import { verifyPublishedFeatureCoverage } from './compatibility-features.mjs'
 
 export const name = 'jev-compatibility-profile'
 export const inject = ['loader', 'jev', 'llm', 'agentLoop', 'agents', 'sessions', 'agentPresets', 'goals', 'workspaceRegistry']
@@ -123,6 +124,7 @@ export function apply(ctx) {
     scripts.set(id, script)
     const { agent } = await ctx.agents.create({ sessionId: id, agentOptions: { provider: 'jev-compatibility-fixture', model: 'fixture' }, meta: { cwd, agentPreset: 'standard' }, setup: async agentCtx => { await ctx.agentPresets.mount(agentCtx, 'standard') } })
     agents.set(id, agent)
+    results.hostCapabilities ??= { responseInterruption: typeof agent.interruptResponse === 'function' }
     // An absolute artifact path containing "ok" protects every TAP passing line.
     const approvedFixturePath = relative(cwd, join(root, 'approval-outside.txt'))
     agent.followup(user('Use native tools to read this isolated project, load its own skill, run its fixture scripts, and follow its AGENTS.md. I authorize the single fixture write at ' + approvedFixturePath + ' with danger-full-access for that operation only.'))
@@ -155,6 +157,7 @@ export function apply(ctx) {
       results.hostExports.push(key)
     }
     results.features = await ctx.jev.listFeatures()
+    results.featureCoverage = verifyPublishedFeatureCoverage(results.features)
     results.diagnostic = await ctx.jev.testConnection(ctx.jev.judgmentConnectionIdentity(), new AbortController().signal)
     assert(results.diagnostic.ok, 'Choice, Score and Noul diagnostic must pass')
     const simple = marker => [
@@ -216,6 +219,8 @@ export function apply(ctx) {
     assert(results.finalHostRows.every(row => row.state === 2), 'Host rows must remain ACTIVE after business cases')
     assert.equal(results.errors.length, 0, 'Agent loop must not report runtime errors')
     assert.equal(results.unexpectedQuestions.length, 0, 'Deterministic valid replies must not reach human Retry/Cancel')
+    assert(results.cases.every(item => item.records.every(record => record.featureId !== 'interjection-routing')),
+      'Published-release fixtures must not classify interjections or claim response-interruption coverage')
     for (const label of ['session-a', 'session-b']) {
       const item = results.cases.find(item => item.label === label)
       assert(item.records.some(record => record.featureId === 'skill-selection' && record.status === 'succeeded'), label + ' skill judgment must complete')

@@ -19,7 +19,7 @@ afterEach(async () => {
   }
 })
 
-async function fixture(version = '0.2.1-rc.5') {
+async function fixture(version = '0.2.2-alpha.2') {
   await mkdir(artifacts, { recursive: true })
   const root = await mkdtemp(join(artifacts, 'checkout-'))
   roots.push(root)
@@ -29,6 +29,7 @@ async function fixture(version = '0.2.1-rc.5') {
   await mkdir(join(installed, 'lib/types'), { recursive: true })
   await mkdir(reference, { recursive: true })
   await writeFile(join(root, 'packages/jev/package.json'), '{}')
+  await writeFile(join(root, 'package.json'), JSON.stringify({ devDependencies: { '@deepseek-ai/dsh-typert-protocol': '0.2.2-alpha.2' } }))
   await writeFile(join(reference, 'package.json'), '{}')
   await writeFile(join(installed, 'package.json'), JSON.stringify({ name: '@deepseek-ai/dsh-typert-protocol', version }))
   await writeFile(join(installed, 'lib/types/index.d.ts'), "export type { Sample } from './sample.js'\n")
@@ -57,7 +58,7 @@ it('rejects an unexpected protocol version before preparing the reference', asyn
   const { root, reference } = await fixture('0.2.1-alpha.3')
   const result = await execute(process.execPath, [script], { cwd: root, timeout: 10_000 }).catch(error => error)
   expect(result.code).toBe(1)
-  expect(result.stderr).toContain('Expected @deepseek-ai/dsh-typert-protocol@0.2.1-rc.5, found 0.2.1-alpha.3')
+  expect(result.stderr).toContain('Expected @deepseek-ai/dsh-typert-protocol@0.2.2-alpha.2, found 0.2.1-alpha.3')
   await expect(lstat(join(reference, 'src'))).rejects.toMatchObject({ code: 'ENOENT' })
   await expect(lstat(join(reference, 'node_modules'))).rejects.toMatchObject({ code: 'ENOENT' })
 })

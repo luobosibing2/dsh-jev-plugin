@@ -5,11 +5,14 @@ import { delimiter, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { afterEach, expect, it } from 'vitest'
+import { supportedVersions } from './compatibility-versions.mjs'
 
 const execute = promisify(execFile)
 const project = fileURLToPath(new URL('../..', import.meta.url))
 const smoke = join(project, 'scripts/validation/compatibility-smoke.mjs')
 const manifest = JSON.parse(await readFile(join(project, 'package.json'), 'utf8'))
+// These command-shim cases exercise the formal release matrix independently of the development Host.
+const version = '0.2.1-alpha.2'
 const temporaryRoots = []
 
 afterEach(async () => {
@@ -19,7 +22,7 @@ afterEach(async () => {
   }))
 })
 
-it.each(['prepare-official-cli', 'build', 'payload-pack', 'unpack'])('launches package-manager shims and records a %s failure', async phase => {
+it.each(['prepare-official-cli', 'build', 'payload-pack', 'default-version', 'unpack'])('launches package-manager shims and records a %s failure', async phase => {
   const root = await mkdtemp(join(tmpdir(), 'jev-smoke-command-'))
   temporaryRoots.push(root)
   const bin = join(root, 'command shims')
@@ -36,7 +39,7 @@ if (command === 'npm' && args[0] === 'install' && ['build', 'unpack'].includes(p
   const cliRoot = join(process.cwd(), 'node_modules/@deepseek-ai/dsh')
   mkdirSync(cliRoot, { recursive: true })
   writeFileSync(join(cliRoot, 'package.json'), JSON.stringify({
-    name: '@deepseek-ai/dsh', version: ${JSON.stringify(manifest.devDependencies['@deepseek-ai/dsh'])}, bin: { dsh: 'cli.mjs' },
+    name: '@deepseek-ai/dsh', version: ${JSON.stringify(version)}, bin: { dsh: 'cli.mjs' },
   }))
 } else if (process.env.SMOKE_STUB_PHASE === 'unpack' && command === 'pnpm') {
   // Skip the build: this fixture tests the runner's real tar invocation.
@@ -59,9 +62,9 @@ if (command === 'npm' && args[0] === 'install' && ['build', 'unpack'].includes(p
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => key.toLowerCase() !== 'path'))
   env.PATH = bin + delimiter + (Object.entries(process.env).find(([key]) => key.toLowerCase() === 'path')?.[1] ?? '')
   env.SMOKE_STUB_PHASE = phase
-  let args = [smoke, '--artifacts', artifacts]
+  let args = phase === 'default-version' ? [smoke, '--artifacts', artifacts]
+    : [smoke, '--version', version, '--artifacts', artifacts]
   if (phase === 'payload-pack') {
-    const version = manifest.devDependencies['@deepseek-ai/dsh']
     const runtimeMap = join(root, 'runtime-map.json')
     await writeFile(runtimeMap, JSON.stringify({ [version]: join(root, 'unused-cli.mjs') }))
     args = [join(project, 'scripts/validation/compatibility-matrix.mjs'), '--runtime-map', runtimeMap, '--version', version, '--artifacts', artifacts]
@@ -76,6 +79,8 @@ if (command === 'npm' && args[0] === 'install' && ['build', 'unpack'].includes(p
     return
   }
   const summary = JSON.parse(await readFile(join(artifacts, 'smoke-results.json'), 'utf8'))
+  const failedPhase = phase === 'default-version' ? 'prepare-official-cli' : phase
+  expect(summary.version).toBe(phase === 'default-version' ? supportedVersions.at(-1) : version)
   expect(summary.passed).toBe(false)
   expect(summary.realModelCalls).toBe(0)
   if (phase === 'unpack') {
@@ -89,12 +94,18 @@ if (command === 'npm' && args[0] === 'install' && ['build', 'unpack'].includes(p
     expect(summary.failure).toContain('The formal tarball manifest differs from this checkout')
     return
   }
-  expect(summary.commands.map(command => command.label)).toEqual(phase === 'build' ? ['prepare-official-cli', 'build'] : [phase])
+  expect(summary.commands.map(command => command.label)).toEqual(phase === 'build' ? ['prepare-official-cli', 'build'] : [failedPhase])
   const command = summary.commands.at(-1)
   expect(command.code).toBe(42)
   expect(command.timedOut).toBe(false)
-  expect(summary.failure).toBe(phase + ' failed; see ' + command.log)
+  expect(summary.failure).toBe(failedPhase + ' failed; see ' + command.log)
   expect(JSON.parse((await readFile(command.log, 'utf8')).trim())).toEqual(phase === 'build'
     ? { command: 'pnpm', args: ['run', 'build'] }
     : { command: 'npm', args: ['install', '--no-audit', '--no-fund'] })
 }, 30_000)
+
+it('rejects a development Host outside the published verification targets before installing it', async () => {
+  const execution = await execute(process.execPath, [smoke, '--version', '0.2.2-alpha.2'], { cwd: project, timeout: 10_000 }).catch(error => error)
+  expect(execution.code).toBe(1)
+  expect(execution.stderr).toContain('Select a supported exact DSH version:')
+})

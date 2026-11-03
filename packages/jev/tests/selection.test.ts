@@ -17,6 +17,7 @@ import { applyGlobTool, applyGrepTool } from '@deepseek-ai/dsh-tool-fs-search'
 import * as toolSkill from '@deepseek-ai/dsh-tool-skill'
 import * as toolWorkingDirectory from '@deepseek-ai/dsh-tool-working-directory'
 import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
+import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
 import { apply, Config, inject } from '../src/selection.ts'
 import type { JevJudgeOptions, JevJudgeResult } from '../src/index.ts'
 import type { JevActionReceipt, JevRequest } from '../src/types.ts'
@@ -63,6 +64,7 @@ async function fixture(counts: { skillLimit: number; skillMinProbability?: numbe
   const ctx = new Context()
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(ToolRuntime)
+  await ctx.plugin(NativeToolExecutor)
   await ctx.plugin(LocalFileSystem, { cwd: root })
   await ctx.plugin(SessionProjectionRegistry)
   if (directory.service !== false) await ctx.plugin(WorkingDirectory)
@@ -167,9 +169,12 @@ async function step(
 
 let call = 0
 async function invoke(ctx: Context, agent: Agent, name: string, args: object) {
-  return ctx.agents.withInitiator(agent, () => ctx.tools.execute({
-    name, arguments: args, agent, signal: new AbortController().signal, callId: ToolCallId('selection-' + ++call),
+  const batch = await ctx.agents.withInitiator(agent, () => ctx.tools.execute({
+    calls: [{ type: 'tool-call', name, arguments: JSON.stringify(args), id: ToolCallId('selection-' + ++call) }],
+    agent, signal: new AbortController().signal,
   }))
+  expect(batch.results).toHaveLength(1)
+  return batch.results[0]!.result
 }
 
 describe('selection hooks through host plugin paths', () => {

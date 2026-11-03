@@ -13,6 +13,7 @@ import * as JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-j
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
+import * as NativeExecutor from '@deepseek-ai/dsh-tool-executor-native'
 import GoalService from '@deepseek-ai/dsh-goal'
 import * as goalDriver from '@deepseek-ai/dsh-goal-round-driver'
 import * as goalTools from '@deepseek-ai/dsh-tool-goal'
@@ -45,7 +46,7 @@ export const text = (value: string): StreamChunk[] => [
 ]
 export const call = (id: string, name = 'probe', args: object = {}): StreamChunk[] => [
   { type: 'block-start', index: 0, blockType: 'tool-call' },
-  { type: 'block-end', index: 0, block: { type: 'tool-call', id: ToolCallId(id), name, arguments: args } },
+  { type: 'block-end', index: 0, block: { type: 'tool-call', id: ToolCallId(id), name, arguments: JSON.stringify(args) } },
   { type: 'finish', reason: { kind: 'tool-calls' } },
 ]
 export const answer = (value: string) => ({ answers: { assessment: { choice: value }, evidence: { choice: '$first' } } })
@@ -85,6 +86,7 @@ export async function harness(script: Entry[], replies: Reply[], features: Recor
   await ctx.plugin(SessionProjectionRegistry)
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(ToolRuntime)
+  await ctx.plugin(NativeExecutor)
   await ctx.plugin(AgentRegistry)
   await ctx.plugin(UserQuestionService)
   await ctx.plugin(GoalService)

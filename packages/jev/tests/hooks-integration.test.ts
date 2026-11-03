@@ -82,7 +82,7 @@ async function fixture(script: ModelEntry[], options: { enabled?: boolean; suppl
     requests.push(wire)
     for (const listener of requestListeners) listener()
     const answers: Record<string, { choice: string }> = {}
-    if (wire.questions.route !== undefined) answers.route = { choice: 'correction' }
+    if (wire.questions.route !== undefined) answers.route = { choice: 'steer' }
     else if (wire.questions.assessment !== undefined) {
       answers.assessment = { choice: wire.state.mode === 'completion'
         ? options.supplement && completion++ === 0 ? 'omission' : 'complete'
@@ -141,6 +141,10 @@ async function fixture(script: ModelEntry[], options: { enabled?: boolean; suppl
   await ctx.plugin(supervision, { driftInterval: 1 })
   await ctx.plugin(instructions)
   await ctx.plugin(sharedFindings)
+  ctx.on('agent/created', ({ agent }) => {
+    if (!('interruptResponse' in agent)) Object.defineProperty(agent, 'interruptResponse', { value: () => false })
+    return undefined
+  }, { prepend: true })
   await ctx.plugin(interjection)
   const model = new Model(script)
   ctx.llm.registerAdapter(['fixture'], model)

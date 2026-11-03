@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import { createVolatile, updateVolatile } from '@deepseek-ai/cosmokit'
-import AgentRegistry, { type Agent } from '@deepseek-ai/dsh-agent'
+import type { Agent } from '@deepseek-ai/dsh-agent'
+import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
 import { createAssistantMessage, createUserMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
 import { SESSION_FORMAT_VERSION, Session, SessionId } from '@deepseek-ai/dsh-session'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
+import { defineTool } from '@deepseek-ai/dsh-tools'
 import { apply, Config as OutputConfig, type Config } from '../src/output-admission.ts'
 import type { JevJudgeOptions, JevJudgeOnceResult } from '../src/index.ts'
 import type { JevActionReceipt } from '../src/types.ts'
@@ -34,9 +34,7 @@ async function fixture(log = ordinary, answer?: (options: JevJudgeOptions) => Pr
   userText = 'Build the fixture and preserve errors.', waitMs = 4000,
   overrides: Partial<OutputAdmissionConfigValues> = {}): Promise<Fixture> {
   const ctx = new Context()
-  await ctx.plugin(SystemPrompt)
-  await ctx.plugin(ToolRuntime)
-  await ctx.plugin(AgentRegistry)
+  await mountAgentLoopTestDependencies(ctx)
   ctx.provide('settings', { configure: () => () => {} } as never)
   const saves: string[] = []
   ctx.provide('spillStore', { saveText: async ({ content }: { content: string }) => {
@@ -95,11 +93,15 @@ async function fixture(log = ordinary, answer?: (options: JevJudgeOptions) => Pr
   let sequence = 0
   const run = async (signal = new AbortController().signal, jobKind?: string) => {
     const result = await ctx.agents.withInitiator(agent, () => ctx.tools.execute({
-      name: jobKind === undefined ? 'bash' : 'job_output',
-      arguments: jobKind === undefined ? { command: 'fixture build' } : { kind: jobKind },
-      agent, signal, callId: ToolCallId(`fixture-${++sequence}`),
+      calls: [{ type: 'tool-call', id: ToolCallId(`fixture-${++sequence}`),
+        name: jobKind === undefined ? 'bash' : 'job_output',
+        arguments: JSON.stringify(jobKind === undefined ? { command: 'fixture build' } : { kind: jobKind }),
+      }],
+      agent, signal,
     }))
-    return result.content[0]?.type === 'text' ? result.content[0].text : ''
+    const settled = result.results[0]
+    if (settled === undefined) throw new Error('Fixture tool call did not settle')
+    return settled.result.content[0]?.type === 'text' ? settled.result.content[0].text : ''
   }
   return { ctx, agent, enabled, calls, records, receipts, saves, notes, limits: config, run }
 }

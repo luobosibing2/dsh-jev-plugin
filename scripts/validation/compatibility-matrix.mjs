@@ -8,6 +8,7 @@ import { join, resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { checkCompatibilityBrowser, redactWebSecrets } from './compatibility-browser.mjs'
 import { supportedVersions as targetVersions } from './compatibility-versions.mjs'
+import { publishedFeatures } from '../../packages/jev/tests/fixtures/compatibility-features.mjs'
 
 const project = fileURLToPath(new URL('../..', import.meta.url))
 const { values } = parseArgs({ options: { artifacts: { type: 'string' }, 'runtime-map': { type: 'string' }, version: { type: 'string' }, 'final-package': { type: 'string' }, 'keep-web': { type: 'boolean', default: false }, 'check-web': { type: 'boolean', default: false } } })
@@ -132,12 +133,13 @@ for (const version of versions) {
     await symlink(join(dirname(cli), '../../../@deepseek-ai'), join(fixtureDir, 'node_modules/@deepseek-ai'), 'dir')
     const fixturePath = join(fixtureDir, 'compatibility-profile.mjs')
     await cp(join(project, 'packages/jev/tests/fixtures/compatibility-profile.mjs'), fixturePath)
+    await cp(join(project, 'packages/jev/tests/fixtures/compatibility-features.mjs'), join(fixtureDir, 'compatibility-features.mjs'))
     const patch = [
       { id: 'credentials', config: { path: credentials, watch: false } },
       { id: 'session-title-llm', disabled: true },
       { id: 'session-telemetry-otel', config: { mode: 'DISABLED' } },
       { id: 'skill-filesystem', config: { includeDefaultRoots: true, customSkillDirs: [], bundledSkillDir: join(caseRoot, 'empty-bundled'), watch: false } },
-      { id: 'jev', config: { baseUrl: endpoint, model: 'fixture', credentialRef: 'JEV_COMPAT_KEY', timeoutMs: 5000, features: Object.fromEntries(['skill-selection', 'file-ranking', 'instruction-guidance', 'completion-check', 'drift-monitoring', 'goal-supervision', 'interjection-routing', 'shared-findings', 'output-admission', 'test-log-admission', 'workspace-approval', 'stage-navigation'].map(id => [id, true])) } },
+      { id: 'jev', config: { baseUrl: endpoint, model: 'fixture', credentialRef: 'JEV_COMPAT_KEY', timeoutMs: 5000, features: publishedFeatures } },
       { id: 'jev-supervision', config: { driftInterval: 1, evidenceChars: 1_000_000 } },
       { insert: [{ id: 'jev-compatibility-profile', name: fixturePath }] },
     ]
@@ -170,12 +172,16 @@ for (const version of versions) {
     item.host.fixtureTimedOut = !outcome && !await exists(join(caseRoot, 'fixture-result.json'))
     if (await exists(join(caseRoot, 'fixture-result.json'))) item.fixture = JSON.parse(await readFile(join(caseRoot, 'fixture-result.json'), 'utf8'))
     if (!item.fixture?.ok || item.host.fixtureTimedOut || outcome) throw new Error(item.fixture?.failure?.message ?? (outcome ? 'Host exited before fixture verification completed' : 'Host fixture timed out'))
+    item.featureCoverage = item.fixture.featureCoverage
     if (values['check-web']) {
       phase = 'host-web-url'
       while (!webUrl && !outcome && Date.now() < deadline) await new Promise(done => setTimeout(done, 50))
       if (!webUrl || !new URL(webUrl).searchParams.get('token')) throw new Error('Host did not print an authenticated loopback Web URL')
       phase = 'browser-check'
-      item.web = await checkCompatibilityBrowser({ url: webUrl, endpoint, model: 'fixture', timeoutMs: 5000, featureCount: 12, stageSnapshot: item.fixture.stage.snapshot })
+      item.web = await checkCompatibilityBrowser({ url: webUrl, endpoint, model: 'fixture', timeoutMs: 5000,
+        featureCount: item.fixture.features.length, enabledFeatureCount: item.featureCoverage.enabledFeatureIds.length,
+        disabledFeatureNames: item.fixture.features.filter(feature => !feature.enabled).map(feature => feature.name),
+        stageSnapshot: item.fixture.stage.snapshot })
       if (!item.web.ok) throw new Error('Browser ' + item.web.phase + ' failed: ' + item.web.failure.message)
       if (outcome) throw new Error('Host exited during browser verification')
     }

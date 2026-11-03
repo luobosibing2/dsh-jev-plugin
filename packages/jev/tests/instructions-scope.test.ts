@@ -19,6 +19,7 @@ import { JsonStorageBackend } from '@deepseek-ai/dsh-storage-json'
 import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
+import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
 import UserQuestionService from '@deepseek-ai/dsh-user-questions'
 import JevService from '../src/index.ts'
 import * as instructions from '../src/instructions.ts'
@@ -59,6 +60,7 @@ async function fixture(mode: 'preset' | 'direct', label: string) {
   await ctx.plugin(SessionProjectionRegistry)
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(ToolRuntime)
+  await ctx.plugin(NativeToolExecutor)
   await ctx.plugin(LocalFileSystem, { cwd: root })
   await ctx.plugin(WorkingDirectory)
   await ctx.plugin(UserQuestionService)

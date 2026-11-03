@@ -6,8 +6,10 @@ const reference = resolve('packages/typert-protocol-reference')
 const require = createRequire(resolve('packages/jev/package.json'))
 const installed = dirname(require.resolve('@deepseek-ai/dsh-typert-protocol/package.json'))
 const manifest = JSON.parse(await readFile(join(installed, 'package.json'), 'utf8'))
-if (manifest.version !== '0.2.1-rc.5') {
-  throw new Error(`Expected @deepseek-ai/dsh-typert-protocol@0.2.1-rc.5, found ${manifest.version}`)
+const project = JSON.parse(await readFile(resolve('package.json'), 'utf8'))
+const expected = project.devDependencies['@deepseek-ai/dsh-typert-protocol']
+if (manifest.version !== expected) {
+  throw new Error(`Expected @deepseek-ai/dsh-typert-protocol@${expected}, found ${manifest.version}`)
 }
 
 const declarations = join(installed, 'lib/types')
@@ -16,7 +18,7 @@ await mkdir(output, { recursive: true })
 for (const name of await readdir(declarations)) {
   if (name.endsWith('.d.ts')) await copyFile(join(declarations, name), join(output, name))
 }
-// Reflection needs only the decorators and base class; tsc resolves the full copied index.
+// Reflection needs the decorators and base class; tsc resolves the full copied index.
 await writeFile(join(output, 'facade.d.ts'), "export { Remote, TypertRemoteService } from './index.js'\n")
 // Windows junctions do not require symbolic-link privileges and need an absolute target.
 const windows = process.platform === 'win32'

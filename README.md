@@ -38,7 +38,7 @@ The plugin provides the following features. **Every feature is independently dis
 | Completion checks | Checks the current turn's requirements, latest Todo and final answer, with at most 3 automatic supplements by default. |
 | Goal supervision | Checks native goal completion and pauses after a configurable run of rounds without progress. |
 | Instruction guidance | Reads current user instructions and applicable agent rules, then supplies a nonblocking reminder when needed. |
-| Interjection routing | Routes a running user's correction to the next step; queues other messages for a later turn. |
+| Interjection routing | Chooses later work, a current-task addition, or immediate model-response interruption followed by same-turn continuation. |
 | Shared-finding corrections | Compares reports and messages already shared, then sends corrections to affected recipients. |
 | Long-log admission | Can remove clearly unneeded progress or repeated notices after a command returns, with an original-output recovery reference. |
 | Test-log admission | Protects failures, summaries, named and slow tests while judging whether ordinary passing details are needed. |
@@ -49,9 +49,11 @@ The plugin provides the following features. **Every feature is independently dis
 
 *Example feature settings from an earlier build. The screenshot shows nine switches and user-selected states; current `main` includes the twelve features listed above, all disabled on a fresh installation.*
 
+Interjection routing requires a Host with the public `Agent.interruptResponse()` capability. The unpatched published DSH 0.2.2-alpha.2 package does not provide it. Keep routing off on Hosts without that capability; enabling it reports an explicit Host-capability error before classification. The local source integration uses the matching DSH source change, not a published-release capability claim.
+
 All features share a connection, profile-scoped settings, decision records, and operation receipts. Most agent-facing features target live Web root sessions; correcting a child agent does not enable every feature inside that child.
 
-Interjection routing limits history text to the plugin row's `contextChars` budget (12,000 by default), taking the newest text first and presenting it in conversation order. The current message has a separate `messageChars` limit; original Session history is retained.
+Interjection routing limits task, Goal, recent assistant and tool text to the plugin row's shared `contextChars` budget (12,000 by default). Current user requirements take priority; selected requirements retain their original order. The current message has a separate `messageChars` limit; original Session history is retained.
 
 **Feature branches are not all included in `main`.** Tool-output filtering is included in `main`; `codex/jev-tool-output-admission` preserves its development snapshot. Native web execution is on `codex/jev-native-web-execution` and is **paused; ordinary-site effectiveness has not passed acceptance**. Historical split branches preserve earlier work. See [branch status](docs/branches.md) before switching branches.
 
@@ -81,7 +83,7 @@ Before stage analysis is sent or logged, JSON tool arguments are decoded for cre
 
 ## Install through the Web UI (recommended)
 
-Supported DSH releases are **0.1.7-rc.1, 0.1.7-rc.2, 0.2.0-rc.1, 0.2.0-rc.2, 0.2.1-alpha.2, 0.2.1-alpha.3, 0.2.1-rc.2 and 0.2.1-rc.5**. The package declares `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-rc.2 || 0.2.1-rc.5`; other releases, including 0.2.1-alpha.1, are outside this declaration. Install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
+The package declares `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-rc.2 || 0.2.1-rc.5 || 0.2.2-alpha.2`. The compatibility reports cover the eight earlier released runtimes, including 0.2.1-rc.2 and 0.2.1-rc.5. The exact 0.2.2-alpha.2 entry additionally permits the locally validated source Host; it does not make the unpatched published release capable of response interruption. Other versions, including 0.2.1-alpha.1, remain outside this declaration. Install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
 
 1. Open **Plugins in the sidebar → Add plugin**.
 2. Paste the GitHub URL below into **Package name or address**, then click **Install**.
@@ -108,15 +110,15 @@ Use the following steps when modifying or building the plugin yourself. Existing
 
 - Node.js **24.11 or later** is recommended; the publication build is checked on Node 24.14.1.
 - pnpm **11.7.0** available on `PATH`.
-- Development baseline: DeepSeek Harness CLI and development packages **0.2.1-rc.5**, with Cordis **4.0.5**. These exact build versions are separate from the supported installation range above. Use the explicit version below because npm's `latest` tag can point to a different release.
+- Development baseline: DeepSeek Harness CLI and development packages **0.2.2-alpha.2**, with Cordis **4.0.6-alpha.1**. These exact build versions are separate from the supported installation range above. Use the explicit version below because npm's `latest` tag can point to a different release.
 - A configured main-model provider in DSH, plus credentials for your selected Jev-compatible System One service or Luna API.
 
-Legacy DSH support covers installing and running the built package. Source builds and TypeScript consumers of the generated Remote declarations use the rc.5 development baseline.
+Legacy DSH support covers installing and running the built package. Source builds and TypeScript consumers of the generated Remote declarations use the 0.2.2-alpha.2 development baseline.
 
 If needed, install the tools:
 
 ```sh
-npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.1-rc.5
+npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.2-alpha.2
 ```
 
 ### Build the package
@@ -218,7 +220,7 @@ The Client CSS build uses paths relative to the package for class-name hashes an
 
 Protocol-reference preparation uses a directory junction on Windows, so `pnpm run typecheck` and `pnpm run build` do not require elevation or Developer Mode to create that dependency link. Other platforms retain a relative directory symlink. The preparation regression runs in both the Windows job and the standard test suite.
 
-Run `pnpm run test:compatibility` to build and pack the official GitHub-install entry, prepare the exact development DSH version, and check installation, Host components and the Jev Web page in a disposable profile. The [compatibility smoke guide](docs/testing/compatibility-smoke/README.md) covers Chromium setup, explicit version selection and supported-version updates. The check uses local deterministic model replies and needs no real model credentials.
+Run `pnpm run test:compatibility` to build and pack the official GitHub-install entry, prepare the latest DSH release in the verification target list, and check installation, Host components and the Jev Web page in a disposable profile. It enables 11 features and leaves interjection routing disabled because that feature requires the paired source Host's `Agent.interruptResponse()`. The [compatibility smoke guide](docs/testing/compatibility-smoke/README.md) covers Chromium setup, explicit version selection and supported-version updates. The check uses local deterministic model replies and needs no real model credentials.
 
 Maintainers can use the [DeepSWE paired-evaluation runner](bench/deepswe/README.md) for coding tasks and the [glob-ranking pipeline](bench/selection/README.md) for fixed path-selection cases. Both use isolated DSH/Pier trials and keep model execution separate from offline checks and reports. The [Chinese evaluation guide](bench/deepswe/README.zh-CN.md) covers the coding-task workflow.
 

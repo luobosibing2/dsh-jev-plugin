@@ -14,7 +14,7 @@ The Chinese [Goal supervision and completion review](https://luobosibing2.github
 
 The [2026-10-09–10 Harness compatibility report](docs/testing/2026-10-09-harness-compatibility/README.md) records official DSH 0.2.1-alpha.2 installation, Web smoke checks, and real DeepSeek Flash / Jev experiments, including retained failures and untested channels.
 
-The [2026-10-11 version compatibility report](docs/testing/2026-10-11-harness-version-compatibility/README.md) records five released DSH runtimes, official installation and local deterministic feature checks. The current [installation guide](README.md#install-through-the-web-ui-recommended) lists the supported range, which retains those releases and 0.2.1-alpha.3 and adds 0.2.1-rc.2 and 0.2.1-rc.5. The exact development baseline is 0.2.1-rc.5.
+The [2026-10-11 version compatibility report](docs/testing/2026-10-11-harness-version-compatibility/README.md) records five released DSH runtimes, official installation and local deterministic feature checks. The current [installation guide](README.md#install-through-the-web-ui-recommended) lists the supported range, which includes 0.2.1-alpha.3, 0.2.1-rc.2 and 0.2.1-rc.5; the development baseline is 0.2.2-alpha.2. Interjection routing additionally requires the source-level `Agent.interruptResponse()` capability; that version number alone does not establish support.
 
 The [2026-10-21 Harness compatibility report](docs/testing/2026-10-21-harness-compatibility/README.md) covers the 0.2.1-rc.2 upgrade with deterministic official-package, Host and Web integration checks and zero live model calls.
 

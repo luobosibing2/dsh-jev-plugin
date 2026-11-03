@@ -38,7 +38,7 @@
 | 完成核查（Completion checks） | 核查本 turn 的要求、最新 Todo 与最终回答，默认最多自动补充 3 轮。 |
 | 持续目标监督（Goal supervision） | 检查原生目标完成申请，连续多轮没有进展时暂停。 |
 | 用户约束提醒（Instruction guidance） | 读取当前用户要求及适用的 Agent 规则，必要时发送非阻塞提醒。 |
-| 中途插话分流（Interjection routing） | 把运行中的纠正消息送到下一步骤，其他消息留待后续轮次。 |
+| 中途插话分流（Interjection routing） | 区分后续任务、当前补充和即时纠正；即时纠正可中断模型响应，再在同一回合继续。 |
 | 共享发现纠正（Shared-finding corrections） | 比较已经共享的报告和消息，向受影响的接收者发送纠正。 |
 | 通用长日志准入（Tool-output filtering） | 命令返回后可省略明确不需要的进度或重复提示，并提供原文恢复位置。 |
 | 测试日志准入（Test-log filtering） | 保护失败、摘要、点名和慢测试，再判断普通通过明细是否仍有用。 |
@@ -51,9 +51,11 @@
 
 所有功能共用连接、按 profile 保存的设置、判断记录与操作回执。多数 Agent 功能面向存活的 Web 主会话；向子 Agent 发送纠正，不等于子 Agent 自动拥有其他 Jev 增强。
 
-中途插话分流将历史文本限制在插件组件的 `contextChars` 预算内（默认 12,000 字符），优先取最新文本，再按对话顺序呈现。当前消息另用 `messageChars` 限制；原始 Session 历史仍保留。
+中途插话分流让任务、Goal、近期助手正文和工具文本共用插件组件的 `contextChars` 预算（默认 12,000 字符）。当前用户要求优先保留，选中的要求按原始顺序呈现。当前消息另用 `messageChars` 限制；原始 Session 历史仍保留。
 
 **功能分支不等于已合入 main。** 工具输出筛选已进入 `main`；`codex/jev-tool-output-admission` 保留开发快照。原生网页执行在 `codex/jev-native-web-execution`，该方向目前**暂停，普通网站效果未通过验收**。其他历史分支保留早期实现。切换前请看[分支状态](docs/branches.md)。
+
+插话分流要求 Host 提供公开的 `Agent.interruptResponse()` 能力。未打本功能补丁的已发布 DSH 0.2.2-alpha.2 不具备该能力。在缺少能力的 Host 上保持分流关闭；开启后会在分类前明确报告 Host 能力不足。本地源码联动使用配套 DSH 源码改动，不代表该能力已包含在发布包中。
 
 ## 完成核查
 
@@ -81,7 +83,7 @@
 
 ## 网页端安装（推荐）
 
-支持的 DSH 发布版本为 **0.1.7-rc.1、0.1.7-rc.2、0.2.0-rc.1、0.2.0-rc.2、0.2.1-alpha.2、0.2.1-alpha.3、0.2.1-rc.2 和 0.2.1-rc.5**。安装包声明 `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-rc.2 || 0.2.1-rc.5`；其他版本，包括 0.2.1-alpha.1，不在声明范围内。直接填写 GitHub 仓库地址即可，无需克隆源码、手动打包或登录 npm。
+安装包声明 `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-rc.2 || 0.2.1-rc.5 || 0.2.2-alpha.2`。兼容报告覆盖前八个发布版本，包括 0.2.1-rc.2 和 0.2.1-rc.5；新增的精确 0.2.2-alpha.2 声明允许本地验证的配套源码 Host，不代表未打补丁的发布包具备响应中断能力。其他版本，包括 0.2.1-alpha.1，不在声明范围内。直接填写 GitHub 仓库地址即可，无需克隆源码、手动打包或登录 npm。
 
 1. 打开 **侧边栏「插件」→「添加插件」**。
 2. 在 **「包名或地址」** 中粘贴下面的 GitHub 地址，点击 **「安装」**。
@@ -108,15 +110,15 @@ https://github.com/luobosibing2/deepseek-harness-jev
 
 - 推荐 Node.js **24.11 或更高版本**；发布构建使用 Node 24.14.1 检查。
 - `PATH` 中可用的 pnpm **11.7.0**。
-- 开发基线：DeepSeek Harness CLI 和开发依赖 **0.2.1-rc.5**，以及 Cordis **4.0.5**。这些精确构建版本与上面的安装兼容范围分开维护；请使用下面的精确版本号，npm 的 `latest` 标签可能指向另一版本。
+- 开发基线：DeepSeek Harness CLI 和开发依赖 **0.2.2-alpha.2**，以及 Cordis **4.0.6-alpha.1**。这些精确构建版本与上面的安装兼容范围分开维护；请使用下面的精确版本号，npm 的 `latest` 标签可能指向另一版本。
 - 在 DSH 中配置好主模型，以及所选 Jev 兼容 System One 服务或 Luna API 的凭据。
 
-旧版 DSH 支持针对已构建正式包的安装与运行。从源码构建，以及使用新生成 Remote 声明的 TypeScript 项目，使用 rc.5 开发基线。
+旧版 DSH 支持针对已构建正式包的安装与运行。从源码构建，以及使用新生成 Remote 声明的 TypeScript 项目，使用 0.2.2-alpha.2 开发基线。
 
 如尚未安装工具：
 
 ```sh
-npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.1-rc.5
+npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.2-alpha.2
 ```
 
 ### 构建安装包
@@ -193,6 +195,7 @@ dsh --profile jev
 - **完成核查的固定16槽诊断。** 初始错误由脚本种入，开启组的6/6个错误案例经真实Jev判断和DeepSeek补做满足核心要求；2/2个准确对照判为完成，均无补做。见[新诊断结果](docs/testing/2026-10-05-completion-recovery/public-results.zh-CN.md)。这些试次使用此前的已有证据核查语义，不能证明轻量报告核查的真实任务效果，也不能推出自然任务错误率或编码平均收益。历史长编码试次因默认证据预算裁掉原始要求，判断零采用、零自动补做，最终转入人工Retry/Cancel，见[旧报告](docs/testing/2026-10-02-completion-skill/README.md)。
 - **审批只针对一次操作。** 不改变会话沙箱模式，不覆盖宿主固定检查。操作路径和直接脚本证据使用原生当前工作目录，包含相对 shell `workdir` 覆盖；原始工作区仍为沙箱边界。有效 approve 可返回 allowed-once，unauthorized 或 unknown 回原人工审批；技术故障保留人工 Retry/Cancel。
 - **共享纠正有明确范围。** 它只处理已经共享的报告和消息，不读取所有 Agent 的内部探索；自动投递限当前存活的主 Agent 及其活跃、可继续的直接子 Agent。同一发现以不同形式上报时，仍可能产生重复纠正。
+- **插话判断使用原始事实。** 分流发送新消息、有界的原始任务及修改要求、可用 Goal、近期助手正文、必要工具事实和代码确定的执行阶段。准备输入不调用摘要模型；稳定消息正常只分类一次。响应中断不会取消已经启动的工具。
 - **判断成功不等于执行成功。** 日志分别记录判断、采纳、许可发放和实际操作结果。
 - **日志准入保留原文入口。** 它只在工具执行后调整符合条件的模型可见文本；DSH 即时 spill、工具输出上限和之后的上下文压缩仍生效。隔离真实 profile 的一次构建将 8,510 字符日志缩短了 75.7%。一次中性措辞的 180 项测试触发了测试日志判断，但省略概率低于当时配置的 0.8 门槛，因此完整保留；该次不证明测试日志已有实际缩减效果。见[工具输出准入报告](docs/reports/2026-09-27-tool-output-admission.zh-CN.md)。
 - **验证有范围。** 确定性测试证明集成流程，有限真实样例不能证明普遍语义准确率。详见[验证说明](docs/validation.md)。
@@ -218,7 +221,7 @@ Client CSS 构建用包内相对路径计算类名哈希，并对类名映射排
 
 协议参考准备步骤在 Windows 上使用目录联接（junction），因此 `pnpm run typecheck` 和 `pnpm run build` 创建该依赖链接时无需管理员权限或开发者模式。其他平台仍使用相对目录符号链接。该准备步骤的回归检查在 Windows CI 作业和常规测试套件中运行。
 
-运行 `pnpm run test:compatibility`，即可构建并打包正式 GitHub 安装入口、准备精确开发版本的 DSH，并在临时 profile 中检查官方安装、Host 组件和 Jev 网页。[兼容性 smoke 指南](docs/testing/compatibility-smoke/README.md)说明 Chromium 准备、指定版本及更新支持版本的方法。检查使用本地确定性模型回复，无需真实模型凭据。
+运行 `pnpm run test:compatibility`，即可构建并打包正式 GitHub 安装入口、准备验证目标列表中最新的 DSH 发布版本，并在临时 profile 中检查官方安装、Host 组件和 Jev 网页。检查启用其余 11 项功能；中途插话分流保持关闭，因为它需要配套源码 Host 的 `Agent.interruptResponse()`。[兼容性 smoke 指南](docs/testing/compatibility-smoke/README.md)说明 Chromium 准备、指定版本及更新支持版本的方法。检查使用本地确定性模型回复，无需真实模型凭据。
 
 维护者可用 [DeepSWE 配对评测入口](bench/deepswe/README.zh-CN.md)评测编码任务，用 [glob 排序管线](bench/selection/README.zh-CN.md)验证固定路径选择案例。两者采用隔离的 DSH/Pier trial，将模型执行与离线检查、报告分开。[英文评测指南](bench/deepswe/README.md)提供编码任务工作流。
 

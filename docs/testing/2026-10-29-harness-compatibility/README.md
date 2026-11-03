@@ -85,4 +85,3 @@ pnpm run test:compatibility --version 0.2.1-rc.3
 - 未重跑 7 个旧版本的矩阵；旧版本结论沿用 2026-10-21 报告。
 - 未覆盖 GUI 全流程、其他平台或 Desktop / Hub 安装链路。
 - 本轮不授权发布、不改动用户 profile、不调用真实付费服务。
-

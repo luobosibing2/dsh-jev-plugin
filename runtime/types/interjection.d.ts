@@ -16,7 +16,7 @@ type Notice = {
     phase: Phase;
     operationId?: string;
 };
-type Phase = 'pending' | 'correction' | 'queued' | 'cancelled' | 'interrupted' | 'delivered';
+type Phase = 'pending' | 'correction' | 'steer' | 'interrupt-steer' | 'queued' | 'interrupt-requested' | 'response-settled' | 'cancelled' | 'interrupted' | 'delivered';
 declare module '@deepseek-ai/dsh-llm' {
     interface MessageSourceMap {
         'jev-interjection': {

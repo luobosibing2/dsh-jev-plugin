@@ -16,11 +16,11 @@ const { values } = parseArgs({ options: {
   help: { type: 'boolean', short: 'h', default: false },
 } })
 if (values.help) {
-  console.log('Usage: pnpm run test:compatibility [--version <supported exact DSH version>] [--artifacts <new directory>]\nRequires npm, pnpm, tar and Playwright Chromium (pnpm exec playwright install chromium).')
+  console.log('Usage: pnpm run test:compatibility [--version <supported exact DSH version>] [--artifacts <new directory>]\nDefaults to the latest release in compatibility-versions.mjs. Requires npm, pnpm, tar and Playwright Chromium (pnpm exec playwright install chromium).')
   process.exit(0)
 }
 const manifest = JSON.parse(await readFile(join(project, 'package.json'), 'utf8'))
-const version = values.version ?? manifest.devDependencies['@deepseek-ai/dsh']
+const version = values.version ?? supportedVersions.at(-1)
 if (!supportedVersions.includes(version)) throw new Error('Select a supported exact DSH version: ' + supportedVersions.join(', '))
 const temp = join(project, '.artifacts/temp')
 await mkdir(temp, { recursive: true })
@@ -154,7 +154,7 @@ try {
   const matrix = JSON.parse(await readFile(join(matrixArtifacts, 'results.json'), 'utf8'))
   const [item] = matrix.versions
   if (matrix.experimentalManifest || matrix.realModelCalls !== 0 || matrix.versions.length !== 1 || item.version !== version || !item.fixture?.ok || !item.web?.ok) throw new Error('The matrix did not verify the formal Host and Web package')
-  summary.matrix = { results: join(matrixArtifacts, 'results.json'), officialInstallExitStatus: item.install.code, fixturePassed: item.fixture.ok, webPassed: item.web.ok }
+  summary.matrix = { results: join(matrixArtifacts, 'results.json'), officialInstallExitStatus: item.install.code, fixturePassed: item.fixture.ok, webPassed: item.web.ok, featureCoverage: item.fixture.featureCoverage }
   summary.passed = true
 } catch (error) {
   summary.failure = error.message

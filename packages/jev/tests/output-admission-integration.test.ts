@@ -827,10 +827,12 @@ describe('output admission through published DSH paths', () => {
     const child = { ...h.agent, id, session, status: 'running' } as Agent
     const detach = h.ctx.agents.enter(child, h.agent)
     cleanups.push(async () => { detach() })
-    const result = await h.ctx.tools.execute({
-      name: 'bash', arguments: { command: 'fixture build', description: 'Build fixture' },
-      agent: child, signal: new AbortController().signal, callId: ToolCallId('output-child-call'),
+    const batch = await h.ctx.tools.execute({
+      calls: [{ type: 'tool-call', name: 'bash', arguments: JSON.stringify({ command: 'fixture build', description: 'Build fixture' }), id: ToolCallId('output-child-call') }],
+      agent: child, signal: new AbortController().signal,
     })
+    expect(batch.results).toHaveLength(1)
+    const result = batch.results[0]!.result
     expect(result.isError).toBe(false)
     expect(contentText(result.content)).toBe(rawLog)
     expect(h.received).toHaveLength(0)
