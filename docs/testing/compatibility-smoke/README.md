@@ -20,9 +20,9 @@ Linux 环境缺少浏览器系统依赖时，使用 `pnpm exec playwright instal
 
 On Linux, use `pnpm exec playwright install --with-deps chromium` when Chromium system dependencies are missing. CI uses this preparation command.
 
-包管理器启动支持 Windows 的 `.cmd` shim。`pnpm exec vitest run scripts/validation/compatibility-smoke.test.mjs` 使用临时 npm/pnpm shim 检查命令启动、参数及失败记录；不安装 DSH、不运行构建，也不启动 profile。该回归检查在 Linux 和 Windows CI 中运行；它不代表完整的 Windows Host/Web 验证通过。
+包管理器启动支持 Windows 的 `.cmd` shim。`pnpm exec vitest run scripts/validation/compatibility-smoke.test.mjs` 使用临时 npm/pnpm shim 检查命令启动、参数、失败记录及真实归档解包；不安装 DSH、不运行构建，也不启动 profile。解包从归档所在目录使用相对文件名，兼容 GNU tar 与 Windows 自带的 BSD tar，不依赖 GNU 专用参数。该回归检查在 Linux 和 Windows CI 中运行；它不代表完整的 Windows Host/Web 验证通过。
 
-Package-manager launches support Windows `.cmd` shims. `pnpm exec vitest run scripts/validation/compatibility-smoke.test.mjs` checks command launches, arguments and failure records with temporary npm/pnpm shims, without installing DSH, running a build or starting a profile. This regression check runs in Linux and Windows CI; it does not establish a full Windows Host/Web pass.
+Package-manager launches support Windows `.cmd` shims. `pnpm exec vitest run scripts/validation/compatibility-smoke.test.mjs` checks command launches, arguments, failure records and real archive extraction with temporary npm/pnpm shims, without installing DSH, running a build or starting a profile. Extraction uses a relative archive filename from its directory, supporting GNU tar and Windows' bundled BSD tar without GNU-only flags. This regression check runs in Linux and Windows CI; it does not establish a full Windows Host/Web pass.
 
 可以指定另一个已声明支持的精确版本，例如旧宿主 `0.2.0-rc.2`：
 
