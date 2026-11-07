@@ -15,6 +15,7 @@ import UserQuestionService from '@deepseek-ai/dsh-user-questions'
 import JevService, { Config, JevError } from '../src/index.ts'
 import { JevLedger, ledgerSpec } from '../src/ledger.ts'
 import type { JevConfigValues, JevRequest } from '../src/types.ts'
+import { parseWireResponse } from '../src/wire.ts'
 import { routerRequest } from './fixtures/decisions-request.ts'
 
 const request: JevRequest = {
@@ -571,6 +572,37 @@ describe('Jev Host through Cordis, LlmRuntime, JSON storage, and local HTTP', ()
     expect(JSON.stringify(record)).not.toContain('local-fixture-key')
   })
 
+  it('uses a custom System One model and bearer credential for diagnostics and judgments requiring Noul criteria', async () => {
+    const path = await root()
+    const http = await fixture([valid, valid], body => {
+      expect(body.model).toBe('intern-decision-4b')
+      expect(body.questions).toMatchObject({
+        route: { type: 'choice' }, risk: { type: 'score' },
+        ready: { type: 'noul', criteria: { true: '', false: '' } },
+      })
+    })
+    const { ctx } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'), url: http.url,
+      config: { model: 'intern-decision-4b', credentialRef: 'TOKENPLAN_API_KEY' },
+      credentials: { resolve: async ref => {
+        expect(ref).toBe('TOKENPLAN_API_KEY')
+        return { value: 'local-tokenplan-fixture-key', source: 'fixture' }
+      } },
+    })
+    const probe = await ctx.jev.testConnection(ctx.jev.judgmentConnectionIdentity(), new AbortController().signal)
+    expect(probe.ok).toBe(true)
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+    const result = await ctx.jev.judgeOnce({ featureId: 'fixture', link: {}, refresh: () => request })
+    expect(result.kind).toBe('ok')
+    expect(http.validationErrors).toEqual([])
+    expect(http.received).toHaveLength(2)
+    expect(http.authorizations).toEqual(['Bearer local-tokenplan-fixture-key', 'Bearer local-tokenplan-fixture-key'])
+    for (const id of [probe.recordId, result.operationId!]) {
+      expect((await ctx.jev.getRecord(id))?.attemptRecords[0]?.networkRecords?.[0]).toMatchObject({
+        status: 'succeeded', requestBody: { model: 'intern-decision-4b', questions: { ready: { criteria: { true: '', false: '' } } } },
+      })
+    }
+  })
+
   it('makes a single non-interactive attempt and retains failure evidence', async () => {
     const path = await root()
     const http = await fixture([{ answers: {} }])
@@ -824,6 +856,38 @@ describe('Jev Host through Cordis, LlmRuntime, JSON storage, and local HTTP', ()
     await ledger.close()
     await backend.close()
     await readCtx.fiber.dispose()
+  })
+
+  it('reopens original successful System One records without rewriting omitted Noul criteria', async () => {
+    const path = await root()
+    const profile = join(path, 'profile')
+    const backend = new JsonStorageBackend(join(path, 'storage'))
+    const ctx = new Context()
+    await ctx.plugin(Storage)
+    const unregister = ctx.storage.backend.register('json', backend)
+    const facility = new DomainFacility(ctx, { backend: 'json' })
+    cleanups.push(async () => { await ctx.fiber.dispose(); unregister(); await facility.closeAll(); await backend.close() })
+    const ledger = await JevLedger.open(facility, profile)
+    const operation = await ledger.create('fixture', {}, true)
+    const attempt = await ledger.startAttempt(operation.id, request, { baseUrl: 'https://example.test/v1/systemone', model: 'jev-local', credentialRef: 'JEV_TEST_KEY' })
+    const originalBody = { model: 'jev-local', state: {}, questions: {
+      route: { type: 'choice', instructions: 'Choose route', criteria: { left: 'left path', right: 'right path' } },
+      risk: { type: 'score', instructions: 'Rate risk', criteria: ['low', 'medium', 'high'] },
+      ready: { type: 'noul', instructions: 'Ready?' },
+    } }
+    await ledger.settleAttempt(operation.id, attempt.id, { status: 'succeeded', response: parseWireResponse(valid, request).response,
+      rawResponse: valid, usage: { inputTokens: 17, outputTokens: 5 }, usageComplete: true, networkRecords: [{
+        id: 'original-packet', questionIds: ['route', 'risk', 'ready'], requestBody: originalBody,
+        startedAt: attempt.startedAt, status: 'succeeded', httpStatus: 200, rawResponseText: JSON.stringify(valid), rawResponse: valid,
+        usage: { inputTokens: 17, outputTokens: 5 },
+      }],
+    })
+    const original = ledger.get(operation.id)
+    await ledger.close()
+    const reopened = await JevLedger.open(facility, profile)
+    expect(reopened.get(operation.id)).toEqual(original)
+    expect(reopened.get(operation.id)?.attemptRecords[0]?.networkRecords?.[0]?.requestBody).toEqual(originalBody)
+    await reopened.close()
   })
 
   it('marks a pending file-backed attempt interrupted on reopen', async () => {

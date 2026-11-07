@@ -4,7 +4,7 @@ import type { JevConnectionId, JevNetworkRecord, JevRequest, JevResponse, JevUsa
 export declare function isJson(value: unknown): value is Json;
 /** Reject invalid questions before a ledger write or model call. */
 export declare function validateRequest(request: JevRequest): void;
-/** Encode the typed public request into the provider's System One HTTP body. */
+/** Encode System One input with empty Noul conditions when the caller supplied none. */
 export declare function wireBody(model: string, request: JevRequest): Json;
 /** Parse every answer, including optional probabilities and service signals, or reject the whole request. */
 export declare function parseWireResponse(raw: unknown, request: JevRequest): {

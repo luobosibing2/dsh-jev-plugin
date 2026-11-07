@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { knownUsage, parseProtocolResponse, parseWireResponse, protocolBody, validateRequest, wireBody } from '../src/wire.ts'
-import type { JevRequest } from '../src/types.ts'
+import { knownUsage, parseProtocolResponse, parseWireResponse, protocolBody, replayNetworkResponses, validateRequest, wireBody } from '../src/wire.ts'
+import type { JevNetworkRecord, JevRequest, Json } from '../src/types.ts'
 import { routerRequest } from './fixtures/decisions-request.ts'
 
 const request: JevRequest = {
@@ -24,6 +24,50 @@ const response = {
 }
 
 describe('System One typed exchange', () => {
+  it('supplies empty Noul criteria only when the caller omitted them', () => {
+    const input: JevRequest = { state: 'original state', questions: [
+      { id: 'missing', kind: 'noul', prompt: 'Ready?' },
+      { id: 'empty', kind: 'noul', prompt: ['Ready?'], criteria: {} },
+      { id: 'partial', kind: 'noul', prompt: { question: 'Ready?' }, criteria: { true: 'ready' } },
+      { id: 'nullable', kind: 'noul', prompt: 'Ready?', criteria: { true: null, false: ['not ready'] } },
+    ] }
+    expect(wireBody('intern-decision-4b', input)).toEqual({ model: 'intern-decision-4b', state: input.state, questions: {
+      missing: { type: 'noul', instructions: 'Ready?', criteria: { true: '', false: '' } },
+      empty: { type: 'noul', instructions: ['Ready?'], criteria: {} },
+      partial: { type: 'noul', instructions: { question: 'Ready?' }, criteria: { true: 'ready' } },
+      nullable: { type: 'noul', instructions: 'Ready?', criteria: { true: null, false: ['not ready'] } },
+    } })
+    expect(protocolBody('luna-openrouter', 'luna', { state: input.state, questions: [input.questions[0]!] }))
+      .toEqual({ model: 'luna', state: input.state, questions: { missing: { type: 'noul', instructions: 'Ready?' } } })
+  })
+
+  it('replays original System One packets with omitted Noul criteria and rejects altered inputs', () => {
+    const input: JevRequest = { state: { original: true }, questions: [
+      { id: 'ready', kind: 'noul', prompt: 'Ready?' }, request.questions[0]!, request.questions[2]!,
+    ].map((question, index) => ({ ...question, id: `q${index}` })) }
+    const questions = {
+      q0: { type: 'noul', instructions: 'Ready?' },
+      q1: { type: 'choice', instructions: { task: 'choose' }, criteria: { left: { path: ['left'] }, right: null } },
+      q2: { type: 'noul', instructions: ['Is it ready?'], criteria: { true: 'ready', false: 'not ready' } },
+    }
+    const packet = (requestBody: Json): JevNetworkRecord => ({ id: 'original-packet', questionIds: ['q0', 'q1', 'q2'], requestBody,
+      status: 'succeeded', startedAt: '2026-11-01T00:00:00.000Z', rawResponse: { answers: {
+        q0: { noul: 0.8 }, q1: { choice: 'left' }, q2: { noul: 0.7 },
+      } } })
+    const original = { model: 'jev-latest', state: input.state, questions }
+    const expected = { answers: [
+      { id: 'q0', kind: 'noul', probability: 0.8 }, { id: 'q1', kind: 'choice', optionId: 'left' }, { id: 'q2', kind: 'noul', probability: 0.7 },
+    ] }
+    expect(replayNetworkResponses(input, [packet(original)], 'jev')).toEqual(expected)
+    expect(replayNetworkResponses(input, [packet(protocolBody('jev', 'jev-latest', input))], 'jev')).toEqual(expected)
+    for (const changed of [
+      { ...original, state: { original: false } },
+      { ...original, questions: { ...questions, q0: { ...questions.q0, instructions: 'Changed?' } } },
+      { ...original, questions: { ...questions, q0: { ...questions.q0, criteria: { true: 'changed', false: '' } } } },
+      { ...original, questions: { ...questions, q2: { type: 'noul', instructions: ['Is it ready?'] } } },
+    ]) expect(() => replayNetworkResponses(input, [packet(changed)], 'jev')).toThrow('Decision network input differs')
+  })
+
   it('keeps structured criteria and a fractional score in its original rubric', () => {
     const body = wireBody('jev-latest', request)
     expect(body).toMatchObject({ state: {}, questions: {
