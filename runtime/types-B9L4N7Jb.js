@@ -52,10 +52,20 @@ function validateRequest(request) {
 		}
 	}
 }
-/** Encode the typed public request into the provider's System One HTTP body. */
+/** Encode System One input with empty Noul conditions when the caller supplied none. */
 function wireBody(model, request) {
+	return systemOneBody(model, request, true);
+}
+function systemOneBody(model, request, emptyNoulCriteria) {
 	validateRequest(request);
-	const questions = Object.fromEntries(request.questions.map((question) => [question.id, wireQuestion(question)]));
+	const questions = Object.fromEntries(request.questions.map((question) => [question.id, emptyNoulCriteria && question.kind === "noul" && question.criteria === void 0 ? {
+		type: "noul",
+		instructions: question.prompt,
+		criteria: {
+			true: "",
+			false: ""
+		}
+	} : wireQuestion(question)]));
 	return {
 		model,
 		state: request.state,
@@ -320,7 +330,9 @@ function replayNetworkResponses(request, records, connectionId) {
 			state: request.state,
 			questions
 		};
-		if (JSON.stringify(protocolBody(connectionId, exchange.requestBody.model ?? "", part)) !== JSON.stringify(exchange.requestBody)) throw new TypeError("Decision network input differs from business input");
+		const model = exchange.requestBody.model ?? "";
+		const originalBody = JSON.stringify(exchange.requestBody);
+		if (JSON.stringify(protocolBody(connectionId, model, part)) !== originalBody && (connectionId !== "jev" || JSON.stringify(systemOneBody(model, part, false)) !== originalBody)) throw new TypeError("Decision network input differs from business input");
 		if (exchange.rawResponseText !== void 0 && JSON.stringify(JSON.parse(exchange.rawResponseText)) !== JSON.stringify(exchange.rawResponse)) throw new TypeError("Decision raw response differs from original text");
 		for (const answer of parseProtocolResponse(exchange.rawResponse, part, connectionId).response.answers) answers.set(answer.id, answer);
 	}

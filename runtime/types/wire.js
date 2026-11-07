@@ -61,10 +61,17 @@ export function validateRequest(request) {
         }
     }
 }
-/** Encode the typed public request into the provider's System One HTTP body. */
+/** Encode System One input with empty Noul conditions when the caller supplied none. */
 export function wireBody(model, request) {
+    return systemOneBody(model, request, true);
+}
+function systemOneBody(model, request, emptyNoulCriteria) {
     validateRequest(request);
-    const questions = Object.fromEntries(request.questions.map(question => [question.id, wireQuestion(question)]));
+    const questions = Object.fromEntries(request.questions.map(question => [question.id,
+        emptyNoulCriteria && question.kind === 'noul' && question.criteria === undefined
+            ? { type: 'noul', instructions: question.prompt, criteria: { true: '', false: '' } }
+            : wireQuestion(question),
+    ]));
     return { model, state: request.state, questions };
 }
 function wireQuestion(question) {
@@ -271,8 +278,13 @@ export function replayNetworkResponses(request, records, connectionId) {
         if (new Set(exchange.questionIds).size !== exchange.questionIds.length)
             throw new TypeError('Decision network question identity is duplicated');
         const part = { state: request.state, questions };
-        if (JSON.stringify(protocolBody(connectionId, exchange.requestBody.model ?? '', part)) !== JSON.stringify(exchange.requestBody))
+        const model = exchange.requestBody.model ?? '';
+        const originalBody = JSON.stringify(exchange.requestBody);
+        // Existing System One packets omitted criteria when the caller supplied none.
+        if (JSON.stringify(protocolBody(connectionId, model, part)) !== originalBody
+            && (connectionId !== 'jev' || JSON.stringify(systemOneBody(model, part, false)) !== originalBody)) {
             throw new TypeError('Decision network input differs from business input');
+        }
         if (exchange.rawResponseText !== undefined && JSON.stringify(JSON.parse(exchange.rawResponseText)) !== JSON.stringify(exchange.rawResponse))
             throw new TypeError('Decision raw response differs from original text');
         for (const answer of parseProtocolResponse(exchange.rawResponse, part, connectionId).response.answers)

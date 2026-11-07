@@ -177,6 +177,10 @@ dsh --profile jev
 | Luna / OpenRouter | `https://openrouter.ai/api/alpha/decisions` | `openai/gpt-6-luna-decisions` | `JEV_LUNA_OPENROUTER_API_KEY` |
 | Luna / OpenAI | `https://api.openai.com/v1/decisions` | `gpt-6-luna` | `JEV_LUNA_OPENAI_API_KEY` |
 
+接入其他兼容 TypeSafe 的 System One 服务时，选择 **Jev**，填写完整 POST 地址和模型名称，再把 API Key 保存到自选的凭据引用。例如，一份[第三方 TokenPlan 报告](https://github.com/AstrBotDevs/AstrBot/issues/10920)使用 `https://discovery-api.intern-ai.org.cn/v1/systemone` 和模型 `intern-decision-4b`；凭据引用可填 `TOKENPLAN_API_KEY`。保存密钥本身，不加 `Bearer ` 前缀，插件会自动添加 `Authorization: Bearer` 请求头。本项目未对这个示例进行真实服务验证。
+
+Jev 连接按 System One 格式发送 Choice、Score 和 Noul 问题。调用方未提供 Noul criteria 时，请求会带上 `criteria: {"true":"","false":""}`，以适配要求该字段的服务。显式 criteria（包括部分字段或 null 值）保留原内容，提供方可能有更严格的限制。插件根据类型化问题构建请求体，不接受任意 POST 请求体或聊天补全协议。保存自定义连接后，可通过**测试连接**及其**判断记录**核对结果；收到服务响应时，可在记录中查看 HTTP 状态码和原始响应。
+
 两个 Luna 模型 ID 是指定 Luna Decisions 能力在不同 API 中的命名。所选 API 决定协议，包括 OpenAI 将 Noul 表示为 `predicate`；修改域名不会改变协议。合法自定义端点仍使用所选协议。切回后可恢复各套已保存连接，旧 profile 默认选择 Jev 并保留原值。
 
 凭据状态只显示是否存在和可写，不读回密钥；“已配置”不表示连接测试通过。编辑后须先保存连接，再写入密钥或测试；连接改变后，旧密钥写入会被拒绝，旧诊断也不能成为新连接的结果。成功替换密钥后清空输入。读取、编辑和保存设置均不发送模型请求。
