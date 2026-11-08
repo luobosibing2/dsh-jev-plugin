@@ -24,6 +24,7 @@ The root agent maintains the authoritative three files in the primary checkout a
 
 | Lifecycle | Category | Group | Recorded delivery |
 | --- | --- | --- | --- |
+| proposed | bug-fix | [windows-compatibility-fixture-junction](proposed/bug-fix/windows-compatibility-fixture-junction/decision.md) | Issue #59; patch pending upstream review |
 | implemented | bug-fix | [windows-portable-smoke-unpack](implemented/bug-fix/windows-portable-smoke-unpack/decision.md) | [PR #56](https://github.com/luobosibing2/dsh-jev-plugin/pull/56) |
 | implemented | bug-fix | [allow-zero-skill-recommendations](implemented/bug-fix/allow-zero-skill-recommendations/decision.md) | [PR #37](https://github.com/luobosibing2/dsh-jev-plugin/pull/37) |
 | implemented | bug-fix | [count-eligible-admission-candidates](implemented/bug-fix/count-eligible-admission-candidates/decision.md) | [PR #33](https://github.com/luobosibing2/dsh-jev-plugin/pull/33) |
