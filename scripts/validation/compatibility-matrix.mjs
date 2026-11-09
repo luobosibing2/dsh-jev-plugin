@@ -130,7 +130,8 @@ for (const version of versions) {
     const fixtureDir = join(home, 'profiles/compatibility/fixture')
     await mkdir(join(fixtureDir, 'node_modules'), { recursive: true })
     await writeFile(join(fixtureDir, 'package.json'), '{"name":"@dsh-jev/compatibility-fixture","private":true,"type":"module"}\n')
-    await symlink(join(dirname(cli), '../../../@deepseek-ai'), join(fixtureDir, 'node_modules/@deepseek-ai'), 'dir')
+    // Windows directory junctions avoid elevation or Developer Mode requirements.
+    await symlink(resolve(dirname(cli), '../../../@deepseek-ai'), join(fixtureDir, 'node_modules/@deepseek-ai'), process.platform === 'win32' ? 'junction' : 'dir')
     const fixturePath = join(fixtureDir, 'compatibility-profile.mjs')
     await cp(join(project, 'packages/jev/tests/fixtures/compatibility-profile.mjs'), fixturePath)
     await cp(join(project, 'packages/jev/tests/fixtures/compatibility-features.mjs'), join(fixtureDir, 'compatibility-features.mjs'))
