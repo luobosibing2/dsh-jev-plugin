@@ -51,7 +51,7 @@
 
 所有功能共用连接、按 profile 保存的设置、判断记录与操作回执。多数 Agent 功能面向存活的 Web 主会话；向子 Agent 发送纠正，不等于子 Agent 自动拥有其他 Jev 增强。
 
-中途插话分流让任务、Goal、近期助手正文和工具文本共用插件组件的 `contextChars` 预算（默认 12,000 字符）。当前用户要求优先保留，选中的要求按原始顺序呈现。当前消息另用 `messageChars` 限制；原始 Session 历史仍保留。
+中途插话分流让任务、Goal、近期助手正文和工具文本共用插件组件的 `contextChars` 预算（默认 12,000 字符）。当前用户要求优先保留，选中的要求按原始顺序呈现。分流在应用预算前遮盖近期 JSON 工具参数中可识别的凭据，并省略格式无效或过大的参数数据。当前消息另用 `messageChars` 限制；原始 Session 历史和已有 Jev 记录均保留。
 
 **功能分支不等于已合入 main。** 工具输出筛选已进入 `main`；`codex/jev-tool-output-admission` 保留开发快照。原生网页执行在 `codex/jev-native-web-execution`，该方向目前**暂停，普通网站效果未通过验收**。其他历史分支保留早期实现。切换前请看[分支状态](docs/branches.md)。
 

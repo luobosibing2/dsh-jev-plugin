@@ -282,7 +282,9 @@ New user requirements, target goal revisions, cancellation, and task completion 
 
 ## Interjection routing context
 
-The `jev-interjection-routing` row shares `contextChars` (default 12,000) across task requirements, Goal, recent assistant text, necessary tool text and available previous-task material. It prioritizes recent amendments and the original task, then presents selected task requirements in their original order. Excerpts and missing material are marked; no summary model is called. The limit covers text rather than the entire serialized request; the current message uses the independent `messageChars` limit (default 24,000). Original Session history remains unchanged.
+The `jev-interjection-routing` row shares `contextChars` (default 12,000) across task requirements, Goal, recent assistant text, necessary tool text and available previous-task material. It prioritizes recent amendments and the original task, then presents selected task requirements in their original order. Excerpts and missing material are marked; no summary model is called. The limit covers text rather than the entire serialized request; the current message uses the independent `messageChars` limit (default 24,000).
+
+Routing masks recognizable credential fields and patterns in decoded JSON tool arguments before storing or clipping them. Invalid arguments and raw arguments over 1,000,000 characters are replaced with a bounded marker. Routing rebuilds older context checkpoints from Session events; it does not modify original Session history or rewrite existing Jev decision records. This masking applies to the tool-argument field; other routing context still contains original task text.
 
 ## Non-interactive consumer API
 
