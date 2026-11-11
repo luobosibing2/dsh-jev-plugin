@@ -1,5 +1,6 @@
 /** Complete step requests with bounded, explicitly marked preceding context. */
 import { createHash } from 'node:crypto';
+import { redactCredentialText as redact, redactToolArguments } from "./credential-redaction.js";
 export const STAGE_RULE_VERSION = 'whole-step-v1';
 export const STAGE_REDACTION_VERSION = 'credential-patterns-v3';
 const labels = [
@@ -12,41 +13,6 @@ const labels = [
     ['mixed', 'Several primary purposes cannot be reduced to one'],
     ['unknown', 'The recorded evidence does not support a purpose judgment'],
 ];
-function redact(value, secrets) {
-    let text = value;
-    for (const secret of secrets)
-        if (secret.length >= 4)
-            text = text.replaceAll(secret, '[REDACTED]');
-    return text
-        .replace(/\b(Bearer|Basic)\s+[^\s"']+/gi, '$1 [REDACTED]')
-        .replace(/\b(?:sk|key|token|apikey)[-_][A-Za-z0-9_-]{12,}\b/gi, '[REDACTED]')
-        .replace(/((?:["']?(?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|passwd|authorization|auth[_-]?token)["']?)\s*[:=]\s*)(["'])(.*?)\2/gi, '$1$2[REDACTED]$2')
-        .replace(/((?:["']?(?:password|passwd|authorization)["']?)\s*[:=]\s*)(?!["'])[^\r\n,;}\]]+/gi, '$1[REDACTED]')
-        .replace(/((?:["']?(?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|passwd|authorization|auth[_-]?token)["']?)\s*[:=]\s*)(?!["'])[^\s,"';}]+/gi, '$1[REDACTED]')
-        .replace(/([?&#](?:api[_-]?key|access[_-]?token|refresh[_-]?token|key|token|secret|auth)\s*=)[^&#\s"']+/gi, '$1[REDACTED]')
-        .replace(/(https?:\/\/)[^\s/@]+:[^\s/@]+@/gi, '$1[REDACTED]@');
-}
-/** Redact decoded strings so JSON escaping cannot hide credentials from the text rules. */
-function redactArgumentValue(value, secrets) {
-    if (typeof value === 'string')
-        return redact(value, secrets);
-    if (value === null || typeof value !== 'object')
-        return value;
-    if (Array.isArray(value))
-        return value.map(item => redactArgumentValue(item, secrets));
-    return Object.fromEntries(Object.entries(value).map(([key, item]) => [redact(key, secrets),
-        /^(?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|passwd|authorization|auth[_-]?token)$/i.test(key)
-            ? '[REDACTED]' : redactArgumentValue(item, secrets)]));
-}
-function redactArguments(value, secrets) {
-    try {
-        return JSON.stringify(redactArgumentValue(JSON.parse(value), secrets));
-    }
-    // Interrupted calls can contain incomplete JSON. Do not dispatch undecodable credential text.
-    catch {
-        return '[REDACTED: invalid JSON tool arguments]';
-    }
-}
 function visibleBlocks(blocks, secrets) {
     return blocks.map((block) => {
         switch (block.type) {
@@ -54,7 +20,7 @@ function visibleBlocks(blocks, secrets) {
             case 'reasoning':
                 return { type: block.type, text: redact(block.text, secrets) };
             case 'tool-call':
-                return { type: block.type, name: redact(block.name, secrets), arguments: redactArguments(block.arguments, secrets) };
+                return { type: block.type, name: redact(block.name, secrets), arguments: redactToolArguments(block.arguments, secrets).text };
             case 'image':
                 return { type: 'image', present: true, understoodByJev: false,
                     mediaType: block.attachment.mediaType, bytes: block.attachment.bytes,
@@ -97,7 +63,7 @@ export function buildStageInput(turns, target, limits, connectionIdentity, secre
     const assistant = target.messages.map(message => ({ seq: message.seq, interrupted: message.interrupted,
         content: visibleBlocks(message.content.filter(block => block.type !== 'tool-call'), secrets) }));
     const tools = target.tools.map(tool => ({
-        seq: tool.seq, callId: tool.callId, name: redact(tool.name, secrets), arguments: redactArguments(tool.arguments, secrets),
+        seq: tool.seq, callId: tool.callId, name: redact(tool.name, secrets), arguments: redactToolArguments(tool.arguments, secrets).text,
         dispatched: tool.dispatched,
         result: tool.result === undefined ? null : {
             seq: tool.result.seq, isError: tool.result.isError,

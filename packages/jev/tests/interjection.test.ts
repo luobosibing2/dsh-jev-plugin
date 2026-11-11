@@ -226,6 +226,34 @@ describe('interjection routing through published inbox hooks and a response-cont
     expect(visible(h.agent)).toContain(earlier)
   })
 
+  it('withholds recognizable tool-argument credentials from routing requests and records', async () => {
+    const started = Promise.withResolvers<void>()
+    const release = Promise.withResolvers<void>()
+    const fieldValue = 'dummy-field-value'
+    const shellValue = 'dummy\\shell-value'
+    const args = { path: 'repo/file.txt', nested: { api_key: fieldValue }, command: `API_KEY='${shellValue}' inspect` }
+    const h = await harness([call('inspect', 'probe', args), async () => {
+      started.resolve(); await release.promise; return text('Original task done')
+    }, text('Follow-up done')], [answer('follow-up')], { 'interjection-routing': true })
+    cleanups.push(async () => { release.resolve() })
+    h.send('Inspect the repository'); await started.promise
+    const later = input('After that, explain the findings')
+    h.agent.followup(later)
+    await vi.waitFor(() => expect(h.requests).toHaveLength(1))
+    const wireArgs = JSON.parse(h.requests[0].state.recentTool.arguments)
+    expect(wireArgs).toEqual({ path: args.path, nested: { api_key: '[REDACTED]' }, command: "API_KEY='[REDACTED]' inspect" })
+    release.resolve(); await h.agent.whenIdle()
+    expect(h.errors).toEqual([])
+    expect(deliveryTurn(h.agent, later.id)).toBe(2)
+    const records = await h.records()
+    const record = await h.ctx.jev.getRecord(records.items[0]!.id)
+    expect(record?.attemptRecords[0]?.request.state).toMatchObject({ recentTool: h.requests[0].state.recentTool })
+    expect(JSON.stringify(record)).not.toContain(fieldValue)
+    expect(JSON.stringify(record)).not.toContain('shell-value')
+    const original = h.agent.session.snapshotEvents().find(event => event.type === 'tool/call' && event.data.callId === 'inspect')
+    expect(original?.data).toMatchObject({ arguments: JSON.stringify(args) })
+  })
+
   it('keeps default-off and idle input on the original Host path', async () => {
     const h = await harness([text('idle answer')], [], {})
     expect((await h.ctx.jev.listFeatures()).find(feature => feature.id === 'interjection-routing')?.enabled).toBe(false)
