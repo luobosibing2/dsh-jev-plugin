@@ -117,21 +117,23 @@ function latestSelectedCatalog(agent: Agent): SelectedCatalogSource | undefined 
   return undefined
 }
 
-/** Names from catalogs still visible to this Agent after compaction and replay. */
-function injectedSkillNames(agent: Agent): Set<string> {
-  const names = new Set<string>()
+/** Latest descriptions from catalogs still visible to this Agent after compaction and replay. */
+function visibleSkillDescriptions(agent: Agent): Map<string, string> {
+  const descriptions = new Map<string, string>()
   for (const message of agent.session.deriveMessages()) {
     if (message.role !== 'user') continue
     if (message.source.kind !== 'skill-catalog' && message.source.kind !== 'jev-skill-catalog') continue
     const entries: unknown = message.source.entries
     if (!Array.isArray(entries)) continue
     for (const entry of entries) {
-      if (typeof entry === 'object' && entry !== null && 'name' in entry && typeof entry.name === 'string') {
-        names.add(entry.name)
+      if (typeof entry === 'object' && entry !== null
+        && 'name' in entry && typeof entry.name === 'string'
+        && 'description' in entry && typeof entry.description === 'string') {
+        descriptions.set(entry.name, entry.description)
       }
     }
   }
-  return names
+  return descriptions
 }
 
 function validAnswers(items: readonly unknown[], response: JevResponse): boolean {
@@ -170,7 +172,7 @@ function selectedCatalog(
       '<system-reminder>',
       selectedCount === 0
         ? 'No skill reached the minimum relevance probability in this judgment. Continue the task.'
-        : 'Jev selected the top ' + selectedCount + ' of ' + total + ' model-invocable skills. These ' + items.length + ' new summaries supplement the catalogs already visible in this session. Probabilities estimate relevance, not task success.',
+        : 'Jev selected the top ' + selectedCount + ' of ' + total + ' model-invocable skills. These ' + items.length + ' new summaries supplement the catalogs already visible in this session. Use the latest summary for any repeated skill name. Probabilities estimate relevance, not task success.',
       '<available_skills>', ...lines, '</available_skills>',
       'Call the skill tool with an exact name before following its instructions. This is a partial catalog; call skill_catalog to see every currently model-invocable skill summary. A user may invoke an eligible skill directly.',
       '</system-reminder>',
@@ -303,8 +305,8 @@ export function apply(ctx: Context, config: Config): void {
     if (outcome.kind !== 'ok') throw new JevError('CANCELLED', 'Skill selection was cancelled or could not be adopted')
     const chosen = scored(current, outcome.response).filter(item => item.probability >= currentMinProbability)
       .sort(byProbability).slice(0, currentLimit)
-    const existing = injectedSkillNames(agent)
-    const additions = chosen.filter(({ item }) => !existing.has(item.name))
+    const existing = visibleSkillDescriptions(agent)
+    const additions = chosen.filter(({ item }) => existing.get(item.name) !== item.description)
     checkedDirectories.set(agent, {
       fingerprint: currentFingerprint, replaceGeneration: agent.session.surface.replaceGeneration,
     })
@@ -313,7 +315,7 @@ export function apply(ctx: Context, config: Config): void {
         : additions.length === 0 ? 'skill-catalog-no-new' : 'skill-catalog-published',
       status: 'observed', at: new Date().toISOString(),
       ...chosen.length === 0 ? { reason: 'No skill reached the minimum relevance probability in this judgment' }
-        : additions.length === 0 ? { reason: 'All selected skill names were already visible in session catalogs' } : {},
+        : additions.length === 0 ? { reason: 'All selected summaries match the latest visible session catalogs' } : {},
     })
     return replaceCatalog(decision, original, chosen.length > 0 && additions.length === 0
       ? undefined : selectedCatalog(additions, currentFingerprint, current.length, chosen.length, {

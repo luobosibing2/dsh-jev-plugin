@@ -87,7 +87,7 @@ export const features = [
       seams: ['agent/pre-step'],
       trigger: '新的直接用户请求到来，或技能目录发生变化时，在 agent/pre-step、目录进入模型前判断。',
       input: '当前技能的名称和摘要，加最近最多两条直接用户消息及一条可见助手文本；任务文本合计最多 2,000 字。技能正文、附件、工具输出和推理内容不进入这次判断。',
-      handling: '先保留 probability ≥ skillMinProbability 的候选（默认 0.5），再按概率降序、原顺序打破平局，最多取 skillLimit 项（默认 5），最后去掉当前可见目录中的名称，不补位。有效判断无过线项时发布空目录并记 skill-catalog-no-relevant；有选择但全已可见时不新增目录，记 skill-catalog-no-new。失败沿用 Retry / Cancel，不伪装零推荐。原生 skill(name) 和 skill_catalog 完整目录恢复保持可用。',
+      handling: '先保留 probability ≥ skillMinProbability 的候选（默认 0.5），再按概率降序、原顺序打破平局，最多取 skillLimit 项（默认 5），最后去掉与最新可见摘要相同的项，不补位。同名描述变化时发布新版摘要。有效判断无过线项时发布空目录并记 skill-catalog-no-relevant；有选择但描述均相同时不新增目录，记 skill-catalog-no-new。失败沿用 Retry / Cancel，不伪装零推荐。原生 skill(name) 和 skill_catalog 完整目录恢复保持可用。',
       refs: [{ title: '目录接入与判断输入', file: 'packages/jev/src/selection.ts', anchor: '#L243-L322' }],
     },
     cases: [

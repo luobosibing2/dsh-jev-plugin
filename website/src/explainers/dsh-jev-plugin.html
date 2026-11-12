@@ -580,7 +580,7 @@ html[data-theme="shadcn"] .am-kv { border-color: var(--line); border-radius: var
 </tr>
 <tr>
 <td>采用</td>
-<td>先保留 <code>probability ≥ skillMinProbability</code> 的候选；默认门槛 0.5。再稳定排序，最多取 <code>skillLimit</code> 项（默认 5），最后去掉 Session 已可见的名称</td>
+<td>先保留 <code>probability ≥ skillMinProbability</code> 的候选；默认门槛 0.5。再稳定排序，最多取 <code>skillLimit</code> 项（默认 5），最后去掉与 Session 最新可见摘要相同的项</td>
 </tr>
 <tr>
 <td>主模型后续行动</td>
@@ -601,8 +601,12 @@ html[data-theme="shadcn"] .am-kv { border-color: var(--line); border-radius: var
 <td>发布 <code>entries: []</code> 的正常目录；回执为 <code>skill-catalog-no-relevant</code>。说明本次无适用推荐，主模型继续任务</td>
 </tr>
 <tr>
-<td>有合格选择，但名称都已可见</td>
-<td>不新增目录消息；回执为 <code>skill-catalog-no-new</code>。已有摘要继续可用</td>
+<td>有合格选择，但描述均与最新可见摘要相同</td>
+<td>不新增目录消息，回执为 <code>skill-catalog-no-new</code></td>
+</tr>
+<tr>
+<td>入选技能的名称首次出现或同名描述变化</td>
+<td>发布新增或更新的摘要。名称重复时，主模型以最新摘要为准</td>
 </tr>
 <tr>
 <td>判断失败、回答不完整、取消或未采用</td>
@@ -616,7 +620,7 @@ html[data-theme="shadcn"] .am-kv { border-color: var(--line); border-radius: var
 <p><strong>6 个技能摘要 → 一次请求、6 道 Noul → 6 个概率 → 先过 0.5 门槛 → 最多选 5 个。</strong></p>
 <p>本例使用 Jev / System One 协议。技能名称、简介和概率都是演示值，不是真实模型实测。假设这 6 个技能都可由当前 Agent 调用，且尚未在 Session 中展示。</p>
 </div>
-<figure class="am-diagram am-flow"><svg viewBox="0 0 200 502" width="200" height="502" role="img" aria-label="流程图：6 个技能摘要、一次请求中的 6 道 Noul、Jev 返回 6 个概率、保留概率不小于 0.5 的候选、稳定排序并最多取 5 个、去掉已可见名称并发布新增摘要" xmlns="http://www.w3.org/2000/svg"><defs><marker id="am2-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g></g><g><g data-step="0"><path class="am-edge" d="M99.8,49 L99.8,60.5 Q99.8,72 99.8,83.5 L99.8,95" marker-end="url(#am2-arrow)"/></g><g data-step="1"><path class="am-edge" d="M99.8,130 L99.8,141.5 Q99.8,153 99.8,164.5 L99.8,176" marker-end="url(#am2-arrow)"/></g><g data-step="2"><path class="am-edge" d="M99.8,211 L99.8,222.5 Q99.8,234 99.8,245.5 L99.8,257" marker-end="url(#am2-arrow)"/></g><g data-step="3"><path class="am-edge" d="M99.8,309 L99.8,320.5 Q99.8,332 99.8,343.5 L99.8,355" marker-end="url(#am2-arrow)"/></g><g data-step="4"><path class="am-edge" d="M99.8,390 L99.8,401.5 Q99.8,413 99.8,424.5 L99.8,436" marker-end="url(#am2-arrow)"/></g></g><g><g class="am-node am-node--rect" data-key="6 个技能摘要" data-step="0"><rect class="am-node-shape" x="47.7" y="14" width="104.2" height="35" rx="3"/><text x="99.8" y="31.5" text-anchor="middle" dominant-baseline="central">6 个技能摘要</text></g><g class="am-node am-node--rect" data-key="一次请求中的 6 道 Noul" data-step="0"><rect class="am-node-shape" x="17" y="95" width="165.5" height="35" rx="3"/><text x="99.8" y="112.5" text-anchor="middle" dominant-baseline="central">一次请求中的 6 道 Noul</text></g><g class="am-node am-node--rect" data-key="Jev 返回 6 个概率" data-step="1"><rect class="am-node-shape" x="32.1" y="176" width="135.4" height="35" rx="3"/><text x="99.8" y="193.5" text-anchor="middle" dominant-baseline="central">Jev 返回 6 个概率</text></g><g class="am-node am-node--rect" data-key="保留概率不小于 0.5 的候选" data-step="2"><rect class="am-node-shape" x="14" y="257" width="171.5" height="52" rx="3"/><text x="99.8" y="274.5" text-anchor="middle" dominant-baseline="central">保留概率不小于 0.5 的候</text><text x="99.8" y="291.5" text-anchor="middle" dominant-baseline="central">选</text></g><g class="am-node am-node--rect" data-key="稳定排序并最多取 5 个" data-step="3"><rect class="am-node-shape" x="19.7" y="355" width="160.1" height="35" rx="3"/><text x="99.8" y="372.5" text-anchor="middle" dominant-baseline="central">稳定排序并最多取 5 个</text></g><g class="am-node am-node--rect" data-key="去掉已可见名称并发布新增摘要" data-step="4"><rect class="am-node-shape" x="14.3" y="436" width="171" height="52" rx="3"/><text x="99.8" y="453.5" text-anchor="middle" dominant-baseline="central">去掉已可见名称并发布新</text><text x="99.8" y="470.5" text-anchor="middle" dominant-baseline="central">增摘要</text></g></g></svg></figure>
+<figure class="am-diagram am-flow"><svg viewBox="0 0 200 502" width="200" height="502" role="img" aria-label="流程图：6 个技能摘要、一次请求中的 6 道 Noul、Jev 返回 6 个概率、保留概率不小于 0.5 的候选、稳定排序并最多取 5 个、发布新增或更新的摘要" xmlns="http://www.w3.org/2000/svg"><defs><marker id="am2-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g></g><g><g data-step="0"><path class="am-edge" d="M99.8,49 L99.8,60.5 Q99.8,72 99.8,83.5 L99.8,95" marker-end="url(#am2-arrow)"/></g><g data-step="1"><path class="am-edge" d="M99.8,130 L99.8,141.5 Q99.8,153 99.8,164.5 L99.8,176" marker-end="url(#am2-arrow)"/></g><g data-step="2"><path class="am-edge" d="M99.8,211 L99.8,222.5 Q99.8,234 99.8,245.5 L99.8,257" marker-end="url(#am2-arrow)"/></g><g data-step="3"><path class="am-edge" d="M99.8,309 L99.8,320.5 Q99.8,332 99.8,343.5 L99.8,355" marker-end="url(#am2-arrow)"/></g><g data-step="4"><path class="am-edge" d="M99.8,390 L99.8,401.5 Q99.8,413 99.8,424.5 L99.8,436" marker-end="url(#am2-arrow)"/></g></g><g><g class="am-node am-node--rect" data-key="6 个技能摘要" data-step="0"><rect class="am-node-shape" x="47.7" y="14" width="104.2" height="35" rx="3"/><text x="99.8" y="31.5" text-anchor="middle" dominant-baseline="central">6 个技能摘要</text></g><g class="am-node am-node--rect" data-key="一次请求中的 6 道 Noul" data-step="0"><rect class="am-node-shape" x="17" y="95" width="165.5" height="35" rx="3"/><text x="99.8" y="112.5" text-anchor="middle" dominant-baseline="central">一次请求中的 6 道 Noul</text></g><g class="am-node am-node--rect" data-key="Jev 返回 6 个概率" data-step="1"><rect class="am-node-shape" x="32.1" y="176" width="135.4" height="35" rx="3"/><text x="99.8" y="193.5" text-anchor="middle" dominant-baseline="central">Jev 返回 6 个概率</text></g><g class="am-node am-node--rect" data-key="保留概率不小于 0.5 的候选" data-step="2"><rect class="am-node-shape" x="14" y="257" width="171.5" height="52" rx="3"/><text x="99.8" y="274.5" text-anchor="middle" dominant-baseline="central">保留概率不小于 0.5 的候</text><text x="99.8" y="291.5" text-anchor="middle" dominant-baseline="central">选</text></g><g class="am-node am-node--rect" data-key="稳定排序并最多取 5 个" data-step="3"><rect class="am-node-shape" x="19.7" y="355" width="160.1" height="35" rx="3"/><text x="99.8" y="372.5" text-anchor="middle" dominant-baseline="central">稳定排序并最多取 5 个</text></g><g class="am-node am-node--rect" data-key="发布新增或更新的摘要" data-step="4"><rect class="am-node-shape" x="14.3" y="436" width="171" height="52" rx="3"/><text x="99.8" y="453.5" text-anchor="middle" dominant-baseline="central">发布新增或</text><text x="99.8" y="470.5" text-anchor="middle" dominant-baseline="central">更新的摘要</text></g></g></svg></figure>
 <div class="am-md"><h4>用户提出什么任务</h4>
 <blockquote>
 <p>查一下退款金额算错的原因，修复代码，补上测试，并说明改动。</p>
@@ -1350,7 +1354,7 @@ TypeSafe 将 Jev 的训练方法称为 **RLCD**，即为校准决策训练模型
 | 触发 | 主 Agent 的 `agent/pre-step`，原生技能目录发布前 |
 | state | 最近最多 2 条直接用户文本、1 条助手可见文本；默认合计 2,000 字符 |
 | questions | 每个技能一道 Noul；题目包含技能名称和 description |
-| 采用 | 先保留 `probability ≥ skillMinProbability` 的候选；默认门槛 0.5。再稳定排序，最多取 `skillLimit` 项（默认 5），最后去掉 Session 已可见的名称 |
+| 采用 | 先保留 `probability ≥ skillMinProbability` 的候选；默认门槛 0.5。再稳定排序，最多取 `skillLimit` 项（默认 5），最后去掉与 Session 最新可见摘要相同的项 |
 | 主模型后续行动 | 通过原生 `skill` 工具加载技能正文 |
 
 **示例：** 用户要求分析退款逻辑。插件判断代码调查技能是否相关，再把入选摘要交给主模型。Jev 没有读取技能正文、工具结果或附件。
@@ -1360,7 +1364,8 @@ TypeSafe 将 Jev 的训练方法称为 **RLCD**，即为校准决策训练模型
 | 判断与选择结果 | 目录与回执 |
 | --- | --- |
 | 有效判断，但没有候选达到门槛 | 发布 `entries: []` 的正常目录；回执为 `skill-catalog-no-relevant`。说明本次无适用推荐，主模型继续任务 |
-| 有合格选择，但名称都已可见 | 不新增目录消息；回执为 `skill-catalog-no-new`。已有摘要继续可用 |
+| 有合格选择，但描述均与最新可见摘要相同 | 不新增目录消息，回执为 `skill-catalog-no-new` |
+| 入选技能的名称首次出现或同名描述变化 | 发布新增或更新的摘要。名称重复时，主模型以最新摘要为准 |
 | 判断失败、回答不完整、取消或未采用 | 保持既有失败流程；失败等待人工 Retry / Cancel，不生成成功零推荐 |
 
 初始空目录不发起判断，也不记为成功零推荐。新用户请求或目录变化会重新选择；普通工具步骤不重复判断。
@@ -1380,7 +1385,7 @@ TypeSafe 将 Jev 的训练方法称为 **RLCD**，即为校准决策训练模型
 一次请求中的 6 道 Noul -&gt; Jev 返回 6 个概率
 Jev 返回 6 个概率 -&gt; 保留概率不小于 0.5 的候选
 保留概率不小于 0.5 的候选 -&gt; 稳定排序并最多取 5 个
-稳定排序并最多取 5 个 -&gt; 去掉已可见名称并发布新增摘要
+稳定排序并最多取 5 个 -&gt; 发布新增或更新的摘要
 ```
 
 #### 用户提出什么任务

@@ -1,6 +1,6 @@
 /** Profile settings for skill-catalog filtering and glob-result ranking. */
 export interface SelectionConfigValues {
-    /** Maximum eligible skill summaries selected before visible-name deduplication. */
+    /** Maximum eligible skill summaries selected before visible-summary deduplication. */
     skillLimit: number;
     /** Minimum skill relevance probability, inclusive; finite [0, 1], default 0.5. */
     skillMinProbability: number;
