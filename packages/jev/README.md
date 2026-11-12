@@ -71,7 +71,7 @@ The plugin row also accepts `skillMinProbability`: a finite number in `[0, 1]`, 
 
 Skill selection happens before summaries reach the main model. It assesses only model-invocable names and descriptions from the current Agent's catalog; Jev never receives skill bodies. A provider may read metadata files while collecting those summaries.
 
-The hook first filters by the minimum probability, sorts eligible skills by probability with original candidate order breaking ties, and chooses at most `skillLimit`. It then adds only skill names absent from catalogs still visible in the current Session; it does not fill vacated slots from lower-ranked skills. Earlier summaries remain available, and a nonempty selection whose names are all visible adds no catalog message and records `skill-catalog-no-new`.
+The hook first filters by the minimum probability, sorts eligible skills by probability with original candidate order breaking ties, and chooses at most `skillLimit`. It then publishes summaries for new names or descriptions that differ from the latest visible catalog entry for that name. Vacated slots stay empty. A nonempty selection whose descriptions all match adds no catalog message and records `skill-catalog-no-new`. Earlier summaries remain in the Session, and the model is told to use the latest summary when a name repeats.
 
 A valid judgment with no eligible skills instead publishes a normal catalog with empty `entries`, says that no skill reached the minimum in this judgment, and records `skill-catalog-no-relevant`. The agent can continue without Retry/Cancel; the message preserves the full-catalog and original loading instructions.
 

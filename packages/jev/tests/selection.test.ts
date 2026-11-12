@@ -250,7 +250,7 @@ describe('selection hooks through host plugin paths', () => {
     if (first.kind !== 'enter') return
     const selected = first.messages.find(message => message.source.kind === 'jev-skill-catalog')
     const text = selected?.content[0]?.type === 'text' ? selected.content[0].text : ''
-    expect(text).toMatchInlineSnapshot(`"<system-reminder>\nJev selected the top 1 of 2 model-invocable skills. These 1 new summaries supplement the catalogs already visible in this session. Probabilities estimate relevance, not task success.\n<available_skills>\n- beta: Beta summary (relevance probability 0.9)\n</available_skills>\nCall the skill tool with an exact name before following its instructions. This is a partial catalog; call skill_catalog to see every currently model-invocable skill summary. A user may invoke an eligible skill directly.\n</system-reminder>"`)
+    expect(text).toMatchInlineSnapshot(`"<system-reminder>\nJev selected the top 1 of 2 model-invocable skills. These 1 new summaries supplement the catalogs already visible in this session. Use the latest summary for any repeated skill name. Probabilities estimate relevance, not task success.\n<available_skills>\n- beta: Beta summary (relevance probability 0.9)\n</available_skills>\nCall the skill tool with an exact name before following its instructions. This is a partial catalog; call skill_catalog to see every currently model-invocable skill summary. A user may invoke an eligible skill directly.\n</system-reminder>"`)
     expect(JSON.stringify(requests)).not.toContain('BODY')
     const ordinary = await step(ctx, agent)
     expect(ordinary.kind === 'enter' && ordinary.messages.some(message => message.source.kind === 'skill-catalog')).toBe(false)
@@ -316,6 +316,38 @@ describe('selection hooks through host plugin paths', () => {
     expect(catalog?.source).toMatchObject({ entries: [{ name: 'changed-skill', description: 'Changed directory skill' }] })
     const full = await invoke(ctx, agent, 'skill_catalog', {})
     expect(full.value).toEqual({ skills: [{ name: 'changed-skill', description: 'Changed directory skill' }] })
+  })
+
+  it('publishes a selected skill when its current directory description changes', async () => {
+    const { ctx, agent, root, requests, receipts } = await fixture()
+    await mkdir(join(root, 'changed'))
+    const changed = await realpath(join(root, 'changed'))
+    ctx.skills.registerProvider(() => ({
+      name: 'directory-fixture',
+      list: async ({ cwd }) => [{
+        name: 'deploy',
+        description: cwd === changed ? 'Deploy the documentation site' : 'Deploy the API service',
+        invocation: { modelInvocable: true, userInvocable: true }, source: 'custom',
+        provider: 'directory-fixture', rank: 0, locator: cwd,
+      }],
+      get: async () => undefined,
+    }))
+    await ctx.plugin(toolWorkingDirectory)
+    const original = catalogOf(await step(ctx, agent, [user('Find the deployment skill')]))
+    expect(original?.source).toMatchObject({ entries: [{ name: 'deploy', description: 'Deploy the API service' }] })
+
+    expect((await invoke(ctx, agent, 'working_directory', { cd: 'changed' })).isError).toBe(false)
+    const updated = catalogOf(await step(ctx, agent))
+    expect(requests[1]?.questions[0]?.prompt).toContain('Deploy the documentation site')
+    expect(updated?.source).toMatchObject({ entries: [{ name: 'deploy', description: 'Deploy the documentation site' }] })
+
+    expect(catalogOf(await step(ctx, agent, [user('Check deployment again')]))).toBeUndefined()
+    expect((await invoke(ctx, agent, 'working_directory', { cd: root })).isError).toBe(false)
+    const restored = catalogOf(await step(ctx, agent))
+    expect(restored?.source).toMatchObject({ entries: [{ name: 'deploy', description: 'Deploy the API service' }] })
+    expect(receipts.map(receipt => receipt.id)).toEqual([
+      'skill-catalog-published', 'skill-catalog-published', 'skill-catalog-no-new', 'skill-catalog-published',
+    ])
   })
 
   it('ranks the original glob output twice, preserves the structured paths and reports omitted results', async () => {
@@ -720,7 +752,7 @@ describe('selection hooks through host plugin paths', () => {
     expect(requests).toHaveLength(2)
   })
 
-  it('rebuilds visible-name deduplication for legacy replayed Sessions and isolates a fresh Session', async () => {
+  it('rebuilds visible-summary deduplication for legacy replayed Sessions and isolates a fresh Session', async () => {
     const { ctx, agent, root, requests } = await fixture()
     ctx.skills.register({ name: 'alpha', description: 'Alpha', source: 'runtime', content: 'Body A' })
     const recorded: SessionEvent[] = []
