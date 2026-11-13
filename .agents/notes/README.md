@@ -38,6 +38,7 @@ The root agent maintains the authoritative three files in the primary checkout a
 | implemented | testing | [jev-deepswe-paired-evaluation](implemented/testing/jev-deepswe-paired-evaluation/decision.md) | [PR #4](https://github.com/luobosibing2/dsh-jev-plugin/pull/4) |
 | proposed | testing | [jev-log-admission-case-evaluation](proposed/testing/jev-log-admission-case-evaluation/decision.md) | Local experiment and documentation commit; no confirmed PR merge |
 | proposed | process | [publish-jev-planning-records](proposed/process/publish-jev-planning-records/decision.md) | Publication branch pending merge; planning default installed locally |
+| proposed | bug-fix | [preserve-unrelated-shared-admission](proposed/bug-fix/preserve-unrelated-shared-admission/decision.md) | [Issue #65](https://github.com/luobosibing2/dsh-jev-plugin/issues/65) |
 
 ## Git and installation packages
 

@@ -653,3 +653,45 @@ it('keeps simultaneous same-label activation reports tied to their actual child 
   expect(f.findings().find(item => item.senderId === b)!.original).toContain('Report B')
   await vi.waitFor(() => expect(f.relations()).toHaveLength(1))
 })
+
+it('admits a direct user instruction queued alongside a cancelled shared comparison', async () => {
+  const f = await fixture('unknown')
+  const a = await f.child('a')
+  await f.send(a.agent, f.root, 'Previously shared result')
+  await f.root.whenIdle()
+
+  const running = deferred()
+  f.model.gates.set(f.root.id, running)
+  const cancel = deferred()
+  const asked = vi.fn()
+  f.ctx.on('user-questions/request', async () => {
+    asked()
+    await cancel.promise
+    return { answers: [{ id: 'jev-resolution', selected: ['取消 / Cancel'] }] }
+  })
+  const instruction = createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: 'Keep the separate audit running' }] })
+  try {
+    const started = f.model.requests.length
+    f.root.followup(createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: 'Run the next check' }] }))
+    await vi.waitFor(() => expect(f.model.requests.length).toBeGreaterThan(started))
+
+    const sharedId = await f.send(a.agent, f.root, 'Unresolved shared result')
+    f.root.steer(instruction)
+    expect(f.root.inbox.nextStep).toHaveLength(2)
+    running.resolve()
+    await vi.waitFor(() => {
+      expect(asked).toHaveBeenCalledTimes(1)
+      expect(f.root.inbox.nextStep).toHaveLength(0)
+    })
+    expect(f.root.session.deriveMessages().some(message => message.id === sharedId || message.id === instruction.id)).toBe(false)
+  } finally {
+    cancel.resolve()
+    running.resolve()
+  }
+  await f.root.whenIdle()
+
+  expect(f.relations()[0]?.state).toBe('unresolved')
+  expect(f.model.requests.filter(request => request.messages.some(message => message.id === instruction.id))).toHaveLength(1)
+  expect(f.root.session.deriveMessages().filter(message => message.id === instruction.id)).toHaveLength(1)
+  expect(JSON.stringify(f.model.requests)).not.toContain('Unresolved shared result')
+})

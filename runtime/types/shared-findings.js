@@ -376,13 +376,16 @@ export async function apply(ctx, config) {
         });
     });
     ctx.on('agent/pre-step', async ({ agent, messages, signal }, next) => {
-        const originalMessages = [...messages.filter(message => observed.has(message.id)), ...reports.get(agent.id) ?? []];
+        const toolReports = reports.get(agent.id) ?? [];
+        const originalMessages = [...messages.filter(message => observed.has(message.id)), ...toolReports];
+        const withheld = new Set();
         reports.delete(agent.id);
         for (const message of originalMessages) {
             const root = observed.get(message.id)?.root;
             const abort = () => { if (root === agent)
                 judgments.get(root.id)?.abort(); };
             signal.addEventListener('abort', abort, { once: true });
+            let settled = true;
             try {
                 if (signal.aborted) {
                     abort();
@@ -390,19 +393,14 @@ export async function apply(ctx, config) {
                 }
                 const work = incoming.get(message.id);
                 if (work !== undefined) {
-                    const settled = await new Promise(resolve => {
+                    settled = await new Promise(resolve => {
                         const stop = () => { signal.removeEventListener('abort', stop); resolve(false); };
                         signal.addEventListener('abort', stop, { once: true });
                         void work.then(() => { signal.removeEventListener('abort', stop); resolve(true); }, () => { signal.removeEventListener('abort', stop); resolve(false); });
                         if (signal.aborted)
                             stop();
                     });
-                    if (!settled)
-                        return { kind: 'reject' };
                 }
-            }
-            catch {
-                return { kind: 'reject' };
             }
             finally {
                 signal.removeEventListener('abort', abort);
@@ -410,14 +408,23 @@ export async function apply(ctx, config) {
             if (signal.aborted)
                 return { kind: 'reject' };
             const finding = store.findings().find(candidate => candidate.messageIds.includes(message.id));
-            if (finding !== undefined && store.relations().some(relation => relation.state !== 'resolved' && (relation.olderId === finding.id || relation.newerId === finding.id)))
-                return { kind: 'reject' };
+            const unresolved = finding !== undefined && store.relations().some(relation => relation.state !== 'resolved' && (relation.olderId === finding.id || relation.newerId === finding.id));
+            if (!settled || unresolved) {
+                // Tool reports are already in the Session and cannot be withheld from just this step.
+                if (toolReports.includes(message))
+                    return { kind: 'reject' };
+                withheld.add(message.id);
+            }
         }
+        if (withheld.size > 0 && messages.every(message => withheld.has(message.id)))
+            return { kind: 'reject' };
         const decision = await next();
         if (decision.kind === 'reject')
             return decision;
         const notices = [];
         for (const message of originalMessages) {
+            if (withheld.has(message.id))
+                continue;
             const finding = store.findings().find(candidate => candidate.messageIds.includes(message.id));
             if (finding?.supersededBy === undefined)
                 continue;
@@ -435,7 +442,7 @@ export async function apply(ctx, config) {
             generated.set(notice.id, { relationId, recipientId: agent.id, findingId: replacement.id });
             notices.push(notice);
         }
-        return { ...decision, messages: [...decision.messages, ...notices] };
+        return { ...decision, messages: [...decision.messages.filter(message => !withheld.has(message.id)), ...notices] };
     });
     // A produced stream chunk confirms a model attempt ran after durable input admission.
     ctx.on('agent/assistant-stream', ({ agent, frame }) => {

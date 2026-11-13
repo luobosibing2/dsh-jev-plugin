@@ -39,7 +39,7 @@
 | 持续目标监督（Goal supervision） | 检查原生目标完成申请，连续多轮没有进展时暂停。 |
 | 用户约束提醒（Instruction guidance） | 读取当前用户要求及适用的 Agent 规则，必要时发送非阻塞提醒。 |
 | 中途插话分流（Interjection routing） | 区分后续任务、当前补充和即时纠正；即时纠正可中断模型响应，再在同一回合继续。 |
-| 共享发现纠正（Shared-finding corrections） | 比较已经共享的报告和消息，向受影响的接收者发送纠正。 |
+| 共享发现纠正（Shared-finding corrections） | 比较已共享的报告和消息，向受影响的接收者发送纠正；取消收件箱共享消息的比较时，保留同一步的其他收件箱消息。 |
 | 通用长日志准入（Tool-output filtering） | 命令返回后可省略明确不需要的进度或重复提示，并提供原文恢复位置。 |
 | 测试日志准入（Test-log filtering） | 保护失败、摘要、点名和慢测试，再判断普通通过明细是否仍有用。 |
 | 工作区提权代审批（Workspace approval） | 仅在 workspace-write 下参与适用的原生单次提权；非肯定判断回到原人工审批。 |
