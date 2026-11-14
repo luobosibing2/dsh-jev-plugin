@@ -179,7 +179,7 @@ dsh --profile jev
 
 接入其他兼容 TypeSafe 的 System One 服务时，选择 **Jev**，填写完整 POST 地址和模型名称，再把 API Key 保存到自选的凭据引用。例如，一份[第三方 TokenPlan 报告](https://github.com/AstrBotDevs/AstrBot/issues/10920)使用 `https://discovery-api.intern-ai.org.cn/v1/systemone` 和模型 `intern-decision-4b`；凭据引用可填 `TOKENPLAN_API_KEY`。保存密钥本身，不加 `Bearer ` 前缀，插件会自动添加 `Authorization: Bearer` 请求头。本项目未对这个示例进行真实服务验证。
 
-Jev 连接按 System One 格式发送 Choice、Score 和 Noul 问题。调用方未提供 Noul criteria 时，请求会带上 `criteria: {"true":"","false":""}`，以适配要求该字段的服务。显式 criteria（包括部分字段或 null 值）保留原内容，提供方可能有更严格的限制。插件根据类型化问题构建请求体，不接受任意 POST 请求体或聊天补全协议。保存自定义连接后，可通过**测试连接**及其**判断记录**核对结果；收到服务响应时，可在记录中查看 HTTP 状态码和原始响应。
+Jev 连接按 System One 格式发送 Choice、Score 和 Noul 问题。调用方未提供 Noul criteria 时，请求会带上 `criteria: {"true":"","false":""}`，以适配要求该字段的服务。显式 criteria（包括部分字段或 null 值）保留原内容，提供方可能有更严格的限制。插件根据类型化问题构建请求体，不接受任意 POST 请求体或聊天补全协议。保存自定义连接后，可通过**测试连接**及其**判断记录**核对结果；可在记录中查看 HTTP 状态码和原始响应。Jev 或 Luna 的响应体在解压后超过 2 MB 时，插件会停止读取，记录失败及 HTTP 状态码，不保存不完整的响应体。
 
 两个 Luna 模型 ID 是指定 Luna Decisions 能力在不同 API 中的命名。所选 API 决定协议，包括 OpenAI 将 Noul 表示为 `predicate`；修改域名不会改变协议。合法自定义端点仍使用所选协议。切回后可恢复各套已保存连接，旧 profile 默认选择 Jev 并保留原值。
 
