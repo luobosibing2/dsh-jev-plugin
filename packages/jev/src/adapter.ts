@@ -6,6 +6,34 @@ import { DecisionResponseError, isJson, knownUsage, parseProtocolResponse, proto
 
 export const JEV_PROVIDER = 'jev-system-one'
 
+const MAX_RESPONSE_BYTES = 2_000_000
+
+/** Read at most 2 MB of the decompressed response body and decode it as UTF-8. */
+async function readResponseBody(response: Response, signal?: AbortSignal): Promise<string> {
+  const reader = response.body?.getReader()
+  if (reader === undefined) return ''
+  const decoder = new TextDecoder()
+  let bytes = 0
+  let text = ''
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) return text + decoder.decode()
+      bytes += value.byteLength
+      if (bytes > MAX_RESPONSE_BYTES) {
+        void reader.cancel().catch(() => { /* Preserve the size failure if transport cleanup fails. */ })
+        throw new LlmError('Jev response exceeds 2 MB', 'INVALID_RESPONSE')
+      }
+      text += decoder.decode(value, { stream: true })
+    }
+  } catch (error) {
+    if (error instanceof LlmError) throw error
+    throw new LlmError('Decision response could not be read', signal?.aborted ? 'ABORTED' : 'NETWORK', { cause: error })
+  } finally {
+    reader.releaseLock()
+  }
+}
+
 export interface JevConnection extends JevConnectionIdentity {
   apiKey: string
 }
@@ -98,10 +126,7 @@ export class JevAdapter extends LlmAdapter {
     exchange.httpStatus = response.status
     const requestId = response.headers.get('x-request-id')
     if (requestId !== null) exchange.requestId = requestId
-    const raw = await response.text().catch(error => {
-      throw new LlmError('Decision response could not be read', signal?.aborted ? 'ABORTED' : 'NETWORK', { cause: error })
-    })
-    if (raw.length > 2_000_000) throw new LlmError('Jev response exceeds 2 MB', 'INVALID_RESPONSE')
+    const raw = await readResponseBody(response, signal)
     exchange.rawResponseText = raw
     try {
       const parsed: unknown = JSON.parse(raw)
