@@ -678,8 +678,12 @@ var StageNavigationManager = class {
 	}
 	async classify(batch, task) {
 		const { step } = task;
-		const prepared = await this.preparation(batch.controller.signal);
-		const fresh = buildStageInput(batch.sourceTurns, step, this.settings(), prepared.identity, prepared.secrets);
+		const signal = batch.controller.signal;
+		const prepared = await this.preparation(signal).catch((error) => {
+			if (signal.aborted) return void 0;
+			throw error;
+		});
+		const fresh = prepared === void 0 ? task.input : buildStageInput(batch.sourceTurns, step, this.settings(), prepared.identity, prepared.secrets);
 		if (fresh.kind === "unavailable") return "failed";
 		task.input = fresh;
 		const input = fresh;
@@ -694,6 +698,13 @@ var StageNavigationManager = class {
 			status: "pending",
 			updatedAt: at
 		};
+		if (prepared === void 0) {
+			await this.store.save({
+				...record,
+				status: "cancelled"
+			});
+			return "cancelled";
+		}
 		await this.store.save(record);
 		if (batch.controller.signal.aborted || !this.ctx.jev.isFeatureEnabled("stage-navigation")) {
 			await this.store.save({

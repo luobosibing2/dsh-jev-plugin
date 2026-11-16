@@ -104,6 +104,33 @@ describe('stage batch ownership and cancellation', () => {
     await f.manager.stop()
   })
 
+  it('records cancellation when a claimed step is still preparing its request', async () => {
+    const preparing = deferred<void>()
+    const held = deferred<void>()
+    let reads = 0
+    const f = fixture({ resolveCredential: async () => {
+      // The first two reads build the batch; the third refreshes the claimed step.
+      if (++reads === 3) {
+        preparing.resolve()
+        await held.promise
+      }
+      return undefined
+    } })
+    const batch = await f.manager.start(request)
+    await preparing.promise
+    const cancellation = f.manager.cancel(batch.id)
+    held.resolve()
+    await cancellation
+
+    const snapshot = await f.manager.read(request.sessionId, new AbortController().signal)
+    expect(snapshot.batch).toMatchObject({ status: 'cancelled', total: 1, completed: 0, cancelled: 1, failed: 0 })
+    expect(snapshot.batch?.failure).toBeUndefined()
+    expect(snapshot.turns[0]?.steps[0]?.analysis.status).toBe('cancelled')
+    expect([...f.saved.values()].map(record => record.status)).toEqual(['cancelled'])
+    expect(f.judgeOnce).not.toHaveBeenCalled()
+    await f.manager.stop()
+  })
+
   it('a late ledger read cannot adopt an answer after disablement', async () => {
     const held = deferred<object | null>()
     const entered = deferred<void>()
