@@ -55,6 +55,15 @@ function directScript(command) {
     const path = raw?.startsWith('"') || raw?.startsWith("'") ? raw.slice(1, -1) : raw;
     return path !== undefined && /\.(?:py|mjs|cjs|js|sh|ps1)$/i.test(path) ? path : undefined;
 }
+function usesUnqualifiedPowerShellScript(entry) {
+    const command = entry.args.command;
+    if (entry.exec.name !== 'pwsh' || typeof command !== 'string' || !command.trimStart().startsWith('&'))
+        return false;
+    const script = directScript(command);
+    // An unqualified call-operator operand uses PowerShell command discovery.
+    // The same-named file in the tool's working directory is not evidence.
+    return script !== undefined && !/[\\/]/.test(script);
+}
 async function scriptEvidence(fs, entry, cwd, maxBytes, signal) {
     const command = entry.args.command;
     if ((entry.exec.name !== 'bash' && entry.exec.name !== 'pwsh') || typeof command !== 'string')
@@ -248,7 +257,7 @@ export function apply(ctx, config) {
             return next();
         }
         const entry = [...entries][0];
-        if (!matches(entry, req) || !eligible(req.agent, req.signal)) {
+        if (!matches(entry, req) || !eligible(req.agent, req.signal) || usesUnqualifiedPowerShellScript(entry)) {
             leave();
             return next();
         }
