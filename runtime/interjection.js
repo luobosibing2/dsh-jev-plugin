@@ -241,6 +241,7 @@ const Config = s.object({
 	messageChars: s.number().step(1).min(1).max(1e6).default(24e3)
 });
 const FEATURE = "interjection-routing";
+const HOST_STOP_NOTICE = "宿主停止已取消分流 / Host stop cancelled routing";
 function fingerprint(message) {
 	return createHash("sha256").update(JSON.stringify(message)).digest("hex");
 }
@@ -430,7 +431,11 @@ function apply(ctx, config) {
 		]);
 		const task = (async () => {
 			await state.contextReady;
-			if (signal.aborted || entry.removed || entry.generation !== generation) return;
+			if (entry.removed || entry.generation !== generation || stopping) return;
+			if (signal.aborted) {
+				if (live(state.agent)) remove(state, entry, "cancelled", HOST_STOP_NOTICE);
+				return;
+			}
 			let identity = "";
 			let usable = false;
 			const result = await ctx.jev.judge({
@@ -608,7 +613,9 @@ function apply(ctx, config) {
 		mode(state, ctx.jev.isFeatureEnabled(FEATURE), status === "running");
 		if (status === "running") state.abortedActivity = false;
 		if (status === "idle") {
-			if (state.abortedActivity || state.signal?.aborted) for (const entry of state.entries.values()) remove(state, entry, "cancelled", "宿主停止已取消分流 / Host stop cancelled routing");
+			const wasStopped = state.abortedActivity || state.signal?.aborted;
+			state.signal = void 0;
+			if (wasStopped) for (const entry of state.entries.values()) remove(state, entry, "cancelled", HOST_STOP_NOTICE);
 			if (state.retryAfterEdit && !stopping) {
 				state.retryAfterEdit = false;
 				const item = agent.inbox.nextStep[0] ?? agent.inbox.nextTurn[0];

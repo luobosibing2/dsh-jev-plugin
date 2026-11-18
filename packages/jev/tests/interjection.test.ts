@@ -585,6 +585,36 @@ describe('interjection routing through published inbox hooks and a response-cont
     deferred.resolve(answer('steer'))
   })
 
+  it('classifies an early interjection in a new activity after Stop', async () => {
+    const h = await running([answer('steer')])
+    h.agent.cancel({ kind: 'user' })
+    h.release.resolve()
+    await h.agent.whenIdle()
+
+    const entered = Promise.withResolvers<void>()
+    const release = Promise.withResolvers<void>()
+    h.ctx.on('system-prompt/assemble', async (_presentation, _assembleContext, next) => {
+      entered.resolve()
+      await release.promise
+      return next()
+    })
+    const correction = input('Focus this comparison on durability.')
+    h.send('Compare the columns.')
+    await entered.promise
+    h.agent.followup(correction)
+    try {
+      await vi.waitFor(() => expect(h.requests).toHaveLength(1))
+    } catch (error) {
+      h.agent.cancel({ kind: 'user' })
+      throw error
+    } finally {
+      release.resolve()
+      await h.agent.whenIdle()
+    }
+    expect(h.errors).toEqual([])
+    expect(committed(h.agent, correction.id)).toHaveLength(1)
+    expect(deliveryTurn(h.agent, correction.id)).toBe(2)
+  })
 
   it('rechecks a correction arriving while another pre-step hook is still awaiting', async () => {
     const deferred = Promise.withResolvers<object>()
