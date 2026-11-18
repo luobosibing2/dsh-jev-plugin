@@ -124,14 +124,13 @@ export class StageNavigationManager {
         const records = this.store.forSession(sessionId);
         const { secrets, identity } = await this.preparation(signal);
         const settings = this.settings();
+        const batch = this.bySession.get(sessionId);
         const turns = source.turns.map(turn => ({ ...turn, steps: turn.steps.map(step => {
                 const input = buildStageInput(source.turns, step, settings, identity, secrets);
                 const saved = records.filter(record => record.stepId === step.id);
                 const analysis = summary(saved, input.fingerprint, input.kind === 'unavailable' ? input.code : undefined);
-                const batch = this.bySession.get(sessionId);
-                const claimed = batch?.tasks.findIndex(item => item.step.id === step.id) ?? -1;
-                if ((analysis.status === 'pending' || analysis.status === 'unanalysed' && claimed >= 0 && claimed < (batch?.next ?? 0))
-                    && batch !== undefined && batch.state.status !== 'running') {
+                if (batch !== undefined && batch.state.status !== 'running'
+                    && (analysis.status === 'pending' || analysis.status === 'unanalysed' && batch.claimedStepIds.has(step.id))) {
                     return { ...step, classifiable: input.kind === 'ready', materialStatus: input.kind === 'ready' ? 'ready' : input.code,
                         analysis: { ...analysis, status: batch.state.status === 'cancelled' ? 'cancelled' : 'failed',
                             failure: batch.state.failure ?? { code: 'INTERRUPTED', message: 'Stage analysis did not finish' } } };
@@ -141,7 +140,7 @@ export class StageNavigationManager {
             }) }));
         return {
             sessionId, cursor: source.cursor, turns, featureEnabled: this.ctx.jev.isFeatureEnabled(FEATURE),
-            ...this.bySession.get(sessionId) === undefined ? {} : { batch: { ...this.bySession.get(sessionId).state } },
+            ...batch === undefined ? {} : { batch: { ...batch.state } },
         };
     }
     /** Return the selected record only after the same native history check. */
@@ -176,7 +175,7 @@ export class StageNavigationManager {
         if (!this.ctx.jev.isFeatureEnabled(FEATURE))
             throw new JevError('FEATURE_DISABLED', 'Stage navigation is disabled');
         const active = this.bySession.get(request.sessionId);
-        if (active !== undefined && !active.done)
+        if (active !== undefined && this.batches.has(active.state.id))
             return Promise.resolve({ ...active.state });
         const starting = this.starting.get(request.sessionId);
         if (starting !== undefined)
@@ -222,15 +221,16 @@ export class StageNavigationManager {
             }
         const state = { id: randomUUID(), sessionId: request.sessionId,
             status: tasks.length === 0 ? 'completed' : 'running', total: tasks.length, completed: 0, failed: 0, cancelled: 0 };
-        const batch = { state, controller, tasks, sourceTurns: snapshot.turns.slice(),
-            next: 0, halt: false, done: tasks.length === 0 };
-        this.batches.set(state.id, batch);
-        this.bySession.set(request.sessionId, batch);
-        if (tasks.length > 0)
+        const summary = { state, claimedStepIds: new Set() };
+        this.bySession.set(request.sessionId, summary);
+        if (tasks.length > 0) {
+            const batch = { summary, controller, tasks, sourceTurns: snapshot.turns, next: 0, halt: false };
+            this.batches.set(state.id, batch);
             batch.work = this.run(batch, settings.concurrency).catch(() => {
-                batch.state.status = 'failed';
-                batch.state.failure = { code: 'RECORD_FAILURE', message: 'Stage batch could not finish recording results' };
-            }).finally(() => { batch.done = true; });
+                state.status = 'failed';
+                state.failure = { code: 'RECORD_FAILURE', message: 'Stage batch could not finish recording results' };
+            }).finally(() => { this.batches.delete(state.id); });
+        }
         return { ...state };
     }
     async currentFingerprint(sessionId, stepId, signal) {
@@ -243,6 +243,7 @@ export class StageNavigationManager {
     }
     async classify(batch, task) {
         const { step } = task;
+        const { sessionId } = batch.summary.state;
         const signal = batch.controller.signal;
         const prepared = await this.preparation(signal).catch(error => {
             if (signal.aborted)
@@ -256,8 +257,8 @@ export class StageNavigationManager {
         task.input = fresh;
         const input = fresh;
         const at = new Date().toISOString();
-        const record = { id: randomUUID(), sessionId: batch.state.sessionId,
-            stepId: step.id, revision: this.store.forSession(batch.state.sessionId).filter(item => item.stepId === step.id).length + 1,
+        const record = { id: randomUUID(), sessionId,
+            stepId: step.id, revision: this.store.forSession(sessionId).filter(item => item.stepId === step.id).length + 1,
             sourceFingerprint: input.fingerprint, ruleVersion: STAGE_RULE_VERSION,
             status: 'pending', updatedAt: at };
         if (prepared === undefined) {
@@ -272,12 +273,12 @@ export class StageNavigationManager {
         const outcome = await this.ctx.jev.judgeOnce({
             featureId: FEATURE, signal: batch.controller.signal,
             connection: prepared.connection,
-            link: { sessionId: batch.state.sessionId, stepId: step.id, inputVersion: input.fingerprint },
+            link: { sessionId, stepId: step.id, inputVersion: input.fingerprint },
             refresh: () => input.request,
             canAdopt: async () => {
                 if (batch.controller.signal.aborted || !this.ctx.jev.isFeatureEnabled(FEATURE))
                     return 'Stage analysis was cancelled';
-                return await this.currentFingerprint(batch.state.sessionId, step.id, batch.controller.signal) === input.fingerprint
+                return await this.currentFingerprint(sessionId, step.id, batch.controller.signal) === input.fingerprint
                     ? true : 'Recorded step material or classification settings changed';
             },
         });
@@ -302,7 +303,7 @@ export class StageNavigationManager {
             let current;
             if (!batch.controller.signal.aborted && this.ctx.jev.isFeatureEnabled(FEATURE)) {
                 try {
-                    current = await this.currentFingerprint(batch.state.sessionId, step.id, batch.controller.signal);
+                    current = await this.currentFingerprint(sessionId, step.id, batch.controller.signal);
                 }
                 catch (error) {
                     if (!batch.controller.signal.aborted)
@@ -333,27 +334,29 @@ export class StageNavigationManager {
         return ['AUTH', 'PAYMENT_REQUIRED', 'CREDENTIAL_MISSING', 'RATE_LIMIT'].includes(failure.code) ? 'halt' : 'failed';
     }
     async run(batch, concurrency) {
+        const { state, claimedStepIds } = batch.summary;
         const worker = async () => {
             while (!batch.controller.signal.aborted && !batch.halt && batch.next < batch.tasks.length) {
                 const task = batch.tasks[batch.next++];
+                claimedStepIds.add(task.step.id);
                 try {
                     const outcome = await this.classify(batch, task);
                     if (outcome === 'ok')
-                        batch.state.completed++;
+                        state.completed++;
                     else if (outcome === 'cancelled')
-                        batch.state.cancelled++;
+                        state.cancelled++;
                     else {
-                        batch.state.failed++;
+                        state.failed++;
                         if (outcome === 'halt') {
                             batch.halt = true;
-                            batch.state.failure = { code: 'CONNECTION_BLOCKED', message: 'Jev credentials or account require attention' };
+                            state.failure = { code: 'CONNECTION_BLOCKED', message: 'Jev credentials or account require attention' };
                         }
                     }
                 }
                 catch {
                     batch.halt = true;
-                    batch.state.failed++;
-                    batch.state.failure = { code: 'RECORD_FAILURE', message: 'Stage result could not be saved or read' };
+                    state.failed++;
+                    state.failure = { code: 'RECORD_FAILURE', message: 'Stage result could not be saved or read' };
                 }
             }
         };
@@ -361,22 +364,22 @@ export class StageNavigationManager {
         if (batch.controller.signal.aborted) {
             for (const task of batch.tasks.slice(batch.next)) {
                 try {
-                    await this.store.save({ id: randomUUID(), sessionId: batch.state.sessionId, stepId: task.step.id,
-                        revision: this.store.forSession(batch.state.sessionId).filter(item => item.stepId === task.step.id).length + 1,
+                    await this.store.save({ id: randomUUID(), sessionId: state.sessionId, stepId: task.step.id,
+                        revision: this.store.forSession(state.sessionId).filter(item => item.stepId === task.step.id).length + 1,
                         sourceFingerprint: task.input.fingerprint, ruleVersion: STAGE_RULE_VERSION,
                         status: 'cancelled', updatedAt: new Date().toISOString() });
                 }
                 catch {
-                    batch.state.failure = { code: 'RECORD_FAILURE', message: 'Some cancelled targets could not be saved' };
+                    state.failure = { code: 'RECORD_FAILURE', message: 'Some cancelled targets could not be saved' };
                 }
-                batch.state.cancelled++;
+                state.cancelled++;
             }
         }
-        batch.state.status = batch.controller.signal.aborted ? 'cancelled' : batch.halt ? 'failed' : 'completed';
+        state.status = batch.controller.signal.aborted ? 'cancelled' : batch.halt ? 'failed' : 'completed';
     }
     async cancel(batchId) {
         const batch = this.batches.get(batchId);
-        if (batch?.state.status === 'running')
+        if (batch?.summary.state.status === 'running')
             batch.controller.abort();
         await batch?.work;
     }
@@ -386,7 +389,7 @@ export class StageNavigationManager {
         for (const controller of this.preparations.values())
             controller.abort();
         for (const batch of this.batches.values())
-            if (batch.state.status === 'running')
+            if (batch.summary.state.status === 'running')
                 batch.controller.abort();
         await Promise.allSettled([...this.starting.values()]);
         await Promise.allSettled([...this.batches.values()].map(batch => batch.work));
@@ -396,7 +399,7 @@ export class StageNavigationManager {
         for (const controller of this.preparations.values())
             controller.abort();
         for (const batch of this.batches.values())
-            if (batch.state.status === 'running')
+            if (batch.summary.state.status === 'running')
                 batch.controller.abort();
     }
 }

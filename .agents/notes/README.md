@@ -24,7 +24,11 @@ The root agent maintains the authoritative three files in the primary checkout a
 
 | Lifecycle | Category | Group | Recorded delivery |
 | --- | --- | --- | --- |
-| proposed | bug-fix | [windows-compatibility-fixture-junction](proposed/bug-fix/windows-compatibility-fixture-junction/decision.md) | Issue #59; patch pending upstream review |
+| implemented | bug-fix | [refresh-changed-skill-summaries](implemented/bug-fix/refresh-changed-skill-summaries/decision.md) | [PR #64](https://github.com/luobosibing2/dsh-jev-plugin/pull/64) |
+| implemented | bug-fix | [release-stage-batch-history](implemented/bug-fix/release-stage-batch-history/decision.md) | [PR #70](https://github.com/luobosibing2/dsh-jev-plugin/pull/70) |
+| implemented | bug-fix | [interjection-tool-argument-redaction](implemented/bug-fix/interjection-tool-argument-redaction/decision.md) | [PR #62](https://github.com/luobosibing2/dsh-jev-plugin/pull/62) |
+| implemented | bug-fix | [powershell-approval-script-evidence](implemented/bug-fix/powershell-approval-script-evidence/decision.md) | [PR #74](https://github.com/luobosibing2/dsh-jev-plugin/pull/74) |
+| implemented | bug-fix | [windows-compatibility-fixture-junction](implemented/bug-fix/windows-compatibility-fixture-junction/decision.md) | [PR #60](https://github.com/luobosibing2/dsh-jev-plugin/pull/60) |
 | implemented | bug-fix | [windows-portable-smoke-unpack](implemented/bug-fix/windows-portable-smoke-unpack/decision.md) | [PR #56](https://github.com/luobosibing2/dsh-jev-plugin/pull/56) |
 | implemented | bug-fix | [allow-zero-skill-recommendations](implemented/bug-fix/allow-zero-skill-recommendations/decision.md) | [PR #37](https://github.com/luobosibing2/dsh-jev-plugin/pull/37) |
 | implemented | bug-fix | [count-eligible-admission-candidates](implemented/bug-fix/count-eligible-admission-candidates/decision.md) | [PR #33](https://github.com/luobosibing2/dsh-jev-plugin/pull/33) |

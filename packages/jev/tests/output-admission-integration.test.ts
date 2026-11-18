@@ -307,6 +307,51 @@ describe('output admission through published DSH paths', () => {
     expect(requestToolText(h.model.requests[2])).toBe(rawLog)
   })
 
+  it.each([
+    { kind: 'command log', log: rawLog, request: 'Keep the complete log verbatim.' },
+    { kind: 'test log', log: passingLog, request: 'Show the log in full.' },
+  ])('keeps the complete $kind requested in a queued steer', async ({ log, request }) => {
+    const message = user(request)
+    const h = await harness({ enabled: true, log, beforeAdmission: ctx => {
+      ctx.on('tools/execute', (exec, next) => {
+        exec.agent?.steer(message)
+        return next()
+      })
+    } })
+    await h.run()
+    expect(h.calls()).toBe(1)
+    expect(h.received.length).toBe(0)
+    expect(h.saves).toHaveLength(0)
+    const result = h.agent.session.snapshotEvents().find(event => event.type === 'tool/result')
+    if (result?.type !== 'tool/result') throw new Error('No durable tool result')
+    expect(contentText(result.data.message.content)).toBe(log)
+    expect(requestToolText(h.model.requests[1])).toBe(log)
+    expect(h.model.requests[1]?.messages.some(input => input.id === message.id)).toBe(true)
+  })
+
+  it('keeps the complete log when a follow-up moves to the current step during judgment', async () => {
+    const message = user('Keep the complete log verbatim.')
+    const h = await harness({
+      enabled: true,
+      beforeAdmission: ctx => {
+        ctx.on('tools/execute', (exec, next) => {
+          exec.agent?.followup(message)
+          return next()
+        })
+      },
+      answer: wire => {
+        h.agent.inbox.remove(message.id)
+        h.agent.steer(message)
+        return omitAnswers(wire)
+      },
+    })
+    await h.run()
+    expect(h.received).toHaveLength(1)
+    expect(h.saves).toHaveLength(0)
+    expect(requestToolText(h.model.requests[1])).toBe(rawLog)
+    expect(h.model.requests[1]?.messages.some(input => input.id === message.id)).toBe(true)
+  })
+
   it('records the admitted Native result once and presents that same content to the next model request', async () => {
     const h = await harness({ enabled: true, realBashExit: 0 })
     await h.run()

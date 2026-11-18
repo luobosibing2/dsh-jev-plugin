@@ -31,7 +31,9 @@ export const Config: s<StageNavigationConfigValues, Config> = s.object({
 
 interface Source { cursor: number; turns: StageTurn[] }
 interface Task { step: StageStep; input: Extract<StageInputResult, { kind: 'ready' }> }
-interface Batch { state: StageBatchState; controller: AbortController; tasks: Task[]; sourceTurns: StageTurn[]; next: number; halt: boolean; done: boolean; work?: Promise<void> }
+// Keep enough to show a failure when a claimed step has no saved outcome.
+interface BatchSummary { state: StageBatchState; claimedStepIds: Set<string> }
+interface Batch { summary: BatchSummary; controller: AbortController; tasks: Task[]; sourceTurns: readonly StageTurn[]; next: number; halt: boolean; work?: Promise<void> }
 
 function latest(records: readonly StageAnalysisRecord[]): StageAnalysisRecord | undefined {
   return records.toSorted((a, b) => b.revision - a.revision)[0]
@@ -72,7 +74,7 @@ function summary(records: readonly StageAnalysisRecord[], fingerprint: string, u
 /** Optional Host manager bound to the common Jev Remote namespace. */
 export class StageNavigationManager {
   private readonly batches = new Map<string, Batch>()
-  private readonly bySession = new Map<string, Batch>()
+  private readonly bySession = new Map<string, BatchSummary>()
   private readonly starting = new Map<string, Promise<StageBatchState>>()
   private readonly preparations = new Map<string, AbortController>()
   private stopping = false
@@ -132,14 +134,13 @@ export class StageNavigationManager {
     const records = this.store.forSession(sessionId)
     const { secrets, identity } = await this.preparation(signal)
     const settings = this.settings()
+    const batch = this.bySession.get(sessionId)
     const turns = source.turns.map(turn => ({ ...turn, steps: turn.steps.map(step => {
       const input = buildStageInput(source.turns, step, settings, identity, secrets)
       const saved = records.filter(record => record.stepId === step.id)
       const analysis = summary(saved, input.fingerprint, input.kind === 'unavailable' ? input.code : undefined)
-      const batch = this.bySession.get(sessionId)
-      const claimed = batch?.tasks.findIndex(item => item.step.id === step.id) ?? -1
-      if ((analysis.status === 'pending' || analysis.status === 'unanalysed' && claimed >= 0 && claimed < (batch?.next ?? 0))
-        && batch !== undefined && batch.state.status !== 'running') {
+      if (batch !== undefined && batch.state.status !== 'running'
+        && (analysis.status === 'pending' || analysis.status === 'unanalysed' && batch.claimedStepIds.has(step.id))) {
         return { ...step, classifiable: input.kind === 'ready', materialStatus: input.kind === 'ready' ? 'ready' as const : input.code,
           analysis: { ...analysis, status: batch.state.status === 'cancelled' ? 'cancelled' as const : 'failed' as const,
           failure: batch.state.failure ?? { code: 'INTERRUPTED', message: 'Stage analysis did not finish' } } }
@@ -149,7 +150,7 @@ export class StageNavigationManager {
     }) }))
     return {
       sessionId, cursor: source.cursor, turns, featureEnabled: this.ctx.jev.isFeatureEnabled(FEATURE),
-      ...this.bySession.get(sessionId) === undefined ? {} : { batch: { ...this.bySession.get(sessionId)!.state } },
+      ...batch === undefined ? {} : { batch: { ...batch.state } },
     }
   }
 
@@ -181,7 +182,7 @@ export class StageNavigationManager {
     if (this.stopping) throw new JevError('UNAVAILABLE', 'Stage navigation is stopping')
     if (!this.ctx.jev.isFeatureEnabled(FEATURE)) throw new JevError('FEATURE_DISABLED', 'Stage navigation is disabled')
     const active = this.bySession.get(request.sessionId)
-    if (active !== undefined && !active.done) return Promise.resolve({ ...active.state })
+    if (active !== undefined && this.batches.has(active.state.id)) return Promise.resolve({ ...active.state })
     const starting = this.starting.get(request.sessionId)
     if (starting !== undefined) return starting
     if (!['missing', 'retry-failed', 'refresh'].includes(request.mode)) throw new JevError('INVALID_SCOPE', 'Invalid stage analysis mode')
@@ -219,14 +220,16 @@ export class StageNavigationManager {
     }
     const state: StageBatchState = { id: randomUUID(), sessionId: request.sessionId,
       status: tasks.length === 0 ? 'completed' : 'running', total: tasks.length, completed: 0, failed: 0, cancelled: 0 }
-    const batch: Batch = { state, controller, tasks, sourceTurns: snapshot.turns.slice(),
-      next: 0, halt: false, done: tasks.length === 0 }
-    this.batches.set(state.id, batch)
-    this.bySession.set(request.sessionId, batch)
-    if (tasks.length > 0) batch.work = this.run(batch, settings.concurrency).catch(() => {
-      batch.state.status = 'failed'
-      batch.state.failure = { code: 'RECORD_FAILURE', message: 'Stage batch could not finish recording results' }
-    }).finally(() => { batch.done = true })
+    const summary: BatchSummary = { state, claimedStepIds: new Set() }
+    this.bySession.set(request.sessionId, summary)
+    if (tasks.length > 0) {
+      const batch: Batch = { summary, controller, tasks, sourceTurns: snapshot.turns, next: 0, halt: false }
+      this.batches.set(state.id, batch)
+      batch.work = this.run(batch, settings.concurrency).catch(() => {
+        state.status = 'failed'
+        state.failure = { code: 'RECORD_FAILURE', message: 'Stage batch could not finish recording results' }
+      }).finally(() => { this.batches.delete(state.id) })
+    }
     return { ...state }
   }
 
@@ -240,6 +243,7 @@ export class StageNavigationManager {
 
   private async classify(batch: Batch, task: Task): Promise<'ok' | 'failed' | 'cancelled' | 'halt'> {
     const { step } = task
+    const { sessionId } = batch.summary.state
     const signal = batch.controller.signal
     const prepared = await this.preparation(signal).catch(error => {
       if (signal.aborted) return undefined
@@ -251,8 +255,8 @@ export class StageNavigationManager {
     task.input = fresh
     const input = fresh
     const at = new Date().toISOString()
-    const record: StageAnalysisRecord = { id: randomUUID(), sessionId: batch.state.sessionId,
-      stepId: step.id, revision: this.store.forSession(batch.state.sessionId).filter(item => item.stepId === step.id).length + 1,
+    const record: StageAnalysisRecord = { id: randomUUID(), sessionId,
+      stepId: step.id, revision: this.store.forSession(sessionId).filter(item => item.stepId === step.id).length + 1,
       sourceFingerprint: input.fingerprint, ruleVersion: STAGE_RULE_VERSION,
       status: 'pending', updatedAt: at }
     if (prepared === undefined) {
@@ -267,11 +271,11 @@ export class StageNavigationManager {
     const outcome = await this.ctx.jev.judgeOnce({
       featureId: FEATURE, signal: batch.controller.signal,
       connection: prepared.connection,
-      link: { sessionId: batch.state.sessionId, stepId: step.id, inputVersion: input.fingerprint },
+      link: { sessionId, stepId: step.id, inputVersion: input.fingerprint },
       refresh: () => input.request,
       canAdopt: async () => {
         if (batch.controller.signal.aborted || !this.ctx.jev.isFeatureEnabled(FEATURE)) return 'Stage analysis was cancelled'
-        return await this.currentFingerprint(batch.state.sessionId, step.id, batch.controller.signal) === input.fingerprint
+        return await this.currentFingerprint(sessionId, step.id, batch.controller.signal) === input.fingerprint
           ? true : 'Recorded step material or classification settings changed'
       },
     })
@@ -294,7 +298,7 @@ export class StageNavigationManager {
         operationId: outcome.operationId, updatedAt }
       let current: string | undefined
       if (!batch.controller.signal.aborted && this.ctx.jev.isFeatureEnabled(FEATURE)) {
-        try { current = await this.currentFingerprint(batch.state.sessionId, step.id, batch.controller.signal) }
+        try { current = await this.currentFingerprint(sessionId, step.id, batch.controller.signal) }
         catch (error) { if (!batch.controller.signal.aborted) throw error }
       }
       if (batch.controller.signal.aborted || !this.ctx.jev.isFeatureEnabled(FEATURE)
@@ -322,24 +326,26 @@ export class StageNavigationManager {
   }
 
   private async run(batch: Batch, concurrency: number): Promise<void> {
+    const { state, claimedStepIds } = batch.summary
     const worker = async (): Promise<void> => {
       while (!batch.controller.signal.aborted && !batch.halt && batch.next < batch.tasks.length) {
         const task = batch.tasks[batch.next++]!
+        claimedStepIds.add(task.step.id)
         try {
           const outcome = await this.classify(batch, task)
-          if (outcome === 'ok') batch.state.completed++
-          else if (outcome === 'cancelled') batch.state.cancelled++
+          if (outcome === 'ok') state.completed++
+          else if (outcome === 'cancelled') state.cancelled++
           else {
-            batch.state.failed++
+            state.failed++
             if (outcome === 'halt') {
               batch.halt = true
-              batch.state.failure = { code: 'CONNECTION_BLOCKED', message: 'Jev credentials or account require attention' }
+              state.failure = { code: 'CONNECTION_BLOCKED', message: 'Jev credentials or account require attention' }
             }
           }
         } catch {
           batch.halt = true
-          batch.state.failed++
-          batch.state.failure = { code: 'RECORD_FAILURE', message: 'Stage result could not be saved or read' }
+          state.failed++
+          state.failure = { code: 'RECORD_FAILURE', message: 'Stage result could not be saved or read' }
         }
       }
     }
@@ -347,22 +353,22 @@ export class StageNavigationManager {
     if (batch.controller.signal.aborted) {
       for (const task of batch.tasks.slice(batch.next)) {
         try {
-          await this.store.save({ id: randomUUID(), sessionId: batch.state.sessionId, stepId: task.step.id,
-            revision: this.store.forSession(batch.state.sessionId).filter(item => item.stepId === task.step.id).length + 1,
+          await this.store.save({ id: randomUUID(), sessionId: state.sessionId, stepId: task.step.id,
+            revision: this.store.forSession(state.sessionId).filter(item => item.stepId === task.step.id).length + 1,
             sourceFingerprint: task.input.fingerprint, ruleVersion: STAGE_RULE_VERSION,
             status: 'cancelled', updatedAt: new Date().toISOString() })
         } catch {
-          batch.state.failure = { code: 'RECORD_FAILURE', message: 'Some cancelled targets could not be saved' }
+          state.failure = { code: 'RECORD_FAILURE', message: 'Some cancelled targets could not be saved' }
         }
-        batch.state.cancelled++
+        state.cancelled++
       }
     }
-    batch.state.status = batch.controller.signal.aborted ? 'cancelled' : batch.halt ? 'failed' : 'completed'
+    state.status = batch.controller.signal.aborted ? 'cancelled' : batch.halt ? 'failed' : 'completed'
   }
 
   async cancel(batchId: string): Promise<void> {
     const batch = this.batches.get(batchId)
-    if (batch?.state.status === 'running') batch.controller.abort()
+    if (batch?.summary.state.status === 'running') batch.controller.abort()
     await batch?.work
   }
 
@@ -370,7 +376,7 @@ export class StageNavigationManager {
   async stop(): Promise<void> {
     this.stopping = true
     for (const controller of this.preparations.values()) controller.abort()
-    for (const batch of this.batches.values()) if (batch.state.status === 'running') batch.controller.abort()
+    for (const batch of this.batches.values()) if (batch.summary.state.status === 'running') batch.controller.abort()
     await Promise.allSettled([...this.starting.values()])
     await Promise.allSettled([...this.batches.values()].map(batch => batch.work))
     await this.store.close()
@@ -378,7 +384,7 @@ export class StageNavigationManager {
 
   cancelRunning(): void {
     for (const controller of this.preparations.values()) controller.abort()
-    for (const batch of this.batches.values()) if (batch.state.status === 'running') batch.controller.abort()
+    for (const batch of this.batches.values()) if (batch.summary.state.status === 'running') batch.controller.abort()
   }
 }
 

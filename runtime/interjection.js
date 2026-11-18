@@ -1,10 +1,12 @@
 import { n as JevError } from "./types-B9L4N7Jb.js";
+import { n as redactToolArguments } from "./credential-redaction-4wL2a7GG.js";
 import s from "@deepseek-ai/schemastery";
 import { createHash } from "node:crypto";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { z } from "zod";
 //#region packages/jev/lib/types/interjection-context.js
 /** Bounded original facts used by running-user-message classification. */
+const MAX_TOOL_ARGUMENT_CHARS = 1e6;
 const materialSchema = z.object({
 	id: z.string(),
 	text: z.string(),
@@ -79,7 +81,7 @@ function routingContextProjection(limit) {
 	});
 	return {
 		key: "jev-interjection-context",
-		stateVersion: 1000001 + limit,
+		stateVersion: 2000001 + limit,
 		stateSchema,
 		init: () => ({
 			budget: limit,
@@ -126,16 +128,22 @@ function routingContextProjection(limit) {
 					...state,
 					assistant: material(event.data.message.id, event.data.message.content, limit)
 				};
-				case "tool/call": return {
-					...state,
-					tool: {
-						callId: event.data.callId,
-						name: event.data.name.slice(0, limit),
-						arguments: event.data.arguments.slice(0, limit),
-						excerpt: event.data.arguments.length > limit || event.data.name.length > limit,
-						status: "running"
-					}
-				};
+				case "tool/call": {
+					const args = event.data.arguments.length > MAX_TOOL_ARGUMENT_CHARS ? {
+						text: "[REDACTED: oversized tool arguments]",
+						withheld: true
+					} : redactToolArguments(event.data.arguments);
+					return {
+						...state,
+						tool: {
+							callId: event.data.callId,
+							name: event.data.name.slice(0, limit),
+							arguments: args.text.slice(0, limit),
+							excerpt: args.withheld || args.text.length > limit || event.data.name.length > limit,
+							status: "running"
+						}
+					};
+				}
 				case "tool/result": return state.tool?.callId === event.data.message.toolCallId ? {
 					...state,
 					tool: {
@@ -233,6 +241,7 @@ const Config = s.object({
 	messageChars: s.number().step(1).min(1).max(1e6).default(24e3)
 });
 const FEATURE = "interjection-routing";
+const HOST_STOP_NOTICE = "宿主停止已取消分流 / Host stop cancelled routing";
 function fingerprint(message) {
 	return createHash("sha256").update(JSON.stringify(message)).digest("hex");
 }
@@ -263,6 +272,12 @@ function apply(ctx, config) {
 		} finally {
 			state.internal--;
 		}
+	}
+	function movePending(state, message, target) {
+		mutate(state, () => {
+			state.agent.inbox.remove(message.id);
+			state.agent.inbox.append(target, message);
+		});
 	}
 	function track(task) {
 		background.add(task);
@@ -422,7 +437,11 @@ function apply(ctx, config) {
 		]);
 		const task = (async () => {
 			await state.contextReady;
-			if (signal.aborted || entry.removed || entry.generation !== generation) return;
+			if (entry.removed || entry.generation !== generation || stopping) return;
+			if (signal.aborted) {
+				if (live(state.agent)) remove(state, entry, "cancelled", HOST_STOP_NOTICE);
+				return;
+			}
 			let identity = "";
 			let usable = false;
 			const result = await ctx.jev.judge({
@@ -469,6 +488,10 @@ function apply(ctx, config) {
 			if (answer.kind !== "choice" || answer.optionId === "unknown") return;
 			entry.route = answer.optionId;
 			entry.destination = entry.route === "follow-up" ? "next-turn" : "next-step";
+			if (entry.destination === "next-step" && state.turnStoppingSignal?.aborted === false) {
+				const message = pending(state, entry.id);
+				if (message !== void 0) movePending(state, message, "next-step");
+			}
 			routeNotice(state, entry, entry.route === "follow-up" ? "queued" : entry.route, entry.route === "follow-up" ? "已排队，等待后续轮次 / Queued for a subsequent turn" : entry.route === "steer" ? "本轮补充，等待最近步骤 / Current-task addition for the nearest step" : "即时纠正，尚未投递 / Immediate correction; not yet delivered");
 			if (entry.route === "interrupt-steer") {
 				if (!supportsInterruption(state.agent)) throw new JevError("ROUTING_HOST_UNSUPPORTED", "This DSH Host does not provide Agent.interruptResponse");
@@ -600,7 +623,9 @@ function apply(ctx, config) {
 		mode(state, ctx.jev.isFeatureEnabled(FEATURE), status === "running");
 		if (status === "running") state.abortedActivity = false;
 		if (status === "idle") {
-			if (state.abortedActivity || state.signal?.aborted) for (const entry of state.entries.values()) remove(state, entry, "cancelled", "宿主停止已取消分流 / Host stop cancelled routing");
+			const wasStopped = state.abortedActivity || state.signal?.aborted;
+			state.signal = void 0;
+			if (wasStopped) for (const entry of state.entries.values()) remove(state, entry, "cancelled", HOST_STOP_NOTICE);
 			if (state.retryAfterEdit && !stopping) {
 				state.retryAfterEdit = false;
 				const item = agent.inbox.nextStep[0] ?? agent.inbox.nextTurn[0];
@@ -632,10 +657,7 @@ function apply(ctx, config) {
 			const latest = fingerprint(message);
 			if (existing.removed || existing.delivered) return;
 			if (latest === existing.fingerprint) {
-				mutate(state, () => {
-					agent.inbox.remove(message.id);
-					agent.inbox.append("next-turn", message);
-				});
+				movePending(state, message, (state.turnStoppingSignal?.aborted === false ? existing.destination : void 0) ?? "next-turn");
 				return;
 			}
 			existing.controller.abort();
@@ -647,6 +669,7 @@ function apply(ctx, config) {
 			existing.route = void 0;
 			existing.result = void 0;
 			existing.failure = void 0;
+			if (agent.inbox.nextStep.some((item) => item.id === message.id)) movePending(state, message, "next-turn");
 			routeNotice(state, existing, "pending", "修改后重新分类 / Edited message awaiting classification");
 			start(state, existing);
 			return;
@@ -663,10 +686,7 @@ function apply(ctx, config) {
 			delivered: false
 		};
 		state.entries.set(entry.id, entry);
-		mutate(state, () => {
-			agent.inbox.remove(message.id);
-			agent.inbox.append("next-turn", message);
-		});
+		movePending(state, message, "next-turn");
 		routeNotice(state, entry, "pending", "已接收，待分类 / Received; classification pending");
 		start(state, entry);
 	});
@@ -685,13 +705,14 @@ function apply(ctx, config) {
 		const state = states.get(agent);
 		const entry = state?.entries.get(message.id);
 		if (state === void 0 || entry === void 0 || entry.removed || entry.delivered) return;
-		entry.claimedTurn = turn;
+		if (state.turnStoppingSignal === void 0) entry.claimedTurn = turn;
 		mutate(state, () => agent.inbox.append(entry.destination ?? "next-turn", message));
 	});
 	ctx.on("agent/pre-step", async ({ agent, messages, turn, step, signal }, next) => {
 		if (!live(agent)) return next();
 		const state = initialize(agent);
 		state.signal = signal;
+		state.turnStoppingSignal = void 0;
 		state.position = {
 			turn,
 			step
@@ -728,11 +749,9 @@ function apply(ctx, config) {
 			if (entry.removed || entry.delivered || entry.destination !== "next-step") continue;
 			const message = pending(state, entry.id);
 			if (message === void 0) continue;
-			mutate(state, () => {
-				agent.inbox.remove(entry.id);
-				agent.inbox.append("next-step", message);
-			});
+			movePending(state, message, "next-step");
 		}
+		state.turnStoppingSignal = signal;
 	}, { prepend: true });
 	function settledInterruption(state, turn, step, attemptId) {
 		for (const entry of state.entries.values()) {
@@ -813,6 +832,7 @@ function apply(ctx, config) {
 				current.activity = current.activeTools.size > 0 ? "tool-execution" : "other";
 			}
 			if (event.type === "turn/end") {
+				current.turnStoppingSignal = void 0;
 				current.activeTools.clear();
 				current.activity = "other";
 				current.attemptId = null;

@@ -1,4 +1,5 @@
 import { n as JevError } from "./types-B9L4N7Jb.js";
+import { n as redactToolArguments, t as redactCredentialText } from "./credential-redaction-4wL2a7GG.js";
 import s from "@deepseek-ai/schemastery";
 import { credentialRef } from "@deepseek-ai/dsh-credentials";
 import { createHash, randomUUID } from "node:crypto";
@@ -134,37 +135,18 @@ const labels = [
 	["mixed", "Several primary purposes cannot be reduced to one"],
 	["unknown", "The recorded evidence does not support a purpose judgment"]
 ];
-function redact(value, secrets) {
-	let text = value;
-	for (const secret of secrets) if (secret.length >= 4) text = text.replaceAll(secret, "[REDACTED]");
-	return text.replace(/\b(Bearer|Basic)\s+[^\s"']+/gi, "$1 [REDACTED]").replace(/\b(?:sk|key|token|apikey)[-_][A-Za-z0-9_-]{12,}\b/gi, "[REDACTED]").replace(/((?:["']?(?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|passwd|authorization|auth[_-]?token)["']?)\s*[:=]\s*)(["'])(.*?)\2/gi, "$1$2[REDACTED]$2").replace(/((?:["']?(?:password|passwd|authorization)["']?)\s*[:=]\s*)(?!["'])[^\r\n,;}\]]+/gi, "$1[REDACTED]").replace(/((?:["']?(?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|passwd|authorization|auth[_-]?token)["']?)\s*[:=]\s*)(?!["'])[^\s,"';}]+/gi, "$1[REDACTED]").replace(/([?&#](?:api[_-]?key|access[_-]?token|refresh[_-]?token|key|token|secret|auth)\s*=)[^&#\s"']+/gi, "$1[REDACTED]").replace(/(https?:\/\/)[^\s/@]+:[^\s/@]+@/gi, "$1[REDACTED]@");
-}
-/** Redact decoded strings so JSON escaping cannot hide credentials from the text rules. */
-function redactArgumentValue(value, secrets) {
-	if (typeof value === "string") return redact(value, secrets);
-	if (value === null || typeof value !== "object") return value;
-	if (Array.isArray(value)) return value.map((item) => redactArgumentValue(item, secrets));
-	return Object.fromEntries(Object.entries(value).map(([key, item]) => [redact(key, secrets), /^(?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|passwd|authorization|auth[_-]?token)$/i.test(key) ? "[REDACTED]" : redactArgumentValue(item, secrets)]));
-}
-function redactArguments(value, secrets) {
-	try {
-		return JSON.stringify(redactArgumentValue(JSON.parse(value), secrets));
-	} catch {
-		return "[REDACTED: invalid JSON tool arguments]";
-	}
-}
 function visibleBlocks(blocks, secrets) {
 	return blocks.map((block) => {
 		switch (block.type) {
 			case "text":
 			case "reasoning": return {
 				type: block.type,
-				text: redact(block.text, secrets)
+				text: redactCredentialText(block.text, secrets)
 			};
 			case "tool-call": return {
 				type: block.type,
-				name: redact(block.name, secrets),
-				arguments: redactArguments(block.arguments, secrets)
+				name: redactCredentialText(block.name, secrets),
+				arguments: redactToolArguments(block.arguments, secrets).text
 			};
 			case "image": return {
 				type: "image",
@@ -174,13 +156,13 @@ function visibleBlocks(blocks, secrets) {
 				bytes: block.attachment.bytes,
 				width: block.attachment.width,
 				height: block.attachment.height,
-				...block.attachment.name === void 0 ? {} : { name: redact(block.attachment.name, secrets) }
+				...block.attachment.name === void 0 ? {} : { name: redactCredentialText(block.attachment.name, secrets) }
 			};
 			case "file": return {
 				type: "file",
 				present: true,
 				understoodByJev: false,
-				name: redact(block.attachment.name, secrets),
+				name: redactCredentialText(block.attachment.name, secrets),
 				bytes: block.attachment.bytes
 			};
 			default: return {
@@ -198,13 +180,13 @@ function hasRecordedMaterial(step) {
 	}));
 }
 function predecessor(step, chars, secrets) {
-	const summary = redact(step.assistant?.content.filter((block) => block.type === "text").map((block) => block.text).join("\n") || step.assistant?.content.filter((block) => block.type === "reasoning").map((block) => block.text).join("\n") || "", secrets);
+	const summary = redactCredentialText(step.assistant?.content.filter((block) => block.type === "text").map((block) => block.text).join("\n") || step.assistant?.content.filter((block) => block.type === "reasoning").map((block) => block.text).join("\n") || "", secrets);
 	return {
 		stepId: step.id,
 		text: summary.slice(0, chars),
 		truncated: summary.length > chars,
 		tools: step.tools.map((tool) => ({
-			name: redact(tool.name, secrets),
+			name: redactCredentialText(tool.name, secrets),
 			result: tool.result === void 0 ? "missing" : tool.result.isError ? "error" : "recorded"
 		}))
 	};
@@ -228,17 +210,17 @@ function buildStageInput(turns, target, limits, connectionIdentity, secrets = []
 	const tools = target.tools.map((tool) => ({
 		seq: tool.seq,
 		callId: tool.callId,
-		name: redact(tool.name, secrets),
-		arguments: redactArguments(tool.arguments, secrets),
+		name: redactCredentialText(tool.name, secrets),
+		arguments: redactToolArguments(tool.arguments, secrets).text,
 		dispatched: tool.dispatched,
 		result: tool.result === void 0 ? null : {
 			seq: tool.result.seq,
 			isError: tool.result.isError,
 			content: visibleBlocks(tool.result.content, secrets),
 			...tool.result.error === void 0 ? {} : { error: {
-				name: redact(tool.result.error.name, secrets),
-				code: redact(tool.result.error.code, secrets),
-				...tool.result.error.reason === void 0 ? {} : { reason: redact(tool.result.error.reason, secrets) }
+				name: redactCredentialText(tool.result.error.name, secrets),
+				code: redactCredentialText(tool.result.error.code, secrets),
+				...tool.result.error.reason === void 0 ? {} : { reason: redactCredentialText(tool.result.error.reason, secrets) }
 			} }
 		}
 	}));
@@ -536,14 +518,13 @@ var StageNavigationManager = class {
 		const records = this.store.forSession(sessionId);
 		const { secrets, identity } = await this.preparation(signal);
 		const settings = this.settings();
+		const batch = this.bySession.get(sessionId);
 		const turns = source.turns.map((turn) => ({
 			...turn,
 			steps: turn.steps.map((step) => {
 				const input = buildStageInput(source.turns, step, settings, identity, secrets);
 				const analysis = summary(records.filter((record) => record.stepId === step.id), input.fingerprint, input.kind === "unavailable" ? input.code : void 0);
-				const batch = this.bySession.get(sessionId);
-				const claimed = batch?.tasks.findIndex((item) => item.step.id === step.id) ?? -1;
-				if ((analysis.status === "pending" || analysis.status === "unanalysed" && claimed >= 0 && claimed < (batch?.next ?? 0)) && batch !== void 0 && batch.state.status !== "running") return {
+				if (batch !== void 0 && batch.state.status !== "running" && (analysis.status === "pending" || analysis.status === "unanalysed" && batch.claimedStepIds.has(step.id))) return {
 					...step,
 					classifiable: input.kind === "ready",
 					materialStatus: input.kind === "ready" ? "ready" : input.code,
@@ -569,7 +550,7 @@ var StageNavigationManager = class {
 			cursor: source.cursor,
 			turns,
 			featureEnabled: this.ctx.jev.isFeatureEnabled(FEATURE),
-			...this.bySession.get(sessionId) === void 0 ? {} : { batch: { ...this.bySession.get(sessionId).state } }
+			...batch === void 0 ? {} : { batch: { ...batch.state } }
 		};
 	}
 	/** Return the selected record only after the same native history check. */
@@ -598,7 +579,7 @@ var StageNavigationManager = class {
 		if (this.stopping) throw new JevError("UNAVAILABLE", "Stage navigation is stopping");
 		if (!this.ctx.jev.isFeatureEnabled("stage-navigation")) throw new JevError("FEATURE_DISABLED", "Stage navigation is disabled");
 		const active = this.bySession.get(request.sessionId);
-		if (active !== void 0 && !active.done) return Promise.resolve({ ...active.state });
+		if (active !== void 0 && this.batches.has(active.state.id)) return Promise.resolve({ ...active.state });
 		const starting = this.starting.get(request.sessionId);
 		if (starting !== void 0) return starting;
 		if (![
@@ -647,26 +628,31 @@ var StageNavigationManager = class {
 			failed: 0,
 			cancelled: 0
 		};
-		const batch = {
+		const summary = {
 			state,
-			controller,
-			tasks,
-			sourceTurns: snapshot.turns.slice(),
-			next: 0,
-			halt: false,
-			done: tasks.length === 0
+			claimedStepIds: /* @__PURE__ */ new Set()
 		};
-		this.batches.set(state.id, batch);
-		this.bySession.set(request.sessionId, batch);
-		if (tasks.length > 0) batch.work = this.run(batch, settings.concurrency).catch(() => {
-			batch.state.status = "failed";
-			batch.state.failure = {
-				code: "RECORD_FAILURE",
-				message: "Stage batch could not finish recording results"
+		this.bySession.set(request.sessionId, summary);
+		if (tasks.length > 0) {
+			const batch = {
+				summary,
+				controller,
+				tasks,
+				sourceTurns: snapshot.turns,
+				next: 0,
+				halt: false
 			};
-		}).finally(() => {
-			batch.done = true;
-		});
+			this.batches.set(state.id, batch);
+			batch.work = this.run(batch, settings.concurrency).catch(() => {
+				state.status = "failed";
+				state.failure = {
+					code: "RECORD_FAILURE",
+					message: "Stage batch could not finish recording results"
+				};
+			}).finally(() => {
+				this.batches.delete(state.id);
+			});
+		}
 		return { ...state };
 	}
 	async currentFingerprint(sessionId, stepId, signal) {
@@ -678,6 +664,7 @@ var StageNavigationManager = class {
 	}
 	async classify(batch, task) {
 		const { step } = task;
+		const { sessionId } = batch.summary.state;
 		const signal = batch.controller.signal;
 		const prepared = await this.preparation(signal).catch((error) => {
 			if (signal.aborted) return void 0;
@@ -690,9 +677,9 @@ var StageNavigationManager = class {
 		const at = (/* @__PURE__ */ new Date()).toISOString();
 		const record = {
 			id: randomUUID(),
-			sessionId: batch.state.sessionId,
+			sessionId,
 			stepId: step.id,
-			revision: this.store.forSession(batch.state.sessionId).filter((item) => item.stepId === step.id).length + 1,
+			revision: this.store.forSession(sessionId).filter((item) => item.stepId === step.id).length + 1,
 			sourceFingerprint: input.fingerprint,
 			ruleVersion: STAGE_RULE_VERSION,
 			status: "pending",
@@ -719,14 +706,14 @@ var StageNavigationManager = class {
 			signal: batch.controller.signal,
 			connection: prepared.connection,
 			link: {
-				sessionId: batch.state.sessionId,
+				sessionId,
 				stepId: step.id,
 				inputVersion: input.fingerprint
 			},
 			refresh: () => input.request,
 			canAdopt: async () => {
 				if (batch.controller.signal.aborted || !this.ctx.jev.isFeatureEnabled("stage-navigation")) return "Stage analysis was cancelled";
-				return await this.currentFingerprint(batch.state.sessionId, step.id, batch.controller.signal) === input.fingerprint ? true : "Recorded step material or classification settings changed";
+				return await this.currentFingerprint(sessionId, step.id, batch.controller.signal) === input.fingerprint ? true : "Recorded step material or classification settings changed";
 			}
 		});
 		const updatedAt = (/* @__PURE__ */ new Date()).toISOString();
@@ -751,7 +738,7 @@ var StageNavigationManager = class {
 			};
 			let current;
 			if (!batch.controller.signal.aborted && this.ctx.jev.isFeatureEnabled("stage-navigation")) try {
-				current = await this.currentFingerprint(batch.state.sessionId, step.id, batch.controller.signal);
+				current = await this.currentFingerprint(sessionId, step.id, batch.controller.signal);
 			} catch (error) {
 				if (!batch.controller.signal.aborted) throw error;
 			}
@@ -804,18 +791,20 @@ var StageNavigationManager = class {
 		].includes(failure.code) ? "halt" : "failed";
 	}
 	async run(batch, concurrency) {
+		const { state, claimedStepIds } = batch.summary;
 		const worker = async () => {
 			while (!batch.controller.signal.aborted && !batch.halt && batch.next < batch.tasks.length) {
 				const task = batch.tasks[batch.next++];
+				claimedStepIds.add(task.step.id);
 				try {
 					const outcome = await this.classify(batch, task);
-					if (outcome === "ok") batch.state.completed++;
-					else if (outcome === "cancelled") batch.state.cancelled++;
+					if (outcome === "ok") state.completed++;
+					else if (outcome === "cancelled") state.cancelled++;
 					else {
-						batch.state.failed++;
+						state.failed++;
 						if (outcome === "halt") {
 							batch.halt = true;
-							batch.state.failure = {
+							state.failure = {
 								code: "CONNECTION_BLOCKED",
 								message: "Jev credentials or account require attention"
 							};
@@ -823,8 +812,8 @@ var StageNavigationManager = class {
 					}
 				} catch {
 					batch.halt = true;
-					batch.state.failed++;
-					batch.state.failure = {
+					state.failed++;
+					state.failure = {
 						code: "RECORD_FAILURE",
 						message: "Stage result could not be saved or read"
 					};
@@ -836,41 +825,41 @@ var StageNavigationManager = class {
 			try {
 				await this.store.save({
 					id: randomUUID(),
-					sessionId: batch.state.sessionId,
+					sessionId: state.sessionId,
 					stepId: task.step.id,
-					revision: this.store.forSession(batch.state.sessionId).filter((item) => item.stepId === task.step.id).length + 1,
+					revision: this.store.forSession(state.sessionId).filter((item) => item.stepId === task.step.id).length + 1,
 					sourceFingerprint: task.input.fingerprint,
 					ruleVersion: STAGE_RULE_VERSION,
 					status: "cancelled",
 					updatedAt: (/* @__PURE__ */ new Date()).toISOString()
 				});
 			} catch {
-				batch.state.failure = {
+				state.failure = {
 					code: "RECORD_FAILURE",
 					message: "Some cancelled targets could not be saved"
 				};
 			}
-			batch.state.cancelled++;
+			state.cancelled++;
 		}
-		batch.state.status = batch.controller.signal.aborted ? "cancelled" : batch.halt ? "failed" : "completed";
+		state.status = batch.controller.signal.aborted ? "cancelled" : batch.halt ? "failed" : "completed";
 	}
 	async cancel(batchId) {
 		const batch = this.batches.get(batchId);
-		if (batch?.state.status === "running") batch.controller.abort();
+		if (batch?.summary.state.status === "running") batch.controller.abort();
 		await batch?.work;
 	}
 	/** Disablement and unload stop only this consumer's auxiliary work. */
 	async stop() {
 		this.stopping = true;
 		for (const controller of this.preparations.values()) controller.abort();
-		for (const batch of this.batches.values()) if (batch.state.status === "running") batch.controller.abort();
+		for (const batch of this.batches.values()) if (batch.summary.state.status === "running") batch.controller.abort();
 		await Promise.allSettled([...this.starting.values()]);
 		await Promise.allSettled([...this.batches.values()].map((batch) => batch.work));
 		await this.store.close();
 	}
 	cancelRunning() {
 		for (const controller of this.preparations.values()) controller.abort();
-		for (const batch of this.batches.values()) if (batch.state.status === "running") batch.controller.abort();
+		for (const batch of this.batches.values()) if (batch.summary.state.status === "running") batch.controller.abort();
 	}
 };
 /** Register a disabled-by-default Jev feature and its optional Host history provider. */
