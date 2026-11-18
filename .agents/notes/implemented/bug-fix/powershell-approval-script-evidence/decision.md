@@ -6,4 +6,4 @@ Delegate these recognized unqualified calls before claiming the native approval.
 
 Both regressions failed before the fix. All 43 workspace approval cases passed afterward with a localhost judge, including explicit path control cases. No live provider was used.
 
-Delivery status: proposed in [issue #73](https://github.com/luobosibing2/dsh-jev-plugin/issues/73).
+[PR #74](https://github.com/luobosibing2/dsh-jev-plugin/pull/74) merged into `main` as `14fac06b06b321dac884bb722fecefdf848990ab` on 2026-11-18. The [PR workflow](https://github.com/luobosibing2/dsh-jev-plugin/actions/runs/44133834266) passed both the plugin checks and Windows smoke checks.
