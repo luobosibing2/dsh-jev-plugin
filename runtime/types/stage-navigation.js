@@ -244,8 +244,14 @@ export class StageNavigationManager {
     async classify(batch, task) {
         const { step } = task;
         const { sessionId } = batch.summary.state;
-        const prepared = await this.preparation(batch.controller.signal);
-        const fresh = buildStageInput(batch.sourceTurns, step, this.settings(), prepared.identity, prepared.secrets);
+        const signal = batch.controller.signal;
+        const prepared = await this.preparation(signal).catch(error => {
+            if (signal.aborted)
+                return undefined;
+            throw error;
+        });
+        const fresh = prepared === undefined ? task.input
+            : buildStageInput(batch.sourceTurns, step, this.settings(), prepared.identity, prepared.secrets);
         if (fresh.kind === 'unavailable')
             return 'failed';
         task.input = fresh;
@@ -255,6 +261,10 @@ export class StageNavigationManager {
             stepId: step.id, revision: this.store.forSession(sessionId).filter(item => item.stepId === step.id).length + 1,
             sourceFingerprint: input.fingerprint, ruleVersion: STAGE_RULE_VERSION,
             status: 'pending', updatedAt: at };
+        if (prepared === undefined) {
+            await this.store.save({ ...record, status: 'cancelled' });
+            return 'cancelled';
+        }
         await this.store.save(record);
         if (batch.controller.signal.aborted || !this.ctx.jev.isFeatureEnabled(FEATURE)) {
             await this.store.save({ ...record, status: 'cancelled', updatedAt: new Date().toISOString() });
