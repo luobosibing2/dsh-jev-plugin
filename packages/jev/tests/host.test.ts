@@ -806,6 +806,54 @@ describe('Jev Host through Cordis, LlmRuntime, JSON storage, and local HTTP', ()
     await readCtx.fiber.dispose()
   })
 
+  it('rejects an oversized chunked response before the server finishes sending it', async () => {
+    const closed = deferred<void>()
+    const server = createServer((request, response) => {
+      request.resume()
+      response.on('close', () => closed.resolve())
+      response.writeHead(200, { 'content-type': 'application/json', 'x-request-id': 'oversized-fixture' })
+      response.write('界'.repeat(700_000))
+      // Leave the body open: the client already has enough bytes to reject it.
+    })
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+    cleanups.push(async () => {
+      server.closeAllConnections()
+      await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
+    })
+    const address = server.address()
+    if (address === null || typeof address === 'string') throw new Error('HTTP fixture did not bind an ephemeral port')
+    const path = await root()
+    const { ctx } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'),
+      url: `http://127.0.0.1:${address.port}/v1/systemone`, timeoutMs: 3_000 })
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+
+    const result = await ctx.jev.judgeOnce({ featureId: 'fixture', link: {}, refresh: () => request })
+    expect(result).toMatchObject({ kind: 'failed', failure: { code: 'INVALID_RESPONSE' } })
+    await closed.promise
+    const detail = await ctx.jev.getRecord(result.operationId!)
+    const exchange = detail?.attemptRecords[0]?.networkRecords?.[0]
+    expect(exchange).toMatchObject({ status: 'failed', httpStatus: 200, requestId: 'oversized-fixture',
+      failure: { code: 'INVALID_RESPONSE' }, settledAt: expect.any(String) })
+    expect(exchange?.rawResponseText).toBeUndefined()
+    expect(exchange?.rawResponse).toBeUndefined()
+  })
+
+  it('accepts and preserves a UTF-8 response at the byte limit', async () => {
+    const json = JSON.stringify({ ...valid, model: 'fixture-\u754c' })
+    const raw = json.padEnd(json.length + 2_000_000 - Buffer.byteLength(json))
+    const http = await fixture([raw])
+    const path = await root()
+    const { ctx } = await setup({ root: join(path, 'storage'), profile: join(path, 'profile'), url: http.url })
+    ctx.jev.registerFeature({ id: 'fixture', name: 'Fixture', description: 'Test only' })
+
+    const result = await ctx.jev.judgeOnce({ featureId: 'fixture', link: {}, refresh: () => request })
+    expect(result.kind).toBe('ok')
+    const detail = await ctx.jev.getRecord(result.operationId!)
+    const exchange = detail?.attemptRecords[0]?.networkRecords?.[0]
+    expect(exchange?.returnedModel).toBe('fixture-\u754c')
+    expect(exchange?.rawResponseText === raw).toBe(true)
+  })
+
   it('classifies a local service timeout and never retries without a human answer', async () => {
     const path = await root()
     let entered: (() => void) | undefined
