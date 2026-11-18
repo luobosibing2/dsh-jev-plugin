@@ -89,17 +89,17 @@ function latestSelectedCatalog(agent) {
 		if (typeof message.source.fullFingerprint === "string" && Array.isArray(message.source.entries)) return message.source;
 	}
 }
-/** Names from catalogs still visible to this Agent after compaction and replay. */
-function injectedSkillNames(agent) {
-	const names = /* @__PURE__ */ new Set();
+/** Latest descriptions from catalogs still visible to this Agent after compaction and replay. */
+function visibleSkillDescriptions(agent) {
+	const descriptions = /* @__PURE__ */ new Map();
 	for (const message of agent.session.deriveMessages()) {
 		if (message.role !== "user") continue;
 		if (message.source.kind !== "skill-catalog" && message.source.kind !== "jev-skill-catalog") continue;
 		const entries = message.source.entries;
 		if (!Array.isArray(entries)) continue;
-		for (const entry of entries) if (typeof entry === "object" && entry !== null && "name" in entry && typeof entry.name === "string") names.add(entry.name);
+		for (const entry of entries) if (typeof entry === "object" && entry !== null && "name" in entry && typeof entry.name === "string" && "description" in entry && typeof entry.description === "string") descriptions.set(entry.name, entry.description);
 	}
-	return names;
+	return descriptions;
 }
 function validAnswers(items, response) {
 	return response.answers.length === items.length && response.answers.every((answer, index) => answer.id === "candidate-" + index && answer.kind === "noul");
@@ -144,7 +144,7 @@ function selectedCatalog(items, fullFingerprint, total, selectedCount, selection
 			type: "text",
 			text: [
 				"<system-reminder>",
-				selectedCount === 0 ? "No skill reached the minimum relevance probability in this judgment. Continue the task." : "Jev selected the top " + selectedCount + " of " + total + " model-invocable skills. These " + items.length + " new summaries supplement the catalogs already visible in this session. Probabilities estimate relevance, not task success.",
+				selectedCount === 0 ? "No skill reached the minimum relevance probability in this judgment. Continue the task." : "Jev selected the top " + selectedCount + " of " + total + " model-invocable skills. These " + items.length + " new summaries supplement the catalogs already visible in this session. Use the latest summary for any repeated skill name. Probabilities estimate relevance, not task success.",
 				"<available_skills>",
 				...lines,
 				"</available_skills>",
@@ -325,8 +325,8 @@ function apply(ctx, config) {
 		});
 		if (outcome.kind !== "ok") throw new JevError("CANCELLED", "Skill selection was cancelled or could not be adopted");
 		const chosen = scored(current, outcome.response).filter((item) => item.probability >= currentMinProbability).sort(byProbability).slice(0, currentLimit);
-		const existing = injectedSkillNames(agent);
-		const additions = chosen.filter(({ item }) => !existing.has(item.name));
+		const existing = visibleSkillDescriptions(agent);
+		const additions = chosen.filter(({ item }) => existing.get(item.name) !== item.description);
 		checkedDirectories.set(agent, {
 			fingerprint: currentFingerprint,
 			replaceGeneration: agent.session.surface.replaceGeneration
@@ -335,7 +335,7 @@ function apply(ctx, config) {
 			id: chosen.length === 0 ? "skill-catalog-no-relevant" : additions.length === 0 ? "skill-catalog-no-new" : "skill-catalog-published",
 			status: "observed",
 			at: (/* @__PURE__ */ new Date()).toISOString(),
-			...chosen.length === 0 ? { reason: "No skill reached the minimum relevance probability in this judgment" } : additions.length === 0 ? { reason: "All selected skill names were already visible in session catalogs" } : {}
+			...chosen.length === 0 ? { reason: "No skill reached the minimum relevance probability in this judgment" } : additions.length === 0 ? { reason: "All selected summaries match the latest visible session catalogs" } : {}
 		});
 		return replaceCatalog(decision, original, chosen.length > 0 && additions.length === 0 ? void 0 : selectedCatalog(additions, currentFingerprint, current.length, chosen.length, {
 			skillMinProbability: currentMinProbability,
