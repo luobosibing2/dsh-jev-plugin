@@ -81,6 +81,8 @@ Each classification covers one complete DSH model step: its recorded reasoning, 
 
 Before stage analysis is sent or logged, JSON tool arguments are decoded for credential redaction and serialized again. Incomplete or invalid argument JSON is replaced with an explicit redaction marker. Original Session records remain unchanged; the revised redaction rules mark earlier classifications stale without deleting their saved records.
 
+When stage analysis finishes or is cancelled, the Host releases the batch's working copy of the history and inputs. The latest batch status and saved results remain available.
+
 ## Install through the Web UI (recommended)
 
 The package declares `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-rc.2 || 0.2.1-rc.5 || 0.2.2-alpha.2`. The compatibility reports cover the eight earlier released runtimes, including 0.2.1-rc.2 and 0.2.1-rc.5. The exact 0.2.2-alpha.2 entry additionally permits the locally validated source Host; it does not make the unpatched published release capable of response interruption. Other versions, including 0.2.1-alpha.1, remain outside this declaration. Install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.

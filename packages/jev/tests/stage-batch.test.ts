@@ -58,6 +58,31 @@ function fixture(options: {
 const request = { sessionId: 'session-1', scope: { kind: 'turn', turn: 1 } as const, mode: 'missing' as const }
 
 describe('stage batch ownership and cancellation', () => {
+  it('releases completed batch inputs across repeated reanalysis while keeping the latest summary', async () => {
+    const f = fixture()
+    const ids = new Set<string>()
+    for (let index = 0; index < 10; index++) {
+      const batch = await f.manager.start({ ...request, mode: 'refresh' })
+      ids.add(batch.id)
+      await vi.waitFor(async () => {
+        const snapshot = await f.manager.read('session-1', new AbortController().signal)
+        expect(snapshot.batch).toMatchObject({ id: batch.id, status: 'completed', failed: 1 })
+      })
+      // Waiting on a finished id is harmless and also synchronizes registry cleanup.
+      await f.manager.cancel(batch.id)
+    }
+    expect(ids.size).toBe(10)
+    expect(f.saved.size).toBe(10)
+    // Inspect the long-lived owner rather than relying on nondeterministic garbage collection.
+    expect(f.manager['batches'].size).toBe(0)
+    expect(f.manager['bySession'].get('session-1')).not.toHaveProperty('sourceTurns')
+    expect(f.manager['bySession'].get('session-1')).not.toHaveProperty('tasks')
+    const empty = await f.manager.start(request)
+    expect(empty).toMatchObject({ status: 'completed', total: 0 })
+    expect(f.manager['batches'].size).toBe(0)
+    await f.manager.stop()
+  })
+
   it('does not dispatch when the credential cannot be checked for redaction', async () => {
     const f = fixture({ resolveCredential: async () => { throw new Error('credential store unavailable') } })
     await expect(f.manager.start(request)).rejects.toMatchObject({ code: 'CREDENTIAL_UNAVAILABLE' })
@@ -124,12 +149,12 @@ describe('stage batch ownership and cancellation', () => {
     await f.manager.stop()
   })
 
-  it('a failed result write leaves no accepted stage and reports the batch failure', async () => {
+  it.each(['pending', 'succeeded'])('a failed %s write leaves no accepted stage and reports the batch failure', async status => {
     const f = fixture({
       judge: async () => ({ kind: 'ok', operationId: 'op-1', attemptId: 'attempt-1', response: {
         answers: [{ id: 'stage', kind: 'choice', optionId: 'review_validation' }],
       } }),
-      save: async record => { if (record.status === 'succeeded') throw new Error('disk full') },
+      save: async record => { if (record.status === status) throw new Error('disk full') },
     })
     const batch = await f.manager.start(request)
     let snapshot = await f.manager.read('session-1', new AbortController().signal)
