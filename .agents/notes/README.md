@@ -24,6 +24,8 @@ The root agent maintains the authoritative three files in the primary checkout a
 
 | Lifecycle | Category | Group | Recorded delivery |
 | --- | --- | --- | --- |
+| implemented | bug-fix | [refresh-changed-skill-summaries](implemented/bug-fix/refresh-changed-skill-summaries/decision.md) | [PR #64](https://github.com/luobosibing2/dsh-jev-plugin/pull/64) |
+| implemented | bug-fix | [release-stage-batch-history](implemented/bug-fix/release-stage-batch-history/decision.md) | [PR #70](https://github.com/luobosibing2/dsh-jev-plugin/pull/70) |
 | implemented | bug-fix | [interjection-tool-argument-redaction](implemented/bug-fix/interjection-tool-argument-redaction/decision.md) | [PR #62](https://github.com/luobosibing2/dsh-jev-plugin/pull/62) |
 | implemented | bug-fix | [powershell-approval-script-evidence](implemented/bug-fix/powershell-approval-script-evidence/decision.md) | [PR #74](https://github.com/luobosibing2/dsh-jev-plugin/pull/74) |
 | implemented | bug-fix | [windows-compatibility-fixture-junction](implemented/bug-fix/windows-compatibility-fixture-junction/decision.md) | [PR #60](https://github.com/luobosibing2/dsh-jev-plugin/pull/60) |
@@ -38,10 +40,8 @@ The root agent maintains the authoritative three files in the primary checkout a
 | implemented | testing | [jev-completion-evidence-rerun](implemented/testing/jev-completion-evidence-rerun/decision.md) | [PR #10](https://github.com/luobosibing2/dsh-jev-plugin/pull/10); optional long-trajectory product changes excluded |
 | implemented | testing | [jev-completion-skill-evaluation](implemented/testing/jev-completion-skill-evaluation/decision.md) | [PR #6](https://github.com/luobosibing2/dsh-jev-plugin/pull/6), [PR #7](https://github.com/luobosibing2/dsh-jev-plugin/pull/7) |
 | implemented | testing | [jev-deepswe-paired-evaluation](implemented/testing/jev-deepswe-paired-evaluation/decision.md) | [PR #4](https://github.com/luobosibing2/dsh-jev-plugin/pull/4) |
-| proposed | bug-fix | [refresh-changed-skill-summaries](proposed/bug-fix/refresh-changed-skill-summaries/decision.md) | [Issue #63](https://github.com/luobosibing2/dsh-jev-plugin/issues/63) |
 | proposed | testing | [jev-log-admission-case-evaluation](proposed/testing/jev-log-admission-case-evaluation/decision.md) | Local experiment and documentation commit; no confirmed PR merge |
 | proposed | process | [publish-jev-planning-records](proposed/process/publish-jev-planning-records/decision.md) | Publication branch pending merge; planning default installed locally |
-| proposed | bug-fix | [release-stage-batch-history](proposed/bug-fix/release-stage-batch-history/decision.md) | [Issue #69](https://github.com/luobosibing2/dsh-jev-plugin/issues/69) |
 
 ## Git and installation packages
 

@@ -6,4 +6,4 @@ Keep an active registry for cancellation and worker shutdown. Remove its entries
 
 The regression reproduced ten retained batches on main and verifies zero active entries after ten refreshes with the fix. All 38 focused stage Host, batch, integration, and Client tests passed, plus typecheck, production build, and import of the regenerated Host entry. The fixture checks which objects the long-running manager retains; it does not measure process RSS or live-provider behavior.
 
-Delivery status: proposed in [issue #69](https://github.com/luobosibing2/dsh-jev-plugin/issues/69).
+[PR #70](https://github.com/luobosibing2/dsh-jev-plugin/pull/70) merged into `main` as `35c9db5002781de32d17e9867fa2d88e167efb5b` on 2026-11-18 and closed [Issue #69](https://github.com/luobosibing2/dsh-jev-plugin/issues/69).
