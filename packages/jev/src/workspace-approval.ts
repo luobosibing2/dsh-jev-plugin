@@ -75,6 +75,15 @@ function directScript(command: string): string | undefined {
   return path !== undefined && /\.(?:py|mjs|cjs|js|sh|ps1)$/i.test(path) ? path : undefined
 }
 
+function usesUnqualifiedPowerShellScript(entry: Entry): boolean {
+  const command = entry.args.command
+  if (entry.exec.name !== 'pwsh' || typeof command !== 'string' || !command.trimStart().startsWith('&')) return false
+  const script = directScript(command)
+  // An unqualified call-operator operand uses PowerShell command discovery.
+  // The same-named file in the tool's working directory is not evidence.
+  return script !== undefined && !/[\\/]/.test(script)
+}
+
 async function scriptEvidence(fs: FileSystem, entry: Entry, cwd: string, maxBytes: number, signal: AbortSignal): Promise<Json> {
   const command = entry.args.command
   if ((entry.exec.name !== 'bash' && entry.exec.name !== 'pwsh') || typeof command !== 'string') return { status: 'not-applicable' }
@@ -248,7 +257,7 @@ export function apply(ctx: Context, config: Config): void {
     const entries = req.callId === undefined ? undefined : active.get(req.agent)?.get(req.callId)
     if (entries?.size !== 1) { leave(); return next() }
     const entry = [...entries][0]!
-    if (!matches(entry, req) || !eligible(req.agent, req.signal)) { leave(); return next() }
+    if (!matches(entry, req) || !eligible(req.agent, req.signal) || usesUnqualifiedPowerShellScript(entry)) { leave(); return next() }
     const asked = askedByEntry.get(entry)
     if (asked?.size !== 1) { leave(); return next() }
     entry.claimed = true

@@ -560,13 +560,28 @@ it('cancels a PTC judgment after a native sandbox-mode change without granting o
   })
 })
 
+it.each(["& jev-fixture.ps1", "& 'jev-fixture.ps1'"])('uses native approval for the bare PowerShell script call %s', async command => {
+  const h = await fixture([call('path-script', 'pwsh', { command, description: 'Run fixture script',
+    sandbox_permissions: 'danger-full-access', justification: 'Run script once' }), text('done')], [{ choice: 'approve' }], { shell: true })
+  await writeFile(join(h.workspace, 'jev-fixture.ps1'), 'unrelated workspace script')
+  const human = vi.fn(async (): Promise<ApprovalOutcome> => 'rejected')
+  h.ctx.on('approval/request', human)
+  await h.send()
+  expect(h.received).toHaveLength(0)
+  expect(human).toHaveBeenCalledOnce()
+  expect(h.outcomes()).toEqual(['rejected'])
+  expect(h.shell?.modes).toEqual([])
+})
+
 it.each([
-  { tool: 'bash', command: 'python "scripts/fix.py"', script: 'fix.py' },
-  { tool: 'pwsh', command: 'pwsh -File scripts/fix.ps1', script: 'fix.ps1' },
+  { tool: 'bash', command: 'python "scripts/fix.py"', script: 'scripts/fix.py' },
+  { tool: 'pwsh', command: 'pwsh -File scripts/fix.ps1', script: 'scripts/fix.ps1' },
+  { tool: 'pwsh', command: 'pwsh -File fix.ps1', script: 'fix.ps1' },
+  { tool: 'pwsh', command: "& './scripts/fix.ps1'", script: 'scripts/fix.ps1' },
 ])('supplies a direct script and grants one native $tool command', async ({ tool, command, script }) => {
   const h = await fixture([call('shell-1', tool, { command, description: 'Run direct fixture script', sandbox_permissions: 'danger-full-access', justification: 'Write build cache' }), text('done')], [{ choice: 'approve' }], { shell: true })
   await mkdir(join(h.workspace, 'scripts'))
-  await writeFile(join(h.workspace, 'scripts', script), 'fixture script content\n')
+  await writeFile(join(h.workspace, script), 'fixture script content\n')
   await h.send()
   expect(h.received).toHaveLength(1)
   expect(h.received[0]?.state.script).toMatchObject({ status: 'read', content: 'fixture script content\n' })

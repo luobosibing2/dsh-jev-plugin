@@ -39,6 +39,7 @@ The root agent maintains the authoritative three files in the primary checkout a
 | proposed | bug-fix | [interjection-tool-argument-redaction](proposed/bug-fix/interjection-tool-argument-redaction/decision.md) | [Issue #61](https://github.com/luobosibing2/dsh-jev-plugin/issues/61); merge unconfirmed |
 | proposed | testing | [jev-log-admission-case-evaluation](proposed/testing/jev-log-admission-case-evaluation/decision.md) | Local experiment and documentation commit; no confirmed PR merge |
 | proposed | process | [publish-jev-planning-records](proposed/process/publish-jev-planning-records/decision.md) | Publication branch pending merge; planning default installed locally |
+| proposed | bug-fix | [powershell-approval-script-evidence](proposed/bug-fix/powershell-approval-script-evidence/decision.md) | [Issue #73](https://github.com/luobosibing2/dsh-jev-plugin/issues/73) |
 
 ## Git and installation packages
 
