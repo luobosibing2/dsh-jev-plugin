@@ -474,6 +474,57 @@ describe('interjection routing through published inbox hooks and a response-cont
   })
 
 
+  it.each(['before claim', 'after claim'])('admits a late steer in the closing turn and queues a follow-up edited %s', async editTiming => {
+    const h = await harness(
+      [text('Original answer'), text('Current-turn answer'), text('Later answer')],
+      [answer('steer'), answer('steer'), answer('follow-up')], { 'interjection-routing': true },
+    )
+    const entered = Promise.withResolvers<void>()
+    const release = Promise.withResolvers<void>()
+    cleanups.push(async () => { release.resolve() })
+    h.ctx.on('agent/turn-stopping', async ({ turn }) => {
+      if (turn === 1) { entered.resolve(); await release.promise }
+    })
+    const waitForRoute = (id: string, phase: 'steer' | 'queued') => vi.waitFor(() => {
+      expect(h.agent.session.snapshotEvents().some(event => event.type === 'user/message' &&
+        event.data.source.kind === 'jev-interjection' && event.data.source.action === 'route' &&
+        event.data.source.messageId === id && event.data.source.phase === phase)).toBe(true)
+    })
+
+    h.send('Summarize this table.')
+    await entered.promise
+    const correction = input('Add a column for durability.')
+    const original = input('Also compare the failure modes.')
+    const edited = { ...original, content: input('Compare the failure modes in a separate task.').content }
+    let replacedAfterClaim = false
+    if (editTiming === 'after claim') {
+      h.ctx.on('agent/inbox/claimed', ({ message, turn }) => {
+        if (turn === 1 && message.id === original.id) replacedAfterClaim = h.agent.inbox.replace(original.id, edited)
+      })
+    }
+    try {
+      h.agent.followup(correction)
+      await waitForRoute(correction.id, 'steer')
+      h.agent.followup(original)
+      await waitForRoute(original.id, 'steer')
+      if (editTiming === 'before claim') {
+        expect(h.agent.inbox.replace(original.id, edited)).toBe(true)
+        await waitForRoute(original.id, 'queued')
+      }
+    } finally {
+      release.resolve()
+    }
+
+    await h.agent.whenIdle()
+    expect(h.errors).toEqual([])
+    expect(h.requests).toHaveLength(3)
+    if (editTiming === 'after claim') expect(replacedAfterClaim).toBe(true)
+    expect(deliveryTurn(h.agent, correction.id)).toBe(1)
+    expect(deliveryTurn(h.agent, original.id)).toBe(2)
+    expect(committed(h.agent, correction.id)).toEqual([correction])
+    expect(committed(h.agent, original.id)).toEqual([edited])
+  })
+
   it('waits for a late correction before the native goal driver can begin another round', async () => {
     const deferred = Promise.withResolvers<object>()
     const started = Promise.withResolvers<void>()
