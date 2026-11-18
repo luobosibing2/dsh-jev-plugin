@@ -39,7 +39,7 @@ The plugin provides the following features. **Every feature is independently dis
 | Goal supervision | Checks native goal completion and pauses after a configurable run of rounds without progress. |
 | Instruction guidance | Reads current user instructions and applicable agent rules, then supplies a nonblocking reminder when needed. |
 | Interjection routing | Chooses later work, a current-task addition, or immediate model-response interruption followed by same-turn continuation. |
-| Shared-finding corrections | Compares reports and messages already shared, then sends corrections to affected recipients. |
+| Shared-finding corrections | Compares already shared reports and messages, sends corrections to affected recipients, and preserves other inbox messages when a shared inbox comparison is cancelled. |
 | Long-log admission | Can remove clearly unneeded progress or repeated notices after a command returns, with an original-output recovery reference. |
 | Test-log admission | Protects failures, summaries, named and slow tests while judging whether ordinary passing details are needed. |
 | Workspace approval | In `workspace-write`, can answer eligible native single-operation escalation requests; non-affirmative answers return to human approval. |
@@ -235,6 +235,8 @@ Maintainers can use the [DeepSWE paired-evaluation runner](bench/deepswe/README.
 The [completion and skill evaluation entry](bench/completion_skill/README.md) provides four named scenarios, including `completion-recovery-16`, explicit resource manifests, new-batch preparation, keyless preflight, paid execution, and offline reports. The [new fixed diagnosis](docs/testing/2026-10-05-completion-recovery/README.md) and [historical results](docs/testing/2026-10-02-completion-skill/README.md) remain separate from validation of the maintained runner. A rerun records the runner commit and source hashes; dependencies and credentials remain local prerequisites.
 
 The [public glob experiment](docs/testing/2026-10-01-glob-ranking/README.md) records six synthetic cases and 12 real DeepSeek/Jev trials: four successful Jev judgments returned 69 scores, while zero and 41 candidates bypassed ranking. It retains quality failures, recovery checks, source-read counts, and estimated costs. The historical run used a pinned earlier plugin artifact; the maintained pipeline does not imply the current `main` was rerun or that general task success improved.
+
+The [controlled log-admission cases](docs/testing/2026-10-02-log-admission/README.md) record six synthetic native-bash logs and 12 real DeepSeek trials. Four Jev calls judged 33 candidates: two judgments retained all candidates below the experiment's 0.8 threshold, while two actually omitted 15 semantic candidates; a separate exact-duplicate rule replaced four failure-detail copies. Both shortened results kept their protected evidence and were fully read back from the original. This is one historical run using a local one-off helper, not a public `bench/deepswe` case runner or a claim of general cost or task-success improvement.
 
 ```sh
 pnpm run typecheck

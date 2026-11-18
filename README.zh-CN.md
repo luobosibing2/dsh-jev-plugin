@@ -39,7 +39,7 @@
 | 持续目标监督（Goal supervision） | 检查原生目标完成申请，连续多轮没有进展时暂停。 |
 | 用户约束提醒（Instruction guidance） | 读取当前用户要求及适用的 Agent 规则，必要时发送非阻塞提醒。 |
 | 中途插话分流（Interjection routing） | 区分后续任务、当前补充和即时纠正；即时纠正可中断模型响应，再在同一回合继续。 |
-| 共享发现纠正（Shared-finding corrections） | 比较已经共享的报告和消息，向受影响的接收者发送纠正。 |
+| 共享发现纠正（Shared-finding corrections） | 比较已共享的报告和消息，向受影响的接收者发送纠正；取消收件箱共享消息的比较时，保留同一步的其他收件箱消息。 |
 | 通用长日志准入（Tool-output filtering） | 命令返回后可省略明确不需要的进度或重复提示，并提供原文恢复位置。 |
 | 测试日志准入（Test-log filtering） | 保护失败、摘要、点名和慢测试，再判断普通通过明细是否仍有用。 |
 | 工作区提权代审批（Workspace approval） | 仅在 workspace-write 下参与适用的原生单次提权；非肯定判断回到原人工审批。 |
@@ -236,6 +236,8 @@ Client CSS 构建用包内相对路径计算类名哈希，并对类名映射排
 [完成核查与技能评测入口](bench/completion_skill/README.zh-CN.md)提供四个具名场景，包括`completion-recovery-16`，以及显式资源清单、新批次准备、无费预检、收费执行和离线报告。[新固定诊断](docs/testing/2026-10-05-completion-recovery/README.md)与[历史结果](docs/testing/2026-10-02-completion-skill/README.md)均和维护入口的验证分开。每次重跑记录脚本提交和源码哈希，依赖及凭据仍需在运行机器上可用。
 
 [公开 glob 实验](docs/testing/2026-10-01-glob-ranking/README.md)记录六类合成案例与12次真实DeepSeek/Jev运行：4次成功Jev判断返回69项分数，0和41候选按规则旁路；报告保留质量负例、恢复检查、源码读取数与费用估算。历史运行使用固定的旧版插件产物，维护中的管线不表示当前main已重跑，也不表示通用任务成功率提高。
+
+[日志省略受控案例](docs/testing/2026-10-02-log-admission/README.md)记录六种人工原生 bash 日志与 12 次真实 DeepSeek trial。四次 Jev 判断覆盖 33 个候选：两次因概率低于实验采用的 0.8 门槛而全部保留，另两次实际省略 15 个语义候选；确定性逐字重复规则另替换四份失败详情。两份缩减结果均保留保护信息，主模型也完整读回原文。这是使用本地一次性辅助包的历史运行，**不是**公开 `bench/deepswe` 直接可跑的案例，也不能证明通用费用或任务成功率收益。
 
 ```sh
 pnpm run typecheck

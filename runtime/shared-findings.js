@@ -667,7 +667,9 @@ async function apply(ctx, config) {
 		});
 	});
 	ctx.on("agent/pre-step", async ({ agent, messages, signal }, next) => {
-		const originalMessages = [...messages.filter((message) => observed.has(message.id)), ...reports.get(agent.id) ?? []];
+		const toolReports = reports.get(agent.id) ?? [];
+		const originalMessages = [...messages.filter((message) => observed.has(message.id)), ...toolReports];
+		const withheld = /* @__PURE__ */ new Set();
 		reports.delete(agent.id);
 		for (const message of originalMessages) {
 			const root = observed.get(message.id)?.root;
@@ -675,42 +677,45 @@ async function apply(ctx, config) {
 				if (root === agent) judgments.get(root.id)?.abort();
 			};
 			signal.addEventListener("abort", abort, { once: true });
+			let settled = true;
 			try {
 				if (signal.aborted) {
 					abort();
 					return { kind: "reject" };
 				}
 				const work = incoming.get(message.id);
-				if (work !== void 0) {
-					if (!await new Promise((resolve) => {
-						const stop = () => {
-							signal.removeEventListener("abort", stop);
-							resolve(false);
-						};
-						signal.addEventListener("abort", stop, { once: true });
-						work.then(() => {
-							signal.removeEventListener("abort", stop);
-							resolve(true);
-						}, () => {
-							signal.removeEventListener("abort", stop);
-							resolve(false);
-						});
-						if (signal.aborted) stop();
-					})) return { kind: "reject" };
-				}
-			} catch {
-				return { kind: "reject" };
+				if (work !== void 0) settled = await new Promise((resolve) => {
+					const stop = () => {
+						signal.removeEventListener("abort", stop);
+						resolve(false);
+					};
+					signal.addEventListener("abort", stop, { once: true });
+					work.then(() => {
+						signal.removeEventListener("abort", stop);
+						resolve(true);
+					}, () => {
+						signal.removeEventListener("abort", stop);
+						resolve(false);
+					});
+					if (signal.aborted) stop();
+				});
 			} finally {
 				signal.removeEventListener("abort", abort);
 			}
 			if (signal.aborted) return { kind: "reject" };
 			const finding = store.findings().find((candidate) => candidate.messageIds.includes(message.id));
-			if (finding !== void 0 && store.relations().some((relation) => relation.state !== "resolved" && (relation.olderId === finding.id || relation.newerId === finding.id))) return { kind: "reject" };
+			const unresolved = finding !== void 0 && store.relations().some((relation) => relation.state !== "resolved" && (relation.olderId === finding.id || relation.newerId === finding.id));
+			if (!settled || unresolved) {
+				if (toolReports.includes(message)) return { kind: "reject" };
+				withheld.add(message.id);
+			}
 		}
+		if (withheld.size > 0 && messages.every((message) => withheld.has(message.id))) return { kind: "reject" };
 		const decision = await next();
 		if (decision.kind === "reject") return decision;
 		const notices = [];
 		for (const message of originalMessages) {
+			if (withheld.has(message.id)) continue;
 			const finding = store.findings().find((candidate) => candidate.messageIds.includes(message.id));
 			if (finding?.supersededBy === void 0) continue;
 			let predecessor = finding;
@@ -742,7 +747,7 @@ async function apply(ctx, config) {
 		}
 		return {
 			...decision,
-			messages: [...decision.messages, ...notices]
+			messages: [...decision.messages.filter((message) => !withheld.has(message.id)), ...notices]
 		};
 	});
 	ctx.on("agent/assistant-stream", ({ agent, frame }) => {
