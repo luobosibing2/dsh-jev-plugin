@@ -24,6 +24,8 @@ The root agent maintains the authoritative three files in the primary checkout a
 
 | Lifecycle | Category | Group | Recorded delivery |
 | --- | --- | --- | --- |
+| implemented | bug-fix | [bound-judgment-response-body](implemented/bug-fix/bound-judgment-response-body/decision.md) | [PR #68](https://github.com/luobosibing2/dsh-jev-plugin/pull/68) |
+| implemented | bug-fix | [stage-cancel-during-preparation](implemented/bug-fix/stage-cancel-during-preparation/decision.md) | [PR #72](https://github.com/luobosibing2/dsh-jev-plugin/pull/72) |
 | implemented | bug-fix | [preserve-unrelated-shared-admission](implemented/bug-fix/preserve-unrelated-shared-admission/decision.md) | [PR #66](https://github.com/luobosibing2/dsh-jev-plugin/pull/66) |
 | implemented | bug-fix | [refresh-changed-skill-summaries](implemented/bug-fix/refresh-changed-skill-summaries/decision.md) | [PR #64](https://github.com/luobosibing2/dsh-jev-plugin/pull/64) |
 | implemented | bug-fix | [release-stage-batch-history](implemented/bug-fix/release-stage-batch-history/decision.md) | [PR #70](https://github.com/luobosibing2/dsh-jev-plugin/pull/70) |
@@ -42,9 +44,7 @@ The root agent maintains the authoritative three files in the primary checkout a
 | implemented | testing | [jev-completion-evidence-rerun](implemented/testing/jev-completion-evidence-rerun/decision.md) | [PR #10](https://github.com/luobosibing2/dsh-jev-plugin/pull/10); optional long-trajectory product changes excluded |
 | implemented | testing | [jev-completion-skill-evaluation](implemented/testing/jev-completion-skill-evaluation/decision.md) | [PR #6](https://github.com/luobosibing2/dsh-jev-plugin/pull/6), [PR #7](https://github.com/luobosibing2/dsh-jev-plugin/pull/7) |
 | implemented | testing | [jev-deepswe-paired-evaluation](implemented/testing/jev-deepswe-paired-evaluation/decision.md) | [PR #4](https://github.com/luobosibing2/dsh-jev-plugin/pull/4) |
-| proposed | bug-fix | [stage-cancel-during-preparation](proposed/bug-fix/stage-cancel-during-preparation/decision.md) | [Issue #71](https://github.com/luobosibing2/dsh-jev-plugin/issues/71) |
 | proposed | process | [publish-jev-planning-records](proposed/process/publish-jev-planning-records/decision.md) | Publication branch pending merge; planning default installed locally |
-| proposed | bug-fix | [bound-judgment-response-body](proposed/bug-fix/bound-judgment-response-body/decision.md) | [Issue #67](https://github.com/luobosibing2/dsh-jev-plugin/issues/67) |
 
 ## Git and installation packages
 
