@@ -39,7 +39,7 @@ The plugin provides the following features. **Every feature is independently dis
 | Goal supervision | Checks native goal completion and pauses after a configurable run of rounds without progress. |
 | Instruction guidance | Reads current user instructions and applicable agent rules, then supplies a nonblocking reminder when needed. |
 | Interjection routing | Chooses later work, a current-task addition, or immediate model-response interruption followed by same-turn continuation. |
-| Shared-finding corrections | Compares reports and messages already shared, then sends corrections to affected recipients. |
+| Shared-finding corrections | Compares already shared reports and messages, sends corrections to affected recipients, and preserves other inbox messages when a shared inbox comparison is cancelled. |
 | Long-log admission | Can remove clearly unneeded progress or repeated notices after a command returns, with an original-output recovery reference. |
 | Test-log admission | Protects failures, summaries, named and slow tests while judging whether ordinary passing details are needed. |
 | Workspace approval | In `workspace-write`, can answer eligible native single-operation escalation requests; non-affirmative answers return to human approval. |
