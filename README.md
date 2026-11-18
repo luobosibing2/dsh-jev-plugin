@@ -234,6 +234,8 @@ The [completion and skill evaluation entry](bench/completion_skill/README.md) pr
 
 The [public glob experiment](docs/testing/2026-10-01-glob-ranking/README.md) records six synthetic cases and 12 real DeepSeek/Jev trials: four successful Jev judgments returned 69 scores, while zero and 41 candidates bypassed ranking. It retains quality failures, recovery checks, source-read counts, and estimated costs. The historical run used a pinned earlier plugin artifact; the maintained pipeline does not imply the current `main` was rerun or that general task success improved.
 
+The [controlled log-admission cases](docs/testing/2026-10-02-log-admission/README.md) record six synthetic native-bash logs and 12 real DeepSeek trials. Four Jev calls judged 33 candidates: two judgments retained all candidates below the experiment's 0.8 threshold, while two actually omitted 15 semantic candidates; a separate exact-duplicate rule replaced four failure-detail copies. Both shortened results kept their protected evidence and were fully read back from the original. This is one historical run using a local one-off helper, not a public `bench/deepswe` case runner or a claim of general cost or task-success improvement.
+
 ```sh
 pnpm run typecheck
 pnpm run build
