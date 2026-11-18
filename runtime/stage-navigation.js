@@ -1,4 +1,5 @@
 import { n as JevError } from "./types-B9L4N7Jb.js";
+import { n as redactToolArguments, t as redactCredentialText } from "./credential-redaction-4wL2a7GG.js";
 import s from "@deepseek-ai/schemastery";
 import { credentialRef } from "@deepseek-ai/dsh-credentials";
 import { createHash, randomUUID } from "node:crypto";
@@ -134,37 +135,18 @@ const labels = [
 	["mixed", "Several primary purposes cannot be reduced to one"],
 	["unknown", "The recorded evidence does not support a purpose judgment"]
 ];
-function redact(value, secrets) {
-	let text = value;
-	for (const secret of secrets) if (secret.length >= 4) text = text.replaceAll(secret, "[REDACTED]");
-	return text.replace(/\b(Bearer|Basic)\s+[^\s"']+/gi, "$1 [REDACTED]").replace(/\b(?:sk|key|token|apikey)[-_][A-Za-z0-9_-]{12,}\b/gi, "[REDACTED]").replace(/((?:["']?(?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|passwd|authorization|auth[_-]?token)["']?)\s*[:=]\s*)(["'])(.*?)\2/gi, "$1$2[REDACTED]$2").replace(/((?:["']?(?:password|passwd|authorization)["']?)\s*[:=]\s*)(?!["'])[^\r\n,;}\]]+/gi, "$1[REDACTED]").replace(/((?:["']?(?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|passwd|authorization|auth[_-]?token)["']?)\s*[:=]\s*)(?!["'])[^\s,"';}]+/gi, "$1[REDACTED]").replace(/([?&#](?:api[_-]?key|access[_-]?token|refresh[_-]?token|key|token|secret|auth)\s*=)[^&#\s"']+/gi, "$1[REDACTED]").replace(/(https?:\/\/)[^\s/@]+:[^\s/@]+@/gi, "$1[REDACTED]@");
-}
-/** Redact decoded strings so JSON escaping cannot hide credentials from the text rules. */
-function redactArgumentValue(value, secrets) {
-	if (typeof value === "string") return redact(value, secrets);
-	if (value === null || typeof value !== "object") return value;
-	if (Array.isArray(value)) return value.map((item) => redactArgumentValue(item, secrets));
-	return Object.fromEntries(Object.entries(value).map(([key, item]) => [redact(key, secrets), /^(?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|passwd|authorization|auth[_-]?token)$/i.test(key) ? "[REDACTED]" : redactArgumentValue(item, secrets)]));
-}
-function redactArguments(value, secrets) {
-	try {
-		return JSON.stringify(redactArgumentValue(JSON.parse(value), secrets));
-	} catch {
-		return "[REDACTED: invalid JSON tool arguments]";
-	}
-}
 function visibleBlocks(blocks, secrets) {
 	return blocks.map((block) => {
 		switch (block.type) {
 			case "text":
 			case "reasoning": return {
 				type: block.type,
-				text: redact(block.text, secrets)
+				text: redactCredentialText(block.text, secrets)
 			};
 			case "tool-call": return {
 				type: block.type,
-				name: redact(block.name, secrets),
-				arguments: redactArguments(block.arguments, secrets)
+				name: redactCredentialText(block.name, secrets),
+				arguments: redactToolArguments(block.arguments, secrets).text
 			};
 			case "image": return {
 				type: "image",
@@ -174,13 +156,13 @@ function visibleBlocks(blocks, secrets) {
 				bytes: block.attachment.bytes,
 				width: block.attachment.width,
 				height: block.attachment.height,
-				...block.attachment.name === void 0 ? {} : { name: redact(block.attachment.name, secrets) }
+				...block.attachment.name === void 0 ? {} : { name: redactCredentialText(block.attachment.name, secrets) }
 			};
 			case "file": return {
 				type: "file",
 				present: true,
 				understoodByJev: false,
-				name: redact(block.attachment.name, secrets),
+				name: redactCredentialText(block.attachment.name, secrets),
 				bytes: block.attachment.bytes
 			};
 			default: return {
@@ -198,13 +180,13 @@ function hasRecordedMaterial(step) {
 	}));
 }
 function predecessor(step, chars, secrets) {
-	const summary = redact(step.assistant?.content.filter((block) => block.type === "text").map((block) => block.text).join("\n") || step.assistant?.content.filter((block) => block.type === "reasoning").map((block) => block.text).join("\n") || "", secrets);
+	const summary = redactCredentialText(step.assistant?.content.filter((block) => block.type === "text").map((block) => block.text).join("\n") || step.assistant?.content.filter((block) => block.type === "reasoning").map((block) => block.text).join("\n") || "", secrets);
 	return {
 		stepId: step.id,
 		text: summary.slice(0, chars),
 		truncated: summary.length > chars,
 		tools: step.tools.map((tool) => ({
-			name: redact(tool.name, secrets),
+			name: redactCredentialText(tool.name, secrets),
 			result: tool.result === void 0 ? "missing" : tool.result.isError ? "error" : "recorded"
 		}))
 	};
@@ -228,17 +210,17 @@ function buildStageInput(turns, target, limits, connectionIdentity, secrets = []
 	const tools = target.tools.map((tool) => ({
 		seq: tool.seq,
 		callId: tool.callId,
-		name: redact(tool.name, secrets),
-		arguments: redactArguments(tool.arguments, secrets),
+		name: redactCredentialText(tool.name, secrets),
+		arguments: redactToolArguments(tool.arguments, secrets).text,
 		dispatched: tool.dispatched,
 		result: tool.result === void 0 ? null : {
 			seq: tool.result.seq,
 			isError: tool.result.isError,
 			content: visibleBlocks(tool.result.content, secrets),
 			...tool.result.error === void 0 ? {} : { error: {
-				name: redact(tool.result.error.name, secrets),
-				code: redact(tool.result.error.code, secrets),
-				...tool.result.error.reason === void 0 ? {} : { reason: redact(tool.result.error.reason, secrets) }
+				name: redactCredentialText(tool.result.error.name, secrets),
+				code: redactCredentialText(tool.result.error.code, secrets),
+				...tool.result.error.reason === void 0 ? {} : { reason: redactCredentialText(tool.result.error.reason, secrets) }
 			} }
 		}
 	}));

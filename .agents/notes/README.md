@@ -24,7 +24,7 @@ The root agent maintains the authoritative three files in the primary checkout a
 
 | Lifecycle | Category | Group | Recorded delivery |
 | --- | --- | --- | --- |
-| proposed | bug-fix | [windows-compatibility-fixture-junction](proposed/bug-fix/windows-compatibility-fixture-junction/decision.md) | Issue #59; patch pending upstream review |
+| implemented | bug-fix | [windows-compatibility-fixture-junction](implemented/bug-fix/windows-compatibility-fixture-junction/decision.md) | [PR #60](https://github.com/luobosibing2/dsh-jev-plugin/pull/60) |
 | implemented | bug-fix | [windows-portable-smoke-unpack](implemented/bug-fix/windows-portable-smoke-unpack/decision.md) | [PR #56](https://github.com/luobosibing2/dsh-jev-plugin/pull/56) |
 | implemented | bug-fix | [allow-zero-skill-recommendations](implemented/bug-fix/allow-zero-skill-recommendations/decision.md) | [PR #37](https://github.com/luobosibing2/dsh-jev-plugin/pull/37) |
 | implemented | bug-fix | [count-eligible-admission-candidates](implemented/bug-fix/count-eligible-admission-candidates/decision.md) | [PR #33](https://github.com/luobosibing2/dsh-jev-plugin/pull/33) |
@@ -36,6 +36,7 @@ The root agent maintains the authoritative three files in the primary checkout a
 | implemented | testing | [jev-completion-evidence-rerun](implemented/testing/jev-completion-evidence-rerun/decision.md) | [PR #10](https://github.com/luobosibing2/dsh-jev-plugin/pull/10); optional long-trajectory product changes excluded |
 | implemented | testing | [jev-completion-skill-evaluation](implemented/testing/jev-completion-skill-evaluation/decision.md) | [PR #6](https://github.com/luobosibing2/dsh-jev-plugin/pull/6), [PR #7](https://github.com/luobosibing2/dsh-jev-plugin/pull/7) |
 | implemented | testing | [jev-deepswe-paired-evaluation](implemented/testing/jev-deepswe-paired-evaluation/decision.md) | [PR #4](https://github.com/luobosibing2/dsh-jev-plugin/pull/4) |
+| proposed | bug-fix | [interjection-tool-argument-redaction](proposed/bug-fix/interjection-tool-argument-redaction/decision.md) | [Issue #61](https://github.com/luobosibing2/dsh-jev-plugin/issues/61); merge unconfirmed |
 | proposed | testing | [jev-log-admission-case-evaluation](proposed/testing/jev-log-admission-case-evaluation/decision.md) | Local experiment and documentation commit; no confirmed PR merge |
 | proposed | process | [publish-jev-planning-records](proposed/process/publish-jev-planning-records/decision.md) | Publication branch pending merge; planning default installed locally |
 

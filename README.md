@@ -53,7 +53,7 @@ Interjection routing requires a Host with the public `Agent.interruptResponse()`
 
 All features share a connection, profile-scoped settings, decision records, and operation receipts. Most agent-facing features target live Web root sessions; correcting a child agent does not enable every feature inside that child.
 
-Interjection routing limits task, Goal, recent assistant and tool text to the plugin row's shared `contextChars` budget (12,000 by default). Current user requirements take priority; selected requirements retain their original order. The current message has a separate `messageChars` limit; original Session history is retained.
+Interjection routing limits task, Goal, recent assistant and tool text to the plugin row's shared `contextChars` budget (12,000 by default). Current user requirements take priority; selected requirements retain their original order. Before applying the budget, routing masks recognizable credentials in recent JSON tool arguments and withholds malformed or oversized argument data. The current message has a separate `messageChars` limit; original Session history and existing Jev records are retained.
 
 **Feature branches are not all included in `main`.** Tool-output filtering is included in `main`; `codex/jev-tool-output-admission` preserves its development snapshot. Native web execution is on `codex/jev-native-web-execution` and is **paused; ordinary-site effectiveness has not passed acceptance**. Historical split branches preserve earlier work. See [branch status](docs/branches.md) before switching branches.
 

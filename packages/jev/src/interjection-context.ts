@@ -3,9 +3,11 @@ import { z } from 'zod'
 import type { ContentBlock, UserMessage } from '@deepseek-ai/dsh-llm'
 import type { SessionEvent } from '@deepseek-ai/dsh-session'
 import type { ProjectionDefinition } from '@deepseek-ai/dsh-session-projection'
+import { redactToolArguments } from './credential-redaction.ts'
 
 type Material = { id: string; text: string; excerpt: boolean }
 type ToolMaterial = { callId: string; name: string; arguments: string; excerpt: boolean; status: 'running' | 'completed' | 'failed' }
+const MAX_TOOL_ARGUMENT_CHARS = 1_000_000
 
 /** The live execution phase; no model infers these values. */
 export type RoutingActivity = 'model-response' | 'model-retry-wait' | 'tool-execution' | 'other'
@@ -73,8 +75,8 @@ export function routingContextProjection(limit: number): ProjectionDefinition<'j
     missingUserText: z.boolean(), omittedUsers: z.boolean(),
   })
   return {
-    // The configured budget changes retained state; the version prevents old cropped checkpoints from surviving a budget change.
-    key: 'jev-interjection-context', stateVersion: 1_000_001 + limit, stateSchema,
+    // Separate versions for each budget and for checkpoints created before tool redaction.
+    key: 'jev-interjection-context', stateVersion: 2_000_001 + limit, stateSchema,
     init: (): RoutingContextState => ({
       budget: limit, turn: 0, step: 0, latestUserId: '',
       users: [], previous: [], assistant: null, tool: null, missingUserText: false, omittedUsers: false,
@@ -96,12 +98,17 @@ export function routingContextProjection(limit: number): ProjectionDefinition<'j
         }
         case 'assistant/message':
           return { ...state, assistant: material(event.data.message.id, event.data.message.content, limit) }
-        case 'tool/call':
+        case 'tool/call': {
+          // Decode the whole argument value before clipping. A prefix can cut through a credential.
+          const args = event.data.arguments.length > MAX_TOOL_ARGUMENT_CHARS
+            ? { text: '[REDACTED: oversized tool arguments]', withheld: true }
+            : redactToolArguments(event.data.arguments)
           return { ...state, tool: {
             callId: event.data.callId, name: event.data.name.slice(0, limit),
-            arguments: event.data.arguments.slice(0, limit),
-            excerpt: event.data.arguments.length > limit || event.data.name.length > limit, status: 'running',
+            arguments: args.text.slice(0, limit),
+            excerpt: args.withheld || args.text.length > limit || event.data.name.length > limit, status: 'running',
           } }
+        }
         case 'tool/result':
           return state.tool?.callId === event.data.message.toolCallId
             ? { ...state, tool: { ...state.tool, status: event.data.message.isError ? 'failed' : 'completed' } } : state

@@ -1,10 +1,12 @@
 import { n as JevError } from "./types-B9L4N7Jb.js";
+import { n as redactToolArguments } from "./credential-redaction-4wL2a7GG.js";
 import s from "@deepseek-ai/schemastery";
 import { createHash } from "node:crypto";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 import { z } from "zod";
 //#region packages/jev/lib/types/interjection-context.js
 /** Bounded original facts used by running-user-message classification. */
+const MAX_TOOL_ARGUMENT_CHARS = 1e6;
 const materialSchema = z.object({
 	id: z.string(),
 	text: z.string(),
@@ -79,7 +81,7 @@ function routingContextProjection(limit) {
 	});
 	return {
 		key: "jev-interjection-context",
-		stateVersion: 1000001 + limit,
+		stateVersion: 2000001 + limit,
 		stateSchema,
 		init: () => ({
 			budget: limit,
@@ -126,16 +128,22 @@ function routingContextProjection(limit) {
 					...state,
 					assistant: material(event.data.message.id, event.data.message.content, limit)
 				};
-				case "tool/call": return {
-					...state,
-					tool: {
-						callId: event.data.callId,
-						name: event.data.name.slice(0, limit),
-						arguments: event.data.arguments.slice(0, limit),
-						excerpt: event.data.arguments.length > limit || event.data.name.length > limit,
-						status: "running"
-					}
-				};
+				case "tool/call": {
+					const args = event.data.arguments.length > MAX_TOOL_ARGUMENT_CHARS ? {
+						text: "[REDACTED: oversized tool arguments]",
+						withheld: true
+					} : redactToolArguments(event.data.arguments);
+					return {
+						...state,
+						tool: {
+							callId: event.data.callId,
+							name: event.data.name.slice(0, limit),
+							arguments: args.text.slice(0, limit),
+							excerpt: args.withheld || args.text.length > limit || event.data.name.length > limit,
+							status: "running"
+						}
+					};
+				}
 				case "tool/result": return state.tool?.callId === event.data.message.toolCallId ? {
 					...state,
 					tool: {
