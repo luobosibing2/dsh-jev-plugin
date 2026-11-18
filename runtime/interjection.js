@@ -272,6 +272,12 @@ function apply(ctx, config) {
 			state.internal--;
 		}
 	}
+	function movePending(state, message, target) {
+		mutate(state, () => {
+			state.agent.inbox.remove(message.id);
+			state.agent.inbox.append(target, message);
+		});
+	}
 	function track(task) {
 		background.add(task);
 		task.finally(() => background.delete(task)).catch(() => {});
@@ -477,6 +483,10 @@ function apply(ctx, config) {
 			if (answer.kind !== "choice" || answer.optionId === "unknown") return;
 			entry.route = answer.optionId;
 			entry.destination = entry.route === "follow-up" ? "next-turn" : "next-step";
+			if (entry.destination === "next-step" && state.turnStoppingSignal?.aborted === false) {
+				const message = pending(state, entry.id);
+				if (message !== void 0) movePending(state, message, "next-step");
+			}
 			routeNotice(state, entry, entry.route === "follow-up" ? "queued" : entry.route, entry.route === "follow-up" ? "已排队，等待后续轮次 / Queued for a subsequent turn" : entry.route === "steer" ? "本轮补充，等待最近步骤 / Current-task addition for the nearest step" : "即时纠正，尚未投递 / Immediate correction; not yet delivered");
 			if (entry.route === "interrupt-steer") {
 				if (!supportsInterruption(state.agent)) throw new JevError("ROUTING_HOST_UNSUPPORTED", "This DSH Host does not provide Agent.interruptResponse");
@@ -640,10 +650,7 @@ function apply(ctx, config) {
 			const latest = fingerprint(message);
 			if (existing.removed || existing.delivered) return;
 			if (latest === existing.fingerprint) {
-				mutate(state, () => {
-					agent.inbox.remove(message.id);
-					agent.inbox.append("next-turn", message);
-				});
+				movePending(state, message, (state.turnStoppingSignal?.aborted === false ? existing.destination : void 0) ?? "next-turn");
 				return;
 			}
 			existing.controller.abort();
@@ -655,6 +662,7 @@ function apply(ctx, config) {
 			existing.route = void 0;
 			existing.result = void 0;
 			existing.failure = void 0;
+			if (agent.inbox.nextStep.some((item) => item.id === message.id)) movePending(state, message, "next-turn");
 			routeNotice(state, existing, "pending", "修改后重新分类 / Edited message awaiting classification");
 			start(state, existing);
 			return;
@@ -671,10 +679,7 @@ function apply(ctx, config) {
 			delivered: false
 		};
 		state.entries.set(entry.id, entry);
-		mutate(state, () => {
-			agent.inbox.remove(message.id);
-			agent.inbox.append("next-turn", message);
-		});
+		movePending(state, message, "next-turn");
 		routeNotice(state, entry, "pending", "已接收，待分类 / Received; classification pending");
 		start(state, entry);
 	});
@@ -693,13 +698,14 @@ function apply(ctx, config) {
 		const state = states.get(agent);
 		const entry = state?.entries.get(message.id);
 		if (state === void 0 || entry === void 0 || entry.removed || entry.delivered) return;
-		entry.claimedTurn = turn;
+		if (state.turnStoppingSignal === void 0) entry.claimedTurn = turn;
 		mutate(state, () => agent.inbox.append(entry.destination ?? "next-turn", message));
 	});
 	ctx.on("agent/pre-step", async ({ agent, messages, turn, step, signal }, next) => {
 		if (!live(agent)) return next();
 		const state = initialize(agent);
 		state.signal = signal;
+		state.turnStoppingSignal = void 0;
 		state.position = {
 			turn,
 			step
@@ -736,11 +742,9 @@ function apply(ctx, config) {
 			if (entry.removed || entry.delivered || entry.destination !== "next-step") continue;
 			const message = pending(state, entry.id);
 			if (message === void 0) continue;
-			mutate(state, () => {
-				agent.inbox.remove(entry.id);
-				agent.inbox.append("next-step", message);
-			});
+			movePending(state, message, "next-step");
 		}
+		state.turnStoppingSignal = signal;
 	}, { prepend: true });
 	function settledInterruption(state, turn, step, attemptId) {
 		for (const entry of state.entries.values()) {
@@ -821,6 +825,7 @@ function apply(ctx, config) {
 				current.activity = current.activeTools.size > 0 ? "tool-execution" : "other";
 			}
 			if (event.type === "turn/end") {
+				current.turnStoppingSignal = void 0;
 				current.activeTools.clear();
 				current.activity = "other";
 				current.attemptId = null;

@@ -51,6 +51,7 @@ interface State {
   order: number
   entries: Map<UserMessage['id'], Entry>
   signal?: AbortSignal
+  turnStoppingSignal?: AbortSignal
   retryAfterEdit: boolean
   bufferedNotices: UserMessage[]
   recovery: Promise<void>
@@ -84,6 +85,12 @@ export function apply(ctx: Context, config: Config): void {
   const live = (agent: Agent) => ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent)
   const pending = (state: State, id: UserMessage['id']) => [...state.agent.inbox.nextStep, ...state.agent.inbox.nextTurn].find(message => message.id === id)
   function mutate<T>(state: State, callback: () => T): T { state.internal++; try { return callback() } finally { state.internal-- } }
+  function movePending(state: State, message: UserMessage, target: InboxTarget): void {
+    mutate(state, () => {
+      state.agent.inbox.remove(message.id)
+      state.agent.inbox.append(target, message)
+    })
+  }
   function track(task: Promise<void>): void { background.add(task); void task.finally(() => background.delete(task)).catch(() => {}) }
   function marker(state: State, message: UserMessage): void {
     mutate(state, () => { state.agent.inbox.append('next-step', message); state.agent.inbox.remove(message.id) })
@@ -209,6 +216,10 @@ export function apply(ctx: Context, config: Config): void {
       if (answer.kind !== 'choice' || answer.optionId === 'unknown') return
       entry.route = answer.optionId as Route
       entry.destination = entry.route === 'follow-up' ? 'next-turn' : 'next-step'
+      if (entry.destination === 'next-step' && state.turnStoppingSignal?.aborted === false) {
+        const message = pending(state, entry.id)
+        if (message !== undefined) movePending(state, message, 'next-step')
+      }
       routeNotice(state, entry, entry.route === 'follow-up' ? 'queued' : entry.route,
         entry.route === 'follow-up' ? '已排队，等待后续轮次 / Queued for a subsequent turn'
           : entry.route === 'steer' ? '本轮补充，等待最近步骤 / Current-task addition for the nearest step'
@@ -322,12 +333,14 @@ export function apply(ctx: Context, config: Config): void {
       const latest = fingerprint(message)
       if (existing.removed || existing.delivered) return
       if (latest === existing.fingerprint) {
-        mutate(state, () => { agent.inbox.remove(message.id); agent.inbox.append('next-turn', message) })
+        const destination = state.turnStoppingSignal?.aborted === false ? existing.destination : undefined
+        movePending(state, message, destination ?? 'next-turn')
         return
       }
       existing.controller.abort()
       existing.message = message; existing.fingerprint = latest; existing.generation++
       existing.controller = new AbortController(); existing.destination = undefined; existing.route = undefined; existing.result = undefined; existing.failure = undefined
+      if (agent.inbox.nextStep.some(item => item.id === message.id)) movePending(state, message, 'next-turn')
       routeNotice(state, existing, 'pending', '修改后重新分类 / Edited message awaiting classification')
       start(state, existing)
       return
@@ -336,7 +349,7 @@ export function apply(ctx: Context, config: Config): void {
     const entry: Entry = { id: message.id, order: state.order++, message, fingerprint: fingerprint(message), generation: 0, controller: new AbortController(), removed: false, delivered: false }
     state.entries.set(entry.id, entry)
     // Keep every pending identity editable while the active turn reaches a classification fence.
-    mutate(state, () => { agent.inbox.remove(message.id); agent.inbox.append('next-turn', message) })
+    movePending(state, message, 'next-turn')
     routeNotice(state, entry, 'pending', '已接收，待分类 / Received; classification pending')
     start(state, entry)
   })
@@ -353,13 +366,15 @@ export function apply(ctx: Context, config: Config): void {
     const state = states.get(agent)
     const entry = state?.entries.get(message.id)
     if (state === undefined || entry === undefined || entry.removed || entry.delivered) return
-    entry.claimedTurn = turn
+    // A claim while this turn is stopping uses the next-step inbox.
+    if (state.turnStoppingSignal === undefined) entry.claimedTurn = turn
     mutate(state, () => agent.inbox.append(entry.destination ?? 'next-turn', message))
   })
   ctx.on('agent/pre-step', async ({ agent, messages, turn, step, signal }, next) => {
     if (!live(agent)) return next()
     const state = initialize(agent)
     state.signal = signal
+    state.turnStoppingSignal = undefined
     state.position = { turn, step }
     state.proposed = messages.filter(message => message.source.kind === 'user' && !state.entries.has(message.id))
     await settle(state, signal)
@@ -394,8 +409,10 @@ export function apply(ctx: Context, config: Config): void {
       if (entry.removed || entry.delivered || entry.destination !== 'next-step') continue
       const message = pending(state, entry.id)
       if (message === undefined) continue
-      mutate(state, () => { agent.inbox.remove(entry.id); agent.inbox.append('next-step', message) })
+      movePending(state, message, 'next-step')
     }
+    // Later stopping listeners can await work before the Host checks the inbox.
+    state.turnStoppingSignal = signal
   }, { prepend: true })
   function settledInterruption(state: State, turn: number, step: number, attemptId: string | null): void {
     for (const entry of state.entries.values()) {
@@ -441,7 +458,12 @@ export function apply(ctx: Context, config: Config): void {
       if (event.type === 'step/end') settledInterruption(current, event.data.turn, event.data.step, null)
       if (event.type === 'tool/call') { current.activeTools.add(event.data.callId); current.activity = 'tool-execution' }
       if (event.type === 'tool/result') { current.activeTools.delete(event.data.message.toolCallId); current.activity = current.activeTools.size > 0 ? 'tool-execution' : 'other' }
-      if (event.type === 'turn/end') { current.activeTools.clear(); current.activity = 'other'; current.attemptId = null }
+      if (event.type === 'turn/end') {
+        current.turnStoppingSignal = undefined
+        current.activeTools.clear()
+        current.activity = 'other'
+        current.attemptId = null
+      }
       if (event.type === 'system/message') current.hasSystemMessage = true
     }
     if (event.type === 'turn/end' && event.data.reason.kind === 'aborted' && agent !== undefined) {
