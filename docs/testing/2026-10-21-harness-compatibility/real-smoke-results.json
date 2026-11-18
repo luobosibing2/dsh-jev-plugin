@@ -1,0 +1,121 @@
+{
+  "date": "2026-10-21",
+  "scope": "bounded real-provider integration on controlled fixtures; separate from the seven-version deterministic matrix",
+  "dshVersion": "0.2.1-rc.2",
+  "platform": "darwin",
+  "testedCommit": "9a46c2104e0eb18d73aad65047f01786796ebe12",
+  "equivalentMergedMain": "c54e071e99eb839749b3991d29ede9ca20e275f6",
+  "testedAndMergedTreesMatch": true,
+  "package": {
+    "sha256": "6599f20b14ea8a88d07570b06f5240e3c3a6c49b1ee601223c6f7afb5c768f34",
+    "installedFilesCompared": 87,
+    "installedFilesMatch": true
+  },
+  "requestedModels": {
+    "main": "deepseek-flash",
+    "jev": "jev-latest"
+  },
+  "observedReturnedModels": {
+    "main": {
+      "model": "deepseek-flash",
+      "responses": 9,
+      "missingMetadataResponses": 1
+    },
+    "jev": {
+      "model": "jev-1.13.0",
+      "responses": 3
+    }
+  },
+  "requests": {
+    "main": 10,
+    "jev": 3,
+    "total": 13,
+    "http200": 13,
+    "automaticProviderRetries": 0,
+    "taskCancellations": 0,
+    "timeouts": 0
+  },
+  "cases": [
+    {
+      "case": "default-off",
+      "mainRequests": 1,
+      "jevRequests": 0,
+      "allHttp200": true,
+      "allFeaturesDisabled": true,
+      "toolCalls": 0,
+      "ledgerOperations": 0,
+      "exactFinal": "HARNESS_REAL_SMOKE_OK",
+      "providerReturnedModel": null
+    },
+    {
+      "case": "file-ranking",
+      "mainRequests": 3,
+      "jevRequests": 1,
+      "allHttp200": true,
+      "candidates": 12,
+      "targetProbability": 0.81,
+      "targetRank": 1,
+      "nativeToolSequence": [
+        "glob",
+        "read"
+      ],
+      "readTargetMarker": "AUTH_RESET_IMPLEMENTATION_OK",
+      "topRankRecordedInToolText": true
+    },
+    {
+      "case": "output-admission",
+      "mainRequests": 3,
+      "jevRequests": 1,
+      "allHttp200": true,
+      "inputChars": 7634,
+      "finalChars": 853,
+      "omittedChars": 6781,
+      "reductionPercent": 88.83,
+      "semanticGroupsOmitted": 7,
+      "ruleGroupsOmitted": 0,
+      "originalLogSha256": "c71bf8c58072206872c342df3a02cbe40923be60621f3f498cda28b41969014e",
+      "originalBuildLines": 450,
+      "distinctMarkerCount": 1,
+      "directHttpRequestBodyCaptured": false,
+      "totalTokenSavingsMeasured": false,
+      "originalSpillExistsAndRecoverable": true,
+      "fixtureRerunMatchesOriginalBytes": true,
+      "additionalLogInspectionToolCalls": 1,
+      "additionalLogInspection": "grep and tail",
+      "deliveryEvidence": "Session tool result and accepted-delivery sequence coverage"
+    },
+    {
+      "case": "ptc-approval",
+      "mainRequests": 3,
+      "jevRequests": 1,
+      "allHttp200": true,
+      "sameProgramTwice": true,
+      "firstResult": "EXPECTED_SANDBOX_DENIAL",
+      "secondResult": "PTC_APPROVED_ONCE_OK",
+      "nativeApproval": "allowed-once",
+      "nativeApprovalCount": 1,
+      "nestedPtcDispatches": 0,
+      "fileContent": "PTC_APPROVED_ONCE_OK",
+      "actualFileBytes": 20,
+      "knownFinalNarrativeError": "The main model stated 11 bytes; the file and actual readback contain 20 bytes.",
+      "receipts": [
+        "approval-routing",
+        "grant-issued",
+        "tool-result: executed"
+      ],
+      "longTermSandboxModeChanged": false,
+      "operationChecksPassed": true,
+      "finalNarrativeAccurate": false
+    }
+  ],
+  "userProfileUnchanged": true,
+  "credentialsUnchanged": true,
+  "limitations": [
+    "Real business checks cover file ranking, output admission and PTC single-operation approval, plus a default-off control, only on DSH 0.2.1-rc.2 on macOS.",
+    "Controlled fixtures do not establish all-feature coverage, natural-task judgment quality, other-platform compatibility or real GUI business-flow coverage.",
+    "Tool-text reduction is not total token, cost or elapsed-time savings; the main model made an additional log-inspection tool call.",
+    "No direct HTTP request body was captured. Reduced tool-text delivery is supported by Session records and accepted-delivery sequence coverage.",
+    "The default-off passive SSE observation lost returned-model metadata; the requested model is not used as a substitute.",
+    "The PTC operation succeeded, but its final narrative incorrectly stated 11 bytes instead of the independently checked 20 bytes."
+  ]
+}

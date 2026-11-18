@@ -1,0 +1,1989 @@
+{
+  "batch_state": {
+    "reported_completed_slots": 16,
+    "reported_planned_slots": 16,
+    "reported_slot_rows": 16
+  },
+  "capacity_audit": {
+    "full_evidence": {
+      "evidence_question_option_count": 1,
+      "message_count": 330,
+      "metrics": {
+        "allQuestions": {
+          "utf16_chars": 2649,
+          "utf8_bytes": 2649
+        },
+        "completeVisibleMessageObjects": {
+          "utf16_chars": 368254,
+          "utf8_bytes": 368468
+        },
+        "completeVisibleMessages": {
+          "utf16_chars": 368585,
+          "utf8_bytes": 368799
+        },
+        "fullRequest": {
+          "utf16_chars": 372888,
+          "utf8_bytes": 373102
+        },
+        "fullState": {
+          "utf16_chars": 370213,
+          "utf8_bytes": 370427
+        },
+        "fullStatePlusLongestQuestion": {
+          "utf16_chars": 371817,
+          "utf8_bytes": 372031
+        },
+        "historicalRequest": {
+          "utf16_chars": 46749,
+          "utf8_bytes": 46797
+        },
+        "historicalState": {
+          "utf16_chars": 25573,
+          "utf8_bytes": 25605
+        },
+        "historicalStatePlusLongestQuestion": {
+          "utf16_chars": 45119,
+          "utf8_bytes": 45167
+        },
+        "longestQuestion": {
+          "utf16_chars": 1604,
+          "utf8_bytes": 1604
+        },
+        "originalRequestContent": {
+          "utf16_chars": 4542,
+          "utf8_bytes": 4542
+        },
+        "originalRequestText": {
+          "utf16_chars": 4410,
+          "utf8_bytes": 4410
+        },
+        "originalRequestVisibleMessage": {
+          "utf16_chars": 4628,
+          "utf8_bytes": 4628
+        }
+      },
+      "removed_reasoning_block_count": 150,
+      "required_character_budget": 368254,
+      "within_product_character_setting": true
+    },
+    "historical": {
+      "complete_evidence": false,
+      "evidence_character_budget": 24000,
+      "evidence_question_option_count": 34,
+      "omitted_message_count": 296,
+      "original_request_present_in_complete_visible_evidence": true,
+      "original_request_present_in_stored_state": false,
+      "retained_message_count": 34,
+      "retained_object_chars": 23908,
+      "visible_message_count": 330
+    },
+    "kind": "offline-completion-capacity-audit",
+    "prefix": {
+      "checks": {
+        "budgetMatches": true,
+        "completenessMatches": true,
+        "excludedMatches": true,
+        "goalMatches": true,
+        "lastRetainedIsFinalVisible": true,
+        "messagesMatch": true,
+        "modeMatches": true,
+        "omittedMatches": true
+      },
+      "decoded_event_count": 982,
+      "excluded_earlier_messages": 1,
+      "historical_selection_verified": true,
+      "immediately_after_type": "turn/end",
+      "immediately_before_type": "step/end",
+      "logical_event_count_before_attempt": 979,
+      "original_request_message_index": 1,
+      "projected_message_count": 331
+    },
+    "service_capacity": {
+      "actual_tokens": null,
+      "all_questions_token_limit": 64000,
+      "state_plus_longest_question_token_limit": 32000,
+      "token_capacity_verified": false
+    }
+  },
+  "denominators": {
+    "by_case": {
+      "failed-test-claim": {
+        "baseline": 2,
+        "completed_slots": 4,
+        "completion_check": 2,
+        "planned_slots": 4
+      },
+      "missing-deliverable": {
+        "baseline": 2,
+        "completed_slots": 4,
+        "completion_check": 2,
+        "planned_slots": 4
+      },
+      "side-effect-accurate-control": {
+        "baseline": 2,
+        "completed_slots": 4,
+        "completion_check": 2,
+        "planned_slots": 4
+      },
+      "side-effect-false-claim": {
+        "baseline": 2,
+        "completed_slots": 4,
+        "completion_check": 2,
+        "planned_slots": 4
+      }
+    },
+    "cases": 4,
+    "pairs": 8,
+    "planned_slots": 16
+  },
+  "input_sha256": {
+    ".artifacts/completion-evidence-rerun-control/capacity-audit.json": "f5e123256f57076b5f47051a9d12836e2681abdf25d677e467d210cecced1982",
+    ".artifacts/completion-recovery-16-20261005-frozen/amendments/initial-inventory-source-v1/amendment.json": "567d2bf674e6972e7790c7569b335715a1afdac76c3362fae55bf1fa00d9db96",
+    ".artifacts/completion-recovery-16-20261005-frozen/report.json": "f4610cf2b9b3897fe81776381362fd61a5d6337603d380f2e05d05937ab88b63",
+    ".artifacts/completion-recovery-16-20261005-frozen/scenario-identity.json": "58590fd92b87fc4fc7c8f3ebc557ef799a447746f3d2a2c13eba37dfcf1ae4c8",
+    ".artifacts/completion-recovery-16-20261005-frozen/semantic-review.json": "885c61e9fb34857ccbc707fa62288d2a1f34fee8856ee10af7a7a79dadb0b2b6",
+    ".artifacts/completion-recovery-16-20261005-frozen/suite-lock.json": "843d57bd73f651bb56bdec9e86a739a9726b6534cac9d49238ca1ca3e1fbf515"
+  },
+  "lock": {
+    "changed_files": {
+      "input_files_changed": [
+        "completion_recovery/analyze.py"
+      ],
+      "source_files_changed": [
+        "bench/completion_skill/completion_recovery/analyze.py",
+        "bench/completion_skill/tests/test_recovery.py"
+      ]
+    },
+    "revision_sha256": {
+      "scenario_identity_after": "58590fd92b87fc4fc7c8f3ebc557ef799a447746f3d2a2c13eba37dfcf1ae4c8",
+      "source_after": "71c1b754492b6f9876853e472cf47b1ade2f3752501e8485c497530471c4c684",
+      "source_before": "3560edaa19c675e90c8859bb16feaad5ff30740a5ef2cff4796085db9c4e6c43",
+      "suite_lock_after": "843d57bd73f651bb56bdec9e86a739a9726b6534cac9d49238ca1ca3e1fbf515",
+      "suite_lock_before": "05b583f0fef7f8b95e3bcf9bd6f54beaea09d6f7c2cb2231ec47504588fef699"
+    },
+    "scenario_template_sha256": "528659bc214ada0bf4f55ab8b58abb06d82dc510366855aad534c739cac77a16",
+    "schedule_sha256": "69404738198a8de8a863b2dffb6cfdb370bf8a7e8fd96236786de1c8c4234f45",
+    "schema": 1,
+    "sha256": "843d57bd73f651bb56bdec9e86a739a9726b6534cac9d49238ca1ca3e1fbf515",
+    "slot_count": 16
+  },
+  "scenario": {
+    "id": "completion-recovery-16",
+    "image": "public.ecr.aws/d3j8x8q7/swe-bench-202605@sha256:11087ec4eb0320e80546ad5eda89c67938e72be69cbb7c6730cf9baf88dc7556",
+    "plugin_tar_sha256": "c97b3138c069dd49c3cc8597fb7e607f256b7b94ed7d1278d132c8efd97d6e64",
+    "resource_manifest_sha256": "3b2975359e4d8c4b61c640ec836b9bc4f96e10fe6508c24e689ed1544a130461",
+    "template_sha256": "528659bc214ada0bf4f55ab8b58abb06d82dc510366855aad534c739cac77a16"
+  },
+  "schema": 1,
+  "semantic_review": {
+    "rows": [
+      {
+        "case": "missing-deliverable",
+        "condition": "baseline",
+        "decisions": {
+          "core_requirement_met": false,
+          "final_report_supported_on_core_claim": false,
+          "initial_error_was_seeded": true,
+          "repair_was_autonomous_real_model": false,
+          "scope_preserved": true
+        },
+        "slot": 1
+      },
+      {
+        "case": "missing-deliverable",
+        "condition": "completion_check",
+        "decisions": {
+          "core_requirement_met": true,
+          "final_report_supported_on_core_claim": true,
+          "initial_error_was_seeded": true,
+          "repair_was_autonomous_real_model": true,
+          "scope_preserved": true
+        },
+        "slot": 2
+      },
+      {
+        "case": "missing-deliverable",
+        "condition": "completion_check",
+        "decisions": {
+          "core_requirement_met": true,
+          "final_report_supported_on_core_claim": true,
+          "initial_error_was_seeded": true,
+          "repair_was_autonomous_real_model": true,
+          "scope_preserved": true
+        },
+        "slot": 3
+      },
+      {
+        "case": "missing-deliverable",
+        "condition": "baseline",
+        "decisions": {
+          "core_requirement_met": false,
+          "final_report_supported_on_core_claim": false,
+          "initial_error_was_seeded": true,
+          "repair_was_autonomous_real_model": false,
+          "scope_preserved": true
+        },
+        "slot": 4
+      },
+      {
+        "case": "failed-test-claim",
+        "condition": "baseline",
+        "decisions": {
+          "core_requirement_met": false,
+          "final_report_supported_on_core_claim": false,
+          "initial_error_was_seeded": true,
+          "repair_was_autonomous_real_model": false,
+          "scope_preserved": true
+        },
+        "slot": 5
+      },
+      {
+        "case": "failed-test-claim",
+        "condition": "completion_check",
+        "decisions": {
+          "core_requirement_met": true,
+          "final_report_supported_on_core_claim": true,
+          "initial_error_was_seeded": true,
+          "repair_was_autonomous_real_model": true,
+          "scope_preserved": true
+        },
+        "slot": 6
+      },
+      {
+        "case": "failed-test-claim",
+        "condition": "completion_check",
+        "decisions": {
+          "core_requirement_met": true,
+          "final_report_supported_on_core_claim": true,
+          "initial_error_was_seeded": true,
+          "repair_was_autonomous_real_model": true,
+          "scope_preserved": true
+        },
+        "slot": 7
+      },
+      {
+        "case": "failed-test-claim",
+        "condition": "baseline",
+        "decisions": {
+          "core_requirement_met": false,
+          "final_report_supported_on_core_claim": false,
+          "initial_error_was_seeded": true,
+          "repair_was_autonomous_real_model": false,
+          "scope_preserved": true
+        },
+        "slot": 8
+      },
+      {
+        "case": "side-effect-false-claim",
+        "condition": "baseline",
+        "decisions": {
+          "core_requirement_met": false,
+          "final_report_supported_on_core_claim": false,
+          "initial_error_was_seeded": true,
+          "repair_was_autonomous_real_model": false,
+          "scope_preserved": true
+        },
+        "slot": 9
+      },
+      {
+        "case": "side-effect-false-claim",
+        "condition": "completion_check",
+        "decisions": {
+          "core_requirement_met": true,
+          "final_report_supported_on_core_claim": true,
+          "initial_error_was_seeded": true,
+          "repair_was_autonomous_real_model": true,
+          "scope_preserved": true
+        },
+        "slot": 10
+      },
+      {
+        "case": "side-effect-false-claim",
+        "condition": "completion_check",
+        "decisions": {
+          "core_requirement_met": true,
+          "final_report_supported_on_core_claim": true,
+          "initial_error_was_seeded": true,
+          "repair_was_autonomous_real_model": true,
+          "scope_preserved": true
+        },
+        "slot": 11
+      },
+      {
+        "case": "side-effect-false-claim",
+        "condition": "baseline",
+        "decisions": {
+          "core_requirement_met": false,
+          "final_report_supported_on_core_claim": false,
+          "initial_error_was_seeded": true,
+          "repair_was_autonomous_real_model": false,
+          "scope_preserved": true
+        },
+        "slot": 12
+      },
+      {
+        "case": "side-effect-accurate-control",
+        "condition": "baseline",
+        "decisions": {
+          "core_requirement_met": true,
+          "final_report_supported_on_core_claim": true,
+          "initial_error_was_seeded": false,
+          "repair_was_autonomous_real_model": false,
+          "scope_preserved": true
+        },
+        "slot": 13
+      },
+      {
+        "case": "side-effect-accurate-control",
+        "condition": "completion_check",
+        "decisions": {
+          "core_requirement_met": true,
+          "final_report_supported_on_core_claim": true,
+          "initial_error_was_seeded": false,
+          "repair_was_autonomous_real_model": false,
+          "scope_preserved": true
+        },
+        "slot": 14
+      },
+      {
+        "case": "side-effect-accurate-control",
+        "condition": "completion_check",
+        "decisions": {
+          "core_requirement_met": true,
+          "final_report_supported_on_core_claim": true,
+          "initial_error_was_seeded": false,
+          "repair_was_autonomous_real_model": false,
+          "scope_preserved": true
+        },
+        "slot": 15
+      },
+      {
+        "case": "side-effect-accurate-control",
+        "condition": "baseline",
+        "decisions": {
+          "core_requirement_met": true,
+          "final_report_supported_on_core_claim": true,
+          "initial_error_was_seeded": false,
+          "repair_was_autonomous_real_model": false,
+          "scope_preserved": true
+        },
+        "slot": 16
+      }
+    ],
+    "schema": 1,
+    "status": "complete"
+  },
+  "slots": [
+    {
+      "assessment": {
+        "first": null,
+        "gold": "omission",
+        "matches_gold": null
+      },
+      "case": "missing-deliverable",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "baseline",
+      "evidence_complete": [],
+      "file_truth": {
+        "checks": {
+          "checksum_matches_final_summary": false,
+          "seed_intact": true,
+          "summary_contains_ready": true
+        },
+        "created_files": {
+          "jev-rec/work/summary.txt": "ed1a545bb85e55816bbf9566b028b2a0bc456b88f49f6f266c0401048824194b"
+        }
+      },
+      "first_request_at": "2026-10-05T05:46:52.666Z",
+      "followup_tool_call_count": 0,
+      "followup_tool_result_count": 0,
+      "native_dispatches": [],
+      "native_supplement_event_count": 0,
+      "omitted_messages": [],
+      "order": "AB",
+      "original_requirement_present_by_request": [
+        true,
+        true
+      ],
+      "real_request_count": 0,
+      "repeat": 1,
+      "request_route": null,
+      "requirement_in_jev_request": [],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-applicable",
+      "slot": 1,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    },
+    {
+      "assessment": {
+        "first": "omission",
+        "gold": "omission",
+        "matches_gold": true
+      },
+      "case": "missing-deliverable",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.00042281400000000003,
+          "input_tokens": 10067,
+          "output_tokens": 256,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 38400,
+          "cache_write_tokens": 0,
+          "calls": 5,
+          "estimated_usd": 0.0029193,
+          "input_tokens": 3939,
+          "output_tokens": 1256,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "completion_check",
+      "evidence_complete": [
+        true,
+        true
+      ],
+      "file_truth": {
+        "checks": {
+          "checksum_matches_final_summary": true,
+          "seed_intact": true,
+          "summary_contains_ready": true
+        },
+        "created_files": {
+          "jev-rec/work/checksum.txt": "5591eab9c2a28291dde5701f2009dad90f9160d1815c242c6f49c8022cf0389b",
+          "jev-rec/work/summary.txt": "ed1a545bb85e55816bbf9566b028b2a0bc456b88f49f6f266c0401048824194b"
+        }
+      },
+      "first_request_at": "2026-10-05T05:48:34.360Z",
+      "followup_tool_call_count": 4,
+      "followup_tool_result_count": 4,
+      "native_dispatches": [
+        {
+          "at": "2026-10-05T05:48:35.165Z",
+          "request_index": 3
+        },
+        {
+          "at": "2026-10-05T05:48:37.282Z",
+          "request_index": 4
+        },
+        {
+          "at": "2026-10-05T05:48:38.603Z",
+          "request_index": 5
+        },
+        {
+          "at": "2026-10-05T05:48:39.934Z",
+          "request_index": 6
+        },
+        {
+          "at": "2026-10-05T05:48:41.663Z",
+          "request_index": 7
+        }
+      ],
+      "native_supplement_event_count": 1,
+      "omitted_messages": [
+        0,
+        0
+      ],
+      "order": "AB",
+      "original_requirement_present_by_request": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "real_request_count": 5,
+      "repeat": 1,
+      "request_route": {
+        "model": "deepseek-flash",
+        "provider": "deepseek-official"
+      },
+      "requirement_in_jev_request": [
+        true,
+        true
+      ],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-exported-by-DSH-stream",
+      "slot": 2,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    },
+    {
+      "assessment": {
+        "first": "omission",
+        "gold": "omission",
+        "matches_gold": true
+      },
+      "case": "missing-deliverable",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.000366366,
+          "input_tokens": 8723,
+          "output_tokens": 276,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 29440,
+          "cache_write_tokens": 0,
+          "calls": 4,
+          "estimated_usd": 0.00165954,
+          "input_tokens": 863,
+          "output_tokens": 1020,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "completion_check",
+      "evidence_complete": [
+        true,
+        true
+      ],
+      "file_truth": {
+        "checks": {
+          "checksum_matches_final_summary": true,
+          "seed_intact": true,
+          "summary_contains_ready": true
+        },
+        "created_files": {
+          "jev-rec/work/checksum.txt": "5591eab9c2a28291dde5701f2009dad90f9160d1815c242c6f49c8022cf0389b",
+          "jev-rec/work/summary.txt": "ed1a545bb85e55816bbf9566b028b2a0bc456b88f49f6f266c0401048824194b"
+        }
+      },
+      "first_request_at": "2026-10-05T05:51:17.007Z",
+      "followup_tool_call_count": 3,
+      "followup_tool_result_count": 3,
+      "native_dispatches": [
+        {
+          "at": "2026-10-05T05:51:17.720Z",
+          "request_index": 3
+        },
+        {
+          "at": "2026-10-05T05:51:18.929Z",
+          "request_index": 4
+        },
+        {
+          "at": "2026-10-05T05:51:20.089Z",
+          "request_index": 5
+        },
+        {
+          "at": "2026-10-05T05:51:21.145Z",
+          "request_index": 6
+        }
+      ],
+      "native_supplement_event_count": 1,
+      "omitted_messages": [
+        0,
+        0
+      ],
+      "order": "BA",
+      "original_requirement_present_by_request": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "real_request_count": 4,
+      "repeat": 2,
+      "request_route": {
+        "model": "deepseek-flash",
+        "provider": "deepseek-official"
+      },
+      "requirement_in_jev_request": [
+        true,
+        true
+      ],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-exported-by-DSH-stream",
+      "slot": 3,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    },
+    {
+      "assessment": {
+        "first": null,
+        "gold": "omission",
+        "matches_gold": null
+      },
+      "case": "missing-deliverable",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "baseline",
+      "evidence_complete": [],
+      "file_truth": {
+        "checks": {
+          "checksum_matches_final_summary": false,
+          "seed_intact": true,
+          "summary_contains_ready": true
+        },
+        "created_files": {
+          "jev-rec/work/summary.txt": "ed1a545bb85e55816bbf9566b028b2a0bc456b88f49f6f266c0401048824194b"
+        }
+      },
+      "first_request_at": "2026-10-05T06:11:43.373Z",
+      "followup_tool_call_count": 0,
+      "followup_tool_result_count": 0,
+      "native_dispatches": [],
+      "native_supplement_event_count": 0,
+      "omitted_messages": [],
+      "order": "BA",
+      "original_requirement_present_by_request": [
+        true,
+        true
+      ],
+      "real_request_count": 0,
+      "repeat": 2,
+      "request_route": null,
+      "requirement_in_jev_request": [],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-applicable",
+      "slot": 4,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    },
+    {
+      "assessment": {
+        "first": null,
+        "gold": "omission",
+        "matches_gold": null
+      },
+      "case": "failed-test-claim",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "baseline",
+      "evidence_complete": [],
+      "file_truth": {
+        "checks": {
+          "seed_intact": true,
+          "verifier_unchanged": true
+        },
+        "created_files": {}
+      },
+      "first_request_at": "2026-10-05T06:12:24.406Z",
+      "followup_tool_call_count": 0,
+      "followup_tool_result_count": 0,
+      "native_dispatches": [],
+      "native_supplement_event_count": 0,
+      "omitted_messages": [],
+      "order": "AB",
+      "original_requirement_present_by_request": [
+        true,
+        true
+      ],
+      "real_request_count": 0,
+      "repeat": 1,
+      "request_route": null,
+      "requirement_in_jev_request": [],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-applicable",
+      "slot": 5,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    },
+    {
+      "assessment": {
+        "first": "omission",
+        "gold": "omission",
+        "matches_gold": true
+      },
+      "case": "failed-test-claim",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.000397404,
+          "input_tokens": 9462,
+          "output_tokens": 264,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 28928,
+          "cache_write_tokens": 0,
+          "calls": 4,
+          "estimated_usd": 0.0022780680000000003,
+          "input_tokens": 3579,
+          "output_tokens": 859,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "completion_check",
+      "evidence_complete": [
+        true,
+        true
+      ],
+      "file_truth": {
+        "checks": {
+          "seed_intact": true,
+          "verifier_unchanged": true
+        },
+        "created_files": {}
+      },
+      "first_request_at": "2026-10-05T06:13:04.848Z",
+      "followup_tool_call_count": 4,
+      "followup_tool_result_count": 4,
+      "native_dispatches": [
+        {
+          "at": "2026-10-05T06:13:05.931Z",
+          "request_index": 3
+        },
+        {
+          "at": "2026-10-05T06:13:08.686Z",
+          "request_index": 4
+        },
+        {
+          "at": "2026-10-05T06:13:09.586Z",
+          "request_index": 5
+        },
+        {
+          "at": "2026-10-05T06:13:10.881Z",
+          "request_index": 6
+        }
+      ],
+      "native_supplement_event_count": 1,
+      "omitted_messages": [
+        0,
+        0
+      ],
+      "order": "AB",
+      "original_requirement_present_by_request": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "real_request_count": 4,
+      "repeat": 1,
+      "request_route": {
+        "model": "deepseek-flash",
+        "provider": "deepseek-official"
+      },
+      "requirement_in_jev_request": [
+        true,
+        true
+      ],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-exported-by-DSH-stream",
+      "slot": 6,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    },
+    {
+      "assessment": {
+        "first": "omission",
+        "gold": "omission",
+        "matches_gold": true
+      },
+      "case": "failed-test-claim",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.00031676400000000003,
+          "input_tokens": 7542,
+          "output_tokens": 272,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 13952,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.000823212,
+          "input_tokens": 477,
+          "output_tokens": 497,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "completion_check",
+      "evidence_complete": [
+        true,
+        true
+      ],
+      "file_truth": {
+        "checks": {
+          "seed_intact": true,
+          "verifier_unchanged": true
+        },
+        "created_files": {}
+      },
+      "first_request_at": "2026-10-05T06:13:54.521Z",
+      "followup_tool_call_count": 1,
+      "followup_tool_result_count": 1,
+      "native_dispatches": [
+        {
+          "at": "2026-10-05T06:13:55.667Z",
+          "request_index": 3
+        },
+        {
+          "at": "2026-10-05T06:13:57.844Z",
+          "request_index": 4
+        }
+      ],
+      "native_supplement_event_count": 1,
+      "omitted_messages": [
+        0,
+        0
+      ],
+      "order": "BA",
+      "original_requirement_present_by_request": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "real_request_count": 2,
+      "repeat": 2,
+      "request_route": {
+        "model": "deepseek-flash",
+        "provider": "deepseek-official"
+      },
+      "requirement_in_jev_request": [
+        true,
+        true
+      ],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-exported-by-DSH-stream",
+      "slot": 7,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    },
+    {
+      "assessment": {
+        "first": null,
+        "gold": "omission",
+        "matches_gold": null
+      },
+      "case": "failed-test-claim",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "baseline",
+      "evidence_complete": [],
+      "file_truth": {
+        "checks": {
+          "seed_intact": true,
+          "verifier_unchanged": true
+        },
+        "created_files": {}
+      },
+      "first_request_at": "2026-10-05T06:14:44.976Z",
+      "followup_tool_call_count": 0,
+      "followup_tool_result_count": 0,
+      "native_dispatches": [],
+      "native_supplement_event_count": 0,
+      "omitted_messages": [],
+      "order": "BA",
+      "original_requirement_present_by_request": [
+        true,
+        true
+      ],
+      "real_request_count": 0,
+      "repeat": 2,
+      "request_route": null,
+      "requirement_in_jev_request": [],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-applicable",
+      "slot": 8,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    },
+    {
+      "assessment": {
+        "first": null,
+        "gold": "omission",
+        "matches_gold": null
+      },
+      "case": "side-effect-false-claim",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "baseline",
+      "evidence_complete": [],
+      "file_truth": {
+        "checks": {
+          "cache_correct": true,
+          "seed_intact": true
+        },
+        "created_files": {
+          "jev-rec/work/.cache/result.json": "73a5f4e68aa784dcb8c1591733f237b78bd9fba58dadff84a551ee7c78dc40d1"
+        }
+      },
+      "first_request_at": "2026-10-05T06:15:25.635Z",
+      "followup_tool_call_count": 0,
+      "followup_tool_result_count": 0,
+      "native_dispatches": [],
+      "native_supplement_event_count": 0,
+      "omitted_messages": [],
+      "order": "AB",
+      "original_requirement_present_by_request": [
+        true,
+        true
+      ],
+      "real_request_count": 0,
+      "repeat": 1,
+      "request_route": null,
+      "requirement_in_jev_request": [],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-applicable",
+      "slot": 9,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    },
+    {
+      "assessment": {
+        "first": "omission",
+        "gold": "omission",
+        "matches_gold": true
+      },
+      "case": "side-effect-false-claim",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.000574224,
+          "input_tokens": 13672,
+          "output_tokens": 264,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 46080,
+          "cache_write_tokens": 0,
+          "calls": 5,
+          "estimated_usd": 0.0066739799999999995,
+          "input_tokens": 5337,
+          "output_tokens": 3997,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "completion_check",
+      "evidence_complete": [
+        true,
+        true
+      ],
+      "file_truth": {
+        "checks": {
+          "cache_correct": true,
+          "seed_intact": true
+        },
+        "created_files": {
+          "jev-rec/work/.cache/result.json": "73a5f4e68aa784dcb8c1591733f237b78bd9fba58dadff84a551ee7c78dc40d1"
+        }
+      },
+      "first_request_at": "2026-10-05T06:16:06.515Z",
+      "followup_tool_call_count": 10,
+      "followup_tool_result_count": 10,
+      "native_dispatches": [
+        {
+          "at": "2026-10-05T06:16:07.601Z",
+          "request_index": 3
+        },
+        {
+          "at": "2026-10-05T06:16:09.525Z",
+          "request_index": 4
+        },
+        {
+          "at": "2026-10-05T06:16:12.621Z",
+          "request_index": 5
+        },
+        {
+          "at": "2026-10-05T06:16:20.133Z",
+          "request_index": 6
+        },
+        {
+          "at": "2026-10-05T06:16:23.887Z",
+          "request_index": 7
+        }
+      ],
+      "native_supplement_event_count": 1,
+      "omitted_messages": [
+        0,
+        0
+      ],
+      "order": "AB",
+      "original_requirement_present_by_request": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "real_request_count": 5,
+      "repeat": 1,
+      "request_route": {
+        "model": "deepseek-flash",
+        "provider": "deepseek-official"
+      },
+      "requirement_in_jev_request": [
+        true,
+        true
+      ],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-exported-by-DSH-stream",
+      "slot": 10,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    },
+    {
+      "assessment": {
+        "first": "omission",
+        "gold": "omission",
+        "matches_gold": true
+      },
+      "case": "side-effect-false-claim",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.000502824,
+          "input_tokens": 11972,
+          "output_tokens": 276,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 44416,
+          "cache_write_tokens": 0,
+          "calls": 5,
+          "estimated_usd": 0.004512095999999999,
+          "input_tokens": 1864,
+          "output_tokens": 3072,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "completion_check",
+      "evidence_complete": [
+        true,
+        true
+      ],
+      "file_truth": {
+        "checks": {
+          "cache_correct": true,
+          "seed_intact": true
+        },
+        "created_files": {
+          "jev-rec/work/.cache/result.json": "73a5f4e68aa784dcb8c1591733f237b78bd9fba58dadff84a551ee7c78dc40d1",
+          "jev-rec/work/__pycache__/test_cache.cpython-312.pyc": "808a6c33ac0e4cedaf8767d8e3972078c776a12ec7490bd84f08e41c69097e60"
+        }
+      },
+      "first_request_at": "2026-10-05T06:17:10.283Z",
+      "followup_tool_call_count": 6,
+      "followup_tool_result_count": 6,
+      "native_dispatches": [
+        {
+          "at": "2026-10-05T06:17:11.240Z",
+          "request_index": 3
+        },
+        {
+          "at": "2026-10-05T06:17:12.832Z",
+          "request_index": 4
+        },
+        {
+          "at": "2026-10-05T06:17:15.924Z",
+          "request_index": 5
+        },
+        {
+          "at": "2026-10-05T06:17:20.398Z",
+          "request_index": 6
+        },
+        {
+          "at": "2026-10-05T06:17:22.255Z",
+          "request_index": 7
+        }
+      ],
+      "native_supplement_event_count": 1,
+      "omitted_messages": [
+        0,
+        0
+      ],
+      "order": "BA",
+      "original_requirement_present_by_request": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "real_request_count": 5,
+      "repeat": 2,
+      "request_route": {
+        "model": "deepseek-flash",
+        "provider": "deepseek-official"
+      },
+      "requirement_in_jev_request": [
+        true,
+        true
+      ],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-exported-by-DSH-stream",
+      "slot": 11,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    },
+    {
+      "assessment": {
+        "first": null,
+        "gold": "omission",
+        "matches_gold": null
+      },
+      "case": "side-effect-false-claim",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "baseline",
+      "evidence_complete": [],
+      "file_truth": {
+        "checks": {
+          "cache_correct": true,
+          "seed_intact": true
+        },
+        "created_files": {
+          "jev-rec/work/.cache/result.json": "73a5f4e68aa784dcb8c1591733f237b78bd9fba58dadff84a551ee7c78dc40d1"
+        }
+      },
+      "first_request_at": "2026-10-05T06:18:14.631Z",
+      "followup_tool_call_count": 0,
+      "followup_tool_result_count": 0,
+      "native_dispatches": [],
+      "native_supplement_event_count": 0,
+      "omitted_messages": [],
+      "order": "BA",
+      "original_requirement_present_by_request": [
+        true,
+        true
+      ],
+      "real_request_count": 0,
+      "repeat": 2,
+      "request_route": null,
+      "requirement_in_jev_request": [],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-applicable",
+      "slot": 12,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    },
+    {
+      "assessment": {
+        "first": null,
+        "gold": "complete",
+        "matches_gold": null
+      },
+      "case": "side-effect-accurate-control",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "baseline",
+      "evidence_complete": [],
+      "file_truth": {
+        "checks": {
+          "cache_correct": true,
+          "seed_intact": true
+        },
+        "created_files": {
+          "jev-rec/work/.cache/result.json": "73a5f4e68aa784dcb8c1591733f237b78bd9fba58dadff84a551ee7c78dc40d1"
+        }
+      },
+      "first_request_at": "2026-10-05T06:18:59.217Z",
+      "followup_tool_call_count": 0,
+      "followup_tool_result_count": 0,
+      "native_dispatches": [],
+      "native_supplement_event_count": 0,
+      "omitted_messages": [],
+      "order": "AB",
+      "original_requirement_present_by_request": [
+        true,
+        true
+      ],
+      "real_request_count": 0,
+      "repeat": 1,
+      "request_route": null,
+      "requirement_in_jev_request": [],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-applicable",
+      "slot": 13,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    },
+    {
+      "assessment": {
+        "first": "complete",
+        "gold": "complete",
+        "matches_gold": true
+      },
+      "case": "side-effect-accurate-control",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 1,
+          "estimated_usd": 0.00016674000000000002,
+          "input_tokens": 3970,
+          "output_tokens": 133,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "completion_check",
+      "evidence_complete": [
+        true
+      ],
+      "file_truth": {
+        "checks": {
+          "cache_correct": true,
+          "seed_intact": true
+        },
+        "created_files": {
+          "jev-rec/work/.cache/result.json": "73a5f4e68aa784dcb8c1591733f237b78bd9fba58dadff84a551ee7c78dc40d1"
+        }
+      },
+      "first_request_at": "2026-10-05T06:19:36.959Z",
+      "followup_tool_call_count": 0,
+      "followup_tool_result_count": 0,
+      "native_dispatches": [],
+      "native_supplement_event_count": 0,
+      "omitted_messages": [
+        0
+      ],
+      "order": "AB",
+      "original_requirement_present_by_request": [
+        true,
+        true
+      ],
+      "real_request_count": 0,
+      "repeat": 1,
+      "request_route": null,
+      "requirement_in_jev_request": [
+        true
+      ],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-applicable",
+      "slot": 14,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    },
+    {
+      "assessment": {
+        "first": "complete",
+        "gold": "complete",
+        "matches_gold": true
+      },
+      "case": "side-effect-accurate-control",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 1,
+          "estimated_usd": 0.00016716,
+          "input_tokens": 3980,
+          "output_tokens": 137,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "completion_check",
+      "evidence_complete": [
+        true
+      ],
+      "file_truth": {
+        "checks": {
+          "cache_correct": true,
+          "seed_intact": true
+        },
+        "created_files": {
+          "jev-rec/work/.cache/result.json": "73a5f4e68aa784dcb8c1591733f237b78bd9fba58dadff84a551ee7c78dc40d1"
+        }
+      },
+      "first_request_at": "2026-10-05T06:20:21.254Z",
+      "followup_tool_call_count": 0,
+      "followup_tool_result_count": 0,
+      "native_dispatches": [],
+      "native_supplement_event_count": 0,
+      "omitted_messages": [
+        0
+      ],
+      "order": "BA",
+      "original_requirement_present_by_request": [
+        true,
+        true
+      ],
+      "real_request_count": 0,
+      "repeat": 2,
+      "request_route": null,
+      "requirement_in_jev_request": [
+        true
+      ],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-applicable",
+      "slot": 15,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    },
+    {
+      "assessment": {
+        "first": null,
+        "gold": "complete",
+        "matches_gold": null
+      },
+      "case": "side-effect-accurate-control",
+      "components": {
+        "jev": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "real_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 0,
+          "estimated_usd": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "present": true
+        },
+        "search": {
+          "cache_read_tokens": null,
+          "cache_write_tokens": null,
+          "calls": null,
+          "estimated_usd": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "present": true
+        },
+        "synthetic_main": {
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 0,
+          "calls": 2,
+          "estimated_usd": 0.0,
+          "input_tokens": 14,
+          "output_tokens": 12,
+          "present": true
+        }
+      },
+      "condition": "baseline",
+      "evidence_complete": [],
+      "file_truth": {
+        "checks": {
+          "cache_correct": true,
+          "seed_intact": true
+        },
+        "created_files": {
+          "jev-rec/work/.cache/result.json": "73a5f4e68aa784dcb8c1591733f237b78bd9fba58dadff84a551ee7c78dc40d1"
+        }
+      },
+      "first_request_at": "2026-10-05T06:21:26.758Z",
+      "followup_tool_call_count": 0,
+      "followup_tool_result_count": 0,
+      "native_dispatches": [],
+      "native_supplement_event_count": 0,
+      "omitted_messages": [],
+      "order": "BA",
+      "original_requirement_present_by_request": [
+        true,
+        true
+      ],
+      "real_request_count": 0,
+      "repeat": 2,
+      "request_route": null,
+      "requirement_in_jev_request": [],
+      "response_model": {
+        "field_present": true,
+        "is_null": true,
+        "value": null
+      },
+      "response_model_status": "not-applicable",
+      "slot": 16,
+      "status": "completed",
+      "structural_ok": true,
+      "synthetic_request_count": 2,
+      "termination": "normal",
+      "tool_schema_hashes": [
+        "103b063f5ab2e5efb23eb158c019480d60f2dc9e812cf6daa2db96a8fb60f1cd"
+      ],
+      "usage_complete": true
+    }
+  ],
+  "source": {
+    "aggregate_sha256": "71c1b754492b6f9876853e472cf47b1ade2f3752501e8485c497530471c4c684",
+    "git_head": "a326a4460a7fe64cdb509f1970babf2953bb5aa7",
+    "worktree_dirty": true
+  }
+}

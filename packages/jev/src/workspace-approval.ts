@@ -11,6 +11,7 @@ import type { ToolCallId } from '@deepseek-ai/dsh-llm'
 import type { ToolDispatchExecution } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-sandbox-policy'
 import type {} from '@deepseek-ai/dsh-settings'
+import type {} from '@deepseek-ai/dsh-working-directory'
 import s from '@deepseek-ai/schemastery'
 import type {} from './index.ts'
 import type { JevRequest, JevResponse, Json } from './types.ts'
@@ -57,10 +58,12 @@ function nativeArgs(exec: ToolDispatchExecution): EscalatingArgs | undefined {
 }
 
 function matches(entry: Entry, req: ApprovalRequestEvent): boolean {
+  // PTC adds sandbox-mode cancellation to the dispatch signal.
+  const signalMatches = req.signal !== undefined && (entry.exec.name === 'run_code' || req.signal === entry.exec.signal)
   return entry.exec.agent === req.agent && entry.exec.callId === req.callId
-    && entry.exec.name === req.toolName && req.signal === entry.exec.signal
+    && entry.exec.name === req.toolName && signalMatches
     && req.reason === `escalate sandbox to ${TARGET}: ${entry.args.justification}`
-    && !entry.exec.signal.aborted && !req.signal.aborted && !entry.claimed
+    && !entry.exec.signal.aborted && !req.signal?.aborted && !entry.claimed
 }
 
 function directScript(command: string): string | undefined {
@@ -70,6 +73,15 @@ function directScript(command: string): string | undefined {
   const raw = match?.[1]
   const path = raw?.startsWith('"') || raw?.startsWith("'") ? raw.slice(1, -1) : raw
   return path !== undefined && /\.(?:py|mjs|cjs|js|sh|ps1)$/i.test(path) ? path : undefined
+}
+
+function usesUnqualifiedPowerShellScript(entry: Entry): boolean {
+  const command = entry.args.command
+  if (entry.exec.name !== 'pwsh' || typeof command !== 'string' || !command.trimStart().startsWith('&')) return false
+  const script = directScript(command)
+  // An unqualified call-operator operand uses PowerShell command discovery.
+  // The same-named file in the tool's working directory is not evidence.
+  return script !== undefined && !/[\\/]/.test(script)
 }
 
 async function scriptEvidence(fs: FileSystem, entry: Entry, cwd: string, maxBytes: number, signal: AbortSignal): Promise<Json> {
@@ -107,17 +119,20 @@ function visibleContext(agent: Agent): Json {
   return JSON.parse(JSON.stringify({ messages, pending })) as Json
 }
 
-function operationCwd(entry: Entry, workspaceRoot: string): string {
+function operationCwd(entry: Entry, currentDirectory: string): string {
   const workdir = entry.args.workdir
   return (entry.exec.name === 'bash' || entry.exec.name === 'pwsh') && typeof workdir === 'string'
-    ? isAbsolute(workdir) ? workdir : resolve(workspaceRoot, workdir)
-    : workspaceRoot
+    ? isAbsolute(workdir) ? workdir : resolve(currentDirectory, workdir)
+    : currentDirectory
 }
 
 async function snapshot(ctx: Context, fs: FileSystem, entry: Entry, req: ApprovalRequestEvent, epoch: () => number, maxScriptBytes: () => number, signal: AbortSignal): Promise<Snapshot> {
   const agent = entry.exec.agent!
   const policy = ctx.sandboxPolicy.resolve({ session: agent.session })
-  const cwd = operationCwd(entry, policy.workspaceRoot)
+  const directory = ctx.get('workingDirectory')
+  const currentDirectory = directory === undefined
+    ? agent.session.header.cwd ?? policy.workspaceRoot : await directory.ensure(agent, signal)
+  const cwd = operationCwd(entry, currentDirectory)
   const argumentsJson = JSON.parse(JSON.stringify(entry.args)) as Json
   const script = await scriptEvidence(fs, entry, cwd, maxScriptBytes(), signal)
   const currentPolicy = ctx.sandboxPolicy.resolve({ session: agent.session })
@@ -126,7 +141,7 @@ async function snapshot(ctx: Context, fs: FileSystem, entry: Entry, req: Approva
     operation: { agentId: agent.id, sessionId: agent.session.id, callId: entry.exec.callId,
       rootCallId: entry.exec.rootCallId, tool: entry.exec.name, arguments: argumentsJson,
       cwd, workspaceRoot: policy.workspaceRoot,
-      ...typeof entry.args.file_path === 'string' ? { target: resolve(policy.workspaceRoot, entry.args.file_path) } : {},
+      ...typeof entry.args.file_path === 'string' ? { target: resolve(cwd, entry.args.file_path) } : {},
       reason: req.reason ?? '', requestedMode: TARGET },
     script,
     currentPolicy: { sandboxMode: currentPolicy.mode, approvalPolicy: ctx.approval.overrideOf(agent.session) ?? ctx.approval.config.policy ?? 'ask' },
@@ -186,9 +201,9 @@ export function apply(ctx: Context, config: Config): void {
     && ctx.agents.get(agent.id) === agent
     && ctx.jev.isFeatureEnabled(FEATURE) && ctx.sandboxPolicy.resolve({ session: agent.session }).mode === 'workspace-write'
     && (ctx.approval.overrideOf(agent.session) ?? ctx.approval.config.policy ?? 'ask') === 'ask'
-  const handoff = (req: ApprovalRequestEvent, next: () => Promise<ApprovalOutcome>, leave: () => void): Promise<ApprovalOutcome> => {
+  const handoff = (req: ApprovalRequestEvent, next: () => Promise<ApprovalOutcome>, leave: () => void, signal: AbortSignal): Promise<ApprovalOutcome> => {
     leave()
-    if (stopped || req.signal?.aborted || ctx.agents.get(req.agent.id) !== req.agent) return Promise.resolve('cancelled')
+    if (stopped || signal.aborted || ctx.agents.get(req.agent.id) !== req.agent) return Promise.resolve('cancelled')
     if ((ctx.approval.overrideOf(req.agent.session) ?? ctx.approval.config.policy ?? 'ask') !== 'ask') return Promise.resolve('rejected')
     return next()
   }
@@ -242,44 +257,45 @@ export function apply(ctx: Context, config: Config): void {
     const entries = req.callId === undefined ? undefined : active.get(req.agent)?.get(req.callId)
     if (entries?.size !== 1) { leave(); return next() }
     const entry = [...entries][0]!
-    if (!matches(entry, req) || !eligible(req.agent, req.signal)) { leave(); return next() }
+    if (!matches(entry, req) || !eligible(req.agent, req.signal) || usesUnqualifiedPowerShellScript(entry)) { leave(); return next() }
     const asked = askedByEntry.get(entry)
     if (asked?.size !== 1) { leave(); return next() }
     entry.claimed = true
     entry.approvalId = [...asked][0]!
+    const cancellation = AbortSignal.any([entry.exec.signal, req.signal!, lifetime.signal])
     let basis: Snapshot | undefined
     let judged: Awaited<ReturnType<typeof ctx.jev.judge>>
     try {
-      judged = await ctx.jev.judge({ featureId: FEATURE, agent: req.agent, signal: AbortSignal.any([req.signal!, lifetime.signal]),
+      judged = await ctx.jev.judge({ featureId: FEATURE, agent: req.agent, signal: cancellation,
         link: { sessionId: req.agent.session.id, runId: String(entry.exec.callId), stepId: String(entry.exec.rootCallId) },
         refresh: async signal => { basis = await snapshot(ctx, fs, entry, req, () => epoch, () => config.maxScriptBytes.get(), signal); return basis.request },
         canAdopt: async (_response, signal) => {
-          if (!eligible(req.agent, req.signal) || !entries.has(entry)) return 'Approval request is no longer current'
+          if (!eligible(req.agent, cancellation) || !entries.has(entry)) return 'Approval request is no longer current'
           const current = await snapshot(ctx, fs, entry, req, () => epoch, () => config.maxScriptBytes.get(), signal)
           return current.fingerprint === basis?.fingerprint ? true : 'Task, policy, operation, or script changed during judgment'
         },
       })
-    } catch { return lifetime.signal.aborted || req.signal?.aborted ? 'cancelled' : 'unavailable' }
-    if (judged.kind === 'cancelled' || req.signal?.aborted || entry.exec.signal.aborted || stopped) return 'cancelled'
-    if (judged.kind === 'not-adopted' || !eligible(req.agent, req.signal) || !entries.has(entry)) return handoff(req, next, leave)
+    } catch { return cancellation.aborted ? 'cancelled' : 'unavailable' }
+    if (judged.kind === 'cancelled' || cancellation.aborted) return 'cancelled'
+    if (judged.kind === 'not-adopted' || !eligible(req.agent, cancellation) || !entries.has(entry)) return handoff(req, next, leave, cancellation)
     const choice = decision(judged.response)
     if (choice !== 'approve') {
       await track(ctx.jev.writeReceipt(judged.operationId, { id: 'approval-routing', status: 'observed', reason: `${choice}: delegated to native answerer`, at: new Date().toISOString() })).catch(() => {})
-      return handoff(req, next, leave)
+      return handoff(req, next, leave, cancellation)
     }
     try {
       await track(ctx.jev.writeReceipt(judged.operationId, { id: 'approval-routing', status: 'observed', reason: 'Jev answered approve; final freshness check pending', at: new Date().toISOString() }))
-    } catch { return handoff(req, next, leave) }
+    } catch { return handoff(req, next, leave, cancellation) }
     const finalHandoff = async (reason: string): Promise<ApprovalOutcome> => {
       await track(ctx.jev.writeReceipt(judged.operationId, { id: 'final-adoption', status: 'not-adopted', reason, at: new Date().toISOString() })).catch(() => {})
-      return handoff(req, next, leave)
+      return handoff(req, next, leave, cancellation)
     }
-    if (!eligible(req.agent, req.signal) || !entries.has(entry)) return finalHandoff('Approval conditions changed before the final check')
+    if (!eligible(req.agent, cancellation) || !entries.has(entry)) return finalHandoff('Approval conditions changed before the final check')
     try {
-      const final = await snapshot(ctx, fs, entry, req, () => epoch, () => config.maxScriptBytes.get(), AbortSignal.any([req.signal!, lifetime.signal]))
+      const final = await snapshot(ctx, fs, entry, req, () => epoch, () => config.maxScriptBytes.get(), cancellation)
       if (final.fingerprint !== basis?.fingerprint) return finalHandoff('Task, policy, operation, or script changed before grant')
     } catch { return finalHandoff('Final approval information could not be refreshed') }
-    if (!eligible(req.agent, req.signal) || !entries.has(entry)) return finalHandoff('Approval conditions changed before grant')
+    if (!eligible(req.agent, cancellation) || !entries.has(entry)) return finalHandoff('Approval conditions changed before grant')
     entry.approved = judged.operationId
     return 'allowed-once'
   }

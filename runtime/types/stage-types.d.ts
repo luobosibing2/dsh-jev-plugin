@@ -1,7 +1,7 @@
 /** Complete recorded step material and auxiliary Jev stage analysis data. */
 import type { ContentBlock } from '@deepseek-ai/dsh-llm';
 import type { TurnEndReason } from '@deepseek-ai/dsh-session';
-import type { JevRequest, JevResponse, Json } from './types.ts';
+import type { JevAttemptRecord, JevConnectionId, JevRequest, JevResponse, Json } from './types.ts';
 export interface StageNavigationConfigValues {
     previousSteps: number;
     previousChars: number;
@@ -38,6 +38,7 @@ export interface StagePreviousResult {
     probabilities?: Record<string, number>;
     model?: string;
     configuredModel?: string;
+    connectionId?: JevConnectionId;
     updatedAt?: string;
 }
 /** One step's latest persisted judgment; a stale judgment remains inspectable. */
@@ -48,6 +49,7 @@ export interface StageAnalysisSummary {
     probabilities?: Record<string, number>;
     model?: string;
     configuredModel?: string;
+    connectionId?: JevConnectionId;
     recordId?: string;
     operationId?: string;
     failure?: {
@@ -69,6 +71,10 @@ export interface StageAnalysisRecord extends StageAnalysisSummary {
     request?: JevRequest;
     response?: JevResponse;
     rawResponse?: Json;
+    connection?: JevAttemptRecord['connection'];
+    networkRecords?: JevAttemptRecord['networkRecords'];
+    usage?: JevAttemptRecord['usage'];
+    usageComplete?: boolean;
 }
 export interface StageStep {
     /** Session id plus durable `step/start` sequence, independent of visible row order. */

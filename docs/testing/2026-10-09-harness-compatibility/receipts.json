@@ -1,0 +1,199 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-10-09T16:18:22.467Z",
+  "receipts": [
+    {
+      "caseId": "completion-control",
+      "operationId": "evidence-1",
+      "featureId": "completion-check",
+      "id": "completion-checked",
+      "status": "observed",
+      "at": "2026-10-09T15:56:24.772Z",
+      "reason": "Requirements supported by recorded evidence; not an independent test run"
+    },
+    {
+      "caseId": "completion-incomplete",
+      "operationId": "evidence-8",
+      "featureId": "completion-check",
+      "id": "completion-checked",
+      "status": "observed",
+      "at": "2026-10-09T15:56:23.656Z",
+      "reason": "Requirements supported by recorded evidence; not an independent test run"
+    },
+    {
+      "caseId": "completion-incomplete",
+      "operationId": "evidence-12",
+      "featureId": "completion-check",
+      "id": "supplement-reserved",
+      "status": "observed",
+      "at": "2026-10-09T15:56:19.869Z",
+      "reason": "One supplemental attempt reserved for this original request"
+    },
+    {
+      "caseId": "completion-incomplete",
+      "operationId": "evidence-12",
+      "featureId": "completion-check",
+      "id": "supplement-queued",
+      "status": "executed",
+      "at": "2026-10-09T15:56:19.879Z",
+      "reason": "Supplement queued; completion remains unverified"
+    },
+    {
+      "caseId": "completion-incomplete",
+      "operationId": "evidence-12",
+      "featureId": "completion-check",
+      "id": "supplement-delivered",
+      "status": "executed",
+      "at": "2026-10-09T15:56:19.898Z",
+      "reason": "Message admitted to the session"
+    },
+    {
+      "caseId": "current-cwd",
+      "operationId": "evidence-24",
+      "featureId": "instruction-guidance",
+      "id": "instruction-guidance",
+      "status": "observed",
+      "reason": "No conflict established for supplied evidence; general compliance unconfirmed",
+      "at": "2026-10-09T16:06:38.195Z"
+    },
+    {
+      "caseId": "current-cwd",
+      "operationId": "evidence-30",
+      "featureId": "instruction-guidance",
+      "id": "instruction-guidance",
+      "status": "observed",
+      "reason": "No conflict established for supplied evidence; general compliance unconfirmed",
+      "at": "2026-10-09T16:06:36.386Z"
+    },
+    {
+      "caseId": "current-cwd",
+      "operationId": "evidence-33",
+      "featureId": "instruction-guidance",
+      "id": "instruction-guidance",
+      "status": "observed",
+      "reason": "No conflict established for supplied evidence; general compliance unconfirmed",
+      "at": "2026-10-09T16:06:36.409Z"
+    },
+    {
+      "caseId": "current-cwd",
+      "operationId": "evidence-36",
+      "featureId": "instruction-guidance",
+      "id": "instruction-guidance",
+      "status": "observed",
+      "reason": "No conflict established for supplied evidence; general compliance unconfirmed",
+      "at": "2026-10-09T16:06:36.272Z"
+    },
+    {
+      "caseId": "current-cwd",
+      "operationId": "evidence-39",
+      "featureId": "instruction-guidance",
+      "id": "instruction-guidance",
+      "status": "observed",
+      "reason": "No conflict established for supplied evidence; general compliance unconfirmed",
+      "at": "2026-10-09T16:06:35.027Z"
+    },
+    {
+      "caseId": "current-cwd",
+      "operationId": "evidence-48",
+      "featureId": "instruction-guidance",
+      "id": "instruction-guidance",
+      "status": "observed",
+      "reason": "No conflict established for supplied evidence; general compliance unconfirmed",
+      "at": "2026-10-09T16:06:31.648Z"
+    },
+    {
+      "caseId": "current-cwd",
+      "operationId": "evidence-51",
+      "featureId": "skill-selection",
+      "id": "skill-catalog-published",
+      "status": "observed",
+      "at": "2026-10-09T16:06:30.114Z"
+    },
+    {
+      "caseId": "current-cwd-project",
+      "operationId": "evidence-56",
+      "featureId": "skill-selection",
+      "id": "skill-catalog-published",
+      "status": "observed",
+      "at": "2026-10-09T16:09:52.995Z"
+    },
+    {
+      "caseId": "current-cwd-project",
+      "operationId": "evidence-59",
+      "featureId": "skill-selection",
+      "id": "skill-catalog-published",
+      "status": "observed",
+      "at": "2026-10-09T16:09:51.503Z"
+    },
+    {
+      "caseId": "file-ranking",
+      "operationId": "evidence-68",
+      "featureId": "file-ranking",
+      "id": "glob-paths-ranked",
+      "status": "observed",
+      "at": "2026-10-09T15:55:32.017Z"
+    },
+    {
+      "caseId": "instruction-guidance",
+      "operationId": "evidence-74",
+      "featureId": "instruction-guidance",
+      "id": "instruction-guidance",
+      "status": "observed",
+      "reason": "No conflict established for supplied evidence; general compliance unconfirmed",
+      "at": "2026-10-09T15:56:26.635Z"
+    },
+    {
+      "caseId": "output-admission",
+      "operationId": "evidence-80",
+      "featureId": "output-admission",
+      "id": "tool-log-final-result",
+      "status": "observed",
+      "reason": "{\"branch\":\"output-admission\",\"callId\":\"evidence-77\",\"inputChars\":7634,\"proposedChars\":853,\"finalChars\":853,\"finalIsError\":false,\"rules\":0,\"jev\":7,\"locator\":\"$PRIVATE_SPILL\"}",
+      "at": "2026-10-09T15:56:06.259Z"
+    },
+    {
+      "caseId": "skill-selection",
+      "operationId": "evidence-84",
+      "featureId": "skill-selection",
+      "id": "skill-catalog-published",
+      "status": "observed",
+      "at": "2026-10-09T15:55:59.979Z"
+    },
+    {
+      "caseId": "workspace-approval",
+      "operationId": "evidence-108",
+      "featureId": "workspace-approval",
+      "id": "approval-routing",
+      "status": "observed",
+      "reason": "unauthorized: delegated to native answerer",
+      "at": "2026-10-09T15:57:31.869Z"
+    },
+    {
+      "caseId": "workspace-approval-exact",
+      "operationId": "evidence-112",
+      "featureId": "workspace-approval",
+      "id": "approval-routing",
+      "status": "observed",
+      "reason": "Jev answered approve; final freshness check pending",
+      "at": "2026-10-09T15:58:57.191Z"
+    },
+    {
+      "caseId": "workspace-approval-exact",
+      "operationId": "evidence-112",
+      "featureId": "workspace-approval",
+      "id": "grant-issued",
+      "status": "observed",
+      "reason": "Jev allowed-once was issued to the native approval request",
+      "at": "2026-10-09T15:58:57.207Z"
+    },
+    {
+      "caseId": "workspace-approval-exact",
+      "operationId": "evidence-112",
+      "featureId": "workspace-approval",
+      "id": "tool-result",
+      "status": "executed",
+      "reason": "Native tool completed; see native result for operation outcome",
+      "at": "2026-10-09T15:58:57.220Z"
+    }
+  ]
+}

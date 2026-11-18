@@ -1,0 +1,1918 @@
+{
+  "schema_version": 1,
+  "prepared_date": "2026-10-02",
+  "date_semantics": "run_dates_observed only lists dates in source execution timestamps; prepared_date is this JSON assembly date.",
+  "scenarios": [
+    {
+      "scenario_id": "initial-26",
+      "run_dates_observed": [
+        "2026-10-02"
+      ],
+      "entries": [
+        {
+          "index": 1,
+          "family": "completion",
+          "case": "complete-deliverable",
+          "condition": "baseline",
+          "repeat": null,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_attempt_recorded",
+          "attempts": [],
+          "supplement_requests": 0,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 2,
+          "family": "completion",
+          "case": "complete-deliverable",
+          "condition": "completion_check",
+          "repeat": null,
+          "feature": {
+            "name": "completion_check",
+            "enabled": true
+          },
+          "attempt_status": "attempts_recorded",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "succeeded",
+              "raw_assessment": "complete",
+              "probability": null,
+              "confidence": null,
+              "class_probabilities": null,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": []
+            }
+          ],
+          "supplement_requests": 0,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 3,
+          "family": "completion",
+          "case": "missing-deliverable",
+          "condition": "baseline",
+          "repeat": null,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_attempt_recorded",
+          "attempts": [],
+          "supplement_requests": 0,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 4,
+          "family": "completion",
+          "case": "missing-deliverable",
+          "condition": "completion_check",
+          "repeat": null,
+          "feature": {
+            "name": "completion_check",
+            "enabled": true
+          },
+          "attempt_status": "attempts_recorded",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "succeeded",
+              "raw_assessment": "omission",
+              "probability": null,
+              "confidence": null,
+              "class_probabilities": null,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": []
+            },
+            {
+              "attempt_index": 2,
+              "attempt_status": "succeeded",
+              "raw_assessment": "omission",
+              "probability": null,
+              "confidence": null,
+              "class_probabilities": null,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": []
+            }
+          ],
+          "supplement_requests": 1,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 5,
+          "family": "completion",
+          "case": "failed-test-claim",
+          "condition": "baseline",
+          "repeat": null,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_attempt_recorded",
+          "attempts": [],
+          "supplement_requests": 0,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 6,
+          "family": "completion",
+          "case": "failed-test-claim",
+          "condition": "completion_check",
+          "repeat": null,
+          "feature": {
+            "name": "completion_check",
+            "enabled": true
+          },
+          "attempt_status": "attempts_recorded",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "succeeded",
+              "raw_assessment": "omission",
+              "probability": null,
+              "confidence": null,
+              "class_probabilities": null,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": []
+            },
+            {
+              "attempt_index": 2,
+              "attempt_status": "succeeded",
+              "raw_assessment": "complete",
+              "probability": 0.5,
+              "confidence": 0.33,
+              "class_probabilities": {
+                "complete": 0.5,
+                "omission": 0.5
+              },
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": []
+            }
+          ],
+          "supplement_requests": 1,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 7,
+          "family": "completion",
+          "case": "stale-test-after-edit",
+          "condition": "baseline",
+          "repeat": null,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_attempt_recorded",
+          "attempts": [],
+          "supplement_requests": 0,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 8,
+          "family": "completion",
+          "case": "stale-test-after-edit",
+          "condition": "completion_check",
+          "repeat": null,
+          "feature": {
+            "name": "completion_check",
+            "enabled": true
+          },
+          "attempt_status": "attempts_recorded",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "succeeded",
+              "raw_assessment": "omission",
+              "probability": null,
+              "confidence": null,
+              "class_probabilities": null,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": []
+            },
+            {
+              "attempt_index": 2,
+              "attempt_status": "succeeded",
+              "raw_assessment": "complete",
+              "probability": null,
+              "confidence": null,
+              "class_probabilities": null,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": []
+            }
+          ],
+          "supplement_requests": 1,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 9,
+          "family": "completion",
+          "case": "read-only-investigation",
+          "condition": "baseline",
+          "repeat": null,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_attempt_recorded",
+          "attempts": [],
+          "supplement_requests": 0,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 10,
+          "family": "completion",
+          "case": "read-only-investigation",
+          "condition": "completion_check",
+          "repeat": null,
+          "feature": {
+            "name": "completion_check",
+            "enabled": true
+          },
+          "attempt_status": "attempts_recorded",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "succeeded",
+              "raw_assessment": "complete",
+              "probability": null,
+              "confidence": null,
+              "class_probabilities": null,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": []
+            }
+          ],
+          "supplement_requests": 0,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 11,
+          "family": "completion",
+          "case": "needs-user-choice",
+          "condition": "baseline",
+          "repeat": null,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_attempt_recorded",
+          "attempts": [],
+          "supplement_requests": 0,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 12,
+          "family": "completion",
+          "case": "needs-user-choice",
+          "condition": "completion_check",
+          "repeat": null,
+          "feature": {
+            "name": "completion_check",
+            "enabled": true
+          },
+          "attempt_status": "attempts_recorded",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "succeeded",
+              "raw_assessment": "needs-user",
+              "probability": null,
+              "confidence": null,
+              "class_probabilities": null,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": []
+            }
+          ],
+          "supplement_requests": 0,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 13,
+          "family": "skills",
+          "case": "empty-directory",
+          "condition": "baseline",
+          "repeat": null,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_operation_recorded",
+          "attempts": [],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 14,
+          "family": "skills",
+          "case": "empty-directory",
+          "condition": "skill_selection",
+          "repeat": null,
+          "feature": {
+            "name": "skill_selection",
+            "enabled": true
+          },
+          "attempt_status": "no_operation_recorded",
+          "attempts": [],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 15,
+          "family": "skills",
+          "case": "single-relevant",
+          "condition": "baseline",
+          "repeat": null,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_operation_recorded",
+          "attempts": [],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "incident-triage": true
+            }
+          }
+        },
+        {
+          "index": 16,
+          "family": "skills",
+          "case": "single-relevant",
+          "condition": "skill_selection",
+          "repeat": null,
+          "feature": {
+            "name": "skill_selection",
+            "enabled": true
+          },
+          "attempt_status": "completed",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "completed",
+              "raw_assessment": null,
+              "probability": null,
+              "confidence": null,
+              "score_candidates": [
+                {
+                  "name": "incident-triage",
+                  "probability": 0.96,
+                  "confidence": null
+                }
+              ],
+              "scores_match_publication": true,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": [
+                {
+                  "id": "skill-catalog-published",
+                  "status": "observed"
+                }
+              ]
+            }
+          ],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [
+            {
+              "id": "skill-catalog-published",
+              "status": "observed"
+            }
+          ],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "incident-triage": true
+            }
+          }
+        },
+        {
+          "index": 17,
+          "family": "skills",
+          "case": "dense-relevance",
+          "condition": "baseline",
+          "repeat": null,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_operation_recorded",
+          "attempts": [],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "astronomy-lenses": false,
+              "garden-irrigation": false,
+              "launch-quality": true,
+              "launch-rollback": true,
+              "launch-rollout": true,
+              "launch-stakeholders": true,
+              "launch-support": true,
+              "music-harmony": false,
+              "travel-packing": false
+            }
+          }
+        },
+        {
+          "index": 18,
+          "family": "skills",
+          "case": "dense-relevance",
+          "condition": "skill_selection",
+          "repeat": null,
+          "feature": {
+            "name": "skill_selection",
+            "enabled": true
+          },
+          "attempt_status": "completed",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "completed",
+              "raw_assessment": null,
+              "probability": null,
+              "confidence": null,
+              "score_candidates": [
+                {
+                  "name": "astronomy-lenses",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "garden-irrigation",
+                  "probability": 0.02,
+                  "confidence": null
+                },
+                {
+                  "name": "launch-quality",
+                  "probability": 0.95,
+                  "confidence": null
+                },
+                {
+                  "name": "launch-rollback",
+                  "probability": 0.95,
+                  "confidence": null
+                },
+                {
+                  "name": "launch-rollout",
+                  "probability": 0.94,
+                  "confidence": null
+                },
+                {
+                  "name": "launch-stakeholders",
+                  "probability": 0.96,
+                  "confidence": null
+                },
+                {
+                  "name": "launch-support",
+                  "probability": 0.91,
+                  "confidence": null
+                },
+                {
+                  "name": "music-harmony",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "travel-packing",
+                  "probability": 0.02,
+                  "confidence": null
+                }
+              ],
+              "scores_match_publication": true,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": [
+                {
+                  "id": "skill-catalog-published",
+                  "status": "observed"
+                }
+              ]
+            }
+          ],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [
+            {
+              "id": "skill-catalog-published",
+              "status": "observed"
+            }
+          ],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "astronomy-lenses": false,
+              "garden-irrigation": false,
+              "launch-quality": true,
+              "launch-rollback": true,
+              "launch-rollout": true,
+              "launch-stakeholders": true,
+              "launch-support": true,
+              "music-harmony": false,
+              "travel-packing": false
+            }
+          }
+        },
+        {
+          "index": 19,
+          "family": "skills",
+          "case": "two-required-near-names",
+          "condition": "baseline",
+          "repeat": null,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_operation_recorded",
+          "attempts": [],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "invoice-reconcile": true,
+              "invoice-reconcile-style": false,
+              "invoice-reconciliation-faq": false,
+              "privacy-retention": true,
+              "privacy-retention-faq": false,
+              "privacy-retention-style": false
+            }
+          }
+        },
+        {
+          "index": 20,
+          "family": "skills",
+          "case": "two-required-near-names",
+          "condition": "skill_selection",
+          "repeat": null,
+          "feature": {
+            "name": "skill_selection",
+            "enabled": true
+          },
+          "attempt_status": "completed",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "completed",
+              "raw_assessment": null,
+              "probability": null,
+              "confidence": null,
+              "score_candidates": [
+                {
+                  "name": "invoice-reconcile",
+                  "probability": 0.93,
+                  "confidence": null
+                },
+                {
+                  "name": "invoice-reconcile-style",
+                  "probability": 0.21,
+                  "confidence": null
+                },
+                {
+                  "name": "invoice-reconciliation-faq",
+                  "probability": 0.18,
+                  "confidence": null
+                },
+                {
+                  "name": "privacy-retention",
+                  "probability": 0.94,
+                  "confidence": null
+                },
+                {
+                  "name": "privacy-retention-faq",
+                  "probability": 0.13,
+                  "confidence": null
+                },
+                {
+                  "name": "privacy-retention-style",
+                  "probability": 0.12,
+                  "confidence": null
+                }
+              ],
+              "scores_match_publication": true,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": [
+                {
+                  "id": "skill-catalog-published",
+                  "status": "observed"
+                }
+              ]
+            }
+          ],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [
+            {
+              "id": "skill-catalog-published",
+              "status": "observed"
+            }
+          ],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "invoice-reconcile": true,
+              "invoice-reconcile-style": false,
+              "invoice-reconciliation-faq": false,
+              "privacy-retention": true,
+              "privacy-retention-faq": false,
+              "privacy-retention-style": false
+            }
+          }
+        },
+        {
+          "index": 21,
+          "family": "skills",
+          "case": "all-irrelevant",
+          "condition": "baseline",
+          "repeat": null,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_operation_recorded",
+          "attempts": [],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "baking-bread": false,
+              "bird-watching": false,
+              "calligraphy-ink": false,
+              "garden-pruning": false,
+              "guitar-strings": false,
+              "map-reading": false,
+              "photography-light": false,
+              "telescope-care": false
+            }
+          }
+        },
+        {
+          "index": 22,
+          "family": "skills",
+          "case": "all-irrelevant",
+          "condition": "skill_selection",
+          "repeat": null,
+          "feature": {
+            "name": "skill_selection",
+            "enabled": true
+          },
+          "attempt_status": "completed",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "completed",
+              "raw_assessment": null,
+              "probability": null,
+              "confidence": null,
+              "score_candidates": [
+                {
+                  "name": "baking-bread",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "bird-watching",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "calligraphy-ink",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "garden-pruning",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "guitar-strings",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "map-reading",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "photography-light",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "telescope-care",
+                  "probability": 0.01,
+                  "confidence": null
+                }
+              ],
+              "scores_match_publication": true,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": [
+                {
+                  "id": "skill-catalog-published",
+                  "status": "observed"
+                }
+              ]
+            }
+          ],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [
+            {
+              "id": "skill-catalog-published",
+              "status": "observed"
+            }
+          ],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "baking-bread": false,
+              "bird-watching": false,
+              "calligraphy-ink": false,
+              "garden-pruning": false,
+              "guitar-strings": false,
+              "map-reading": false,
+              "photography-light": false,
+              "telescope-care": false
+            }
+          }
+        },
+        {
+          "index": 23,
+          "family": "skills",
+          "case": "catalog-recovery",
+          "condition": "baseline",
+          "repeat": null,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_operation_recorded",
+          "attempts": [],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "archive-index": false,
+              "bird-migration": false,
+              "cafe-menu": false,
+              "garden-layout": false,
+              "music-tempo": false,
+              "photo-catalog": false,
+              "travel-route": false,
+              "zenith-codebook": true
+            }
+          }
+        },
+        {
+          "index": 24,
+          "family": "skills",
+          "case": "catalog-recovery",
+          "condition": "skill_selection",
+          "repeat": null,
+          "feature": {
+            "name": "skill_selection",
+            "enabled": true
+          },
+          "attempt_status": "completed",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "completed",
+              "raw_assessment": null,
+              "probability": null,
+              "confidence": null,
+              "score_candidates": [
+                {
+                  "name": "archive-index",
+                  "probability": 0.1,
+                  "confidence": null
+                },
+                {
+                  "name": "bird-migration",
+                  "probability": 0.02,
+                  "confidence": null
+                },
+                {
+                  "name": "cafe-menu",
+                  "probability": 0.02,
+                  "confidence": null
+                },
+                {
+                  "name": "garden-layout",
+                  "probability": 0.02,
+                  "confidence": null
+                },
+                {
+                  "name": "music-tempo",
+                  "probability": 0.03,
+                  "confidence": null
+                },
+                {
+                  "name": "photo-catalog",
+                  "probability": 0.06,
+                  "confidence": null
+                },
+                {
+                  "name": "travel-route",
+                  "probability": 0.03,
+                  "confidence": null
+                },
+                {
+                  "name": "zenith-codebook",
+                  "probability": 0.9,
+                  "confidence": null
+                }
+              ],
+              "scores_match_publication": true,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": [
+                {
+                  "id": "skill-catalog-published",
+                  "status": "observed"
+                }
+              ]
+            }
+          ],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [
+            {
+              "id": "skill-catalog-published",
+              "status": "observed"
+            }
+          ],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "archive-index": false,
+              "bird-migration": false,
+              "cafe-menu": false,
+              "garden-layout": false,
+              "music-tempo": false,
+              "photo-catalog": false,
+              "travel-route": false,
+              "zenith-codebook": true
+            }
+          }
+        },
+        {
+          "index": 25,
+          "family": "coding",
+          "case": "vitest-duration-sharding",
+          "condition": "baseline",
+          "repeat": null,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "not_applicable",
+          "attempts": [],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 26,
+          "family": "coding",
+          "case": "vitest-duration-sharding",
+          "condition": "completion_check",
+          "repeat": null,
+          "feature": {
+            "name": "completion_check",
+            "enabled": true
+          },
+          "attempt_status": "no_attempt_observed",
+          "attempts": [],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          },
+          "observed_attempt_count": 0
+        }
+      ]
+    },
+    {
+      "scenario_id": "coding-followup-4",
+      "run_dates_observed": [
+        "2026-10-02"
+      ],
+      "entries": [
+        {
+          "index": 1,
+          "family": "coding",
+          "case": "vitest-duration-sharding",
+          "condition": "baseline",
+          "repeat": 1,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_attempt_recorded",
+          "attempts": [],
+          "supplement_requests": 0,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 2,
+          "family": "coding",
+          "case": "vitest-duration-sharding",
+          "condition": "completion_check",
+          "repeat": 1,
+          "feature": {
+            "name": "completion_check",
+            "enabled": true
+          },
+          "attempt_status": "failed",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "failed",
+              "raw_assessment": "omission",
+              "probability": 0.84,
+              "confidence": 0.79,
+              "raw_assessment_format_valid": true,
+              "complete_evidence": false,
+              "omitted_messages": 296,
+              "retained_messages": 34,
+              "evidence_character_budget": 24000,
+              "assessment_adopted": false,
+              "interpretation_usable": false,
+              "supplement_requests": 0,
+              "failure_code": "UNDETERMINED",
+              "adoption_receipts": [],
+              "operation_status": "cancelled"
+            }
+          ],
+          "supplement_requests": 0,
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          },
+          "operation_status": "cancelled"
+        },
+        {
+          "index": 3,
+          "family": "coding",
+          "case": "vitest-duration-sharding",
+          "condition": "completion_check",
+          "repeat": 2,
+          "feature": {
+            "name": "completion_check",
+            "enabled": true
+          },
+          "attempt_status": null,
+          "attempts": [],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        },
+        {
+          "index": 4,
+          "family": "coding",
+          "case": "vitest-duration-sharding",
+          "condition": "baseline",
+          "repeat": 2,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": null,
+          "attempts": [],
+          "supplement_requests": null,
+          "adoption_receipts_source_available": false,
+          "adoption_receipts": [],
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": null,
+            "skill_body_sha_match_by_name": {}
+          }
+        }
+      ]
+    },
+    {
+      "scenario_id": "skill-repository-8",
+      "run_dates_observed": [],
+      "review_dates_observed": [
+        "2026-10-02"
+      ],
+      "entries": [
+        {
+          "index": 1,
+          "family": "skill-followup",
+          "case": "research-one",
+          "condition": "baseline",
+          "repeat": 1,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_operation_recorded",
+          "attempts": [],
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [],
+          "supplement_requests": null,
+          "source_citation_check_passed": true,
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "session-renewal-trace": true
+            }
+          }
+        },
+        {
+          "index": 2,
+          "family": "skill-followup",
+          "case": "research-one",
+          "condition": "skill_selection",
+          "repeat": 1,
+          "feature": {
+            "name": "skill_selection",
+            "enabled": true
+          },
+          "attempt_status": "completed",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "completed",
+              "raw_assessment": null,
+              "probability": null,
+              "confidence": null,
+              "score_candidates": [
+                {
+                  "name": "api-pagination",
+                  "probability": 0.08,
+                  "confidence": null
+                },
+                {
+                  "name": "cache-eviction",
+                  "probability": 0.16,
+                  "confidence": null
+                },
+                {
+                  "name": "database-backup",
+                  "probability": 0.05,
+                  "confidence": null
+                },
+                {
+                  "name": "email-template",
+                  "probability": 0.03,
+                  "confidence": null
+                },
+                {
+                  "name": "file-encoding",
+                  "probability": 0.13,
+                  "confidence": null
+                },
+                {
+                  "name": "garden-watering",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "image-alt-text",
+                  "probability": 0.02,
+                  "confidence": null
+                },
+                {
+                  "name": "invoice-export",
+                  "probability": 0.02,
+                  "confidence": null
+                },
+                {
+                  "name": "ledger-posting",
+                  "probability": 0.03,
+                  "confidence": null
+                },
+                {
+                  "name": "music-cadence",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "network-diagnostics",
+                  "probability": 0.13,
+                  "confidence": null
+                },
+                {
+                  "name": "privacy-notice",
+                  "probability": 0.03,
+                  "confidence": null
+                },
+                {
+                  "name": "release-notes",
+                  "probability": 0.06,
+                  "confidence": null
+                },
+                {
+                  "name": "search-index",
+                  "probability": 0.12,
+                  "confidence": null
+                },
+                {
+                  "name": "session-cookie-format",
+                  "probability": 0.56,
+                  "confidence": null
+                },
+                {
+                  "name": "session-expiry-dashboard",
+                  "probability": 0.27,
+                  "confidence": null
+                },
+                {
+                  "name": "session-recovery-faq",
+                  "probability": 0.07,
+                  "confidence": null
+                },
+                {
+                  "name": "session-renewal-docs",
+                  "probability": 0.33,
+                  "confidence": null
+                },
+                {
+                  "name": "session-renewal-trace",
+                  "probability": 0.96,
+                  "confidence": null
+                },
+                {
+                  "name": "session-revocation-audit",
+                  "probability": 0.19,
+                  "confidence": null
+                },
+                {
+                  "name": "session-signin-guide",
+                  "probability": 0.48,
+                  "confidence": null
+                },
+                {
+                  "name": "session-ttl-copy",
+                  "probability": 0.05,
+                  "confidence": null
+                },
+                {
+                  "name": "test-reporting",
+                  "probability": 0.1,
+                  "confidence": null
+                },
+                {
+                  "name": "travel-packing",
+                  "probability": 0.01,
+                  "confidence": null
+                }
+              ],
+              "scores_match_publication": true,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": [
+                {
+                  "id": "skill-catalog-published",
+                  "status": "observed"
+                }
+              ]
+            }
+          ],
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [
+            {
+              "id": "skill-catalog-published",
+              "status": "observed"
+            }
+          ],
+          "supplement_requests": null,
+          "source_citation_check_passed": true,
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "session-renewal-trace": true
+            }
+          }
+        },
+        {
+          "index": 3,
+          "family": "skill-followup",
+          "case": "research-one",
+          "condition": "skill_selection",
+          "repeat": 2,
+          "feature": {
+            "name": "skill_selection",
+            "enabled": true
+          },
+          "attempt_status": "completed",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "completed",
+              "raw_assessment": null,
+              "probability": null,
+              "confidence": null,
+              "score_candidates": [
+                {
+                  "name": "api-pagination",
+                  "probability": 0.08,
+                  "confidence": null
+                },
+                {
+                  "name": "cache-eviction",
+                  "probability": 0.16,
+                  "confidence": null
+                },
+                {
+                  "name": "database-backup",
+                  "probability": 0.05,
+                  "confidence": null
+                },
+                {
+                  "name": "email-template",
+                  "probability": 0.03,
+                  "confidence": null
+                },
+                {
+                  "name": "file-encoding",
+                  "probability": 0.14,
+                  "confidence": null
+                },
+                {
+                  "name": "garden-watering",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "image-alt-text",
+                  "probability": 0.02,
+                  "confidence": null
+                },
+                {
+                  "name": "invoice-export",
+                  "probability": 0.02,
+                  "confidence": null
+                },
+                {
+                  "name": "ledger-posting",
+                  "probability": 0.03,
+                  "confidence": null
+                },
+                {
+                  "name": "music-cadence",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "network-diagnostics",
+                  "probability": 0.13,
+                  "confidence": null
+                },
+                {
+                  "name": "privacy-notice",
+                  "probability": 0.03,
+                  "confidence": null
+                },
+                {
+                  "name": "release-notes",
+                  "probability": 0.05,
+                  "confidence": null
+                },
+                {
+                  "name": "search-index",
+                  "probability": 0.11,
+                  "confidence": null
+                },
+                {
+                  "name": "session-cookie-format",
+                  "probability": 0.58,
+                  "confidence": null
+                },
+                {
+                  "name": "session-expiry-dashboard",
+                  "probability": 0.26,
+                  "confidence": null
+                },
+                {
+                  "name": "session-recovery-faq",
+                  "probability": 0.07,
+                  "confidence": null
+                },
+                {
+                  "name": "session-renewal-docs",
+                  "probability": 0.3,
+                  "confidence": null
+                },
+                {
+                  "name": "session-renewal-trace",
+                  "probability": 0.96,
+                  "confidence": null
+                },
+                {
+                  "name": "session-revocation-audit",
+                  "probability": 0.19,
+                  "confidence": null
+                },
+                {
+                  "name": "session-signin-guide",
+                  "probability": 0.47,
+                  "confidence": null
+                },
+                {
+                  "name": "session-ttl-copy",
+                  "probability": 0.05,
+                  "confidence": null
+                },
+                {
+                  "name": "test-reporting",
+                  "probability": 0.09,
+                  "confidence": null
+                },
+                {
+                  "name": "travel-packing",
+                  "probability": 0.01,
+                  "confidence": null
+                }
+              ],
+              "scores_match_publication": true,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": [
+                {
+                  "id": "skill-catalog-published",
+                  "status": "observed"
+                }
+              ]
+            }
+          ],
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [
+            {
+              "id": "skill-catalog-published",
+              "status": "observed"
+            }
+          ],
+          "supplement_requests": null,
+          "source_citation_check_passed": true,
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "session-renewal-trace": true
+            }
+          }
+        },
+        {
+          "index": 4,
+          "family": "skill-followup",
+          "case": "research-one",
+          "condition": "baseline",
+          "repeat": 2,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_operation_recorded",
+          "attempts": [],
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [],
+          "supplement_requests": null,
+          "source_citation_check_passed": true,
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "session-renewal-trace": true
+            }
+          }
+        },
+        {
+          "index": 5,
+          "family": "skill-followup",
+          "case": "research-two",
+          "condition": "baseline",
+          "repeat": 1,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_operation_recorded",
+          "attempts": [],
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [],
+          "supplement_requests": null,
+          "source_citation_check_passed": true,
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "invoice-allocation-trace": true,
+              "audit-retention-trace": true
+            }
+          }
+        },
+        {
+          "index": 6,
+          "family": "skill-followup",
+          "case": "research-two",
+          "condition": "skill_selection",
+          "repeat": 1,
+          "feature": {
+            "name": "skill_selection",
+            "enabled": true
+          },
+          "attempt_status": "completed",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "completed",
+              "raw_assessment": null,
+              "probability": null,
+              "confidence": null,
+              "score_candidates": [
+                {
+                  "name": "api-pagination",
+                  "probability": 0.09,
+                  "confidence": null
+                },
+                {
+                  "name": "audit-retention-trace",
+                  "probability": 0.95,
+                  "confidence": null
+                },
+                {
+                  "name": "billing-cross-account-faq",
+                  "probability": 0.15,
+                  "confidence": null
+                },
+                {
+                  "name": "billing-invoice-format",
+                  "probability": 0.22,
+                  "confidence": null
+                },
+                {
+                  "name": "billing-refund-guide",
+                  "probability": 0.42,
+                  "confidence": null
+                },
+                {
+                  "name": "cache-eviction",
+                  "probability": 0.07,
+                  "confidence": null
+                },
+                {
+                  "name": "email-template",
+                  "probability": 0.05,
+                  "confidence": null
+                },
+                {
+                  "name": "file-encoding",
+                  "probability": 0.11,
+                  "confidence": null
+                },
+                {
+                  "name": "garden-watering",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "image-alt-text",
+                  "probability": 0.02,
+                  "confidence": null
+                },
+                {
+                  "name": "invoice-allocation-trace",
+                  "probability": 0.97,
+                  "confidence": null
+                },
+                {
+                  "name": "music-cadence",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "network-diagnostics",
+                  "probability": 0.04,
+                  "confidence": null
+                },
+                {
+                  "name": "payment-receipt-format",
+                  "probability": 0.2,
+                  "confidence": null
+                },
+                {
+                  "name": "privacy-audit-dashboard",
+                  "probability": 0.52,
+                  "confidence": null
+                },
+                {
+                  "name": "privacy-consent-copy",
+                  "probability": 0.12,
+                  "confidence": null
+                },
+                {
+                  "name": "privacy-notice-style",
+                  "probability": 0.07,
+                  "confidence": null
+                },
+                {
+                  "name": "release-notes",
+                  "probability": 0.08,
+                  "confidence": null
+                },
+                {
+                  "name": "retention-legal-faq",
+                  "probability": 0.36,
+                  "confidence": null
+                },
+                {
+                  "name": "search-index",
+                  "probability": 0.14,
+                  "confidence": null
+                },
+                {
+                  "name": "session-cookie-format",
+                  "probability": 0.05,
+                  "confidence": null
+                },
+                {
+                  "name": "session-signin-guide",
+                  "probability": 0.05,
+                  "confidence": null
+                },
+                {
+                  "name": "test-reporting",
+                  "probability": 0.22,
+                  "confidence": null
+                },
+                {
+                  "name": "travel-packing",
+                  "probability": 0.01,
+                  "confidence": null
+                }
+              ],
+              "scores_match_publication": true,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": [
+                {
+                  "id": "skill-catalog-published",
+                  "status": "observed"
+                }
+              ]
+            }
+          ],
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [
+            {
+              "id": "skill-catalog-published",
+              "status": "observed"
+            }
+          ],
+          "supplement_requests": null,
+          "source_citation_check_passed": true,
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "invoice-allocation-trace": true,
+              "audit-retention-trace": true
+            }
+          }
+        },
+        {
+          "index": 7,
+          "family": "skill-followup",
+          "case": "research-two",
+          "condition": "skill_selection",
+          "repeat": 2,
+          "feature": {
+            "name": "skill_selection",
+            "enabled": true
+          },
+          "attempt_status": "completed",
+          "attempts": [
+            {
+              "attempt_index": 1,
+              "attempt_status": "completed",
+              "raw_assessment": null,
+              "probability": null,
+              "confidence": null,
+              "score_candidates": [
+                {
+                  "name": "api-pagination",
+                  "probability": 0.09,
+                  "confidence": null
+                },
+                {
+                  "name": "audit-retention-trace",
+                  "probability": 0.95,
+                  "confidence": null
+                },
+                {
+                  "name": "billing-cross-account-faq",
+                  "probability": 0.15,
+                  "confidence": null
+                },
+                {
+                  "name": "billing-invoice-format",
+                  "probability": 0.21,
+                  "confidence": null
+                },
+                {
+                  "name": "billing-refund-guide",
+                  "probability": 0.4,
+                  "confidence": null
+                },
+                {
+                  "name": "cache-eviction",
+                  "probability": 0.07,
+                  "confidence": null
+                },
+                {
+                  "name": "email-template",
+                  "probability": 0.05,
+                  "confidence": null
+                },
+                {
+                  "name": "file-encoding",
+                  "probability": 0.11,
+                  "confidence": null
+                },
+                {
+                  "name": "garden-watering",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "image-alt-text",
+                  "probability": 0.03,
+                  "confidence": null
+                },
+                {
+                  "name": "invoice-allocation-trace",
+                  "probability": 0.97,
+                  "confidence": null
+                },
+                {
+                  "name": "music-cadence",
+                  "probability": 0.01,
+                  "confidence": null
+                },
+                {
+                  "name": "network-diagnostics",
+                  "probability": 0.03,
+                  "confidence": null
+                },
+                {
+                  "name": "payment-receipt-format",
+                  "probability": 0.2,
+                  "confidence": null
+                },
+                {
+                  "name": "privacy-audit-dashboard",
+                  "probability": 0.5,
+                  "confidence": null
+                },
+                {
+                  "name": "privacy-consent-copy",
+                  "probability": 0.12,
+                  "confidence": null
+                },
+                {
+                  "name": "privacy-notice-style",
+                  "probability": 0.07,
+                  "confidence": null
+                },
+                {
+                  "name": "release-notes",
+                  "probability": 0.07,
+                  "confidence": null
+                },
+                {
+                  "name": "retention-legal-faq",
+                  "probability": 0.34,
+                  "confidence": null
+                },
+                {
+                  "name": "search-index",
+                  "probability": 0.15,
+                  "confidence": null
+                },
+                {
+                  "name": "session-cookie-format",
+                  "probability": 0.05,
+                  "confidence": null
+                },
+                {
+                  "name": "session-signin-guide",
+                  "probability": 0.05,
+                  "confidence": null
+                },
+                {
+                  "name": "test-reporting",
+                  "probability": 0.21,
+                  "confidence": null
+                },
+                {
+                  "name": "travel-packing",
+                  "probability": 0.01,
+                  "confidence": null
+                }
+              ],
+              "scores_match_publication": true,
+              "assessment_adopted": null,
+              "interpretation_usable": null,
+              "adoption_receipts": [
+                {
+                  "id": "skill-catalog-published",
+                  "status": "observed"
+                }
+              ]
+            }
+          ],
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [
+            {
+              "id": "skill-catalog-published",
+              "status": "observed"
+            }
+          ],
+          "supplement_requests": null,
+          "source_citation_check_passed": true,
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "invoice-allocation-trace": true,
+              "audit-retention-trace": true
+            }
+          }
+        },
+        {
+          "index": 8,
+          "family": "skill-followup",
+          "case": "research-two",
+          "condition": "baseline",
+          "repeat": 2,
+          "feature": {
+            "name": "baseline",
+            "enabled": false
+          },
+          "attempt_status": "no_operation_recorded",
+          "attempts": [],
+          "adoption_receipts_source_available": true,
+          "adoption_receipts": [],
+          "supplement_requests": null,
+          "source_citation_check_passed": true,
+          "hash_checks": {
+            "source_hash_verified": null,
+            "fixture_integrity_unchanged": true,
+            "skill_body_sha_match_by_name": {
+              "invoice-allocation-trace": true,
+              "audit-retention-trace": true
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "historical_identity_ref": "results.json#/historical_identity"
+}

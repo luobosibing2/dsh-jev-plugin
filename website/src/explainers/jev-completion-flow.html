@@ -1,0 +1,1392 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="blueprint" data-mode="light" data-style="80">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="Answer me with HTML 0.4.9">
+<title>Jev 轻量完成声明核查</title>
+<style>
+html[data-theme="blueprint"], html[data-theme="blueprint"][data-mode="light"] {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --radius: 0px;
+  --shadow: none;
+  --bw: 1.5px;
+  --head-font: var(--font-sans);
+  --bg: #f6f6f3;
+  --paper: #ffffff;
+  --ink: #16181d;
+  --ink-2: #4b5260;
+  --ink-3: #8b929e;
+  --line: #1d2026;
+  --line-2: #d6dae1;
+  --fill: #f3f5f8;
+  --accent: #1d5fbf;
+  --accent-bg: #e4ecf8;
+  --ok: #1d5fbf;
+  --ok-bg: #e4ecf8;
+  --err: #c62828;
+  --err-bg: #fbeaea;
+  --warn: #a8620a;
+  --warn-bg: #fdf3e2;
+  --head-bg: #16181d;
+  --head-fg: #ffffff;
+}
+html[data-theme="blueprint"][data-mode="dark"] {
+  --bg: #081322;
+  --paper: #0d1c31;
+  --ink: #e6edf7;
+  --ink-2: #a9b8cc;
+  --ink-3: #6b7f99;
+  --line: #c9d6e8;
+  --line-2: #23385a;
+  --fill: #12253f;
+  --accent: #6ea8ff;
+  --accent-bg: #16305a;
+  --ok: #6ea8ff;
+  --ok-bg: #16305a;
+  --err: #ff7070;
+  --err-bg: #3b1620;
+  --warn: #f0b14a;
+  --warn-bg: #3a2a10;
+  --head-bg: #e6edf7;
+  --head-fg: #081322;
+}
+@media (prefers-color-scheme: dark) {
+html[data-theme="blueprint"][data-mode="auto"] {
+  --bg: #081322;
+  --paper: #0d1c31;
+  --ink: #e6edf7;
+  --ink-2: #a9b8cc;
+  --ink-3: #6b7f99;
+  --line: #c9d6e8;
+  --line-2: #23385a;
+  --fill: #12253f;
+  --accent: #6ea8ff;
+  --accent-bg: #16305a;
+  --ok: #6ea8ff;
+  --ok-bg: #16305a;
+  --err: #ff7070;
+  --err-bg: #3b1620;
+  --warn: #f0b14a;
+  --warn-bg: #3a2a10;
+  --head-bg: #e6edf7;
+  --head-fg: #081322;
+}
+}
+
+html[data-theme="shadcn"], html[data-theme="shadcn"][data-mode="light"] {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --radius: 8px;
+  --shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+  --bw: 1px;
+  --head-font: var(--font-sans);
+  --bg: #fafafa;
+  --paper: #ffffff;
+  --ink: #09090b;
+  --ink-2: #71717a;
+  --ink-3: #a1a1aa;
+  --line: #e4e4e7;
+  --line-2: #f0f0f2;
+  --fill: #f4f4f5;
+  --accent: #2563eb;
+  --accent-bg: #eff6ff;
+  --ok: #16a34a;
+  --ok-bg: #f0fdf4;
+  --err: #dc2626;
+  --err-bg: #fef2f2;
+  --warn: #d97706;
+  --warn-bg: #fffbeb;
+  --head-bg: #18181b;
+  --head-fg: #fafafa;
+}
+html[data-theme="shadcn"][data-mode="dark"] {
+  --bg: #09090b;
+  --paper: #121215;
+  --ink: #fafafa;
+  --ink-2: #a1a1aa;
+  --ink-3: #71717a;
+  --line: #27272a;
+  --line-2: #1c1c1f;
+  --fill: #18181b;
+  --accent: #60a5fa;
+  --accent-bg: #172554;
+  --ok: #4ade80;
+  --ok-bg: #052e16;
+  --err: #f87171;
+  --err-bg: #450a0a;
+  --warn: #fbbf24;
+  --warn-bg: #451a03;
+  --head-bg: #fafafa;
+  --head-fg: #18181b;
+}
+@media (prefers-color-scheme: dark) {
+html[data-theme="shadcn"][data-mode="auto"] {
+  --bg: #09090b;
+  --paper: #121215;
+  --ink: #fafafa;
+  --ink-2: #a1a1aa;
+  --ink-3: #71717a;
+  --line: #27272a;
+  --line-2: #1c1c1f;
+  --fill: #18181b;
+  --accent: #60a5fa;
+  --accent-bg: #172554;
+  --ok: #4ade80;
+  --ok-bg: #052e16;
+  --err: #f87171;
+  --err-bg: #450a0a;
+  --warn: #fbbf24;
+  --warn-bg: #451a03;
+  --head-bg: #fafafa;
+  --head-fg: #18181b;
+}
+}
+
+html[lang="ja"][data-theme][data-mode] {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "Noto Sans JP", "PingFang SC", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+html[lang="ja"][data-theme="3b1b"][data-mode] {
+  --v-title-font: "CMU Serif", "Latin Modern Roman", "Iowan Old Style", "Palatino", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", "Noto Serif JP", "Songti SC", serif;
+}
+
+/* Answer me with HTML base — uses theme variables only, never hard-coded colors (theme tokens: themes/index.js). Exception: the var() fallbacks of diagrams (flow / sequence) equal the blueprint light tokens, guarded by a test. */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-sans); font-size: 14px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+code, pre, kbd { font-family: var(--font-mono); }
+
+/* ── Toolbar ─────────────────────────────── */
+.am-toolbar {
+  position: fixed; top: 12px; right: 12px; z-index: 10; display: flex; gap: 6px;
+}
+.am-btn {
+  font: 12px/1 var(--font-sans); color: var(--ink); background: var(--paper);
+  border: 1px solid var(--line-2); border-radius: var(--radius); padding: 7px 10px; cursor: pointer;
+}
+.am-btn:hover { border-color: var(--ink-3); }
+.am-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── Header ───────────────────────────────── */
+.am-head { margin: 0 0 20px; padding-right: 260px; }
+.am-head h1 { margin: 0; font-size: 24px; line-height: 1.25; letter-spacing: -0.01em; }
+.am-sub { margin: 4px 0 0; color: var(--ink-2); }
+.am-head-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; font-size: 12px; color: var(--ink-2); }
+.am-head-meta b { font-family: var(--font-mono); font-weight: 400; color: var(--ink-3); margin-right: 6px; }
+.am-intro { margin-top: 12px; max-width: 80ch; }
+
+/* ── sheet template ────────────────────────── */
+.am-sheet { max-width: 1680px; margin: 0 auto; padding: 32px 28px 40px; }
+.am-frame { position: relative; }
+.am-grid {
+  display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+  gap: 20px; align-items: start;
+}
+.am-ruler { display: none; }
+html[data-theme="blueprint"] .am-frame { border: 1px solid var(--line); padding: 30px; }
+html[data-theme="blueprint"] .am-frame::before {
+  content: ""; position: absolute; inset: 18px; border: 1px solid var(--line); pointer-events: none;
+}
+html[data-theme="blueprint"] .am-ruler {
+  display: flex; position: absolute; font: 10px/1 var(--font-mono); color: var(--ink-3);
+}
+.am-ruler span { flex: 1; display: flex; align-items: center; justify-content: center; }
+.am-ruler--top, .am-ruler--bottom { left: 18px; right: 18px; height: 18px; }
+.am-ruler--top { top: 0; }
+.am-ruler--bottom { bottom: 0; }
+.am-ruler--left, .am-ruler--right { top: 18px; bottom: 18px; width: 18px; flex-direction: column; }
+.am-ruler--left { left: 0; }
+.am-ruler--right { right: 0; }
+.am-ruler--top span + span, .am-ruler--bottom span + span { border-left: 1px solid var(--line); }
+.am-ruler--left span + span, .am-ruler--right span + span { border-top: 1px solid var(--line); }
+
+/* ── Panels ───────────────────────────────── */
+.am-panel {
+  background: var(--paper); border: var(--bw) solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); min-width: 0; overflow: hidden;
+}
+.am-panel-head {
+  display: flex; align-items: stretch; gap: 0; border-bottom: var(--bw) solid var(--line); min-height: 34px;
+}
+.am-panel-id {
+  display: flex; align-items: center; justify-content: center; min-width: 34px; padding: 0 8px;
+  background: var(--head-bg); color: var(--head-fg); font-weight: 600; font-size: 14px;
+}
+html[data-theme="shadcn"] .am-panel-id { border-radius: 6px; min-width: 24px; height: 24px; margin: 9px 0 9px 14px; font-size: 12px; }
+html[data-theme="shadcn"] .am-panel-head { border-bottom-width: 1px; }
+.am-panel-head h2 { margin: 0; padding: 7px 12px; font-size: 15px; font-weight: 600; flex: 1; display: flex; align-items: center; }
+.am-panel-meta { align-self: center; padding: 0 12px; font: 11px/1.3 var(--font-mono); color: var(--ink-2); text-align: right; }
+.am-panel-body { padding: 14px 16px 16px; }
+.am-panel-body > * + * { margin-top: 12px; }
+
+/* ── Markdown body ───────────────────────── */
+.am-md > :first-child { margin-top: 0; }
+.am-md > :last-child { margin-bottom: 0; }
+.am-md p { margin: 0 0 8px; }
+.am-md ul, .am-md ol { margin: 0 0 8px; padding-left: 20px; }
+.am-md li + li { margin-top: 3px; }
+.am-md h3, .am-md h4 { margin: 14px 0 6px; font-size: 13px; }
+.am-md a { color: var(--accent); }
+.am-md blockquote { margin: 0 0 8px; padding: 2px 12px; border-left: 3px solid var(--line-2); color: var(--ink-2); }
+.am-md :not(pre) > code { font-size: 0.9em; background: var(--fill); padding: 1px 5px; border-radius: 4px; }
+.am-md hr { border: 0; border-top: 1px solid var(--line-2); margin: 12px 0; }
+.am-md table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.am-md th {
+  text-align: left; font: 11px/1.3 var(--font-mono); color: var(--ink-2); font-weight: 400;
+  padding: 6px 10px; border-bottom: 1px solid var(--line-2);
+}
+/* th { text-align: left } outranks the align attribute from Markdown alignment, so restore right and center columns explicitly. */
+.am-md th[align="right"] { text-align: right; }
+.am-md th[align="center"] { text-align: center; }
+.am-md td { padding: 7px 10px; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+.am-md tbody tr:nth-child(even) td { background: var(--fill); }
+.am-table-wrap { overflow-x: auto; }
+.am-code {
+  margin: 0; padding: 12px 14px; background: var(--fill); border: 1px solid var(--line-2);
+  border-radius: var(--radius); overflow-x: auto; font-size: 12.5px; line-height: 1.5;
+}
+
+/* ── Status badges ok / no / warn ──────────────── */
+.am-status { white-space: nowrap; font-weight: 500; }
+.am-status--ok { color: var(--ok); }
+.am-status--no { color: var(--err); }
+.am-status--warn { color: var(--warn); }
+.am-status-icon { display: inline-block; width: 1.1em; font-weight: 700; }
+
+/* ── callout ─────────────────────────────── */
+.am-callout {
+  border: 1px solid var(--line-2); border-left: 3px solid var(--accent); background: var(--accent-bg);
+  padding: 10px 14px; border-radius: var(--radius);
+}
+.am-callout--ok { border-left-color: var(--ok); background: var(--ok-bg); }
+.am-callout--warn { border-left-color: var(--warn); background: var(--warn-bg); }
+.am-callout--err { border-left-color: var(--err); background: var(--err-bg); }
+.am-callout-title { font-weight: 600; margin-bottom: 4px; }
+
+/* ── kv title block ─────────────────────────── */
+.am-kv {
+  display: grid; grid-template-columns: repeat(var(--kv-cols, 2), minmax(0, 1fr)); margin: 0;
+  border-top: var(--bw) solid var(--line); border-left: var(--bw) solid var(--line);
+}
+.am-kv-cell { border-right: var(--bw) solid var(--line); border-bottom: var(--bw) solid var(--line); padding: 6px 10px 8px; min-width: 0; }
+.am-kv-cell--wide { grid-column: 1 / -1; }
+.am-kv dt { font: 11px/1.4 var(--font-mono); color: var(--ink-2); }
+.am-kv dd { margin: 2px 0 0; font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.am-kv-cell--wide dd { font-size: 17px; font-weight: 600; }
+html[data-theme="shadcn"] .am-kv { border-color: var(--line); border-radius: var(--radius); overflow: hidden; }
+
+/* ── timeline ────────────────────────────── */
+.am-timeline { list-style: none; margin: 0; padding: 0; }
+.am-timeline--h { display: grid; grid-template-columns: repeat(var(--n, 1), minmax(0, 1fr)); padding-top: 4px; }
+.am-timeline--h li { position: relative; text-align: center; padding: 0 6px; }
+.am-timeline--h li::before {
+  content: ""; position: absolute; top: 31px; left: 0; right: 0; border-top: var(--bw) solid var(--line);
+}
+.am-timeline--h li:first-child::before { left: 50%; }
+.am-timeline--h li:last-child::before { right: 50%; }
+.am-tl-when { display: block; font-size: 15px; font-weight: 500; height: 24px; }
+.am-tl-dot {
+  position: relative; display: block; width: 11px; height: 11px; margin: 2px auto 8px;
+  border: var(--bw) solid var(--line); border-radius: 50%; background: var(--paper);
+}
+.am-tl-item--hi .am-tl-dot { background: var(--accent); border-color: var(--accent); }
+.am-tl-title { display: block; font-size: 12.5px; font-weight: 500; }
+.am-tl-text { display: block; font-size: 12px; color: var(--ink-2); line-height: 1.45; }
+.am-timeline--v li { position: relative; padding: 0 0 14px 22px; }
+.am-timeline--v li::before { content: ""; position: absolute; left: 5px; top: 6px; bottom: -6px; border-left: var(--bw) solid var(--line-2); }
+.am-timeline--v li:last-child::before { display: none; }
+.am-timeline--v .am-tl-dot { position: absolute; left: 0; top: 4px; margin: 0; }
+.am-timeline--v .am-tl-when { display: inline; height: auto; font: 12px var(--font-mono); color: var(--ink-2); margin-right: 8px; }
+.am-timeline--v .am-tl-title { display: inline; font-size: 14px; }
+.am-timeline--v .am-tl-text { margin-top: 2px; }
+
+/* ── annot sentence notes ──────────────────────── */
+.am-annot + .am-annot { border-top: 1px solid var(--line-2); padding-top: 12px; }
+.am-annot-head { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.am-annot-meta { font: 11px var(--font-mono); font-weight: 400; color: var(--ink-2); }
+.am-annot-scroll { overflow-x: auto; }
+.am-annot-line {
+  position: relative; display: inline-block; white-space: pre; font: 14px/1.6 var(--font-mono);
+  padding-bottom: calc(var(--rows, 0) * 17px + 14px);
+}
+.am-annot-line--wrap { display: block; white-space: normal; padding-bottom: 10px; }
+.am-annot-line--wrap .am-seg { white-space: nowrap; }
+.am-seg { position: relative; }
+.am-seg::after {
+  content: ""; position: absolute; left: 1px; right: 1px; top: calc(100% + 1px); height: 5px;
+  border: 1px solid var(--accent); border-top: 0;
+}
+.am-seg-n {
+  position: absolute; left: 0; top: calc(100% + 8px + var(--row, 0) * 17px);
+  font: 11px/16px var(--font-sans); color: var(--accent); white-space: nowrap;
+}
+.am-seg--err { color: var(--err); }
+.am-seg--err::after { border-color: var(--err); }
+.am-seg--err .am-seg-n { color: var(--err); }
+.am-annot-caption { font-size: 12px; color: var(--ink-2); }
+
+/* ── limits bars ───────────────────────── */
+.am-lim + .am-lim { margin-top: 14px; }
+.am-lim-head { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; margin-bottom: 4px; }
+.am-lim-val { font: 12px var(--font-mono); color: var(--accent); white-space: nowrap; }
+.am-lim-track { position: relative; height: 12px; border: 1px solid var(--line-2); background: var(--fill); border-radius: calc(var(--radius) / 2); }
+.am-lim-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent-bg); border-right: 1px solid var(--accent); }
+.am-lim-mark { position: absolute; top: -4px; bottom: -4px; border-left: 2px solid var(--accent); }
+.am-lim.is-over .am-lim-fill { background: var(--err-bg); border-right-color: var(--err); }
+.am-lim.is-over .am-lim-val { color: var(--err); }
+.am-lim-ticks { position: relative; height: 16px; font: 10px/16px var(--font-mono); color: var(--ink-3); }
+.am-lim-ticks span { position: absolute; transform: translateX(-50%); }
+.am-lim-ticks span:first-child { transform: none; }
+.am-lim-note { font-size: 11px; color: var(--ink-2); margin-left: 6px; }
+
+/* ── tree ─────────────────────────── */
+.am-tree { font-size: 13px; }
+.am-tree-root { display: flex; justify-content: center; position: relative; padding-bottom: 18px; }
+.am-tree-root::after { content: ""; position: absolute; bottom: 0; left: 50%; height: 18px; border-left: var(--bw) solid var(--line); }
+.am-tree-root--solo { padding-bottom: 12px; }
+.am-tree-root--solo::after { display: none; }
+.am-tree-box {
+  border: var(--bw) solid var(--line); background: var(--paper); padding: 6px 14px; text-align: center;
+  border-radius: var(--radius); font-weight: 600;
+}
+.am-tree-box small { display: block; font-weight: 400; color: var(--ink-2); font-size: 12px; }
+.am-tree-box--root { background: var(--accent-bg); font-size: 15px; padding: 8px 28px; }
+.am-tree-cols { display: grid; grid-template-columns: repeat(var(--n, 1), minmax(0, 1fr)); }
+.am-tree-col { position: relative; padding: 18px 8px 0; min-width: 0; }
+.am-tree-col::before { content: ""; position: absolute; top: 0; left: 0; right: 0; border-top: var(--bw) solid var(--line); }
+.am-tree-col:first-child::before { left: 50%; }
+.am-tree-col:last-child::before { right: 50%; }
+.am-tree-col::after { content: ""; position: absolute; top: 0; left: 50%; height: 18px; border-left: var(--bw) solid var(--line); }
+.am-tree-list, .am-tree-list ul { list-style: none; margin: 0; padding: 0; }
+.am-tree-col > .am-tree-list { margin: 8px 0 0 14px; }
+.am-tree-list ul { margin-left: 16px; }
+.am-tree-list li { position: relative; padding: 3px 0 3px 18px; }
+.am-tree-list li::before { content: ""; position: absolute; left: 0; top: 0.95em; width: 12px; border-top: 1px solid var(--ink-3); }
+.am-tree-list li::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; border-left: 1px solid var(--ink-3); }
+.am-tree-list li:last-child::after { bottom: auto; height: 0.95em; }
+.am-tree-tag { font: 11px var(--font-mono); color: var(--ink-3); margin-right: 4px; }
+.am-tree code { font: 12px var(--font-mono); }
+.am-tree-sub { display: block; font-size: 11.5px; color: var(--ink-2); }
+.am-tree-hi > .am-tree-label { color: var(--accent); font-weight: 600; }
+
+/* ── Diagrams (flow / sequence) ───────────────── */
+.am-diagram { margin: 0; overflow-x: auto; text-align: center; }
+/* Embedded previews can lose html[data-theme]; the fallbacks keep diagrams readable, and defined theme variables still win. */
+.am-diagram svg { max-width: 100%; height: auto; font-family: var(--font-sans, sans-serif); }
+.am-diagram text { fill: var(--ink, #16181d); font-size: 13px; }
+.am-node-shape { fill: var(--paper, #ffffff); stroke: var(--line, #1d2026); stroke-width: var(--bw, 1.5px); }
+.am-node--hi .am-node-shape { fill: var(--accent-bg, #e4ecf8); stroke: var(--accent, #1d5fbf); }
+.am-node--hi text { fill: var(--accent, #1d5fbf); font-weight: 600; }
+.am-edge { fill: none; stroke: var(--ink-2, #4b5260); stroke-width: 1.3; }
+.am-edge--dashed { stroke-dasharray: 5 4; }
+.am-arrow { fill: var(--ink-2, #4b5260); }
+.am-edge-label rect { fill: var(--paper, #ffffff); }
+.am-diagram .am-edge-label text { fill: var(--accent, #1d5fbf); font-size: 11.5px; }
+.am-cluster { fill: var(--fill, #f3f5f8); stroke: var(--line-2, #d6dae1); stroke-width: 1; stroke-dasharray: 4 3; }
+.am-diagram .am-cluster-label { fill: var(--ink-2, #4b5260); font: 11px var(--font-mono, monospace); }
+.am-lifeline { stroke: var(--ink-3, #8b929e); stroke-width: 1; stroke-dasharray: 4 4; }
+.am-actor { fill: var(--paper, #ffffff); stroke: var(--line, #1d2026); stroke-width: var(--bw, 1.5px); }
+.am-note { fill: var(--warn-bg, #fdf3e2); stroke: var(--warn, #a8620a); stroke-width: 1; }
+.am-diagram .am-step { fill: var(--ink-3, #8b929e); font: 10px var(--font-mono, monospace); }
+
+/* ── doc template ────────────────────────── */
+.am-doc { max-width: 1120px; margin: 0 auto; padding: 40px 28px 64px; }
+.am-doc-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 32px; align-items: start; }
+.am-doc-layout--notoc { grid-template-columns: minmax(0, 1fr); max-width: 860px; }
+.am-toc { position: sticky; top: 24px; font-size: 13px; }
+.am-toc a { display: block; color: var(--ink-2); text-decoration: none; padding: 4px 0 4px 10px; border-left: 2px solid var(--line-2); }
+.am-toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+.am-doc-body > .am-panel + .am-panel { margin-top: 20px; }
+
+/* ── Responsive and print ─────────────────────────── */
+@media (max-width: 1100px) {
+  .am-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .am-grid > .am-panel { grid-column: auto !important; }
+  .am-grid > .am-panel.am-span-wide { grid-column: 1 / -1 !important; }
+}
+@media (max-width: 760px) {
+  .am-sheet, .am-doc { padding: 56px 12px 24px; }
+  .am-head { padding-right: 0; }
+  .am-grid { grid-template-columns: minmax(0, 1fr); }
+  .am-grid > .am-panel.am-span-wide { grid-column: auto !important; }
+  html[data-theme="blueprint"] .am-frame { padding: 0; border: 0; }
+  html[data-theme="blueprint"] .am-frame::before, html[data-theme="blueprint"] .am-ruler { display: none; }
+  .am-doc-layout { grid-template-columns: minmax(0, 1fr); }
+  .am-toc { position: static; }
+  .am-timeline--h { grid-template-columns: minmax(0, 1fr); }
+  .am-tree-cols { grid-template-columns: minmax(0, 1fr); }
+  /* Tables and diagrams keep their size: the wrapper scrolls horizontally when they overflow. */
+  .am-md th, .am-md td { min-width: 6em; }
+  .am-diagram svg { max-width: none; }
+}
+.am-colophon { text-align: center; padding: 0 0 28px; font: 11px var(--font-mono); color: var(--ink-3); }
+
+@media print {
+  .am-toolbar { display: none; }
+  body { background: var(--paper); }
+  .am-panel { break-inside: avoid; box-shadow: none; }
+}
+.am-panel--bare { border: 0; background: transparent; box-shadow: none; }
+.am-panel--bare > .am-panel-body { padding: 0; }
+.am-panel--bare .am-kv { background: var(--paper); }
+
+</style>
+</head>
+<body>
+<div class="am-toolbar">
+<button class="am-btn" type="button" data-am="theme" data-labels="{&quot;blueprint&quot;:&quot;主题：图纸&quot;,&quot;shadcn&quot;:&quot;主题：卡片&quot;}">主题：图纸</button>
+<button class="am-btn" type="button" data-am="mode" data-labels="{&quot;auto&quot;:&quot;明暗：跟随系统&quot;,&quot;light&quot;:&quot;明暗：亮&quot;,&quot;dark&quot;:&quot;明暗：暗&quot;}">明暗：亮</button>
+<button class="am-btn" type="button" data-am="copy" data-done="已复制 ✓">复制源稿</button>
+</div>
+<main class="am-sheet">
+<header class="am-head"><h1>Jev 轻量完成声明核查</h1><p class="am-sub">当前实现的触发、输入、补充循环与验证范围</p><div class="am-head-meta"><span><b>date</b>2026-10-14</span></div><div class="am-intro am-md"><div class="am-md"><p>只核查当前 turn 的用户要求、最新 Todo 与最终回答。
+自动补充次数可配置，默认 3 次；首次核查另算。</p>
+<p><a href="dsh-jev-plugin.html">全部功能</a> · <a href="https://luobosibing2.github.io/dsh-jev-plugin/">功能网站</a> · <a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/main/docs/explainers/jev-completion-flow.md">Markdown 源稿</a></p>
+</div></div></header>
+<div class="am-frame">
+<div class="am-ruler am-ruler--top" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div><div class="am-ruler am-ruler--bottom" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div><div class="am-ruler am-ruler--left" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span></div><div class="am-ruler am-ruler--right" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span></div>
+<div class="am-grid" style="--cols: 2">
+<section class="am-panel am-span-wide" id="panel-A" style="grid-column: span 2" data-span="2">
+<header class="am-panel-head"><span class="am-panel-id">A</span><h2>直接答案</h2><span class="am-panel-meta">普通完成核查的主流程</span></header>
+<div class="am-panel-body"><figure class="am-diagram am-flow"><svg viewBox="0 0 384 708" width="384" height="708" role="img" aria-label="流程图：主模型按需维护 Todo、输出最终回答、agent/turn-stopping、本 turn 用过 Todo？、跳过完成核查、组装完整核查输入、输入在预算内？、提示核查未完成" xmlns="http://www.w3.org/2000/svg"><defs><marker id="am1-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="am-arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs><g></g><g><g data-step="0"><path class="am-edge" d="M239.2,49 L239.2,60.5 Q239.2,72 239.2,83.5 L239.2,95" marker-end="url(#am1-arrow)"/></g><g data-step="1"><path class="am-edge" d="M239.2,130 L239.2,141.5 Q239.2,153 239.2,164.5 L239.2,176" marker-end="url(#am1-arrow)"/></g><g data-step="2"><path class="am-edge" d="M239.2,211 L239.2,222.5 Q239.2,234 239.2,245.5 L239.2,257" marker-end="url(#am1-arrow)"/></g><g data-step="3"><path class="am-edge" d="M266.4,306 L291.6,325.5 Q316.7,345 316.7,361 L316.7,377" marker-end="url(#am1-arrow)"/><g class="am-edge-label"><rect x="306" y="336" width="21.5" height="18" rx="3"/><text x="316.7" y="345" text-anchor="middle" dominant-baseline="central">否</text></g></g><g data-step="4"><path class="am-edge" d="M212.1,306 L186.9,325.5 Q161.7,345 161.7,361 L161.7,377" marker-end="url(#am1-arrow)"/><g class="am-edge-label"><rect x="151" y="336" width="21.5" height="18" rx="3"/><text x="161.7" y="345" text-anchor="middle" dominant-baseline="central">是</text></g></g><g data-step="5"><path class="am-edge" d="M161.7,412 L161.7,423.5 Q161.7,435 161.7,446.5 L161.7,458" marker-end="url(#am1-arrow)"/></g><g data-step="6"><path class="am-edge" d="M188.3,505.7 L215.5,525.8 Q242.8,546 242.8,562 L242.8,578" marker-end="url(#am1-arrow)"/><g class="am-edge-label"><rect x="232.1" y="537" width="21.5" height="18" rx="3"/><text x="242.8" y="546" text-anchor="middle" dominant-baseline="central">否</text></g></g><g data-step="7"><path class="am-edge" d="M135.2,505.7 L107.9,525.8 Q80.6,546 80.6,562 L80.6,578" marker-end="url(#am1-arrow)"/><g class="am-edge-label"><rect x="69.9" y="537" width="21.5" height="18" rx="3"/><text x="80.6" y="546" text-anchor="middle" dominant-baseline="central">是</text></g></g><g data-step="8"><path class="am-edge" d="M80.6,613 L80.6,624.5 Q80.6,636 80.6,647.5 L80.6,659" marker-end="url(#am1-arrow)"/></g></g><g><g class="am-node am-node--rect" data-key="主模型按需维护 Todo" data-step="0"><rect class="am-node-shape" x="162.4" y="14" width="153.6" height="35" rx="3"/><text x="239.2" y="31.5" text-anchor="middle" dominant-baseline="central">主模型按需维护 Todo</text></g><g class="am-node am-node--rect" data-key="输出最终回答" data-step="0"><rect class="am-node-shape" x="186.2" y="95" width="106" height="35" rx="3"/><text x="239.2" y="112.5" text-anchor="middle" dominant-baseline="central">输出最终回答</text></g><g class="am-node am-node--rect" data-key="agent/turn-stopping" data-step="1"><rect class="am-node-shape" x="163.9" y="176" width="150.7" height="35" rx="3"/><text x="239.2" y="193.5" text-anchor="middle" dominant-baseline="central">agent/turn-stopping</text></g><g class="am-node am-node--diamond" data-key="本 turn 用过 Todo？" data-step="2"><polygon class="am-node-shape" points="239.2,257 348.2,285 239.2,313 130.3,285"/><text x="239.2" y="285" text-anchor="middle" dominant-baseline="central">本 turn 用过 Todo？</text></g><g class="am-node am-node--rect" data-key="跳过完成核查" data-step="3"><rect class="am-node-shape" x="263.7" y="377" width="106" height="35" rx="3"/><text x="316.7" y="394.5" text-anchor="middle" dominant-baseline="central">跳过完成核查</text></g><g class="am-node am-node--rect" data-key="组装完整核查输入" data-step="4"><rect class="am-node-shape" x="95.7" y="377" width="132" height="35" rx="3"/><text x="161.7" y="394.5" text-anchor="middle" dominant-baseline="central">组装完整核查输入</text></g><g class="am-node am-node--diamond" data-key="输入在预算内？" data-step="5"><polygon class="am-node-shape" points="161.7,458 251,486 161.7,514 72.5,486"/><text x="161.7" y="486" text-anchor="middle" dominant-baseline="central">输入在预算内？</text></g><g class="am-node am-node--rect" data-key="提示核查未完成" data-step="6"><rect class="am-node-shape" x="183.3" y="578" width="119" height="35" rx="3"/><text x="242.8" y="595.5" text-anchor="middle" dominant-baseline="central">提示核查未完成</text></g><g class="am-node am-node--rect" data-key="Jev 回答两个问题" data-step="7"><rect class="am-node-shape" x="14" y="578" width="133.3" height="35" rx="3"/><text x="80.6" y="595.5" text-anchor="middle" dominant-baseline="central">Jev 回答两个问题</text></g><g class="am-node am-node--rect" data-key="按结论结束或补充" data-step="8"><rect class="am-node-shape" x="14.6" y="659" width="132" height="35" rx="3"/><text x="80.6" y="676.5" text-anchor="middle" dominant-baseline="central">按结论结束或补充</text></g></g></svg></figure>
+<div class="am-md"><p>功能启用时，普通根 Agent turn 才使用这条流程。
+本 turn 用过 Todo 即可核查，不要求条目全部 completed。
+前一 turn 的 Todo 不自动触发本 turn 核查。
+后来清空清单也不会抹去本 turn 的 Todo 使用记录。
+Todo 更新本身不触发 Jev；简单任务无需创建 Todo。</p>
+<p>这是报告完整性与一致性核查，不是对产物的独立验收。
+如果 Todo 与最终回答一致地错报事实，Jev 未必能识别。
+核查在回答已展示后运行，保留原始回答与后续补充。</p>
+</div></div>
+</section>
+<section class="am-panel am-span-wide" id="panel-B" style="grid-column: span 2">
+<header class="am-panel-head"><span class="am-panel-id">B</span><h2>主模型怎样提供依据？</h2><span class="am-panel-meta">沿用 content 与 status</span></header>
+<div class="am-panel-body"><div class="am-md"><p>插件通过 systemPrompt.section 提供简短提示。
+仅在功能启用时提供，无需用户手工修改提示词。
+不新增 Todo 字段，不要求事件编号或额外证据报告。</p>
+</div>
+<div class="am-callout am-callout--info" role="note"><div class="am-callout-title">更新已有 Todo 时说明真实结果</div><div class="am-callout-body am-md"><p>简述实际动作、产物路径或已执行命令及观察结果。
+失败、未验证和未完成部分如实保留，不编造依据。
+不增加用户未要求的验证，不强制把所有检查改成通过。
+无需为了完成核查而给简单任务创建 Todo。</p>
+</div></div>
+<div class="am-md"><p>虚构示例，不是一次实际执行记录：</p>
+</div>
+<pre class="am-code"><code data-lang="json">{
+  &quot;content&quot;: &quot;修复导出功能；src/export.ts；pnpm test export，12 项通过&quot;,
+  &quot;status&quot;: &quot;completed&quot;
+}</code></pre>
+<div class="am-md"><p>测试是否必须通过，由用户要求决定。
+“运行并报告测试”允许如实报告失败。
+“修复并通过指定测试”在测试仍失败时尚未完成。</p>
+</div></div>
+</section>
+<section class="am-panel am-span-wide" id="panel-C" style="grid-column: span 2" data-span="2">
+<header class="am-panel-head"><span class="am-panel-id">C</span><h2>Jev 回答什么？</h2><span class="am-panel-meta">一次请求 · 两个 Choice</span></header>
+<div class="am-panel-body"><div class="am-md"><p>两个问题共享同一份输入，不是两次串行调用。</p>
+<div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>问题</th>
+<th>输出</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>assessment</td>
+<td>complete</td>
+<td>报告显示要求已满足，未见明显遗漏或矛盾</td>
+</tr>
+<tr>
+<td>assessment</td>
+<td>omission</td>
+<td>要求未交代、明确未完成或规定条件未满足</td>
+</tr>
+<tr>
+<td>assessment</td>
+<td>contradiction</td>
+<td>Todo 状态、完成说明或最终回答相互矛盾</td>
+</tr>
+<tr>
+<td>assessment</td>
+<td>needs-user</td>
+<td>完成依赖未解决的用户选择或授权</td>
+</tr>
+<tr>
+<td>assessment</td>
+<td>unknown</td>
+<td>所给材料不足，无法可靠判断</td>
+</tr>
+<tr>
+<td>focus</td>
+<td>已有要求、Todo 条目或最终回答</td>
+<td>定位本次最关键问题</td>
+</tr>
+<tr>
+<td>focus</td>
+<td>none 或整体材料</td>
+<td>complete 可用 none；整体不足可选整体材料</td>
+</tr>
+</tbody></table></div>
+<p>插件生成位置编号，再将所选编号映射回原文。
+没有进入 Todo 的要求，也能通过用户消息定位。
+提示由结论类别、原文引用和固定模板组成。
+每次只指出最关键的一处，不宣称列出全部问题。</p>
+<p>不要求 Jev 自由生成长理由，不增加第三个生成问题。
+概率或 confidence 可留作诊断，不显示为任务正确率。
+缺少答案、格式错误或不存在的引用，按响应错误处理。
+有效 unknown 是业务结论，不属于技术错误重试。</p>
+</div></div>
+</section>
+<section class="am-panel am-span-wide" id="panel-D" style="grid-column: span 2" data-span="2">
+<header class="am-panel-head"><span class="am-panel-id">D</span><h2>行为示例</h2><span class="am-panel-meta">说明预期，不代表真实判断准确率</span></header>
+<div class="am-panel-body"><div class="am-md"><div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>情况</th>
+<th>预期</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>本 turn 未使用 Todo</td>
+<td>不调用完成核查</td>
+</tr>
+<tr>
+<td>Todo 有 pending 项，主模型正常停止</td>
+<td>仍核查，不因条目未全部完成而跳过</td>
+</tr>
+<tr>
+<td>要求更新文档，报告未交代</td>
+<td>omission，通过用户要求定位</td>
+</tr>
+<tr>
+<td>要求修复并通过测试，报告仍失败</td>
+<td>omission</td>
+</tr>
+<tr>
+<td>Todo 写未验证，回答却说验证通过</td>
+<td>contradiction</td>
+</tr>
+<tr>
+<td>只要求运行测试，报告如实说明失败</td>
+<td>可满足该要求，不强制修到通过</td>
+</tr>
+<tr>
+<td>只有“全部完成”，无法判断真实结果</td>
+<td>unknown，额度内补充依据</td>
+</tr>
+<tr>
+<td>完成依赖未决用户选择或授权</td>
+<td>needs-user，停止自动补充</td>
+</tr>
+<tr>
+<td>三次补充后仍有问题</td>
+<td>展示最后结论，不再自动补充</td>
+</tr>
+<tr>
+<td>超预算或调用失败</td>
+<td>提示核查未完成，等待重试或取消</td>
+</tr>
+</tbody></table></div>
+<p>补充后采用最新 Todo 与最新最终回答。
+材料不足既不能证明任务失败，也不能证明任务完成。</p>
+</div></div>
+</section>
+<section class="am-panel am-span-wide" id="panel-E" style="grid-column: span 2">
+<header class="am-panel-head"><span class="am-panel-id">E</span><h2>怎样补充与复核？</h2><span class="am-panel-meta">默认最多补充 3 次</span></header>
+<div class="am-panel-body"><div class="am-md"><div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>结论或情况</th>
+<th>后续行为</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>complete</td>
+<td>记录报告核查结果，正常结束</td>
+</tr>
+<tr>
+<td>omission，尚有额度</td>
+<td>提示遗漏，主模型在原授权内补做</td>
+</tr>
+<tr>
+<td>contradiction，尚有额度</td>
+<td>引用矛盾位置，主模型核对并更正</td>
+</tr>
+<tr>
+<td>unknown，尚有额度</td>
+<td>提示材料不足，主模型补充真实依据或说明</td>
+</tr>
+<tr>
+<td>needs-user</td>
+<td>交用户决定，不自动继续</td>
+</tr>
+<tr>
+<td>补充后再次停止</td>
+<td>用完整最新材料重新核查</td>
+</tr>
+<tr>
+<td>额度耗尽仍有问题</td>
+<td>展示最后结论，停止自动补充</td>
+</tr>
+</tbody></table></div>
+<p>omission、contradiction 和 unknown 共用补充额度。
+初次核查不占额度，默认最多 3 次补充、4 次正常核查。
+设置上限为 N 时，正常核查最多 N+1 次。
+结论类别改变不重置计数，剩余额度也不必用完。
+技术重试不计入正常核查次数，不消耗或重置补充额度。</p>
+<p>补充通过 agent.steer 进入同一 turn，Todo 不因此清空。
+主模型更新相关条目，不自动重做其他已完成项。
+缺失材料如实说明，不编造结果，不强制 completed。
+补充不增加验收条件，也不授予新的修改权限。</p>
+<p>设置页的“最多自动补充轮数”按 profile 保存。
+默认 3，接受正安全整数；非法输入保留有效配置。
+保存参数不会启用功能，也不改变 Goal 的无进展计数。</p>
+</div></div>
+</section>
+<section class="am-panel am-span-wide" id="panel-F" style="grid-column: span 2" data-span="2">
+<header class="am-panel-head"><span class="am-panel-id">F</span><h2>输入、预算与异常</h2><span class="am-panel-meta">完整材料通过预算检查后才发送</span></header>
+<div class="am-panel-body"><div class="am-md"><div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>项目</th>
+<th>规则</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>用户要求</td>
+<td>本 turn 原始要求及适用调整；不能从 Todo 反推要求</td>
+</tr>
+<tr>
+<td>Todo</td>
+<td>完整最新清单，包含 content 与 status；可为空</td>
+</tr>
+<tr>
+<td>最终回答</td>
+<td>核查前最新最终回答；可为空</td>
+</tr>
+<tr>
+<td>排除材料</td>
+<td>原始工具结果、完整执行轨迹、reasoning 与跨 turn 要求</td>
+</tr>
+<tr>
+<td>超预算</td>
+<td>不裁剪、不自动摘要，不发送残缺输入</td>
+</tr>
+<tr>
+<td>超长提示</td>
+<td>“核查材料超出预算，本次完成核查未完成”</td>
+</tr>
+<tr>
+<td>调高预算后重试</td>
+<td>读取完整当前材料与已保存配置，不消耗补充额度</td>
+</tr>
+<tr>
+<td>超时、接口或格式错误</td>
+<td>提示核查未完成，保留回答，等待重试或取消</td>
+</tr>
+<tr>
+<td>取消核查</td>
+<td>结束核查，不将任务改写为成功或失败</td>
+</tr>
+</tbody></table></div>
+<p>新 turn 只说“继续”时，不自动导入上轮要求。
+无法取得完整原始要求时，提示材料缺失并等待用户处理。
+摘要或上一轮回答不能替代缺失原文。
+插件自己的补充消息不是新用户要求或授权。</p>
+<p>evidenceChars 默认 24,000 字符，上限 1,000,000。
+预算包含实际判断材料及必要规则和引用。
+字符预算不保证判断提供方的 token 容量。</p>
+</div></div>
+</section>
+<section class="am-panel am-span-wide" id="panel-G" style="grid-column: span 2" data-span="2">
+<header class="am-panel-head"><span class="am-panel-id">G</span><h2>记录、时效与其他监督</h2><span class="am-panel-meta">保留原生生命周期与授权</span></header>
+<div class="am-panel-body"><div class="am-md"><div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>情况</th>
+<th>处理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>输入、答案与结论</td>
+<td>保存在 Jev 记录中，区分采用与未采用</td>
+</tr>
+<tr>
+<td>补充次数与停止原因</td>
+<td>可追溯；进入主模型的提示写入 Session</td>
+</tr>
+<tr>
+<td>重复处理或恢复</td>
+<td>不重复派发同一补充，不恢复已用额度</td>
+</tr>
+<tr>
+<td>补充后的核查失败</td>
+<td>已请求的补充仍计入使用次数</td>
+</tr>
+<tr>
+<td>新用户要求、原生中止或状态变化</td>
+<td>先处理原生流程，不采用旧判断继续</td>
+</tr>
+<tr>
+<td>动作记录失败或状态未知</td>
+<td>不宣称成功，不盲目重复补充</td>
+</tr>
+<tr>
+<td>原生 Goal turn</td>
+<td>使用原有 Goal 监督，不启动普通完成补充循环</td>
+</tr>
+<tr>
+<td>跑偏提醒</td>
+<td>保留原输入与后台提醒，不套用新报告核查规则</td>
+</tr>
+</tbody></table></div>
+<p>源码：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/src/completion-report.ts">报告输入与问题</a> · <a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/src/supervision.ts">监督与补充流程</a> · <a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/README.md#ordinary-completion-checks">包参考</a></p>
+</div></div>
+</section>
+<section class="am-panel am-span-wide" id="panel-H" style="grid-column: span 2" data-span="2">
+<header class="am-panel-head"><span class="am-panel-id">H</span><h2>边界与验证</h2><span class="am-panel-meta">程序行为验证与真实模型效果分别记录</span></header>
+<div class="am-panel-body"><div class="am-md"><div class="am-table-wrap"><table>
+<thead>
+<tr>
+<th>验证范围</th>
+<th>已核对内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>固定判定测试</td>
+<td>当前 turn 输入、五类结论、补充次数、失败与恢复分支</td>
+</tr>
+<tr>
+<td>设置组件</td>
+<td>默认 3、保存 2、重挂读取、非法输入和独立开关</td>
+</tr>
+<tr>
+<td>构建及正式安装</td>
+<td>runtime 同步、打包内容一致与隔离 Web 接入</td>
+</tr>
+<tr>
+<td>隔离设置页</td>
+<td>保存 2 后刷新与重启仍为 2；非法值被拒绝</td>
+</tr>
+<tr>
+<td>功能隔离</td>
+<td>保存次数不启用完成核查，Goal 无进展计数不变</td>
+</tr>
+</tbody></table></div>
+<p>固定回答验证程序输入与处理流程，不证明语义判断质量。
+没有运行本功能的付费模型实验。
+未测量真实 Jev 准确率、自然任务收益或平均费用。
+旧实测使用已有证据核查语义，不能作为新语义效果依据。
+本功能未重跑完整旧版矩阵或 Windows、Desktop 验证。</p>
+<p>验证入口：<a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/tests/completion-report.test.ts">报告测试</a> · <a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/tests/supervision.test.ts">监督测试</a> · <a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/tests/client-ui.test.tsx">组件测试</a> · <a href="https://github.com/luobosibing2/dsh-jev-plugin/blob/main/docs/validation.md">历史验证范围</a></p>
+</div></div>
+</section>
+</div>
+</div>
+</main>
+<footer class="am-colophon">Generated by Answer me with HTML 0.4.9 · 2026-10-15 00:02</footer>
+<textarea id="am-source" hidden readonly aria-hidden="true">---
+title: Jev 轻量完成声明核查
+subtitle: 当前实现的触发、输入、补充循环与验证范围
+cols: 2
+template: sheet
+theme: blueprint
+lang: zh
+mode: light
+date: 2026-10-14
+---
+只核查当前 turn 的用户要求、最新 Todo 与最终回答。
+自动补充次数可配置，默认 3 次；首次核查另算。
+
+[全部功能](dsh-jev-plugin.html) · [功能网站](https://luobosibing2.github.io/dsh-jev-plugin/) · [Markdown 源稿](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/docs/explainers/jev-completion-flow.md)
+
+## A 直接答案 {span=2 meta=&quot;普通完成核查的主流程&quot;}
+```flow TB
+主模型按需维护 Todo -&gt; 输出最终回答
+输出最终回答 -&gt; agent/turn-stopping
+agent/turn-stopping -&gt; {本 turn 用过 Todo？}
+本 turn 用过 Todo？ -&gt; 跳过完成核查: 否
+本 turn 用过 Todo？ -&gt; 组装完整核查输入: 是
+组装完整核查输入 -&gt; {输入在预算内？}
+输入在预算内？ -&gt; 提示核查未完成: 否
+输入在预算内？ -&gt; Jev 回答两个问题: 是
+Jev 回答两个问题 -&gt; 按结论结束或补充
+```
+功能启用时，普通根 Agent turn 才使用这条流程。
+本 turn 用过 Todo 即可核查，不要求条目全部 completed。
+前一 turn 的 Todo 不自动触发本 turn 核查。
+后来清空清单也不会抹去本 turn 的 Todo 使用记录。
+Todo 更新本身不触发 Jev；简单任务无需创建 Todo。
+
+这是报告完整性与一致性核查，不是对产物的独立验收。
+如果 Todo 与最终回答一致地错报事实，Jev 未必能识别。
+核查在回答已展示后运行，保留原始回答与后续补充。
+
+## B 主模型怎样提供依据？ {meta=&quot;沿用 content 与 status&quot;}
+插件通过 systemPrompt.section 提供简短提示。
+仅在功能启用时提供，无需用户手工修改提示词。
+不新增 Todo 字段，不要求事件编号或额外证据报告。
+
+```callout info 更新已有 Todo 时说明真实结果
+简述实际动作、产物路径或已执行命令及观察结果。
+失败、未验证和未完成部分如实保留，不编造依据。
+不增加用户未要求的验证，不强制把所有检查改成通过。
+无需为了完成核查而给简单任务创建 Todo。
+```
+
+虚构示例，不是一次实际执行记录：
+
+```json
+{
+  &quot;content&quot;: &quot;修复导出功能；src/export.ts；pnpm test export，12 项通过&quot;,
+  &quot;status&quot;: &quot;completed&quot;
+}
+```
+
+测试是否必须通过，由用户要求决定。
+“运行并报告测试”允许如实报告失败。
+“修复并通过指定测试”在测试仍失败时尚未完成。
+
+## C Jev 回答什么？ {span=2 meta=&quot;一次请求 · 两个 Choice&quot;}
+两个问题共享同一份输入，不是两次串行调用。
+
+| 问题 | 输出 | 含义 |
+| --- | --- | --- |
+| assessment | complete | 报告显示要求已满足，未见明显遗漏或矛盾 |
+| assessment | omission | 要求未交代、明确未完成或规定条件未满足 |
+| assessment | contradiction | Todo 状态、完成说明或最终回答相互矛盾 |
+| assessment | needs-user | 完成依赖未解决的用户选择或授权 |
+| assessment | unknown | 所给材料不足，无法可靠判断 |
+| focus | 已有要求、Todo 条目或最终回答 | 定位本次最关键问题 |
+| focus | none 或整体材料 | complete 可用 none；整体不足可选整体材料 |
+
+插件生成位置编号，再将所选编号映射回原文。
+没有进入 Todo 的要求，也能通过用户消息定位。
+提示由结论类别、原文引用和固定模板组成。
+每次只指出最关键的一处，不宣称列出全部问题。
+
+不要求 Jev 自由生成长理由，不增加第三个生成问题。
+概率或 confidence 可留作诊断，不显示为任务正确率。
+缺少答案、格式错误或不存在的引用，按响应错误处理。
+有效 unknown 是业务结论，不属于技术错误重试。
+
+## D 行为示例 {span=2 meta=&quot;说明预期，不代表真实判断准确率&quot;}
+
+| 情况 | 预期 |
+| --- | --- |
+| 本 turn 未使用 Todo | 不调用完成核查 |
+| Todo 有 pending 项，主模型正常停止 | 仍核查，不因条目未全部完成而跳过 |
+| 要求更新文档，报告未交代 | omission，通过用户要求定位 |
+| 要求修复并通过测试，报告仍失败 | omission |
+| Todo 写未验证，回答却说验证通过 | contradiction |
+| 只要求运行测试，报告如实说明失败 | 可满足该要求，不强制修到通过 |
+| 只有“全部完成”，无法判断真实结果 | unknown，额度内补充依据 |
+| 完成依赖未决用户选择或授权 | needs-user，停止自动补充 |
+| 三次补充后仍有问题 | 展示最后结论，不再自动补充 |
+| 超预算或调用失败 | 提示核查未完成，等待重试或取消 |
+
+补充后采用最新 Todo 与最新最终回答。
+材料不足既不能证明任务失败，也不能证明任务完成。
+
+## E 怎样补充与复核？ {meta=&quot;默认最多补充 3 次&quot;}
+
+| 结论或情况 | 后续行为 |
+| --- | --- |
+| complete | 记录报告核查结果，正常结束 |
+| omission，尚有额度 | 提示遗漏，主模型在原授权内补做 |
+| contradiction，尚有额度 | 引用矛盾位置，主模型核对并更正 |
+| unknown，尚有额度 | 提示材料不足，主模型补充真实依据或说明 |
+| needs-user | 交用户决定，不自动继续 |
+| 补充后再次停止 | 用完整最新材料重新核查 |
+| 额度耗尽仍有问题 | 展示最后结论，停止自动补充 |
+
+omission、contradiction 和 unknown 共用补充额度。
+初次核查不占额度，默认最多 3 次补充、4 次正常核查。
+设置上限为 N 时，正常核查最多 N+1 次。
+结论类别改变不重置计数，剩余额度也不必用完。
+技术重试不计入正常核查次数，不消耗或重置补充额度。
+
+补充通过 agent.steer 进入同一 turn，Todo 不因此清空。
+主模型更新相关条目，不自动重做其他已完成项。
+缺失材料如实说明，不编造结果，不强制 completed。
+补充不增加验收条件，也不授予新的修改权限。
+
+设置页的“最多自动补充轮数”按 profile 保存。
+默认 3，接受正安全整数；非法输入保留有效配置。
+保存参数不会启用功能，也不改变 Goal 的无进展计数。
+
+## F 输入、预算与异常 {span=2 meta=&quot;完整材料通过预算检查后才发送&quot;}
+
+| 项目 | 规则 |
+| --- | --- |
+| 用户要求 | 本 turn 原始要求及适用调整；不能从 Todo 反推要求 |
+| Todo | 完整最新清单，包含 content 与 status；可为空 |
+| 最终回答 | 核查前最新最终回答；可为空 |
+| 排除材料 | 原始工具结果、完整执行轨迹、reasoning 与跨 turn 要求 |
+| 超预算 | 不裁剪、不自动摘要，不发送残缺输入 |
+| 超长提示 | “核查材料超出预算，本次完成核查未完成” |
+| 调高预算后重试 | 读取完整当前材料与已保存配置，不消耗补充额度 |
+| 超时、接口或格式错误 | 提示核查未完成，保留回答，等待重试或取消 |
+| 取消核查 | 结束核查，不将任务改写为成功或失败 |
+
+新 turn 只说“继续”时，不自动导入上轮要求。
+无法取得完整原始要求时，提示材料缺失并等待用户处理。
+摘要或上一轮回答不能替代缺失原文。
+插件自己的补充消息不是新用户要求或授权。
+
+evidenceChars 默认 24,000 字符，上限 1,000,000。
+预算包含实际判断材料及必要规则和引用。
+字符预算不保证判断提供方的 token 容量。
+
+## G 记录、时效与其他监督 {span=2 meta=&quot;保留原生生命周期与授权&quot;}
+
+| 情况 | 处理 |
+| --- | --- |
+| 输入、答案与结论 | 保存在 Jev 记录中，区分采用与未采用 |
+| 补充次数与停止原因 | 可追溯；进入主模型的提示写入 Session |
+| 重复处理或恢复 | 不重复派发同一补充，不恢复已用额度 |
+| 补充后的核查失败 | 已请求的补充仍计入使用次数 |
+| 新用户要求、原生中止或状态变化 | 先处理原生流程，不采用旧判断继续 |
+| 动作记录失败或状态未知 | 不宣称成功，不盲目重复补充 |
+| 原生 Goal turn | 使用原有 Goal 监督，不启动普通完成补充循环 |
+| 跑偏提醒 | 保留原输入与后台提醒，不套用新报告核查规则 |
+
+源码：[报告输入与问题](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/src/completion-report.ts) · [监督与补充流程](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/src/supervision.ts) · [包参考](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/README.md#ordinary-completion-checks)
+
+## H 边界与验证 {span=2 meta=&quot;程序行为验证与真实模型效果分别记录&quot;}
+
+| 验证范围 | 已核对内容 |
+| --- | --- |
+| 固定判定测试 | 当前 turn 输入、五类结论、补充次数、失败与恢复分支 |
+| 设置组件 | 默认 3、保存 2、重挂读取、非法输入和独立开关 |
+| 构建及正式安装 | runtime 同步、打包内容一致与隔离 Web 接入 |
+| 隔离设置页 | 保存 2 后刷新与重启仍为 2；非法值被拒绝 |
+| 功能隔离 | 保存次数不启用完成核查，Goal 无进展计数不变 |
+
+固定回答验证程序输入与处理流程，不证明语义判断质量。
+没有运行本功能的付费模型实验。
+未测量真实 Jev 准确率、自然任务收益或平均费用。
+旧实测使用已有证据核查语义，不能作为新语义效果依据。
+本功能未重跑完整旧版矩阵或 Windows、Desktop 验证。
+
+验证入口：[报告测试](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/tests/completion-report.test.ts) · [监督测试](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/tests/supervision.test.ts) · [组件测试](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/packages/jev/tests/client-ui.test.tsx) · [历史验证范围](https://github.com/luobosibing2/dsh-jev-plugin/blob/main/docs/validation.md)
+</textarea>
+<script>
+(() => {
+  const root = document.documentElement;
+  const cycle = (list, cur) => list[(list.indexOf(cur) + 1) % list.length];
+  const label = (btn, value) => {
+    const map = JSON.parse(btn.dataset.labels || '{}');
+    btn.textContent = map[value] || value;
+  };
+  const bind = (name, attr, values) => {
+    const btn = document.querySelector(`[data-am="${name}"]`);
+    if (!btn) return;
+    label(btn, root.getAttribute(attr));
+    btn.addEventListener('click', () => {
+      const next = cycle(values, root.getAttribute(attr));
+      root.setAttribute(attr, next);
+      label(btn, next);
+    });
+  };
+  bind('theme', 'data-theme', ['blueprint', 'shadcn']);
+  bind('mode', 'data-mode', ['auto', 'light', 'dark']);
+
+  const copyBtn = document.querySelector('[data-am="copy"]');
+  copyBtn?.addEventListener('click', async () => {
+    const nodes = document.querySelectorAll('#am-source');
+    const text = nodes[nodes.length - 1]?.value ?? '';
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = Object.assign(document.createElement('textarea'), { value: text });
+      document.body.append(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    const original = copyBtn.textContent;
+    copyBtn.textContent = copyBtn.dataset.done;
+    setTimeout(() => { copyBtn.textContent = original; }, 1400);
+  });
+})();
+(() => {
+// Pure planner for justified ("photo wall") rows on sheet pages. No DOM access.
+//
+// This file must stay inlinable into the page script: top-level declarations only, no imports, and the exports are
+// `planLayout` and the constants the DOM adapter shares (STEP, MAX_SCALE, MIN_SCALE). The page build strips the `export ` keyword,
+// and test/layout-plan.test.js checks that this still works.
+//
+// planLayout({ width, gap, cols, panels }) -> { rows: [{ columns: [{ panels: [index, ...], width }], height }] }
+//
+// Input (all lengths in px):
+//   width   container width
+//   gap     space between columns, and between two panels stacked in one column
+//   cols    most columns in one row (the planner never uses more than MAX_COLUMNS, but spans stay shares of `cols`)
+//   panels  one entry per panel, in reading order:
+//     samples   [{ w, h }] panel height at sampled widths, ascending by w (heights between samples are interpolated)
+//     minWidth  narrowest feasible width (clamped to `width`)
+//     maxWidth  widest useful width; beyond it the panel only gains empty space (default: no limit)
+//     natural   natural diagram width for a diagram-only panel (default: none)
+//     pad       panel width not used by the diagram (padding and border; default 0)
+//     span      the author's width hint in grid columns (default 1); span >= cols keeps the panel alone in its row
+//
+// Output: { rows, maxScale }. Rows are in reading order; a row is a list of columns (at most `cols`); a column holds one panel or two
+// consecutive panels, stacked. For integer inputs the column widths plus the gaps between them equal `width`.
+// Rows are chosen by dynamic programming over break points; widths by a search in STEP px steps. Cost per row:
+//   H = tallest column; waste = sum((H - columnHeight) * columnWidth) + sum over diagrams wider than maxWidth of (w - maxWidth) * h
+//   dev = sum(((w - preferred) / oneColumn)^2) + SCALE_WEIGHT * sum over diagrams of (ln(scale) / ln(MAX_SCALE))^2
+//   cost = waste / 1000 + PREF_WEIGHT * dev * H
+// Scale band: diagrams on one page stay at similar sizes. With the result's `maxScale` as the diagram size limit, a diagram is
+// shown at scale min(maxScale, (width - pad) / natural). The planner tries a few bands [lo, lo * BAND_RATIO] (lo in BAND_LOS) and
+// keeps the cheapest plan in which no diagram is narrower than scale lo and none is shown above the band's top, so the largest and
+// smallest diagram scale on the page differ by at most BAND_RATIO. A panel wider than its diagram's top size keeps the diagram at
+// that size, and the page script must set the diagram's max-width to natural * maxScale. The band starts no higher than the
+// largest scale the page allows the least roomy diagram, so one wide diagram lowers the band for the others.
+// If no band is feasible the plan is made without a band (maxScale = MAX_SCALE); if no plan fits (or the input is unusable) the
+// result is a single column: one panel per row at the full width.
+
+const STEP = 10;
+const MAX_SCALE = 1.25;
+const MIN_SCALE = 0.75; // the narrowest a diagram is shown, as a share of its natural width
+const MAX_COLUMNS = 6; // rows with more columns are unreadable, and the search grows steeply with the column count
+const BAND_RATIO = 1.25; // the largest and smallest diagram scale on a page differ by at most this
+const BAND_LOS = [MIN_SCALE, 0.85, 0.95, 1]; // lower ends tried for the band; lo * BAND_RATIO is the upper end (1.25 means no upper limit)
+const SCALE_WEIGHT = 3;
+const PREF_WEIGHT = 0.15;
+
+function heightAt(samples, w) {
+  const i = samples.findIndex((s) => s.w >= w);
+  if (i === -1) return samples[samples.length - 1].h;
+  if (i === 0) return samples[0].h;
+  const a = samples[i - 1];
+  const b = samples[i];
+  return a.h + ((b.h - a.h) * (w - a.w)) / (b.w - a.w);
+}
+
+// Every way to split `len` consecutive panels into columns of 1 or 2 panels, as lists of column sizes.
+function splits(len) {
+  if (len === 0) return [[]];
+  return [1, 2].filter((k) => k <= len).flatMap((k) => splits(len - k).map((rest) => [k, ...rest]));
+}
+
+function singleColumn(width, panels) {
+  return { rows: panels.map((_, i) => ({ columns: [{ panels: [i], width }], height: 0 })) };
+}
+
+function planLayout({ width, gap = 0, cols = 3, panels }) {
+  const usable = Number.isFinite(width) && width > 0 && panels.every((p) => Array.isArray(p.samples) && p.samples.length > 0);
+  if (!usable) return singleColumn(width, panels);
+
+  // `cols` stays the unit of the author's spans; no row gets more than MAX_COLUMNS columns however large `cols` is.
+  const maxColumns = Math.min(cols, MAX_COLUMNS);
+  const oneColumn = Math.max(1, (width - gap * (cols - 1)) / cols);
+  // Per-panel limits. With a band [lo, lo * BAND_RATIO], a diagram is no narrower than scale lo and shown at most at the top of the
+  // band: a wider panel keeps it at that size and gains empty space, which the cost counts as waste.
+  const prepare = (lo) => panels.map((p) => {
+    const pad = p.pad ?? 0;
+    const diagram = lo > 0 && p.natural > 0;
+    const scaleCap = diagram ? Math.min(MAX_SCALE, lo * BAND_RATIO) : MAX_SCALE;
+    return {
+      ...p,
+      minWidth: Math.min(width, Math.max(Math.ceil(p.minWidth || 0), diagram ? Math.ceil(p.natural * lo + pad) : 0)),
+      maxWidth: Math.min(p.maxWidth ?? Infinity, diagram ? p.natural * scaleCap + pad : Infinity),
+      scaleCap,
+      pad,
+      preferred: Math.min(width, (p.span ?? 1) * oneColumn + ((p.span ?? 1) - 1) * gap),
+      alone: (p.span ?? 1) >= cols,
+    };
+  });
+  let info = prepare(0);
+  // Beyond its maxWidth a panel only gains empty space, so its height stops changing there (matters when a band lowers maxWidth).
+  const heightOf = (p, w) => heightAt(p.samples, Math.min(w, p.maxWidth));
+  const columnHeight = (col, w) => col.reduce((h, k) => h + heightOf(info[k], w), 0) + gap * (col.length - 1);
+
+  function bestColumns(columns) {
+    const avail = width - gap * (columns.length - 1);
+    const mins = columns.map((c) => Math.max(...c.map((k) => info[k].minWidth)));
+    const minsFrom = mins.map((_, n) => mins.slice(n).reduce((s, w) => s + w, 0));
+    if (minsFrom[0] > avail) return null;
+    let best = null;
+    const evaluate = (ws) => {
+      const hs = ws.map((w, n) => columnHeight(columns[n], w));
+      const H = Math.max(...hs);
+      let waste = 0;
+      let dev = 0;
+      ws.forEach((w, n) => {
+        waste += (H - hs[n]) * w;
+        for (const k of columns[n]) {
+          const p = info[k];
+          if (w > p.maxWidth) waste += (w - p.maxWidth) * heightOf(p, w);
+          dev += ((w - p.preferred) / oneColumn) ** 2;
+          if (p.natural > 0) {
+            const scale = Math.min(p.scaleCap, Math.max(w - p.pad, 1) / p.natural);
+            dev += SCALE_WEIGHT * (Math.log(scale) / Math.log(MAX_SCALE)) ** 2;
+          }
+        }
+      });
+      const cost = waste / 1000 + PREF_WEIGHT * dev * H;
+      if (!best || cost < best.cost) best = { cost, ws, height: H, columns };
+    };
+    const choose = (n, used, ws) => {
+      if (n === columns.length - 1) {
+        const w = avail - used;
+        if (w >= mins[n]) evaluate([...ws, w]);
+        return;
+      }
+      for (let w = mins[n]; used + w + minsFrom[n + 1] <= avail; w += STEP) choose(n + 1, used + w, [...ws, w]);
+    };
+    choose(0, 0, []);
+    return best;
+  }
+
+  // Best columns for one row of panels i..j.
+  function bestRow(i, j) {
+    if (j > i && info.slice(i, j + 1).some((p) => p.alone)) return null;
+    let best = null;
+    for (const split of splits(j - i + 1)) {
+      if (split.length > maxColumns) continue;
+      let next = i;
+      const columns = split.map((size) => Array.from({ length: size }, () => next++));
+      const r = bestColumns(columns);
+      if (r && (!best || r.cost < best.cost)) best = r;
+    }
+    return best;
+  }
+
+  // Row breaks in reading order, for the band set up in `info`. A row holds at most 2 * maxColumns panels. Null if nothing fits.
+  function solve() {
+    const n = panels.length;
+    const total = Array(n + 1).fill(Infinity);
+    const from = Array(n + 1).fill(-1);
+    const chosen = Array(n + 1).fill(null);
+    total[0] = 0;
+    for (let j = 1; j <= n; j++) {
+      for (let i = Math.max(0, j - 2 * maxColumns); i < j; i++) {
+        if (total[i] === Infinity) continue;
+        const r = bestRow(i, j - 1);
+        if (r && total[i] + r.cost < total[j]) {
+          total[j] = total[i] + r.cost;
+          from[j] = i;
+          chosen[j] = r;
+        }
+      }
+    }
+    if (total[n] === Infinity) return null;
+    const rows = [];
+    for (let j = n; j > 0; j = from[j]) {
+      const r = chosen[j];
+      rows.unshift({ columns: r.columns.map((panelsInColumn, c) => ({ panels: panelsInColumn, width: r.ws[c] })), height: r.height });
+    }
+    return { rows, cost: total[n] };
+  }
+
+  let best = null;
+  const diagrams = panels.filter((p) => p.natural > 0);
+  if (diagrams.length > 1) {
+    // No diagram can be shown larger than the page allows, so the band cannot start above the smallest of those limits.
+    const reach = Math.min(...diagrams.map((p) => Math.min(MAX_SCALE, Math.max(width - (p.pad ?? 0), 1) / p.natural)));
+    for (const lo of new Set([...BAND_LOS.filter((x) => x < reach), reach])) {
+      info = prepare(lo);
+      const r = solve();
+      if (r && (!best || r.cost < best.cost)) best = { ...r, maxScale: Math.min(MAX_SCALE, lo * BAND_RATIO) };
+    }
+    info = prepare(0);
+  }
+  best ??= solve();
+  return best ? { rows: best.rows, maxScale: best.maxScale ?? MAX_SCALE } : singleColumn(width, panels);
+}
+
+// DOM adapter for the sheet's justified ("photo wall") layout. Not a module: compose.js puts it after src/runtime/layout-plan.js
+// (which defines planLayout and the shared STEP, MAX_SCALE, MIN_SCALE) inside one function scope of the page script.
+//
+// It measures every panel at sampled widths, asks planLayout for rows and column widths, and applies them with flexbox.
+// The rendered HTML keeps the plain CSS grid: with JavaScript off, at the single-column breakpoint, or while printing, the grid is what
+// shows (the planned widths belong to the screen width, so print never gets a mix of the two); after printing the layout comes back.
+
+const grid = document.querySelector('.am-grid');
+const panels = grid ? [...grid.children].filter((el) => el.classList.contains('am-panel')) : [];
+
+if (panels.length > 1) {
+  const SINGLE_COLUMN = '(max-width: 760px)'; // the single-column breakpoint in src/themes/base.css
+  const TWO_COLUMNS = '(max-width: 1100px)'; // below this the CSS grid has two columns
+  const SAMPLE_STEP = 20; // width sampling step, px; the planner interpolates between samples
+  const TEXT_MIN = 260; // text keeps at least about 16 CJK characters per line
+  const TABLE_COL_MIN = 96; // per table column, px
+  const DIAGRAM_MIN = 160;
+  const RESIZE_DELAY = 150;
+  const OVERFLOWING = '.am-table-wrap, .am-diagram, .am-annot-scroll, pre';
+
+  const original = new Map([grid, ...panels, ...grid.querySelectorAll('.am-diagram > svg')].map((el) => [el, el.getAttribute('style')]));
+  const restoreStyle = (el) => (original.get(el) === null ? el.removeAttribute('style') : el.setAttribute('style', original.get(el)));
+
+  // Back to the plain grid markup and styles.
+  const restore = () => {
+    for (const box of grid.querySelectorAll(':scope > .am-col')) box.replaceWith(...box.children);
+    for (const el of original.keys()) restoreStyle(el);
+  };
+
+  // The author's width hint, rendered as data-span only when the author wrote one. The inline grid-column is the no-JavaScript fallback
+  // and may hold spans the server added, so it is never read here.
+  const spanHint = (el) => Number(el.dataset.span) || 1;
+  const diagramOnly = (el) => {
+    const body = el.querySelector(':scope > .am-panel-body');
+    return body && body.children.length === 1 ? body.querySelector(':scope > .am-diagram > svg') : null;
+  };
+  const naturalWidth = (svg) => Number(svg.getAttribute('width')) || 0;
+
+  // Height (and, for panels with tables or code, the narrowest width without sideways scrolling) at sampled widths.
+  // Only one panel is displayed while it is measured, so each width change lays out that panel alone.
+  function measure(width) {
+    grid.style.display = 'block';
+    for (const el of panels) {
+      el.style.display = 'none';
+      el.style.boxSizing = 'border-box';
+      for (const svg of el.querySelectorAll('.am-diagram > svg')) {
+        svg.style.width = '100%';
+        svg.style.maxWidth = `${naturalWidth(svg) * MAX_SCALE}px`;
+      }
+    }
+    const info = panels.map((el) => {
+      const svg = diagramOnly(el);
+      const svgs = [...el.querySelectorAll('.am-diagram > svg')];
+      const scrollers = el.querySelectorAll(OVERFLOWING);
+      const tableCols = Math.max(0, ...[...el.querySelectorAll('table tr:first-child')].map((tr) => tr.children.length));
+      el.style.display = '';
+      el.style.width = `${width}px`;
+      const pad = svg ? el.offsetWidth - svg.parentElement.clientWidth : 0;
+      const natural = svg ? naturalWidth(svg) : 0;
+      const shrunk = Math.max(0, ...svgs.map((s) => naturalWidth(s) * MIN_SCALE)) + (svg ? pad : 34);
+      const floor = svg ? Math.max(DIAGRAM_MIN, natural * MIN_SCALE + pad) : Math.max(TEXT_MIN, shrunk, tableCols * TABLE_COL_MIN + 34);
+      const from = Math.min(width, Math.floor(floor / STEP) * STEP);
+      const samples = [];
+      let fits = null;
+      for (let w = from; ; w += SAMPLE_STEP) {
+        w = Math.min(w, width);
+        el.style.width = `${w}px`;
+        if (fits === null && !svg && scrollers.length && ![...scrollers].some((s) => s.scrollWidth > s.clientWidth + 1)) fits = w;
+        samples.push({ w, h: el.offsetHeight });
+        if (w === width) break;
+      }
+      el.style.display = 'none';
+      return {
+        samples,
+        minWidth: svg ? floor : Math.max(floor, fits ?? (scrollers.length ? width : 0)),
+        maxWidth: svg ? natural * MAX_SCALE + pad : Infinity,
+        natural,
+        pad,
+        span: spanHint(el),
+      };
+    });
+    for (const el of panels) {
+      el.style.display = '';
+      el.style.width = '';
+    }
+    return info;
+  }
+
+  // Each column gets a fixed width. A row adds up to the full width, so flex-wrap breaks rows by itself.
+  // Stacked panels go into a column wrapper whose last panel absorbs the extra height.
+  function apply(plan, gap) {
+    grid.style.display = 'flex';
+    grid.style.flexWrap = 'wrap';
+    grid.style.alignItems = 'stretch';
+    grid.style.gap = `${gap}px`;
+    for (const el of panels) {
+      el.style.gridColumn = '';
+      el.style.gridRow = '';
+      el.style.flex = '0 0 auto';
+    }
+    for (const row of plan.rows) {
+      for (const col of row.columns) {
+        const width = `${col.width}px`;
+        if (col.panels.length === 1) {
+          panels[col.panels[0]].style.width = width;
+          continue;
+        }
+        const box = document.createElement('div');
+        box.className = 'am-col';
+        box.style.cssText = `width:${width};flex:0 0 auto;display:flex;flex-direction:column;gap:${gap}px`;
+        panels[col.panels[0]].before(box);
+        for (const k of col.panels) {
+          panels[k].style.width = '';
+          box.append(panels[k]);
+        }
+        panels[col.panels[col.panels.length - 1]].style.flex = '1 1 auto';
+      }
+    }
+  }
+
+  // Diagram-only panels show their diagram at most at the top of the page's scale band; a wider panel gains empty space instead.
+  function capDiagrams(maxScale) {
+    for (const el of panels) {
+      const svg = diagramOnly(el);
+      if (svg) svg.style.maxWidth = `${naturalWidth(svg) * maxScale}px`;
+    }
+  }
+
+  const containerWidth = () => Math.floor(grid.getBoundingClientRect().width);
+
+  function justify() {
+    if (printing || printQuery.matches) return;
+    try {
+      // A vertical scrollbar can appear or vanish once the rows change height; plan again if the width moved.
+      let planned = -1;
+      for (let pass = 0; pass < 3 && planned !== containerWidth(); pass++) {
+        restore();
+        if (matchMedia(SINGLE_COLUMN).matches) return;
+        planned = containerWidth();
+        const gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
+        const cols = Math.max(1, Number(getComputedStyle(grid).getPropertyValue('--cols')) || 3);
+        const plan = planLayout({ width: planned, gap, cols: matchMedia(TWO_COLUMNS).matches ? Math.min(cols, 2) : cols, panels: measure(planned) });
+        apply(plan, gap);
+        capDiagrams(plan.maxScale);
+      }
+      // The width never settled: columns planned for another width would overflow or leave gaps, so show the plain grid.
+      if (planned !== containerWidth()) restore();
+    } catch {
+      restore();
+    }
+  }
+
+  // Printing: back to the plain grid (spans and all), and the layout again afterwards. Browsers disagree on which of the
+  // `beforeprint` event and the print media query change fires first, or at all, so listen to both; both are idempotent.
+  // While `printing` is set (beforeprint to afterprint) justify() does nothing, so a late resize cannot bring flex widths into the print layout.
+  let printing = false;
+  const printQuery = matchMedia('print');
+  let timer = 0;
+  const later = () => {
+    clearTimeout(timer);
+    timer = setTimeout(justify, RESIZE_DELAY);
+  };
+  const toPrint = () => {
+    clearTimeout(timer);
+    restore();
+  };
+  justify();
+  addEventListener('resize', later);
+  addEventListener('beforeprint', () => {
+    printing = true;
+    toPrint();
+  });
+  addEventListener('afterprint', () => {
+    printing = false;
+    later();
+  });
+  printQuery.addEventListener('change', (e) => (e.matches ? toPrint() : later()));
+  // Late changes to panel heights: web fonts arriving, and images inside the grid finishing their load (load does not bubble, so capture it).
+  document.fonts?.ready.then(later);
+  grid.addEventListener('load', later, true);
+  // Switching theme changes paddings and fonts, hence panel heights.
+  document.querySelector('[data-am="theme"]')?.addEventListener('click', later);
+}
+})();
+</script>
+</body>
+</html>

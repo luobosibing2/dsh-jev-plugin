@@ -1,30 +1,44 @@
 # deepseek-harness-jev
 
-[English](README.md) | 简体中文 | [中文功能与实测网站](https://luobosibing2.github.io/deepseek-harness-jev/)
+[English](README.md) | 简体中文 | [中文功能与实测网站](https://luobosibing2.github.io/dsh-jev-plugin/)
 
-**DeepSeek Harness（DSH）的原生 Jev 插件：按需接入 TypeSafe Jev / System One 判断。**
+**DeepSeek Harness（DSH）的原生插件：使用 Jev 或 Luna Decisions 提供判断。**
 
 `deepseek-harness-jev` 将 [DeepSeek Harness（DSH）](https://github.com/deepseek-ai/deepseek-harness) 与 [TypeSafe AI 的 Jev](https://typesafe.ai/) 连接起来，为 Agent 提供技能与文件选择、任务监督、共享发现纠正、工具日志筛选、单次操作审批和历史轨迹阶段导航。12 项功能可在同一个 Jev 设置页分别开启，默认全部关闭。
 
-主模型继续负责规划、生成回答和调用原生工具；插件在 DSH 的技能目录、Agent 生命周期、工具结果与审批等扩展点自动发起已启用的 Jev 判断，再按对应功能应用结果。主模型由 DSH 配置，Jev 连接单独配置。接入基于公开的 Cordis / DSH 插件接口，无需修改宿主源码。
+主模型继续负责规划、生成回答和调用原生工具；已启用功能在 DSH 的技能目录、Agent 生命周期、工具结果与审批等扩展点使用已保存的 Jev 或 Luna Decisions 连接，再按对应功能应用结果。主模型由 DSH 单独配置。接入基于公开的 Cordis / DSH 插件接口，无需修改宿主源码。
 
-这是独立社区项目，并非 DeepSeek 或 Jev 官方发布。当前属于早期插件，已针对 **DSH 0.1.7-rc.2** 验证；接口和模型判断都不构成正确性保证。
+这是独立社区项目，并非 DeepSeek 或 Jev 官方发布。当前属于早期插件，支持有界的 [DSH 版本范围](#网页端安装推荐)；接口和模型判断都不构成正确性保证。
 
-[中文功能介绍站](https://luobosibing2.github.io/dsh-jev-plugin/)逐项说明 DSH 原生触发节点、交给 Jev 的信息，以及实际测试场景、结果和边界。
+[中文功能介绍站](https://luobosibing2.github.io/dsh-jev-plugin/)逐项说明 DSH 原生触发节点、交给判断服务的信息，以及实际测试场景、结果和边界。
+
+[原理与全部功能](https://luobosibing2.github.io/dsh-jev-plugin/explainers/dsh-jev-plugin.html)文章说明全部 12 项功能，并展示技能选择的完整输入输出例子。[Markdown 源稿](docs/explainers/dsh-jev-plugin.md)在本仓库维护。
+
+[快速复习目录](https://luobosibing2.github.io/dsh-jev-plugin/#quick-review)集中列出源码导读。[长日志去噪面试复习](https://luobosibing2.github.io/dsh-jev-plugin/explainers/log-admission-interview.html)说明通用与测试日志流程、设计取舍、真实模型结果及其边界；[Markdown 源稿](docs/explainers/log-admission-interview.md)在本仓库维护。
+
+[Goal 监督与完成补做复习](https://luobosibing2.github.io/dsh-jev-plugin/explainers/goal-completion-review.html)沿入口、判断、采纳、有限补充和送达记录回看当前两条流程。[Markdown 源稿](docs/explainers/goal-completion-review.md)区分当前行为与历史真实模型结果。
+
+`main` 支持 Jev，以及通过 OpenRouter 或 OpenAI 使用 Luna Decisions；每个 profile 独立保存三套连接。[2026-10-07 公开报告](docs/testing/2026-10-07-luna-decisions/README.md)区分固定协议及安装、受控真实样例与真实 DeepSeek Flash 任务。官方 OpenAI 在这些有限样例中调用成功；OpenRouter 的唯一真实诊断返回提供方访问限制的 HTTP 403 后停止。这些结果不建立通用判断准确率或稳定任务收益。
+
+[2026-10-09–10 Harness 兼容报告](docs/testing/2026-10-09-harness-compatibility/README.md)记录从 DSH 0.1.7-rc.2 升至 0.2.1-alpha.2 的适配、正式安装与 Web 检查，以及新一轮真实 DeepSeek Flash / Jev 任务。原始插件被新版安装器的版本检查拒绝；本次修改同步依赖并适配受影响的公开 API。报告分别记录真实任务、固定初始遗漏的完成诊断、确定性生命周期测试及本轮未实测的提供方渠道。
+
+[2026-10-11 版本兼容报告](docs/testing/2026-10-11-harness-version-compatibility/README.md)检查当前插件在四个旧发布版本和 0.2.1-alpha.2 上的接入。报告记录正式安装、九个 Host 组件、原生工具和本地确定性判断流程，以及最早版本、0.2.0-rc.2 和 0.2.1-alpha.2 的浏览器检查。这些检查验证所测环境中的版本接入，不评估判断模型质量。
+
+[2026-10-21 Harness 兼容报告](docs/testing/2026-10-21-harness-compatibility/README.md)记录 DSH **0.2.1-rc.2** 升级。本轮使用本地确定性模型回复检查正式安装包、Host 组件与 Web 接入，不调用真实模型服务。较早报告保留各自原始版本和实验条件。
 
 ## 包含哪些功能？
 
-下表描述 `main` 分支。**每项功能都有独立开关，默认全部关闭**，安装插件不会自动开启。
+插件提供下列功能。**每项功能都有独立开关，默认全部关闭**，安装插件不会自动开启。
 
 | 功能 | 作用 |
 | --- | --- |
-| 技能选择（Skill selection） | 在技能目录发布前，对名称和摘要排序；主 Agent 仍通过原生 skill 加载正文。 |
+| 技能选择（Skill selection） | 推荐概率达到最低值的技能，数量不超过配置上限；成功判断也可以零推荐。主 Agent 仍通过原生 skill 加载正文。 |
 | 文件排序（File ranking） | 对原生 glob 返回的路径排序，不追加文件扫描或正文读取。 |
 | 跑偏提醒（Drift monitoring） | 在模型步骤之间检查进展，必要时提供一次非阻塞提醒。 |
-| 完成核查（Completion checks） | 对照已有证据检查已展示的最终回答，最多追加一次补充处理。 |
+| 完成核查（Completion checks） | 核查本 turn 的要求、最新 Todo 与最终回答，默认最多自动补充 3 轮。 |
 | 持续目标监督（Goal supervision） | 检查原生目标完成申请，连续多轮没有进展时暂停。 |
 | 用户约束提醒（Instruction guidance） | 读取当前用户要求及适用的 Agent 规则，必要时发送非阻塞提醒。 |
-| 中途插话分流（Interjection routing） | 把运行中的纠正消息送到下一步骤，其他消息留待后续轮次。 |
+| 中途插话分流（Interjection routing） | 区分后续任务、当前补充和即时纠正；即时纠正可中断模型响应，再在同一回合继续。 |
 | 共享发现纠正（Shared-finding corrections） | 比较已经共享的报告和消息，向受影响的接收者发送纠正。 |
 | 通用长日志准入（Tool-output filtering） | 命令返回后可省略明确不需要的进度或重复提示，并提供原文恢复位置。 |
 | 测试日志准入（Test-log filtering） | 保护失败、摘要、点名和慢测试，再判断普通通过明细是否仍有用。 |
@@ -37,7 +51,25 @@
 
 所有功能共用连接、按 profile 保存的设置、判断记录与操作回执。多数 Agent 功能面向存活的 Web 主会话；向子 Agent 发送纠正，不等于子 Agent 自动拥有其他 Jev 增强。
 
-**功能分支不等于已合入 main。** 工具输出筛选已进入 `main`；`codex/jev-tool-output-admission` 保留开发快照。原生网页执行在 `codex/jev-native-web-execution`，该方向目前**暂停，普通网站效果未通过验收**。其他历史分支保留早期实现。切换前请看[分支状态](docs/branches.md)，本表始终以 `main` 为准。
+中途插话分流让任务、Goal、近期助手正文和工具文本共用插件组件的 `contextChars` 预算（默认 12,000 字符）。当前用户要求优先保留，选中的要求按原始顺序呈现。分流在应用预算前遮盖近期 JSON 工具参数中可识别的凭据，并省略格式无效或过大的参数数据。当前消息另用 `messageChars` 限制；原始 Session 历史和已有 Jev 记录均保留。
+
+**功能分支不等于已合入 main。** 工具输出筛选已进入 `main`；`codex/jev-tool-output-admission` 保留开发快照。原生网页执行在 `codex/jev-native-web-execution`，该方向目前**暂停，普通网站效果未通过验收**。其他历史分支保留早期实现。切换前请看[分支状态](docs/branches.md)。
+
+插话分流要求 Host 提供公开的 `Agent.interruptResponse()` 能力。未打本功能补丁的已发布 DSH 0.2.2-alpha.2 不具备该能力。在缺少能力的 Host 上保持分流关闭；开启后会在分类前明确报告 Host 能力不足。本地源码联动使用配套 DSH 源码改动，不代表该能力已包含在发布包中。
+
+## 完成核查
+
+完成核查启用后，仅在普通根 Agent turn 正常停止且本 turn 用过 Todo 时核查。有未完成条目或后来清空清单仍符合触发条件；本 turn 没用 Todo 就跳过，执行中的 Todo 更新不会触发核查。原生 Goal turn 仍使用自己的监督流程。
+
+判断输入包含本 turn 的原始用户要求及后续调整、完整最新 Todo、最新最终回答，排除原始工具结果、reasoning 和前一 turn。新 turn 只说“继续”时，不会自动补入上轮任务。功能启用时，简短模型提示要求在已有 Todo 的 content 中写明实际动作、路径、命令与观察结果；不新增 Todo 字段，也不要求简单任务创建清单。
+
+一次判断请求只有两个 Choice：`assessment` 从 `complete`、`omission`、`contradiction`、`needs-user`、`unknown` 中选择结论，`focus` 选择已有的用户要求、Todo 条目或最终回答引用。`complete` 表示所给报告显示要求已满足，不等于独立核实代码、产物或执行事实。每次仅指出最关键问题。
+
+`omission`、`contradiction` 与有效 `unknown` 共用当前 profile 的**最多自动补充轮数**（`maxSupplementRounds`），默认 3。初次核查另算：上限 N 允许最多 N 次自动补充、N+1 次正常核查；默认最多 3 次补充、4 次正常核查。`complete` 正常结束，`needs-user` 交用户决定，额度耗尽仍有问题则显示最后结论并停止。补充仍在同一 turn，遵守已有授权。
+
+发送前按现有字符预算检查完整输入；超长不裁剪、不自动摘要。原始要求缺失、预算拒绝、接口错误或无效答案会提示本次完成核查未完成，保留主模型回答并等待 **Retry / Cancel（重试 / 取消）**。重试读取当前材料与已保存设置；技术重试不计入 N+1 次正常核查，也不消耗或重置已使用的补充轮数。取消只结束核查，不将任务判为成功或失败。结论、记录与生命周期详情见[包参考](packages/jev/README.md#ordinary-completion-checks)。
+
+[完成核查流程导读](https://luobosibing2.github.io/dsh-jev-plugin/explainers/jev-completion-flow.html)展示 Todo 触发、两个判断问题、补充循环和失败处理。[Markdown 源稿](docs/explainers/jev-completion-flow.md)随实现维护。
 
 ## 阶段导航
 
@@ -47,14 +79,16 @@
 
 每次分类覆盖一个完整 DSH 模型 step：已记录的 Think、正文、全部工具调用与配对结果。Jev 从六阶段及 `mixed`、`unknown` 中选一个；程序只在同一轮内合并连续相同标签。页面左侧保留多轮目录，右侧定位完整 step 原文，并可核对实际分类输入与回答。标签和 confidence 不表示工具成功或分类正确率。输入、保存与失败处理见[包参考](packages/jev/README.md#stage-navigation)。
 
+阶段分析发送或写入日志前，先解码 JSON 工具参数、脱敏凭据，再重新序列化。不完整或无效的参数 JSON 会替换为明确的脱敏标记。原始 Session 记录保持不变；更新后的脱敏规则使先前分类显示为过期，但不会删除已保存记录。
+
 ## 网页端安装（推荐）
 
-已经在使用 **DSH 0.1.7-rc.2 Web** 的用户，直接填写 GitHub 仓库地址即可，无需克隆源码、手动打包或登录 npm。
+安装包声明 `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-rc.2 || 0.2.1-rc.5 || 0.2.2-alpha.2`。兼容报告覆盖前八个发布版本，包括 0.2.1-rc.2 和 0.2.1-rc.5；新增的精确 0.2.2-alpha.2 声明允许本地验证的配套源码 Host，不代表未打补丁的发布包具备响应中断能力。其他版本，包括 0.2.1-alpha.1，不在声明范围内。直接填写 GitHub 仓库地址即可，无需克隆源码、手动打包或登录 npm。
 
 1. 打开 **侧边栏「插件」→「添加插件」**。
 2. 在 **「包名或地址」** 中粘贴下面的 GitHub 地址，点击 **「安装」**。
 3. 安装完成后点击 **「立即启用」**；若提示下次启动后加载，重启当前 DSH profile。
-4. 进入 **Jev** 页面配置服务地址、模型和 API Key，再按需开启功能。
+4. 在已安装插件列表中点击 **查看 @dsh-jev/plugin**，进入 Jev 页面配置服务地址、模型和 API Key，再按需开启功能。
 
 ```text
 https://github.com/luobosibing2/deepseek-harness-jev
@@ -76,13 +110,15 @@ https://github.com/luobosibing2/deepseek-harness-jev
 
 - 推荐 Node.js **24.11 或更高版本**；发布构建使用 Node 24.14.1 检查。
 - `PATH` 中可用的 pnpm **11.7.0**。
-- DeepSeek Harness CLI **0.1.7-rc.2**。插件固定使用对应 DSH peer 包和 Cordis **4.0.4**，不自动承诺兼容更新版本。
-- 在 DSH 中配置好主模型，以及你自己的 Jev 兼容 System One 服务和凭据。
+- 开发基线：DeepSeek Harness CLI 和开发依赖 **0.2.2-alpha.2**，以及 Cordis **4.0.6-alpha.1**。这些精确构建版本与上面的安装兼容范围分开维护；请使用下面的精确版本号，npm 的 `latest` 标签可能指向另一版本。
+- 在 DSH 中配置好主模型，以及所选 Jev 兼容 System One 服务或 Luna API 的凭据。
+
+旧版 DSH 支持针对已构建正式包的安装与运行。从源码构建，以及使用新生成 Remote 声明的 TypeScript 项目，使用 0.2.2-alpha.2 开发基线。
 
 如尚未安装工具：
 
 ```sh
-npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.1.7-rc.2
+npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.2-alpha.2
 ```
 
 ### 构建安装包
@@ -92,10 +128,22 @@ npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.1.7-rc.2
 ```sh
 git clone https://github.com/luobosibing2/deepseek-harness-jev.git
 cd deepseek-harness-jev
-pnpm install --frozen-lockfile --ignore-scripts
+pnpm install --frozen-lockfile
 pnpm run build
 mkdir -p dist
 pnpm -C packages/jev pack --pack-destination "$PWD/dist"
+```
+
+Windows 用户可在 PowerShell 中运行对应步骤：
+
+```powershell
+git clone https://github.com/luobosibing2/deepseek-harness-jev.git
+Set-Location deepseek-harness-jev
+pnpm install --frozen-lockfile
+pnpm run build
+New-Item -ItemType Directory -Force .\dist | Out-Null
+$dist = (Resolve-Path .\dist).Path
+pnpm -C packages/jev pack --pack-destination "$dist"
 ```
 
 ### 使用 CLI 创建独立试用 profile
@@ -114,29 +162,48 @@ dsh --profile jev
 
 打开 DSH 输出的认证访问地址。在 DSH 中配置主模型，然后进入插件的 **Jev** 页面。
 
-## 配置 Jev
+## 配置判断连接
 
-1. 填写完整 System One 地址，例如 `https://api.typesafe.ai/v1/systemone`。
-2. 填写模型，例如 `jev-latest`。
-3. 指定 DSH 凭据引用，保存连接，再通过页面的凭据控件保存 API Key。不要把密钥写入源码或仓库 URL。
-4. 检查超时时间，只开启需要的功能。
-5. 在“判断记录”中查看输入、答案、尝试次数，以及实际采纳或执行回执。
+1. 打开 **Jev → 设置与功能**，在**判断模型**中选择 **Jev** 或 **Luna Decisions**；Luna 还可在 **Luna API** 中选择 **OpenRouter** 或 **OpenAI**。
+2. 检查完整请求地址和凭据引用。Jev 保留原自定义地址和模型；Luna 使用对应 API 的固定模型标识。
+3. 保存连接，再通过凭据控件保存 API Key。每套连接分别保存地址和凭据引用，不要把密钥写入源码或仓库 URL。
+4. 点击**测试连接**，发送固定 Choice、Score、Noul 问题。通过表示三类回答均完成协议校验，不表示实际任务判断质量。
+5. 只开启需要的功能。所有已启用功能使用已保存判断连接；切换模型不会改变功能开关、阈值、数量参数或共用超时。
+6. 在**判断记录**中核对本次连接、提供方返回模型、实际请求、原始响应、统一答案、已知用量和动作回执。
 
-主 Agent 的模型连接与 Jev 判断连接分别配置。凭据显示“已配置”不等于连接测试成功；连接测试和已启用的判断会向服务方发送请求。
+| 连接 | 默认完整请求地址 | 请求模型 | 默认凭据引用 |
+| --- | --- | --- | --- |
+| Jev | 原 System One 地址，例如 `https://api.typesafe.ai/v1/systemone` | 原模型，例如 `jev-latest` | 原引用，初始为 `JEV_API_KEY` |
+| Luna / OpenRouter | `https://openrouter.ai/api/alpha/decisions` | `openai/gpt-6-luna-decisions` | `JEV_LUNA_OPENROUTER_API_KEY` |
+| Luna / OpenAI | `https://api.openai.com/v1/decisions` | `gpt-6-luna` | `JEV_LUNA_OPENAI_API_KEY` |
 
-选择功能默认取 5 个技能摘要，最多对 40 个 glob 命中排序，展示 12 条路径。超过上限时直接跳过 Jev，不会悄悄只判断前 40 个。监督功能默认每 6 个完成的模型步骤检查一次跑偏，连续 3 个原生目标轮次无进展则暂停。这些参数可调整，保存参数不会自动开启功能。
+接入其他兼容 TypeSafe 的 System One 服务时，选择 **Jev**，填写完整 POST 地址和模型名称，再把 API Key 保存到自选的凭据引用。例如，一份[第三方 TokenPlan 报告](https://github.com/AstrBotDevs/AstrBot/issues/10920)使用 `https://discovery-api.intern-ai.org.cn/v1/systemone` 和模型 `intern-decision-4b`；凭据引用可填 `TOKENPLAN_API_KEY`。保存密钥本身，不加 `Bearer ` 前缀，插件会自动添加 `Authorization: Bearer` 请求头。本项目未对这个示例进行真实服务验证。
 
-通用长日志准入和测试日志准入有独立开关，均默认关闭。命令日志从 6,000 个 Unicode 码点、可识别测试日志从 4,000 个码点开始处理；默认省略概率门槛为 0.8，判断最多等待 4 秒。设置页可调整这些及其他准入预算，保存预算不会开启功能。
+Jev 连接按 System One 格式发送 Choice、Score 和 Noul 问题。调用方未提供 Noul criteria 时，请求会带上 `criteria: {"true":"","false":""}`，以适配要求该字段的服务。显式 criteria（包括部分字段或 null 值）保留原内容，提供方可能有更严格的限制。插件根据类型化问题构建请求体，不接受任意 POST 请求体或聊天补全协议。保存自定义连接后，可通过**测试连接**及其**判断记录**核对结果；收到服务响应时，可在记录中查看 HTTP 状态码和原始响应。
+
+两个 Luna 模型 ID 是指定 Luna Decisions 能力在不同 API 中的命名。所选 API 决定协议，包括 OpenAI 将 Noul 表示为 `predicate`；修改域名不会改变协议。合法自定义端点仍使用所选协议。切回后可恢复各套已保存连接，旧 profile 默认选择 Jev 并保留原值。
+
+凭据状态只显示是否存在和可写，不读回密钥；“已配置”不表示连接测试通过。编辑后须先保存连接，再写入密钥或测试；连接改变后，旧密钥写入会被拒绝，旧诊断也不能成为新连接的结果。成功替换密钥后清空输入。读取、编辑和保存设置均不发送模型请求。
+
+每次尝试使用开始时已保存的连接；之后的切换用于新尝试和人工重试。故障不会自动转向其他模型或 API。OpenRouter 超过 200 题时完整分批，所有批次共用原超时，全部完成后才向业务交付答案；部分失败仍保留实际网络数据和已知用量。配置及生命周期详情见[包参考](packages/jev/README.md#judgment-connections)。
+
+选择功能默认最多推荐 5 个合格技能摘要，最低相关概率为 0.5；最多对 40 个 glob 命中排序，展示 12 条路径。在 `jev-selection` 插件行配置 `skillMinProbability`，取值须为 `[0, 1]` 内的有限数，概率恰等于阈值也合格。Web 数量表单保存时保留该阈值。没有技能合格时，正常发布空目录，主 Agent 可继续任务；`skill_catalog` 可恢复全部可供模型调用的摘要，原生 `skill` 仍可按准确名称加载。glob 超过上限时直接跳过判断排序，不会悄悄只判断前 40 个。监督功能默认每 6 个完成的模型步骤检查一次跑偏，连续 3 个原生目标轮次无进展则暂停；完成核查默认最多自动补充 3 轮。补充轮数接受正安全整数，按当前 profile 保存；非法输入显示错误并保留已保存值。这些计数互相独立，保存参数不会自动开启功能。
+
+通用长日志准入和测试日志准入有独立开关，均默认关闭。命令日志从 6,000 个 Unicode 码点、可识别测试日志从 4,000 个码点开始处理。通用分支默认最多允许 48 个可判断候选块；首尾及其他保留分组不计入名额。默认设置下，候选超过 48 个时放弃本次通用过滤。两分支共用默认省略概率门槛 0.7，profile 显式配置值优先。判断最多等待 4 秒。取值依据和限制见[阈值评估](docs/reports/2026-10-17-log-admission-threshold.zh-CN.md)。设置页可调整这些及其他准入预算，保存预算不会开启功能。
+
+原生 Spill 配置了 `maxInlineTokens` 时，准入先用宿主共享估算器和本次执行实际生效的预算，检查整个模型可见结果。超过预算就跳过判断请求及规则省略，原样交给原生 Spill；等于预算可继续接受已有检查。Jev 的文本处理位置仍在 Spill 裁剪之前。策略未加载或未配置预算时，沿用现有 Jev 处理，不增加这项限制；`0` 仍是有效预算。采用结果也必须在计入省略标记、恢复提示和外层结果后符合预算。这项功能用于原生预算内的任务相关性去噪，不保证真实 token 节省或任务收益。配置变化及策略状态无法确定时的行为见[包参考](packages/jev/README.md#tool-log-admission)。
 
 ## 行为与限制
 
-- **提醒是建议。** 跑偏和约束提醒不会阻塞、取消工具，也不会强制主模型遵守。
-- **完成核查只审查证据。** 它不会独立运行测试；真实样例曾放行缺乏依据的“没有新增文件”声明，不能视为完成保证。
-- **审批只针对一次操作。** 不改变会话沙箱模式，不覆盖宿主固定检查。有效 approve 可返回 allowed-once，unauthorized 或 unknown 回原人工审批；技术故障保留人工 Retry/Cancel。
+- **提醒是建议。** 跑偏和约束提醒不会阻塞、取消工具，也不会强制主模型遵守。即使只有一个引用或没有文字要求，证据选择题也至少保留两个选项；不确定选项不能作为纠正提醒的依据。
+- **完成核查的固定16槽诊断。** 初始错误由脚本种入，开启组的6/6个错误案例经真实Jev判断和DeepSeek补做满足核心要求；2/2个准确对照判为完成，均无补做。见[新诊断结果](docs/testing/2026-10-05-completion-recovery/public-results.zh-CN.md)。这些试次使用此前的已有证据核查语义，不能证明轻量报告核查的真实任务效果，也不能推出自然任务错误率或编码平均收益。历史长编码试次因默认证据预算裁掉原始要求，判断零采用、零自动补做，最终转入人工Retry/Cancel，见[旧报告](docs/testing/2026-10-02-completion-skill/README.md)。
+- **审批只针对一次操作。** 不改变会话沙箱模式，不覆盖宿主固定检查。操作路径和直接脚本证据使用原生当前工作目录，包含相对 shell `workdir` 覆盖；原始工作区仍为沙箱边界。使用 PowerShell 调用运算符执行未指定路径的脚本（例如 `& 'build.ps1'`）时，简单调用保留原生审批，因为 PowerShell 可能通过 `PATH` 找到脚本。有效 approve 可返回 allowed-once，unauthorized 或 unknown 回原人工审批；技术故障保留人工 Retry/Cancel。
 - **共享纠正有明确范围。** 它只处理已经共享的报告和消息，不读取所有 Agent 的内部探索；自动投递限当前存活的主 Agent 及其活跃、可继续的直接子 Agent。同一发现以不同形式上报时，仍可能产生重复纠正。
+- **插话判断使用原始事实。** 分流发送新消息、有界的原始任务及修改要求、可用 Goal、近期助手正文、必要工具事实和代码确定的执行阶段。准备输入不调用摘要模型；稳定消息正常只分类一次。响应中断不会取消已经启动的工具。
 - **判断成功不等于执行成功。** 日志分别记录判断、采纳、许可发放和实际操作结果。
-- **日志准入保留原文入口。** 它只在工具执行后调整符合条件的模型可见文本；DSH 即时 spill、工具输出上限和之后的上下文压缩仍生效。[2026-09-27 的真实 profile 报告](docs/reports/2026-09-27-tool-output-admission.zh-CN.md)记录一次 8,510 字符构建日志缩短 75.7%，以及一次中性 180 项测试日志虽触发判断、却因概率低于 0.8 而保留。后续受控案例另见下文。
+- **日志准入保留原文入口。** 它只在工具执行后调整符合条件的模型可见文本；DSH 即时 spill、工具输出上限和之后的上下文压缩仍生效。隔离真实 profile 的一次构建将 8,510 字符日志缩短了 75.7%。一次中性措辞的 180 项测试触发了测试日志判断，但省略概率低于当时配置的 0.8 门槛，因此完整保留；该次不证明测试日志已有实际缩减效果。见[工具输出准入报告](docs/reports/2026-09-27-tool-output-admission.zh-CN.md)。
 - **验证有范围。** 确定性测试证明集成流程，有限真实样例不能证明普遍语义准确率。详见[验证说明](docs/validation.md)。
+- **Luna 任务结果保留未达预期与限制。** 前两个受控审批样例返回 `unauthorized`；后来的真实任务得到 `approve` 并执行一次原生 `allowed-once` 写入。真实构建日志在原默认参数下由 8,407 缩至 2,122 码点（74.76%），五个同分文件概率则未改变排序。[双语 Luna 报告](docs/testing/2026-10-07-luna-decisions/README.md)同时记录这些结果、原文恢复和未验证功能。
 
 开启的功能会将相关任务上下文或操作内容发送到配置的判断服务。精确判断输入和回答保存在 profile 的本地插件记录中，主模型可见影响使用正常 DSH Session 记录。运行资料和凭据应保留为私有数据；公开源码历史不包含个人 QA 截图和原始会话抓取。
 
@@ -152,11 +219,21 @@ dsh --profile jev
 
 仓库根目录是 GitHub 安装入口，`packages/jev` 保留开发源码；`pnpm run build` 会同步生成 `runtime/`，发布源码改动时应一并提交这些生成文件。
 
+[插件 CI](.github/workflows/ci.yml) 在拉取请求和推送到 `main` 时运行，使用 Node 24 和 `packageManager` 声明的 pnpm 版本。它依次运行 `pnpm install --frozen-lockfile`、`pnpm run typecheck`、`pnpm test` 和 `pnpm run build`，随后检查 `runtime/`，其中有修改、删除或新增文件时检查失败。提交拉取请求前，请构建并将更新后的 runtime 文件与源码改动一并提交。
+
+Client CSS 构建用包内相对路径计算类名哈希，并对类名映射排序，使 runtime 比较不依赖 checkout 的绝对路径或 CSS 导出字段的遍历顺序。
+
+协议参考准备步骤在 Windows 上使用目录联接（junction），因此 `pnpm run typecheck` 和 `pnpm run build` 创建该依赖链接时无需管理员权限或开发者模式。其他平台仍使用相对目录符号链接。该准备步骤的回归检查在 Windows CI 作业和常规测试套件中运行。
+
+运行 `pnpm run test:compatibility`，即可构建并打包正式 GitHub 安装入口、准备验证目标列表中最新的 DSH 发布版本，并在临时 profile 中检查官方安装、Host 组件和 Jev 网页。检查启用其余 11 项功能；中途插话分流保持关闭，因为它需要配套源码 Host 的 `Agent.interruptResponse()`。[兼容性 smoke 指南](docs/testing/compatibility-smoke/README.md)说明 Chromium 准备、指定版本及更新支持版本的方法。检查使用本地确定性模型回复，无需真实模型凭据。
+
 维护者可用 [DeepSWE 配对评测入口](bench/deepswe/README.zh-CN.md)评测编码任务，用 [glob 排序管线](bench/selection/README.zh-CN.md)验证固定路径选择案例。两者采用隔离的 DSH/Pier trial，将模型执行与离线检查、报告分开。[英文评测指南](bench/deepswe/README.md)提供编码任务工作流。
+
+[完成核查与技能评测入口](bench/completion_skill/README.zh-CN.md)提供四个具名场景，包括`completion-recovery-16`，以及显式资源清单、新批次准备、无费预检、收费执行和离线报告。[新固定诊断](docs/testing/2026-10-05-completion-recovery/README.md)与[历史结果](docs/testing/2026-10-02-completion-skill/README.md)均和维护入口的验证分开。每次重跑记录脚本提交和源码哈希，依赖及凭据仍需在运行机器上可用。
 
 [公开 glob 实验](docs/testing/2026-10-01-glob-ranking/README.md)记录六类合成案例与12次真实DeepSeek/Jev运行：4次成功Jev判断返回69项分数，0和41候选按规则旁路；报告保留质量负例、恢复检查、源码读取数与费用估算。历史运行使用固定的旧版插件产物，维护中的管线不表示当前main已重跑，也不表示通用任务成功率提高。
 
-[日志省略受控案例](docs/testing/2026-10-02-log-admission/README.md)记录六种人工原生 bash 日志与 12 次真实 DeepSeek trial。四次 Jev 判断覆盖 33 个候选：两次因概率低于 0.8 而全部保留，另两次实际省略 15 个语义候选；确定性逐字重复规则另替换四份失败详情。两份缩减结果均保留保护信息，主模型也完整读回原文。这是使用本地一次性辅助包的历史运行，**不是**公开 `bench/deepswe` 直接可跑的案例，也不能证明通用费用或任务成功率收益。
+[日志省略受控案例](docs/testing/2026-10-02-log-admission/README.md)记录六种人工原生 bash 日志与 12 次真实 DeepSeek trial。四次 Jev 判断覆盖 33 个候选：两次因概率低于实验采用的 0.8 门槛而全部保留，另两次实际省略 15 个语义候选；确定性逐字重复规则另替换四份失败详情。两份缩减结果均保留保护信息，主模型也完整读回原文。这是使用本地一次性辅助包的历史运行，**不是**公开 `bench/deepswe` 直接可跑的案例，也不能证明通用费用或任务成功率收益。
 
 ```sh
 pnpm run typecheck
@@ -167,6 +244,7 @@ pnpm exec vitest run packages/jev/tests/host.test.ts packages/jev/tests/wire.tes
 按改动运行相关测试。没有明确授权时，不开启真实服务实验或使用他人的凭据。开发夹具和测试不会进入可安装 tarball。
 
 - [包参考与消费者 API](packages/jev/README.md)
+- [规划、决策与交付记录](.agents/notes/README.md)
 - [工作区审批集成测试](packages/jev/tests/workspace-approval.test.ts)
 - [工作区审批 QA 用例](packages/jev/tests/workspace-approval-qa.md)
 - [工具输出准入报告](docs/reports/2026-09-27-tool-output-admission.zh-CN.md)

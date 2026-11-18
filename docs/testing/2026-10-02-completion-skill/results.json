@@ -1,0 +1,2216 @@
+{
+  "schema_version": 1,
+  "prepared_date": "2026-10-02",
+  "date_semantics": "run_dates_observed only lists dates in source execution timestamps; prepared_date is this JSON assembly date.",
+  "source_artifacts": [
+    ".artifacts/completion-skill-suite-v1/batch3/report.json",
+    ".artifacts/completion-skill-suite-v1/batch3/completion-review.json",
+    ".artifacts/completion-skill-suite-v1/batch3/skills-review.json",
+    ".artifacts/completion-skill-suite-v1/batch3/coding-review.json",
+    ".artifacts/coding-followup-v1/batch2/report.json",
+    ".artifacts/coding-followup-v1/batch2/coding-review.json",
+    ".artifacts/skill-followup-v1/batch-candidate2/report.json",
+    ".artifacts/skill-followup-v1/batch-candidate2/skills-review.json",
+    ".artifacts/skill-followup-v1/batch-candidate2/root-answer-audit.json",
+    ".artifacts/followup-control/metrics.json"
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "initial-26",
+      "run_dates_observed": [
+        "2026-10-02"
+      ],
+      "review_dates_observed": [],
+      "coverage": {
+        "planned_count": 26,
+        "with_result_count": 26,
+        "complete_gate_pass_count": 25,
+        "unknown_cost_count": 1,
+        "unknown_cost_indices": [
+          26
+        ],
+        "not_started_count": 0,
+        "known_estimated_subtotal_usd": 0.210807618,
+        "overall_estimated_usd": null
+      },
+      "phase_summaries": [
+        {
+          "planned_count": 12,
+          "with_result_count": 12,
+          "complete_gate_pass_count": 12,
+          "unknown_cost_count": 0,
+          "unknown_cost_indices": [],
+          "not_started_count": 0,
+          "known_estimated_subtotal_usd": 0.001375668,
+          "overall_estimated_usd": 0.001375668,
+          "family": "completion"
+        },
+        {
+          "planned_count": 12,
+          "with_result_count": 12,
+          "complete_gate_pass_count": 12,
+          "unknown_cost_count": 0,
+          "unknown_cost_indices": [],
+          "not_started_count": 0,
+          "known_estimated_subtotal_usd": 0.010004994,
+          "overall_estimated_usd": 0.010004994,
+          "family": "skills"
+        },
+        {
+          "planned_count": 2,
+          "with_result_count": 2,
+          "complete_gate_pass_count": 1,
+          "unknown_cost_count": 1,
+          "unknown_cost_indices": [
+            26
+          ],
+          "not_started_count": 0,
+          "known_estimated_subtotal_usd": 0.199426956,
+          "overall_estimated_usd": null,
+          "family": "coding"
+        }
+      ],
+      "slots": [
+        {
+          "index": 1,
+          "family": "completion",
+          "case": "complete-deliverable",
+          "condition": "baseline",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.0,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 0,
+            "synthetic_usage": true,
+            "input_tokens": 14,
+            "output_tokens": 12,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 2.036335,
+          "independent_verifier": null,
+          "completion": {
+            "first_assessment": null,
+            "subsequent_assessments": [],
+            "attempt_statuses": [],
+            "supplement_requests": 0
+          }
+        },
+        {
+          "index": 2,
+          "family": "completion",
+          "case": "complete-deliverable",
+          "condition": "completion_check",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.000142128,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 0,
+            "synthetic_usage": true,
+            "input_tokens": 14,
+            "output_tokens": 12,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 1,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 3384,
+            "output_tokens": 131,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.000142128,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 2.806448,
+          "independent_verifier": null,
+          "completion": {
+            "first_assessment": "complete",
+            "subsequent_assessments": [
+              "complete"
+            ],
+            "attempt_statuses": [
+              "succeeded"
+            ],
+            "supplement_requests": 0
+          }
+        },
+        {
+          "index": 3,
+          "family": "completion",
+          "case": "missing-deliverable",
+          "condition": "baseline",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.0,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 0,
+            "synthetic_usage": true,
+            "input_tokens": 14,
+            "output_tokens": 12,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 2.01351,
+          "independent_verifier": null,
+          "completion": {
+            "first_assessment": null,
+            "subsequent_assessments": [],
+            "attempt_statuses": [],
+            "supplement_requests": 0
+          }
+        },
+        {
+          "index": 4,
+          "family": "completion",
+          "case": "missing-deliverable",
+          "condition": "completion_check",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.000314874,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 4,
+            "real_provider_calls": 0,
+            "synthetic_usage": true,
+            "input_tokens": 28,
+            "output_tokens": 24,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 2,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 7497,
+            "output_tokens": 270,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.000314874,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 3.207382,
+          "independent_verifier": null,
+          "completion": {
+            "first_assessment": "omission",
+            "subsequent_assessments": [
+              "omission",
+              "omission"
+            ],
+            "attempt_statuses": [
+              "succeeded",
+              "succeeded"
+            ],
+            "supplement_requests": 1
+          }
+        },
+        {
+          "index": 5,
+          "family": "completion",
+          "case": "failed-test-claim",
+          "condition": "baseline",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.0,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 0,
+            "synthetic_usage": true,
+            "input_tokens": 14,
+            "output_tokens": 12,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 2.350489,
+          "independent_verifier": null,
+          "completion": {
+            "first_assessment": null,
+            "subsequent_assessments": [],
+            "attempt_statuses": [],
+            "supplement_requests": 0
+          }
+        },
+        {
+          "index": 6,
+          "family": "completion",
+          "case": "failed-test-claim",
+          "condition": "completion_check",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.000302778,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 3,
+            "real_provider_calls": 0,
+            "synthetic_usage": true,
+            "input_tokens": 21,
+            "output_tokens": 19,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 2,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 7209,
+            "output_tokens": 264,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.000302778,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 3.523247,
+          "independent_verifier": null,
+          "completion": {
+            "first_assessment": "omission",
+            "subsequent_assessments": [
+              "omission",
+              "complete"
+            ],
+            "attempt_statuses": [
+              "succeeded",
+              "succeeded"
+            ],
+            "supplement_requests": 1
+          }
+        },
+        {
+          "index": 7,
+          "family": "completion",
+          "case": "stale-test-after-edit",
+          "condition": "baseline",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.0,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 3,
+            "real_provider_calls": 0,
+            "synthetic_usage": true,
+            "input_tokens": 21,
+            "output_tokens": 17,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 2.401853,
+          "independent_verifier": null,
+          "completion": {
+            "first_assessment": null,
+            "subsequent_assessments": [],
+            "attempt_statuses": [],
+            "supplement_requests": 0
+          }
+        },
+        {
+          "index": 8,
+          "family": "completion",
+          "case": "stale-test-after-edit",
+          "condition": "completion_check",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.000328608,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 5,
+            "real_provider_calls": 0,
+            "synthetic_usage": true,
+            "input_tokens": 35,
+            "output_tokens": 29,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 2,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 7824,
+            "output_tokens": 252,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.000328608,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 3.855913,
+          "independent_verifier": null,
+          "completion": {
+            "first_assessment": "omission",
+            "subsequent_assessments": [
+              "omission",
+              "complete"
+            ],
+            "attempt_statuses": [
+              "succeeded",
+              "succeeded"
+            ],
+            "supplement_requests": 1
+          }
+        },
+        {
+          "index": 9,
+          "family": "completion",
+          "case": "read-only-investigation",
+          "condition": "baseline",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.0,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 0,
+            "synthetic_usage": true,
+            "input_tokens": 14,
+            "output_tokens": 12,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 2.031047,
+          "independent_verifier": null,
+          "completion": {
+            "first_assessment": null,
+            "subsequent_assessments": [],
+            "attempt_statuses": [],
+            "supplement_requests": 0
+          }
+        },
+        {
+          "index": 10,
+          "family": "completion",
+          "case": "read-only-investigation",
+          "condition": "completion_check",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.000142128,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 0,
+            "synthetic_usage": true,
+            "input_tokens": 14,
+            "output_tokens": 12,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 1,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 3384,
+            "output_tokens": 139,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.000142128,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 2.716038,
+          "independent_verifier": null,
+          "completion": {
+            "first_assessment": "complete",
+            "subsequent_assessments": [
+              "complete"
+            ],
+            "attempt_statuses": [
+              "succeeded"
+            ],
+            "supplement_requests": 0
+          }
+        },
+        {
+          "index": 11,
+          "family": "completion",
+          "case": "needs-user-choice",
+          "condition": "baseline",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.0,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 0,
+            "synthetic_usage": true,
+            "input_tokens": 14,
+            "output_tokens": 12,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 2.012035,
+          "independent_verifier": null,
+          "completion": {
+            "first_assessment": null,
+            "subsequent_assessments": [],
+            "attempt_statuses": [],
+            "supplement_requests": 0
+          }
+        },
+        {
+          "index": 12,
+          "family": "completion",
+          "case": "needs-user-choice",
+          "condition": "completion_check",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.000145152,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 0,
+            "synthetic_usage": true,
+            "input_tokens": 14,
+            "output_tokens": 12,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 1,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 3456,
+            "output_tokens": 134,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.000145152,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 2.755016,
+          "independent_verifier": null,
+          "completion": {
+            "first_assessment": "needs-user",
+            "subsequent_assessments": [
+              "needs-user"
+            ],
+            "attempt_statuses": [
+              "succeeded"
+            ],
+            "supplement_requests": 0
+          }
+        },
+        {
+          "index": 13,
+          "family": "skills",
+          "case": "empty-directory",
+          "condition": "baseline",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.00081072,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 2,
+            "synthetic_usage": false,
+            "input_tokens": 2176,
+            "output_tokens": 74,
+            "cache_read_tokens": 11520,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.00081072,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 3.277701,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 0,
+            "published_count": 0,
+            "required_names": [],
+            "top5_names": null,
+            "recall_at_5": null,
+            "body_load_count": 0,
+            "loaded_names": [],
+            "confirmed_source_read_calls": null,
+            "confirmed_source_read_result_utf8_bytes": null
+          }
+        },
+        {
+          "index": 14,
+          "family": "skills",
+          "case": "empty-directory",
+          "condition": "skill_selection",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.00031824,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 2,
+            "synthetic_usage": false,
+            "input_tokens": 296,
+            "output_tokens": 124,
+            "cache_read_tokens": 13440,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.00031824,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 3.365117,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 0,
+            "published_count": 0,
+            "required_names": [],
+            "top5_names": null,
+            "recall_at_5": null,
+            "body_load_count": 0,
+            "loaded_names": [],
+            "confirmed_source_read_calls": null,
+            "confirmed_source_read_result_utf8_bytes": null
+          }
+        },
+        {
+          "index": 15,
+          "family": "skills",
+          "case": "single-relevant",
+          "condition": "baseline",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.000937056,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 2,
+            "synthetic_usage": false,
+            "input_tokens": 2356,
+            "output_tokens": 133,
+            "cache_read_tokens": 11776,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.000937056,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 3.705293,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 1,
+            "published_count": 1,
+            "required_names": [
+              "incident-triage"
+            ],
+            "top5_names": null,
+            "recall_at_5": null,
+            "body_load_count": 1,
+            "loaded_names": [
+              "incident-triage"
+            ],
+            "confirmed_source_read_calls": null,
+            "confirmed_source_read_result_utf8_bytes": null
+          }
+        },
+        {
+          "index": 16,
+          "family": "skills",
+          "case": "single-relevant",
+          "condition": "skill_selection",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.00040485,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 2,
+            "synthetic_usage": false,
+            "input_tokens": 525,
+            "output_tokens": 126,
+            "cache_read_tokens": 13568,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.000390108,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 1,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 351,
+            "output_tokens": 22,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 1.4742e-05,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 4.61368,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 1,
+            "published_count": 1,
+            "required_names": [
+              "incident-triage"
+            ],
+            "top5_names": [
+              "incident-triage"
+            ],
+            "recall_at_5": 1.0,
+            "body_load_count": 1,
+            "loaded_names": [
+              "incident-triage"
+            ],
+            "confirmed_source_read_calls": null,
+            "confirmed_source_read_result_utf8_bytes": null
+          }
+        },
+        {
+          "index": 17,
+          "family": "skills",
+          "case": "dense-relevance",
+          "condition": "baseline",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.00135936,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 2,
+            "synthetic_usage": false,
+            "input_tokens": 2860,
+            "output_tokens": 357,
+            "cache_read_tokens": 12160,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.00135936,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 4.063991,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 9,
+            "published_count": 9,
+            "required_names": [
+              "launch-quality",
+              "launch-rollback",
+              "launch-rollout",
+              "launch-stakeholders",
+              "launch-support"
+            ],
+            "top5_names": null,
+            "recall_at_5": null,
+            "body_load_count": 5,
+            "loaded_names": [
+              "launch-rollout",
+              "launch-support",
+              "launch-quality",
+              "launch-rollback",
+              "launch-stakeholders"
+            ],
+            "confirmed_source_read_calls": null,
+            "confirmed_source_read_result_utf8_bytes": null
+          }
+        },
+        {
+          "index": 18,
+          "family": "skills",
+          "case": "dense-relevance",
+          "condition": "skill_selection",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.000840522,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 2,
+            "synthetic_usage": false,
+            "input_tokens": 1048,
+            "output_tokens": 348,
+            "cache_read_tokens": 13824,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.000814944,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 1,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 609,
+            "output_tokens": 166,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 2.5578e-05,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 4.9959,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 9,
+            "published_count": 5,
+            "required_names": [
+              "launch-quality",
+              "launch-rollback",
+              "launch-rollout",
+              "launch-stakeholders",
+              "launch-support"
+            ],
+            "top5_names": [
+              "launch-stakeholders",
+              "launch-quality",
+              "launch-rollback",
+              "launch-rollout",
+              "launch-support"
+            ],
+            "recall_at_5": 1.0,
+            "body_load_count": 5,
+            "loaded_names": [
+              "launch-rollout",
+              "launch-support",
+              "launch-quality",
+              "launch-rollback",
+              "launch-stakeholders"
+            ],
+            "confirmed_source_read_calls": null,
+            "confirmed_source_read_result_utf8_bytes": null
+          }
+        },
+        {
+          "index": 19,
+          "family": "skills",
+          "case": "two-required-near-names",
+          "condition": "baseline",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.001158792,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 2,
+            "synthetic_usage": false,
+            "input_tokens": 2494,
+            "output_tokens": 282,
+            "cache_read_tokens": 12032,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.001158792,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 4.374601,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 6,
+            "published_count": 6,
+            "required_names": [
+              "invoice-reconcile",
+              "privacy-retention"
+            ],
+            "top5_names": null,
+            "recall_at_5": null,
+            "body_load_count": 2,
+            "loaded_names": [
+              "invoice-reconcile",
+              "privacy-retention"
+            ],
+            "confirmed_source_read_calls": null,
+            "confirmed_source_read_result_utf8_bytes": null
+          }
+        },
+        {
+          "index": 20,
+          "family": "skills",
+          "case": "two-required-near-names",
+          "condition": "skill_selection",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.00090783,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 2,
+            "synthetic_usage": false,
+            "input_tokens": 723,
+            "output_tokens": 488,
+            "cache_read_tokens": 13824,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.000885444,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 1,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 533,
+            "output_tokens": 112,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 2.2386e-05,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 6.162978,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 6,
+            "published_count": 5,
+            "required_names": [
+              "invoice-reconcile",
+              "privacy-retention"
+            ],
+            "top5_names": [
+              "privacy-retention",
+              "invoice-reconcile",
+              "invoice-reconcile-style",
+              "invoice-reconciliation-faq",
+              "privacy-retention-faq"
+            ],
+            "recall_at_5": 1.0,
+            "body_load_count": 2,
+            "loaded_names": [
+              "invoice-reconcile",
+              "privacy-retention"
+            ],
+            "confirmed_source_read_calls": null,
+            "confirmed_source_read_result_utf8_bytes": null
+          }
+        },
+        {
+          "index": 21,
+          "family": "skills",
+          "case": "all-irrelevant",
+          "condition": "baseline",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.000729384,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 1,
+            "real_provider_calls": 1,
+            "synthetic_usage": false,
+            "input_tokens": 2198,
+            "output_tokens": 34,
+            "cache_read_tokens": 4864,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.000729384,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 2.597251,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 8,
+            "published_count": 8,
+            "required_names": [],
+            "top5_names": null,
+            "recall_at_5": null,
+            "body_load_count": 0,
+            "loaded_names": [],
+            "confirmed_source_read_calls": null,
+            "confirmed_source_read_result_utf8_bytes": null
+          }
+        },
+        {
+          "index": 22,
+          "family": "skills",
+          "case": "all-irrelevant",
+          "condition": "skill_selection",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.000184146,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 1,
+            "real_provider_calls": 1,
+            "synthetic_usage": false,
+            "input_tokens": 367,
+            "output_tokens": 9,
+            "cache_read_tokens": 6656,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.000160836,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 1,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 555,
+            "output_tokens": 148,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 2.331e-05,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 3.354861,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 8,
+            "published_count": 5,
+            "required_names": [],
+            "top5_names": [
+              "baking-bread",
+              "bird-watching",
+              "calligraphy-ink",
+              "garden-pruning",
+              "guitar-strings"
+            ],
+            "recall_at_5": null,
+            "body_load_count": 0,
+            "loaded_names": [],
+            "confirmed_source_read_calls": null,
+            "confirmed_source_read_result_utf8_bytes": null
+          }
+        },
+        {
+          "index": 23,
+          "family": "skills",
+          "case": "catalog-recovery",
+          "condition": "baseline",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.001397892,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 2,
+            "real_provider_calls": 2,
+            "synthetic_usage": false,
+            "input_tokens": 2543,
+            "output_tokens": 469,
+            "cache_read_tokens": 12032,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.001397892,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 4.724703,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 8,
+            "published_count": 8,
+            "required_names": [
+              "zenith-codebook"
+            ],
+            "top5_names": null,
+            "recall_at_5": null,
+            "body_load_count": 1,
+            "loaded_names": [
+              "zenith-codebook"
+            ],
+            "confirmed_source_read_calls": null,
+            "confirmed_source_read_result_utf8_bytes": null
+          }
+        },
+        {
+          "index": 24,
+          "family": "skills",
+          "case": "catalog-recovery",
+          "condition": "skill_selection",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.000956202,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 3,
+            "real_provider_calls": 3,
+            "synthetic_usage": false,
+            "input_tokens": 817,
+            "output_tokens": 467,
+            "cache_read_tokens": 21120,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.00093222,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 1,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 571,
+            "output_tokens": 148,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 2.3982e-05,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 6.980535,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 8,
+            "published_count": 5,
+            "required_names": [
+              "zenith-codebook"
+            ],
+            "top5_names": [
+              "zenith-codebook",
+              "archive-index",
+              "photo-catalog",
+              "music-tempo",
+              "travel-route"
+            ],
+            "recall_at_5": 1.0,
+            "body_load_count": 1,
+            "loaded_names": [
+              "zenith-codebook"
+            ],
+            "confirmed_source_read_calls": null,
+            "confirmed_source_read_result_utf8_bytes": null
+          }
+        },
+        {
+          "index": 25,
+          "family": "coding",
+          "case": "vitest-duration-sharding",
+          "condition": "baseline",
+          "repeat": null,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.199426956,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 123,
+            "real_provider_calls": 123,
+            "synthetic_usage": false,
+            "input_tokens": 79473,
+            "output_tokens": 89222,
+            "cache_read_tokens": 11419776,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.199426956,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 557.007296,
+          "independent_verifier": {
+            "reward": 1,
+            "f2p": {
+              "passed": 56,
+              "total": 56
+            },
+            "p2p": {
+              "passed": 24,
+              "total": 24
+            }
+          },
+          "review_status": null
+        },
+        {
+          "index": 26,
+          "family": "coding",
+          "case": "vitest-duration-sharding",
+          "condition": "completion_check",
+          "repeat": null,
+          "status": "completed",
+          "termination": "budget_exhausted",
+          "structural_ok": false,
+          "usage_complete": false,
+          "overall_estimated_usd": null,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 148,
+            "real_provider_calls": 148,
+            "synthetic_usage": false,
+            "input_tokens": 80851,
+            "output_tokens": 98325,
+            "cache_read_tokens": 14585856,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.229760436,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": null,
+            "record_complete": false,
+            "storage_complete": false
+          },
+          "agent_execution_seconds": 601.029797,
+          "independent_verifier": {
+            "reward": 1,
+            "f2p": {
+              "passed": 56,
+              "total": 56
+            },
+            "p2p": {
+              "passed": 24,
+              "total": 24
+            }
+          },
+          "review_status": "completed-trial-unscored-for-experiment"
+        }
+      ]
+    },
+    {
+      "scenario_id": "coding-followup-4",
+      "run_dates_observed": [
+        "2026-10-02"
+      ],
+      "review_dates_observed": [],
+      "coverage": {
+        "planned_count": 4,
+        "with_result_count": 2,
+        "complete_gate_pass_count": 1,
+        "unknown_cost_count": 1,
+        "unknown_cost_indices": [
+          2
+        ],
+        "not_started_count": 2,
+        "known_estimated_subtotal_usd": 0.293765928,
+        "overall_estimated_usd": null
+      },
+      "slots": [
+        {
+          "index": 1,
+          "family": "coding",
+          "case": "vitest-duration-sharding",
+          "condition": "baseline",
+          "repeat": 1,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.293765928,
+          "recorded_estimated_usd": 0.293765928,
+          "main": {
+            "calls": 178,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 105542,
+            "output_tokens": 109158,
+            "cache_read_tokens": 21852288,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.293765928,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 939.719241,
+          "independent_verifier": {
+            "reward": 1,
+            "f2p": {
+              "passed": 56,
+              "total": 56
+            },
+            "p2p": {
+              "passed": 24,
+              "total": 24
+            }
+          },
+          "review_status": "complete"
+        },
+        {
+          "index": 2,
+          "family": "coding",
+          "case": "vitest-duration-sharding",
+          "condition": "completion_check",
+          "repeat": 1,
+          "status": "completed",
+          "termination": "needs-human",
+          "structural_ok": false,
+          "usage_complete": false,
+          "overall_estimated_usd": null,
+          "recorded_estimated_usd": 0.219180426,
+          "main": {
+            "calls": 150,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 67235,
+            "output_tokens": 97379,
+            "cache_read_tokens": 13580416,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.218507796,
+            "record_complete": false,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 1,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 16015,
+            "output_tokens": 1381,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.00067263,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 670.82315,
+          "independent_verifier": {
+            "reward": 1,
+            "f2p": {
+              "passed": 56,
+              "total": 56
+            },
+            "p2p": {
+              "passed": 24,
+              "total": 24
+            }
+          },
+          "review_status": "completed-trial-halted"
+        },
+        {
+          "index": 3,
+          "family": "coding",
+          "case": "vitest-duration-sharding",
+          "condition": "completion_check",
+          "repeat": 2,
+          "status": "not-started",
+          "termination": null,
+          "structural_ok": false,
+          "usage_complete": false,
+          "overall_estimated_usd": null,
+          "recorded_estimated_usd": null,
+          "main": null,
+          "jev": null,
+          "agent_execution_seconds": null,
+          "independent_verifier": null,
+          "review_status": "pending"
+        },
+        {
+          "index": 4,
+          "family": "coding",
+          "case": "vitest-duration-sharding",
+          "condition": "baseline",
+          "repeat": 2,
+          "status": "not-started",
+          "termination": null,
+          "structural_ok": false,
+          "usage_complete": false,
+          "overall_estimated_usd": null,
+          "recorded_estimated_usd": null,
+          "main": null,
+          "jev": null,
+          "agent_execution_seconds": null,
+          "independent_verifier": null,
+          "review_status": "pending"
+        }
+      ]
+    },
+    {
+      "scenario_id": "skill-repository-8",
+      "run_dates_observed": [],
+      "review_dates_observed": [
+        "2026-10-02"
+      ],
+      "coverage": {
+        "planned_count": 8,
+        "with_result_count": 8,
+        "complete_gate_pass_count": 8,
+        "unknown_cost_count": 0,
+        "unknown_cost_indices": [],
+        "not_started_count": 0,
+        "known_estimated_subtotal_usd": 0.031414584,
+        "overall_estimated_usd": 0.031414584
+      },
+      "slots": [
+        {
+          "index": 1,
+          "family": "skill-followup",
+          "case": "research-one",
+          "condition": "baseline",
+          "repeat": 1,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.004589508,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 5,
+            "real_provider_calls": 5,
+            "synthetic_usage": false,
+            "input_tokens": 5147,
+            "output_tokens": 2342,
+            "cache_read_tokens": 39168,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.004589508,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 15.047575,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 24,
+            "published_count": 24,
+            "required_names": [
+              "session-renewal-trace"
+            ],
+            "top5_names": null,
+            "recall_at_5": null,
+            "body_load_count": 1,
+            "loaded_names": [
+              "session-renewal-trace"
+            ],
+            "confirmed_source_read_calls": 6,
+            "confirmed_source_read_result_utf8_bytes": 2111
+          }
+        },
+        {
+          "index": 2,
+          "family": "skill-followup",
+          "case": "research-one",
+          "condition": "skill_selection",
+          "repeat": 1,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.00433161,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 4,
+            "real_provider_calls": 4,
+            "synthetic_usage": false,
+            "input_tokens": 1757,
+            "output_tokens": 2976,
+            "cache_read_tokens": 31360,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.00428646,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 1,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 1075,
+            "output_tokens": 450,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 4.515e-05,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 16.723794,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 24,
+            "published_count": 5,
+            "required_names": [
+              "session-renewal-trace"
+            ],
+            "top5_names": [
+              "session-renewal-trace",
+              "session-cookie-format",
+              "session-signin-guide",
+              "session-renewal-docs",
+              "session-expiry-dashboard"
+            ],
+            "recall_at_5": 1.0,
+            "body_load_count": 1,
+            "loaded_names": [
+              "session-renewal-trace"
+            ],
+            "confirmed_source_read_calls": 6,
+            "confirmed_source_read_result_utf8_bytes": 2111
+          }
+        },
+        {
+          "index": 3,
+          "family": "skill-followup",
+          "case": "research-one",
+          "condition": "skill_selection",
+          "repeat": 2,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.004279074,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 4,
+            "real_provider_calls": 4,
+            "synthetic_usage": false,
+            "input_tokens": 1627,
+            "output_tokens": 2966,
+            "cache_read_tokens": 31104,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.004233924,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 1,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 1075,
+            "output_tokens": 450,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 4.515e-05,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 16.678786,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 24,
+            "published_count": 5,
+            "required_names": [
+              "session-renewal-trace"
+            ],
+            "top5_names": [
+              "session-renewal-trace",
+              "session-cookie-format",
+              "session-signin-guide",
+              "session-renewal-docs",
+              "session-expiry-dashboard"
+            ],
+            "recall_at_5": 1.0,
+            "body_load_count": 1,
+            "loaded_names": [
+              "session-renewal-trace"
+            ],
+            "confirmed_source_read_calls": 6,
+            "confirmed_source_read_result_utf8_bytes": 2111
+          }
+        },
+        {
+          "index": 4,
+          "family": "skill-followup",
+          "case": "research-one",
+          "condition": "baseline",
+          "repeat": 2,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.004943052,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 5,
+            "real_provider_calls": 5,
+            "synthetic_usage": false,
+            "input_tokens": 2569,
+            "output_tokens": 3260,
+            "cache_read_tokens": 43392,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.004943052,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 21.381404,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 24,
+            "published_count": 24,
+            "required_names": [
+              "session-renewal-trace"
+            ],
+            "top5_names": null,
+            "recall_at_5": null,
+            "body_load_count": 1,
+            "loaded_names": [
+              "session-renewal-trace"
+            ],
+            "confirmed_source_read_calls": 6,
+            "confirmed_source_read_result_utf8_bytes": 2111
+          }
+        },
+        {
+          "index": 5,
+          "family": "skill-followup",
+          "case": "research-two",
+          "condition": "baseline",
+          "repeat": 1,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.00341796,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 4,
+            "real_provider_calls": 4,
+            "synthetic_usage": false,
+            "input_tokens": 3902,
+            "output_tokens": 1732,
+            "cache_read_tokens": 28160,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.00341796,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 11.798935,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 24,
+            "published_count": 24,
+            "required_names": [
+              "audit-retention-trace",
+              "invoice-allocation-trace"
+            ],
+            "top5_names": null,
+            "recall_at_5": null,
+            "body_load_count": 2,
+            "loaded_names": [
+              "invoice-allocation-trace",
+              "audit-retention-trace"
+            ],
+            "confirmed_source_read_calls": 6,
+            "confirmed_source_read_result_utf8_bytes": 2763
+          }
+        },
+        {
+          "index": 6,
+          "family": "skill-followup",
+          "case": "research-two",
+          "condition": "skill_selection",
+          "repeat": 1,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.003902628,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 5,
+            "real_provider_calls": 5,
+            "synthetic_usage": false,
+            "input_tokens": 3458,
+            "output_tokens": 2137,
+            "cache_read_tokens": 42368,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.003856008,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 1,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 1110,
+            "output_tokens": 450,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 4.662e-05,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 15.146419,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 24,
+            "published_count": 5,
+            "required_names": [
+              "audit-retention-trace",
+              "invoice-allocation-trace"
+            ],
+            "top5_names": [
+              "invoice-allocation-trace",
+              "audit-retention-trace",
+              "privacy-audit-dashboard",
+              "billing-refund-guide",
+              "retention-legal-faq"
+            ],
+            "recall_at_5": 1.0,
+            "body_load_count": 2,
+            "loaded_names": [
+              "invoice-allocation-trace",
+              "audit-retention-trace"
+            ],
+            "confirmed_source_read_calls": 6,
+            "confirmed_source_read_result_utf8_bytes": 2763
+          }
+        },
+        {
+          "index": 7,
+          "family": "skill-followup",
+          "case": "research-two",
+          "condition": "skill_selection",
+          "repeat": 2,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.003127548,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 3,
+            "real_provider_calls": 3,
+            "synthetic_usage": false,
+            "input_tokens": 1608,
+            "output_tokens": 2056,
+            "cache_read_tokens": 21888,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.003080928,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 1,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 1110,
+            "output_tokens": 450,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 4.662e-05,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 12.506568,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 24,
+            "published_count": 5,
+            "required_names": [
+              "audit-retention-trace",
+              "invoice-allocation-trace"
+            ],
+            "top5_names": [
+              "invoice-allocation-trace",
+              "audit-retention-trace",
+              "privacy-audit-dashboard",
+              "billing-refund-guide",
+              "retention-legal-faq"
+            ],
+            "recall_at_5": 1.0,
+            "body_load_count": 2,
+            "loaded_names": [
+              "invoice-allocation-trace",
+              "audit-retention-trace"
+            ],
+            "confirmed_source_read_calls": 6,
+            "confirmed_source_read_result_utf8_bytes": 2763
+          }
+        },
+        {
+          "index": 8,
+          "family": "skill-followup",
+          "case": "research-two",
+          "condition": "baseline",
+          "repeat": 2,
+          "status": "completed",
+          "termination": "normal",
+          "structural_ok": true,
+          "usage_complete": true,
+          "overall_estimated_usd": 0.002823204,
+          "recorded_estimated_usd": null,
+          "main": {
+            "calls": 3,
+            "real_provider_calls": 3,
+            "synthetic_usage": false,
+            "input_tokens": 1515,
+            "output_tokens": 1860,
+            "cache_read_tokens": 22784,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.002823204,
+            "record_complete": true,
+            "storage_complete": null
+          },
+          "jev": {
+            "calls": 0,
+            "real_provider_calls": null,
+            "synthetic_usage": null,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "recorded_estimated_usd": 0.0,
+            "record_complete": true,
+            "storage_complete": true
+          },
+          "agent_execution_seconds": 10.784647,
+          "independent_verifier": null,
+          "skills": {
+            "candidate_count": 24,
+            "published_count": 24,
+            "required_names": [
+              "audit-retention-trace",
+              "invoice-allocation-trace"
+            ],
+            "top5_names": null,
+            "recall_at_5": null,
+            "body_load_count": 2,
+            "loaded_names": [
+              "invoice-allocation-trace",
+              "audit-retention-trace"
+            ],
+            "confirmed_source_read_calls": 6,
+            "confirmed_source_read_result_utf8_bytes": 2763
+          }
+        }
+      ]
+    }
+  ],
+  "recorded_peak_price_components": {
+    "skill_followup_complete_usd": 0.031414584,
+    "coding_slot_1_known_complete_usd": 0.293765928,
+    "coding_slot_2_recorded_main_usd": 0.218507796,
+    "coding_slot_2_recorded_jev_usd": 0.00067263,
+    "sum_of_recorded_components_usd": 0.544360938,
+    "interpretation": "Recorded peak-price components only; not a complete whole-run cost, not an actual invoice, and not a lower bound on the actual invoice."
+  },
+  "historical_identity": {
+    "initial-26": {
+      "main_models_by_family": {
+        "completion": {
+          "provider": "eval-scripted",
+          "id": "fixed-script",
+          "synthetic": true
+        },
+        "skills": {
+          "provider": "deepseek-official",
+          "id": "deepseek-flash",
+          "synthetic": false
+        },
+        "coding": {
+          "provider": "deepseek-official",
+          "id": "deepseek-flash",
+          "synthetic": false
+        }
+      },
+      "public_runtime_versions": {
+        "dsh": "0.1.7-rc.2",
+        "node": "24.14.1",
+        "pnpm": "11.7.0",
+        "jev": "jev-1.13.0"
+      },
+      "plugin": {
+        "commit": "7e208e040d7f4dae7dcdf292e53a4a1b73c0303f",
+        "tar_sha256": "e9927b097baff28b05ecd0028b9f0c1d16bf9177aa70fa05b873e76d5403bf70"
+      },
+      "runtime_artifacts": {
+        "deep_swe_commit": "0b9fabbb63b9104d678fe965e1632f2dd9eaa2ea",
+        "pier_commit": "4d3c14041d16443f3f9f460dcdf23629994a304e",
+        "node_tar_sha256": "84d38715d449447117d05c3e71acd78daa49d5b1bfa8aacf610303920c3322be"
+      },
+      "suite_lock_history": {
+        "original_sha256": "9f6da83164843b603496614c0b4eb5e2bc71141968f225421556f85a83ab6157",
+        "revised_sha256": "9df6b3c7033d200207beba748a2c1445f1994e5fb2930be46893931075438f6f",
+        "image": "public.ecr.aws/d3j8x8q7/swe-bench-202605@sha256:11087ec4eb0320e80546ad5eda89c67938e72be69cbb7c6730cf9baf88dc7556"
+      },
+      "source_artifact_sha256": {
+        ".artifacts/completion-skill-suite-v1/batch3/report.json": "52027d1d82ed73cf6a6af52f9d33cbd8e82b7cb7cb5278eed4d2eaf551beb28d",
+        ".artifacts/completion-skill-suite-v1/batch3/completion-review.json": "94d50e5ac161fff0a4663bf5e19eca72343a2a9a9a25bf1e3b0107efa126a132",
+        ".artifacts/completion-skill-suite-v1/batch3/skills-review.json": "20205986658fbefb7fa0a41dbf7ef57e3710448f6a6e2c993db59810c91b2ec4",
+        ".artifacts/completion-skill-suite-v1/batch3/coding-review.json": "110c0e24abdaf542b86bc455db9467b43b32411ba66ae862f040be43ca8a3fec",
+        ".artifacts/completion-skill-suite-v1/batch3/amendments/collector-path-v1/amendment.json": "20949e2a5aab46d199449d96598d828b1adac753f24670fe225520bb78464b05",
+        ".artifacts/completion-skill-suite-v1/batch3/amendments/collector-path-v1/suite-lock.before.json": "9f6da83164843b603496614c0b4eb5e2bc71141968f225421556f85a83ab6157",
+        ".artifacts/completion-skill-suite-v1/batch3/suite-lock.json": "9df6b3c7033d200207beba748a2c1445f1994e5fb2930be46893931075438f6f",
+        ".artifacts/completion-skill-suite-v1/batch3/completion/manifest.json": "2b28dc0b3350b361c4af72e96342ae08eefc7898ca37eec4d97413fabecdeac3",
+        ".artifacts/completion-skill-suite-v1/batch3/skills/manifest.json": "cbfd2417aa1344defd78c96d4d5b7716c86b27d78962a40131f34e2bec60c0d4",
+        ".artifacts/completion-skill-suite-v1/batch3/coding/manifest.json": "6b564050743713d4db3cf596869d6a1e4be494d5f5472ae01b4bd1e2a819259c",
+        ".artifacts/completion-skill-suite-v1/batch3/coding/dsh-install/package-lock.json": "117a6c3f3fe2407a79363d9ae06bd93b080a04fd1d288874422b132cdf3f07b7",
+        ".artifacts/completion-skill-suite-v1/batch3/coding/dsh-install/identity.json": "4e1aaf8a48a5c5d87eff1545674da3eca97512e615b9111cea3817a36a40d384"
+      },
+      "base_resource_task_identity": {
+        "sha256": "c74fa8aa04aa707c1d6f27094d587526523f13bc8780ddc01bf422fd783e9bf2",
+        "image_digest": "sha256:11087ec4eb0320e80546ad5eda89c67938e72be69cbb7c6730cf9baf88dc7556"
+      }
+    },
+    "coding-followup-4": {
+      "public_runtime_versions": {
+        "dsh": "0.1.7-rc.2",
+        "node": "24.14.1",
+        "pnpm": "11.7.0",
+        "jev": "jev-1.13.0"
+      },
+      "main_model": {
+        "provider": "deepseek-official",
+        "id": "deepseek-flash",
+        "synthetic": false
+      },
+      "plugin": {
+        "commit": "7e208e040d7f4dae7dcdf292e53a4a1b73c0303f",
+        "tar_sha256": "e9927b097baff28b05ecd0028b9f0c1d16bf9177aa70fa05b873e76d5403bf70"
+      },
+      "runtime_artifacts": {
+        "deep_swe_commit": "0b9fabbb63b9104d678fe965e1632f2dd9eaa2ea",
+        "pier_commit": "4d3c14041d16443f3f9f460dcdf23629994a304e",
+        "node_tar_sha256": "84d38715d449447117d05c3e71acd78daa49d5b1bfa8aacf610303920c3322be"
+      },
+      "input_lock_history": {
+        "suite_lock_file_sha256": "39f1d3d416f125b20140fde021810c7beb7925c1b67eb0e23765377fd056b0a2",
+        "review_batch_lock_sha256": "39f1d3d416f125b20140fde021810c7beb7925c1b67eb0e23765377fd056b0a2",
+        "dsh_lock_sha256": "117a6c3f3fe2407a79363d9ae06bd93b080a04fd1d288874422b132cdf3f07b7"
+      },
+      "source_artifact_sha256": {
+        ".artifacts/coding-followup-v1/batch2/report.json": "22606ffd358ca6d59d6cd28293654bb17dc7965383ce663ee708e06933e68794",
+        ".artifacts/coding-followup-v1/batch2/coding-review.json": "ee969aac671b2ba63ad83a03724101239c6d287c56780eb8747dd06238a21dbb",
+        ".artifacts/coding-followup-v1/batch2/manifest.json": "274502500fc0922694cab78c5a8d9e3d72f86e25ba354ff65fc8fee0a841bdc0",
+        ".artifacts/coding-followup-v1/batch2/suite-lock.json": "39f1d3d416f125b20140fde021810c7beb7925c1b67eb0e23765377fd056b0a2",
+        ".artifacts/coding-followup-v1/batch2/source-identity.json": "48a3dd00ceb0b4c25a1177a5bade8e55561ae39f73e6ba87d4b2f0b91b5e33c2"
+      },
+      "base_resource_task_identity": {
+        "sha256": "c74fa8aa04aa707c1d6f27094d587526523f13bc8780ddc01bf422fd783e9bf2",
+        "image_digest": "sha256:11087ec4eb0320e80546ad5eda89c67938e72be69cbb7c6730cf9baf88dc7556"
+      }
+    },
+    "skill-repository-8": {
+      "public_runtime_versions": {
+        "dsh": "0.1.7-rc.2",
+        "node": "24.14.1",
+        "pnpm": "11.7.0",
+        "jev": "jev-1.13.0"
+      },
+      "main_model": {
+        "provider": "deepseek-official",
+        "id": "deepseek-flash",
+        "synthetic": false
+      },
+      "plugin": {
+        "commit": "7e208e040d7f4dae7dcdf292e53a4a1b73c0303f",
+        "tar_sha256": "e9927b097baff28b05ecd0028b9f0c1d16bf9177aa70fa05b873e76d5403bf70"
+      },
+      "runtime_artifacts": {
+        "deep_swe_commit": "0b9fabbb63b9104d678fe965e1632f2dd9eaa2ea",
+        "pier_commit": "4d3c14041d16443f3f9f460dcdf23629994a304e",
+        "node_tar_sha256": "84d38715d449447117d05c3e71acd78daa49d5b1bfa8aacf610303920c3322be"
+      },
+      "input_lock_history": {
+        "original_sha256": "cc4918df92f3a5d8a8025ca3a05b3a782b4e7327292b421060199c794f9419a8",
+        "revised_sha256": "fd05385077e4f9831e6fb31afda8e524e6135cd4cacd7301aec1565a20665f0d",
+        "original_file_sha256": "cc4918df92f3a5d8a8025ca3a05b3a782b4e7327292b421060199c794f9419a8",
+        "revised_file_sha256": "fd05385077e4f9831e6fb31afda8e524e6135cd4cacd7301aec1565a20665f0d",
+        "referenced_initial_suite_lock_sha256": "9df6b3c7033d200207beba748a2c1445f1994e5fb2930be46893931075438f6f"
+      },
+      "source_artifact_sha256": {
+        ".artifacts/skill-followup-v1/batch-candidate2/report.json": "f16f2c4d6e53b18a89a7c92d3f8f7cf06da5257898fb228c30d4ec04afe7b302",
+        ".artifacts/skill-followup-v1/batch-candidate2/skills-review.json": "c17f5645cbc5e502866cc8643e2d467e47a9d50ca07cd669ccc56c1909295f24",
+        ".artifacts/skill-followup-v1/batch-candidate2/root-answer-audit.json": "906cc653f48cf75352f6fd323f0a774a1ed5933ca82d2f0b5dde4e0a25a90298",
+        ".artifacts/skill-followup-v1/batch-candidate2/manifest.json": "16b5c4380a8a8199339dfb42b7b69779b8d2662d42947c28e43d4c7f41b0831b",
+        ".artifacts/skill-followup-v1/batch-candidate2/suite-lock.json": "fd05385077e4f9831e6fb31afda8e524e6135cd4cacd7301aec1565a20665f0d",
+        ".artifacts/skill-followup-v1/batch-candidate2/probe-output/dsh-install/package-lock.json": "117a6c3f3fe2407a79363d9ae06bd93b080a04fd1d288874422b132cdf3f07b7",
+        ".artifacts/skill-followup-v1/batch-candidate2/probe-output/dsh-install/identity.json": "4e1aaf8a48a5c5d87eff1545674da3eca97512e615b9111cea3817a36a40d384",
+        ".artifacts/followup-control/metrics.json": "7153a298b2cae619ad66168797d53edb91d7068dd98e0962ff4c6c87afd428f8",
+        ".artifacts/skill-followup-v1/batch-candidate2/amendments/runtime-output-exclusion/suite-lock.old.json": "cc4918df92f3a5d8a8025ca3a05b3a782b4e7327292b421060199c794f9419a8",
+        ".artifacts/skill-followup-v1/batch-candidate2/amendments/runtime-output-exclusion/amendment.json": "f2298a3963929343a512b2b9a19c81df8657770990fccc292039ebbba56b1c74"
+      },
+      "image": "public.ecr.aws/d3j8x8q7/swe-bench-202605@sha256:11087ec4eb0320e80546ad5eda89c67938e72be69cbb7c6730cf9baf88dc7556",
+      "base_resource_task_identity": {
+        "sha256": "c74fa8aa04aa707c1d6f27094d587526523f13bc8780ddc01bf422fd783e9bf2",
+        "image_digest": "sha256:11087ec4eb0320e80546ad5eda89c67938e72be69cbb7c6730cf9baf88dc7556"
+      }
+    }
+  }
+}

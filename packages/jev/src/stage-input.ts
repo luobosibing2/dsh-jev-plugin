@@ -3,9 +3,10 @@ import { createHash } from 'node:crypto'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import type { JevRequest, Json } from './types.ts'
 import type { StageStep, StageTurn } from './stage-types.ts'
+import { redactCredentialText as redact, redactToolArguments } from './credential-redaction.ts'
 
 export const STAGE_RULE_VERSION = 'whole-step-v1'
-export const STAGE_REDACTION_VERSION = 'credential-patterns-v2'
+export const STAGE_REDACTION_VERSION = 'credential-patterns-v3'
 
 const labels = [
   ['input_parsing', 'Identify initial task input and constraints'],
@@ -22,19 +23,6 @@ export interface StageInputLimits { previousSteps: number; previousChars: number
 export type StageInputResult = { kind: 'ready'; request: JevRequest; fingerprint: string }
   | { kind: 'unavailable'; code: 'IN_PROGRESS' | 'NO_MATERIAL' | 'MATERIAL_TOO_LARGE'; fingerprint: string }
 
-function redact(value: string, secrets: readonly string[]): string {
-  let text = value
-  for (const secret of secrets) if (secret.length >= 4) text = text.replaceAll(secret, '[REDACTED]')
-  return text
-    .replace(/\b(Bearer|Basic)\s+[^\s"']+/gi, '$1 [REDACTED]')
-    .replace(/\b(?:sk|key|token|apikey)[-_][A-Za-z0-9_-]{12,}\b/gi, '[REDACTED]')
-    .replace(/((?:["']?(?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|passwd|authorization|auth[_-]?token)["']?)\s*[:=]\s*)(["'])(.*?)\2/gi, '$1$2[REDACTED]$2')
-    .replace(/((?:["']?(?:password|passwd|authorization)["']?)\s*[:=]\s*)(?!["'])[^\r\n,;}\]]+/gi, '$1[REDACTED]')
-    .replace(/((?:["']?(?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|passwd|authorization|auth[_-]?token)["']?)\s*[:=]\s*)(?!["'])[^\s,"';}]+/gi, '$1[REDACTED]')
-    .replace(/([?&#](?:api[_-]?key|access[_-]?token|refresh[_-]?token|key|token|secret|auth)\s*=)[^&#\s"']+/gi, '$1[REDACTED]')
-    .replace(/(https?:\/\/)[^\s/@]+:[^\s/@]+@/gi, '$1[REDACTED]@')
-}
-
 function visibleBlocks(blocks: readonly ContentBlock[], secrets: readonly string[]): Json[] {
   return blocks.map((block): Json => {
     switch (block.type) {
@@ -42,7 +30,7 @@ function visibleBlocks(blocks: readonly ContentBlock[], secrets: readonly string
       case 'reasoning':
         return { type: block.type, text: redact(block.text, secrets) }
       case 'tool-call':
-        return { type: block.type, name: redact(block.name, secrets), arguments: redact(block.arguments, secrets) }
+        return { type: block.type, name: redact(block.name, secrets), arguments: redactToolArguments(block.arguments, secrets).text }
       case 'image':
         return { type: 'image', present: true, understoodByJev: false,
           mediaType: block.attachment.mediaType, bytes: block.attachment.bytes,
@@ -90,7 +78,7 @@ export function buildStageInput(
   const assistant = target.messages.map(message => ({ seq: message.seq, interrupted: message.interrupted,
     content: visibleBlocks(message.content.filter(block => block.type !== 'tool-call'), secrets) }))
   const tools = target.tools.map(tool => ({
-    seq: tool.seq, callId: tool.callId, name: redact(tool.name, secrets), arguments: redact(tool.arguments, secrets),
+    seq: tool.seq, callId: tool.callId, name: redact(tool.name, secrets), arguments: redactToolArguments(tool.arguments, secrets).text,
     dispatched: tool.dispatched,
     result: tool.result === undefined ? null : {
       seq: tool.result.seq, isError: tool.result.isError,

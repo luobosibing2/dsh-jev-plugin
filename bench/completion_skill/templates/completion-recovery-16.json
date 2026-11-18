@@ -1,0 +1,77 @@
+{
+  "arms": [
+    "baseline",
+    "completion_check"
+  ],
+  "budget": {
+    "agent_timeout_sec": 240,
+    "cost_policy": "advisory",
+    "max_batch_spend_usd": 0.25,
+    "max_infrastructure_retries": 0,
+    "usage_incomplete_policy": "halt",
+    "verifier_timeout_sec": 1800
+  },
+  "concurrency": 1,
+  "conditions": {
+    "compaction": "dsh-0.1.7-rc.2-default",
+    "context_window": 1000000,
+    "main_credential_env": "DEEPSEEK_API_KEY",
+    "network": "inference-and-npm-allowlist",
+    "sandbox": "danger-full-access",
+    "spill": "maxInlineTokens:12500",
+    "toolset": "dsh-headless-no-web-tools"
+  },
+  "jev": {
+    "credential_env": "JEV_API_KEY",
+    "endpoint": "https://api.typesafe.ai/v1/systemone",
+    "model": "jev-1.13.0"
+  },
+  "main_execution": "scripted-initial-real-followup",
+  "model": {
+    "endpoint": "https://api.deepseek.com/anthropic",
+    "floating_alias": true,
+    "id": "deepseek-flash",
+    "provider": "deepseek-official",
+    "reasoning_effort": "high",
+    "route": "deepseek-official/deepseek-flash"
+  },
+  "phase": "formal",
+  "prices": {
+    "jev": {
+      "cache_read_per_million": 0,
+      "cache_write_per_million": 0,
+      "input_per_million": 0.042,
+      "output_per_million": 0,
+      "source": "TypeSafe official Jev 1.13.0 snapshot verified 2026-10-02; no separate client cache fields"
+    },
+    "main": {
+      "cache_read_per_million": 0.006,
+      "cache_write_per_million": 0.3,
+      "input_per_million": 0.3,
+      "output_per_million": 1.2,
+      "source": "DeepSeek official peak snapshot verified 2026-10-05; only actual delegated follow-up usage is billable"
+    }
+  },
+  "repeats": 2,
+  "schema": 1,
+  "selection_rule": "Four fixed scripted first-answer cases, each AB then BA, two pairs per case; native Jev supplement alone permits normal DeepSeek continuation",
+  "suite_kind": "completion-recovery-16",
+  "tasks": [
+    {
+      "id": "vitest-duration-sharding",
+      "image_digest": "sha256:11087ec4eb0320e80546ad5eda89c67938e72be69cbb7c6730cf9baf88dc7556",
+      "platform": "linux/amd64",
+      "sha256": "c74fa8aa04aa707c1d6f27094d587526523f13bc8780ddc01bf422fd783e9bf2"
+    }
+  ],
+  "versions": {
+    "deep_swe_commit": "0b9fabbb63b9104d678fe965e1632f2dd9eaa2ea",
+    "dsh": "0.1.7-rc.2",
+    "node": "24.14.1",
+    "node_tar_sha256": "84d38715d449447117d05c3e71acd78daa49d5b1bfa8aacf610303920c3322be",
+    "pier_commit": "4d3c14041d16443f3f9f460dcdf23629994a304e",
+    "plugin_commit": "7e208e040d7f4dae7dcdf292e53a4a1b73c0303f",
+    "plugin_tar_sha256": "e9927b097baff28b05ecd0028b9f0c1d16bf9177aa70fa05b873e76d5403bf70",
+    "pnpm": "11.7.0"
+  }
+}

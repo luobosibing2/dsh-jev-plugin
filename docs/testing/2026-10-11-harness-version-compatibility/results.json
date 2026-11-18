@@ -1,0 +1,1568 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-11",
+  "platform": "darwin",
+  "realModelCalls": 0,
+  "finalRootPackage": true,
+  "finalWorkspacePackage": true,
+  "officialInstallRuns": {
+    "passed": 10,
+    "total": 10
+  },
+  "npmVersionRangeQuery": {
+    "package": "@deepseek-ai/dsh",
+    "range": ">=0.1.7-rc.1 <=0.2.0-rc.2",
+    "includePrerelease": true,
+    "semverImplementation": "npm bundled semver@7.7.4",
+    "source": "npm view --registry=https://registry.npmjs.org @deepseek-ai/dsh versions --json",
+    "queriedAtUtc": "2026-10-11T12:17:38Z",
+    "matchedPublishedVersions": [
+      "0.1.7-rc.1",
+      "0.1.7-rc.2",
+      "0.2.0-rc.1",
+      "0.2.0-rc.2"
+    ]
+  },
+  "sourceBaseline": {
+    "commit": "65bd96e298c92b6bbb7e3e45d5fd7137b55ef417",
+    "hashesCaptureCurrentFiles": true,
+    "peerRanges": {
+      "dsh": ">=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2",
+      "cordis": "4.0.4 || 4.0.5-alpha.1",
+      "cordisPluginLoader": "1.0.5 || 1.0.6-alpha.1"
+    },
+    "developmentBaseline": {
+      "dshRuntime": "0.2.1-alpha.2",
+      "dshAppBoot": "0.2.1-alpha.2",
+      "dshAgent": "0.2.1-alpha.2",
+      "cordis": "4.0.5-alpha.1",
+      "cordisPluginLoader": "1.0.6-alpha.1",
+      "schemastery": "3.18.5-alpha.1"
+    },
+    "manifestPeerDeclarationsEqual": true,
+    "fileSha256": {
+      "package.json": "76f4e273be894decb3f7d1735063836f57229ec23f69f2ca752971a19aca0e4f",
+      "packages/jev/package.json": "e97231fd922388dfe6c627b0f697132cc44b49aa9afe66c52be24bb4c3febc8b",
+      "packages/jev/cordis.patch.yml": "4e6fd6e7042e57d03dfc8e17b30523dcab518941c0de25cb1ee6875fa9cb77bb",
+      "packages/jev/src/instructions.ts": "96f62d9a231d7ac01227a692d16b61d330b9597128227f595f342967affaa203",
+      "packages/jev/src/selection.ts": "d427025209a7f48d0f15ebb0b05643dfb61e74fd6fd9f157abe76ef7231aad9e",
+      "packages/jev/tests/instructions.test.ts": "141d5d2a863891eb6d1e019871685f646d4413df6e9ae48b29920537dddc77bf",
+      "packages/jev/tests/selection.test.ts": "972800291c0eff2b36a21c3da7147bc3e308aef618f8763f1d8cb69323a7a6ea",
+      "packages/jev/tests/fixtures/compatibility-profile.mjs": "86f1a89ed9bdb611ab4294ded0eba886c850bde29f4a4fc269448f13fc761994",
+      "scripts/validation/compatibility-matrix.mjs": "0f55939c22fa33c7119d5800b33ac77cc32c6f696aa5ecda748df19f6b2688a6",
+      "scripts/validation/compatibility-report.mjs": "923cdf9e6153530efed8e2f33b927d1e4cbbf8465d6345b56edc5a140e83b424",
+      "runtime/client.js": "6a39eb81e316a8ac688e86d7724adcfa2101c3fb43f495a23ff868296e9dea02",
+      "runtime/instructions.js": "dffdceea58cb6a3c113983744b48aca2f1eaf7bb4723a6b1c2bc80422a1454e0",
+      "runtime/selection.js": "dbb0b728f9317eaba6c5d0ada0524fd06b143dd90bf76ccaf6310c69a561cec3",
+      "runtime/types/instructions.js": "91fad1fda94355c4644fdd685f49a20c2e5b4cf99f64d3ce02aa879ba696c327",
+      "runtime/types/selection.js": "6b701874e91d7399197141fdfd97f6776cd591c6871c9062aa68cba0e2b88db1"
+    }
+  },
+  "packageVersions": {
+    "finalRoot": {
+      "versionCount": 5,
+      "versions": [
+        {
+          "version": "0.1.7-rc.1",
+          "versionCommandExit": 0,
+          "initializeExit": 0,
+          "installExit": 0,
+          "fixtureOk": true,
+          "activeHostRows": 9,
+          "totalHostRows": 9,
+          "hostExportCount": 13,
+          "independentSessionIsolationPassed": true,
+          "nativeCwdSwitchCase": false,
+          "protocolDiagnosticPassed": true,
+          "actualLogOmissionsAdopted": true,
+          "approvalFileValidated": true,
+          "phaseBatch": {
+            "status": "completed",
+            "total": 9,
+            "completed": 9,
+            "failed": 0,
+            "cancelled": 0
+          },
+          "nonPhaseFeatureJudgments": {
+            "featureCount": 11,
+            "succeeded": 55,
+            "otherStatusCounts": {},
+            "receiptStatuses": [
+              "executed",
+              "not-adopted",
+              "observed"
+            ],
+            "byFeature": [
+              {
+                "feature": "completion-check",
+                "succeeded": 4,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "drift-monitoring",
+                "succeeded": 21,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "file-ranking",
+                "succeeded": 2,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "goal-supervision",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "instruction-guidance",
+                "succeeded": 17,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "not-adopted"
+                ]
+              },
+              {
+                "feature": "interjection-routing",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              },
+              {
+                "feature": "output-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "shared-findings",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "skill-selection",
+                "succeeded": 5,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "test-log-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "workspace-approval",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              }
+            ],
+            "scopeNote": "判断记录计数；receipt状态不表示所有判断都已采纳。"
+          },
+          "instructionReminderMessages": {
+            "sourceMessages": 6,
+            "uniqueModelInputMessages": 6
+          }
+        },
+        {
+          "version": "0.1.7-rc.2",
+          "versionCommandExit": 0,
+          "initializeExit": 0,
+          "installExit": 0,
+          "fixtureOk": true,
+          "activeHostRows": 9,
+          "totalHostRows": 9,
+          "hostExportCount": 13,
+          "independentSessionIsolationPassed": true,
+          "nativeCwdSwitchCase": false,
+          "protocolDiagnosticPassed": true,
+          "actualLogOmissionsAdopted": true,
+          "approvalFileValidated": true,
+          "phaseBatch": {
+            "status": "completed",
+            "total": 9,
+            "completed": 9,
+            "failed": 0,
+            "cancelled": 0
+          },
+          "nonPhaseFeatureJudgments": {
+            "featureCount": 11,
+            "succeeded": 55,
+            "otherStatusCounts": {},
+            "receiptStatuses": [
+              "executed",
+              "not-adopted",
+              "observed"
+            ],
+            "byFeature": [
+              {
+                "feature": "completion-check",
+                "succeeded": 4,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "drift-monitoring",
+                "succeeded": 21,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "file-ranking",
+                "succeeded": 2,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "goal-supervision",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "instruction-guidance",
+                "succeeded": 17,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "not-adopted"
+                ]
+              },
+              {
+                "feature": "interjection-routing",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              },
+              {
+                "feature": "output-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "shared-findings",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "skill-selection",
+                "succeeded": 5,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "test-log-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "workspace-approval",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              }
+            ],
+            "scopeNote": "判断记录计数；receipt状态不表示所有判断都已采纳。"
+          },
+          "instructionReminderMessages": {
+            "sourceMessages": 6,
+            "uniqueModelInputMessages": 6
+          }
+        },
+        {
+          "version": "0.2.0-rc.1",
+          "versionCommandExit": 0,
+          "initializeExit": 0,
+          "installExit": 0,
+          "fixtureOk": true,
+          "activeHostRows": 9,
+          "totalHostRows": 9,
+          "hostExportCount": 13,
+          "independentSessionIsolationPassed": true,
+          "nativeCwdSwitchCase": false,
+          "protocolDiagnosticPassed": true,
+          "actualLogOmissionsAdopted": true,
+          "approvalFileValidated": true,
+          "phaseBatch": {
+            "status": "completed",
+            "total": 9,
+            "completed": 9,
+            "failed": 0,
+            "cancelled": 0
+          },
+          "nonPhaseFeatureJudgments": {
+            "featureCount": 11,
+            "succeeded": 55,
+            "otherStatusCounts": {},
+            "receiptStatuses": [
+              "executed",
+              "not-adopted",
+              "observed"
+            ],
+            "byFeature": [
+              {
+                "feature": "completion-check",
+                "succeeded": 4,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "drift-monitoring",
+                "succeeded": 21,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "file-ranking",
+                "succeeded": 2,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "goal-supervision",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "instruction-guidance",
+                "succeeded": 17,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "not-adopted"
+                ]
+              },
+              {
+                "feature": "interjection-routing",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              },
+              {
+                "feature": "output-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "shared-findings",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "skill-selection",
+                "succeeded": 5,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "test-log-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "workspace-approval",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              }
+            ],
+            "scopeNote": "判断记录计数；receipt状态不表示所有判断都已采纳。"
+          },
+          "instructionReminderMessages": {
+            "sourceMessages": 6,
+            "uniqueModelInputMessages": 6
+          }
+        },
+        {
+          "version": "0.2.0-rc.2",
+          "versionCommandExit": 0,
+          "initializeExit": 0,
+          "installExit": 0,
+          "fixtureOk": true,
+          "activeHostRows": 9,
+          "totalHostRows": 9,
+          "hostExportCount": 13,
+          "independentSessionIsolationPassed": true,
+          "nativeCwdSwitchCase": false,
+          "protocolDiagnosticPassed": true,
+          "actualLogOmissionsAdopted": true,
+          "approvalFileValidated": true,
+          "phaseBatch": {
+            "status": "completed",
+            "total": 9,
+            "completed": 9,
+            "failed": 0,
+            "cancelled": 0
+          },
+          "nonPhaseFeatureJudgments": {
+            "featureCount": 11,
+            "succeeded": 55,
+            "otherStatusCounts": {},
+            "receiptStatuses": [
+              "executed",
+              "not-adopted",
+              "observed"
+            ],
+            "byFeature": [
+              {
+                "feature": "completion-check",
+                "succeeded": 4,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "drift-monitoring",
+                "succeeded": 21,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "file-ranking",
+                "succeeded": 2,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "goal-supervision",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "instruction-guidance",
+                "succeeded": 17,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "not-adopted"
+                ]
+              },
+              {
+                "feature": "interjection-routing",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              },
+              {
+                "feature": "output-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "shared-findings",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "skill-selection",
+                "succeeded": 5,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "test-log-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "workspace-approval",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              }
+            ],
+            "scopeNote": "判断记录计数；receipt状态不表示所有判断都已采纳。"
+          },
+          "instructionReminderMessages": {
+            "sourceMessages": 6,
+            "uniqueModelInputMessages": 6
+          }
+        },
+        {
+          "version": "0.2.1-alpha.2",
+          "versionCommandExit": 0,
+          "initializeExit": 0,
+          "installExit": 0,
+          "fixtureOk": true,
+          "activeHostRows": 9,
+          "totalHostRows": 9,
+          "hostExportCount": 13,
+          "independentSessionIsolationPassed": true,
+          "nativeCwdSwitchCase": true,
+          "protocolDiagnosticPassed": true,
+          "actualLogOmissionsAdopted": true,
+          "approvalFileValidated": true,
+          "phaseBatch": {
+            "status": "completed",
+            "total": 9,
+            "completed": 9,
+            "failed": 0,
+            "cancelled": 0
+          },
+          "nonPhaseFeatureJudgments": {
+            "featureCount": 11,
+            "succeeded": 70,
+            "otherStatusCounts": {},
+            "receiptStatuses": [
+              "executed",
+              "not-adopted",
+              "observed"
+            ],
+            "byFeature": [
+              {
+                "feature": "completion-check",
+                "succeeded": 5,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "drift-monitoring",
+                "succeeded": 27,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "file-ranking",
+                "succeeded": 3,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "goal-supervision",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "instruction-guidance",
+                "succeeded": 22,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "not-adopted"
+                ]
+              },
+              {
+                "feature": "interjection-routing",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              },
+              {
+                "feature": "output-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "shared-findings",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "skill-selection",
+                "succeeded": 7,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "test-log-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "workspace-approval",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              }
+            ],
+            "scopeNote": "判断记录计数；receipt状态不表示所有判断都已采纳。"
+          },
+          "instructionReminderMessages": {
+            "sourceMessages": 7,
+            "uniqueModelInputMessages": 7
+          }
+        }
+      ]
+    },
+    "workspace": {
+      "versionCount": 5,
+      "versions": [
+        {
+          "version": "0.1.7-rc.1",
+          "versionCommandExit": 0,
+          "initializeExit": 0,
+          "installExit": 0,
+          "fixtureOk": true,
+          "activeHostRows": 9,
+          "totalHostRows": 9,
+          "hostExportCount": 13,
+          "independentSessionIsolationPassed": true,
+          "nativeCwdSwitchCase": false,
+          "protocolDiagnosticPassed": true,
+          "actualLogOmissionsAdopted": true,
+          "approvalFileValidated": true,
+          "phaseBatch": {
+            "status": "completed",
+            "total": 9,
+            "completed": 9,
+            "failed": 0,
+            "cancelled": 0
+          },
+          "nonPhaseFeatureJudgments": {
+            "featureCount": 11,
+            "succeeded": 55,
+            "otherStatusCounts": {},
+            "receiptStatuses": [
+              "executed",
+              "not-adopted",
+              "observed"
+            ],
+            "byFeature": [
+              {
+                "feature": "completion-check",
+                "succeeded": 4,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "drift-monitoring",
+                "succeeded": 21,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "file-ranking",
+                "succeeded": 2,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "goal-supervision",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "instruction-guidance",
+                "succeeded": 17,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "not-adopted"
+                ]
+              },
+              {
+                "feature": "interjection-routing",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              },
+              {
+                "feature": "output-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "shared-findings",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "skill-selection",
+                "succeeded": 5,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "test-log-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "workspace-approval",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              }
+            ],
+            "scopeNote": "判断记录计数；receipt状态不表示所有判断都已采纳。"
+          },
+          "instructionReminderMessages": {
+            "sourceMessages": 6,
+            "uniqueModelInputMessages": 6
+          }
+        },
+        {
+          "version": "0.1.7-rc.2",
+          "versionCommandExit": 0,
+          "initializeExit": 0,
+          "installExit": 0,
+          "fixtureOk": true,
+          "activeHostRows": 9,
+          "totalHostRows": 9,
+          "hostExportCount": 13,
+          "independentSessionIsolationPassed": true,
+          "nativeCwdSwitchCase": false,
+          "protocolDiagnosticPassed": true,
+          "actualLogOmissionsAdopted": true,
+          "approvalFileValidated": true,
+          "phaseBatch": {
+            "status": "completed",
+            "total": 9,
+            "completed": 9,
+            "failed": 0,
+            "cancelled": 0
+          },
+          "nonPhaseFeatureJudgments": {
+            "featureCount": 11,
+            "succeeded": 55,
+            "otherStatusCounts": {},
+            "receiptStatuses": [
+              "executed",
+              "not-adopted",
+              "observed"
+            ],
+            "byFeature": [
+              {
+                "feature": "completion-check",
+                "succeeded": 4,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "drift-monitoring",
+                "succeeded": 21,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "file-ranking",
+                "succeeded": 2,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "goal-supervision",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "instruction-guidance",
+                "succeeded": 17,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "not-adopted"
+                ]
+              },
+              {
+                "feature": "interjection-routing",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              },
+              {
+                "feature": "output-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "shared-findings",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "skill-selection",
+                "succeeded": 5,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "test-log-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "workspace-approval",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              }
+            ],
+            "scopeNote": "判断记录计数；receipt状态不表示所有判断都已采纳。"
+          },
+          "instructionReminderMessages": {
+            "sourceMessages": 6,
+            "uniqueModelInputMessages": 6
+          }
+        },
+        {
+          "version": "0.2.0-rc.1",
+          "versionCommandExit": 0,
+          "initializeExit": 0,
+          "installExit": 0,
+          "fixtureOk": true,
+          "activeHostRows": 9,
+          "totalHostRows": 9,
+          "hostExportCount": 13,
+          "independentSessionIsolationPassed": true,
+          "nativeCwdSwitchCase": false,
+          "protocolDiagnosticPassed": true,
+          "actualLogOmissionsAdopted": true,
+          "approvalFileValidated": true,
+          "phaseBatch": {
+            "status": "completed",
+            "total": 9,
+            "completed": 9,
+            "failed": 0,
+            "cancelled": 0
+          },
+          "nonPhaseFeatureJudgments": {
+            "featureCount": 11,
+            "succeeded": 55,
+            "otherStatusCounts": {},
+            "receiptStatuses": [
+              "executed",
+              "not-adopted",
+              "observed"
+            ],
+            "byFeature": [
+              {
+                "feature": "completion-check",
+                "succeeded": 4,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "drift-monitoring",
+                "succeeded": 21,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "file-ranking",
+                "succeeded": 2,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "goal-supervision",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "instruction-guidance",
+                "succeeded": 17,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "not-adopted"
+                ]
+              },
+              {
+                "feature": "interjection-routing",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              },
+              {
+                "feature": "output-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "shared-findings",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "skill-selection",
+                "succeeded": 5,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "test-log-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "workspace-approval",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              }
+            ],
+            "scopeNote": "判断记录计数；receipt状态不表示所有判断都已采纳。"
+          },
+          "instructionReminderMessages": {
+            "sourceMessages": 6,
+            "uniqueModelInputMessages": 6
+          }
+        },
+        {
+          "version": "0.2.0-rc.2",
+          "versionCommandExit": 0,
+          "initializeExit": 0,
+          "installExit": 0,
+          "fixtureOk": true,
+          "activeHostRows": 9,
+          "totalHostRows": 9,
+          "hostExportCount": 13,
+          "independentSessionIsolationPassed": true,
+          "nativeCwdSwitchCase": false,
+          "protocolDiagnosticPassed": true,
+          "actualLogOmissionsAdopted": true,
+          "approvalFileValidated": true,
+          "phaseBatch": {
+            "status": "completed",
+            "total": 9,
+            "completed": 9,
+            "failed": 0,
+            "cancelled": 0
+          },
+          "nonPhaseFeatureJudgments": {
+            "featureCount": 11,
+            "succeeded": 55,
+            "otherStatusCounts": {},
+            "receiptStatuses": [
+              "executed",
+              "not-adopted",
+              "observed"
+            ],
+            "byFeature": [
+              {
+                "feature": "completion-check",
+                "succeeded": 4,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "drift-monitoring",
+                "succeeded": 21,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "file-ranking",
+                "succeeded": 2,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "goal-supervision",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "instruction-guidance",
+                "succeeded": 17,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "not-adopted"
+                ]
+              },
+              {
+                "feature": "interjection-routing",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              },
+              {
+                "feature": "output-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "shared-findings",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "skill-selection",
+                "succeeded": 5,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "test-log-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "workspace-approval",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              }
+            ],
+            "scopeNote": "判断记录计数；receipt状态不表示所有判断都已采纳。"
+          },
+          "instructionReminderMessages": {
+            "sourceMessages": 6,
+            "uniqueModelInputMessages": 6
+          }
+        },
+        {
+          "version": "0.2.1-alpha.2",
+          "versionCommandExit": 0,
+          "initializeExit": 0,
+          "installExit": 0,
+          "fixtureOk": true,
+          "activeHostRows": 9,
+          "totalHostRows": 9,
+          "hostExportCount": 13,
+          "independentSessionIsolationPassed": true,
+          "nativeCwdSwitchCase": true,
+          "protocolDiagnosticPassed": true,
+          "actualLogOmissionsAdopted": true,
+          "approvalFileValidated": true,
+          "phaseBatch": {
+            "status": "completed",
+            "total": 9,
+            "completed": 9,
+            "failed": 0,
+            "cancelled": 0
+          },
+          "nonPhaseFeatureJudgments": {
+            "featureCount": 11,
+            "succeeded": 70,
+            "otherStatusCounts": {},
+            "receiptStatuses": [
+              "executed",
+              "not-adopted",
+              "observed"
+            ],
+            "byFeature": [
+              {
+                "feature": "completion-check",
+                "succeeded": 5,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "drift-monitoring",
+                "succeeded": 27,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "file-ranking",
+                "succeeded": 3,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "goal-supervision",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "instruction-guidance",
+                "succeeded": 22,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "not-adopted"
+                ]
+              },
+              {
+                "feature": "interjection-routing",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              },
+              {
+                "feature": "output-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "shared-findings",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "skill-selection",
+                "succeeded": 7,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "test-log-admission",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "observed"
+                ]
+              },
+              {
+                "feature": "workspace-approval",
+                "succeeded": 1,
+                "otherStatusCounts": {},
+                "receiptStatuses": [
+                  "executed",
+                  "observed"
+                ]
+              }
+            ],
+            "scopeNote": "判断记录计数；receipt状态不表示所有判断都已采纳。"
+          },
+          "instructionReminderMessages": {
+            "sourceMessages": 7,
+            "uniqueModelInputMessages": 7
+          }
+        }
+      ]
+    }
+  },
+  "browserSummary": [
+    {
+      "version": "0.1.7-rc.1",
+      "featureSwitchCount": 12,
+      "runningComponentCount": 9,
+      "successfulJudgmentRecordsRendered": true,
+      "consoleErrorOrWarnCount": 0
+    },
+    {
+      "version": "0.2.0-rc.2",
+      "featureSwitchCount": 12,
+      "runningComponentCount": 9,
+      "successfulJudgmentRecordsRendered": true,
+      "consoleErrorOrWarnCount": 0
+    },
+    {
+      "version": "0.2.1-alpha.2",
+      "featureSwitchCount": 12,
+      "runningComponentCount": 9,
+      "successfulJudgmentRecordsRendered": true,
+      "consoleErrorOrWarnCount": 0
+    }
+  ],
+  "compatibilityChecker": {
+    "sameExamplesAcrossBothPackageManifests": true,
+    "acceptedExamples": [
+      {
+        "version": "0.1.7-rc.1",
+        "accepted": true,
+        "exempted": false
+      },
+      {
+        "version": "0.1.7-rc.2",
+        "accepted": true,
+        "exempted": false
+      },
+      {
+        "version": "0.2.0-rc.1",
+        "accepted": true,
+        "exempted": false
+      },
+      {
+        "version": "0.2.0-rc.2",
+        "accepted": true,
+        "exempted": false
+      },
+      {
+        "version": "0.2.1-alpha.2",
+        "accepted": true,
+        "exempted": false
+      }
+    ],
+    "rejectedExamples": [
+      {
+        "version": "0.1.6",
+        "accepted": false,
+        "exempted": false
+      },
+      {
+        "version": "0.1.7-alpha.2",
+        "accepted": false,
+        "exempted": false
+      },
+      {
+        "version": "0.1.7-rc.0",
+        "accepted": false,
+        "exempted": false
+      },
+      {
+        "version": "0.2.0-rc.3",
+        "accepted": false,
+        "exempted": false
+      },
+      {
+        "version": "0.2.0",
+        "accepted": false,
+        "exempted": false
+      },
+      {
+        "version": "0.2.1-alpha.1",
+        "accepted": false,
+        "exempted": false
+      },
+      {
+        "version": "0.2.1-alpha.3",
+        "accepted": false,
+        "exempted": false
+      },
+      {
+        "version": "0.2.1",
+        "accepted": false,
+        "exempted": false
+      },
+      {
+        "version": "0.2.2",
+        "accepted": false,
+        "exempted": false
+      }
+    ]
+  },
+  "packageConsistency": {
+    "byteEqualityComparisons": [
+      {
+        "package": "root",
+        "version": "0.1.7-rc.1",
+        "filesChecked": 82,
+        "filesByteEqual": 82,
+        "bundlePatchByteEqual": true,
+        "peerDeclarationsEqual": true
+      },
+      {
+        "package": "root",
+        "version": "0.1.7-rc.2",
+        "filesChecked": 82,
+        "filesByteEqual": 82,
+        "bundlePatchByteEqual": true,
+        "peerDeclarationsEqual": true
+      },
+      {
+        "package": "root",
+        "version": "0.2.0-rc.1",
+        "filesChecked": 82,
+        "filesByteEqual": 82,
+        "bundlePatchByteEqual": true,
+        "peerDeclarationsEqual": true
+      },
+      {
+        "package": "root",
+        "version": "0.2.0-rc.2",
+        "filesChecked": 82,
+        "filesByteEqual": 82,
+        "bundlePatchByteEqual": true,
+        "peerDeclarationsEqual": true
+      },
+      {
+        "package": "root",
+        "version": "0.2.1-alpha.2",
+        "filesChecked": 82,
+        "filesByteEqual": 82,
+        "bundlePatchByteEqual": true,
+        "peerDeclarationsEqual": true
+      },
+      {
+        "package": "workspace",
+        "version": "0.1.7-rc.1",
+        "filesChecked": 82,
+        "filesByteEqual": 82,
+        "bundlePatchByteEqual": true,
+        "peerDeclarationsEqual": true
+      },
+      {
+        "package": "workspace",
+        "version": "0.1.7-rc.2",
+        "filesChecked": 82,
+        "filesByteEqual": 82,
+        "bundlePatchByteEqual": true,
+        "peerDeclarationsEqual": true
+      },
+      {
+        "package": "workspace",
+        "version": "0.2.0-rc.1",
+        "filesChecked": 82,
+        "filesByteEqual": 82,
+        "bundlePatchByteEqual": true,
+        "peerDeclarationsEqual": true
+      },
+      {
+        "package": "workspace",
+        "version": "0.2.0-rc.2",
+        "filesChecked": 82,
+        "filesByteEqual": 82,
+        "bundlePatchByteEqual": true,
+        "peerDeclarationsEqual": true
+      },
+      {
+        "package": "workspace",
+        "version": "0.2.1-alpha.2",
+        "filesChecked": 82,
+        "filesByteEqual": 82,
+        "bundlePatchByteEqual": true,
+        "peerDeclarationsEqual": true
+      }
+    ],
+    "byteEqualityTotals": {
+      "comparisons": 10,
+      "filesChecked": 820,
+      "filesByteEqual": 820,
+      "bundlePatchEqualComparisons": 10,
+      "peerDeclarationEqualComparisons": 10
+    },
+    "readmeEquality": {
+      "checked": 4,
+      "byteEqual": 4,
+      "byPackage": {
+        "root": {
+          "checked": 3,
+          "byteEqual": 3
+        },
+        "workspace": {
+          "checked": 1,
+          "byteEqual": 1
+        }
+      }
+    }
+  }
+}

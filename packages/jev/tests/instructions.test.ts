@@ -1,9 +1,10 @@
 import { createServer } from 'node:http'
-import { mkdtemp, mkdir, rm, writeFile, readFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, realpath, rm, writeFile, readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
+import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
 import { createVolatile, updateVolatile } from '@deepseek-ai/cosmokit'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
@@ -17,11 +18,15 @@ import { JsonStorageBackend } from '@deepseek-ai/dsh-storage-json'
 import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
+import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
+import * as PtcToolExecutor from '@deepseek-ai/dsh-tool-executor-ptc'
 import UserQuestionService from '@deepseek-ai/dsh-user-questions'
+import * as ToolFs from '@deepseek-ai/dsh-tool-fs'
+import * as ToolWorkingDirectory from '@deepseek-ai/dsh-tool-working-directory'
 import JevService from '../src/index.ts'
 import * as instructions from '../src/instructions.ts'
 
-interface Wire { state: { sources: { id: string; text: string; origin: string }[]; operation: { name: string; arguments: string } }; questions: Record<string, object> }
+interface Wire { state: { sources: { id: string; text: string; origin: string }[]; operation: { name: string; arguments: string; cwd: string } }; questions: Record<string, object> }
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => { for (const fn of cleanups.splice(0).reverse()) await fn() })
 const user = (text: string) => createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text }] })
@@ -37,7 +42,8 @@ class BindingRuntime extends PtcRuntime {
   }
 }
 
-async function fixture(ptc = false, sessionDirectory = '') {
+async function fixture(ptc = false, sessionDirectory = '', nativeFs = false,
+  directory: { service?: boolean; sessionCwd?: boolean; requestText?: string } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'jev-instructions-'))
   cleanups.push(() => rm(root, { recursive: true, force: true }))
   await mkdir(join(root, '.git'))
@@ -72,8 +78,11 @@ async function fixture(ptc = false, sessionDirectory = '') {
   const ctx = new Context()
   for (const plugin of [Storage, LlmRuntime, AgentRegistry, SessionStore, SystemPrompt, UserQuestionService]) await ctx.plugin(plugin)
   await ctx.plugin(LocalFileSystem, { cwd: root })
-  await ctx.plugin(ToolRuntime, { mode: ptc ? 'ptc' : 'native' })
+  await ctx.plugin(SessionProjectionRegistry)
+  if (directory.service !== false) await ctx.plugin(WorkingDirectory)
+  await ctx.plugin(ToolRuntime)
   if (ptc) await ctx.plugin(BindingRuntime)
+  await ctx.plugin(ptc ? PtcToolExecutor : NativeToolExecutor)
   const backend = new JsonStorageBackend(join(root, 'storage'))
   const unregister = ctx.storage.backend.register('json', backend)
   const facility = new DomainFacility(ctx, { backend: 'json' })
@@ -95,18 +104,21 @@ async function fixture(ptc = false, sessionDirectory = '') {
   })
   let instructionsFiber = await ctx.plugin(instructions)
   let writes = 0
-  ctx.tools.register(defineTool({ name: 'write', description: 'Fixture file write through the original tools pipeline',
-    parameters: { file_path: { type: 'string', required: true }, content: { type: 'string', required: true } },
-    output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
-    async execute(args) { writes++; await writeFile(resolve(cwd, args.file_path), args.content); return 'written' },
-  }))
-  ctx.tools.register(defineTool({ name: 'read', description: 'Fixture file read through the original tools pipeline',
-    parameters: { file_path: { type: 'string', required: true } },
-    output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
-    execute: args => readFile(resolve(cwd, args.file_path), 'utf8'),
-  }))
-  const session = ctx.sessions.create(SessionId('instructions-' + root), { meta: { cwd } })
-  session.append('user/message', user('Update this project.'), { surfaceOp: 'append' })
+  if (nativeFs) await ctx.plugin(ToolFs)
+  else {
+    ctx.tools.register(defineTool({ name: 'write', description: 'Fixture file write through the original tools pipeline',
+      parameters: { file_path: { type: 'string', required: true }, content: { type: 'string', required: true } },
+      output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+      async execute(args, exec) { writes++; await writeFile(resolve(exec.agent?.session.header.cwd ?? process.cwd(), args.file_path), args.content); return 'written' },
+    }))
+    ctx.tools.register(defineTool({ name: 'read', description: 'Fixture file read through the original tools pipeline',
+      parameters: { file_path: { type: 'string', required: true } },
+      output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+      execute: (args, exec) => readFile(resolve(exec.agent?.session.header.cwd ?? process.cwd(), args.file_path), 'utf8'),
+    }))
+  }
+  const session = ctx.sessions.create(SessionId('instructions-' + root), { meta: directory.sessionCwd === false ? {} : { cwd } })
+  session.append('user/message', user(directory.requestText ?? 'Update this project.'), { surfaceOp: 'append' })
   session.append('turn/start', { turn: 1 })
   const agent = { ctx, id: session.id, session, status: 'running', inbox: { nextStep: [], nextTurn: [] }, options: {},
     steer: vi.fn(), followup: vi.fn(), send: vi.fn() } as never as Agent
@@ -114,10 +126,16 @@ async function fixture(ptc = false, sessionDirectory = '') {
   const ask = vi.fn()
   ctx.on('user-questions/request', ask)
   let calls = 0
-  const invoke = (path = 'product.txt', tool = 'write') => ctx.agents.withInitiator(agent, () => ctx.tools.execute({
-    name: ptc ? 'run_code' : tool, arguments: ptc ? { description: 'Write fixture', code: 'await tools.write({file_path:"product.txt",content:"ptc wrote"})' } : tool === 'read' ? { file_path: path } : { file_path: path, content: 'written' },
-    agent, signal: new AbortController().signal, callId: ToolCallId('instruction-' + ++calls),
-  }))
+  const invoke = async (path = 'product.txt', tool = 'write') => {
+    const args = ptc ? { description: 'Write fixture', code: 'await tools.write({file_path:"product.txt",content:"ptc wrote"})' }
+      : tool === 'read' ? { file_path: path } : { file_path: path, content: 'written' }
+    const batch = await ctx.agents.withInitiator(agent, () => ctx.tools.execute({
+      calls: [{ type: 'tool-call', name: ptc ? 'run_code' : tool, arguments: JSON.stringify(args), id: ToolCallId('instruction-' + ++calls) }],
+      agent, signal: new AbortController().signal,
+    }))
+    expect(batch.results).toHaveLength(1)
+    return batch.results[0]!.result
+  }
   const step = async (messages: UserMessage[] = []) => {
     const decision = await agentEvents(ctx, agent).waterfall('agent/pre-step', { messages, turn: 1, step: 2, signal: new AbortController().signal },
       () => Promise.resolve({ kind: 'enter' as const, messages }))
@@ -144,6 +162,104 @@ async function fixture(ptc = false, sessionDirectory = '') {
 }
 
 describe('instruction guidance with original Native/PTC pipeline and localhost Jev', () => {
+  it.each(['not-applicable', 'undetermined'])('offers valid choices without textual requirements and handles %s without a reminder', async value => {
+    const f = await fixture(false, '', false, { requestText: '' })
+    f.answer(value)
+    expect((await f.invoke()).isError).toBe(false)
+    await f.settled()
+    expect(f.requests).toHaveLength(1)
+    expect(f.requests[0]!.state.sources).toEqual([])
+    const question = f.requests[0]!.questions['no-requirements'] as { criteria: Record<string, unknown> }
+    expect(Object.keys(question.criteria)).toEqual(['not-applicable', 'undetermined'])
+    const record = await f.ctx.jev.getRecord((await f.ctx.jev.listRecords({})).items[0]!.id)
+    expect(record?.status).toBe(value === 'not-applicable' ? 'succeeded' : 'failed')
+    expect(await f.step()).toHaveLength(0)
+    expect(f.writes()).toBe(1)
+    expect(f.ask).not.toHaveBeenCalled()
+  })
+
+  it('reads operation paths and rules from each legacy Session without a directory service', async () => {
+    const f = await fixture(false, '', false, { service: false })
+    await f.rule('Root directory instructions.')
+    const otherCwd = join(f.root, 'other')
+    await mkdir(otherCwd)
+    await f.rule('Other directory instructions.', 'other/TEAM.md')
+    const otherSession = f.ctx.sessions.create(SessionId('legacy-instructions-other-' + f.root), { meta: { cwd: otherCwd } })
+    otherSession.append('user/message', user('Update the other project.'), { surfaceOp: 'append' })
+    otherSession.append('turn/start', { turn: 1 })
+    const other = { ...f.agent, id: otherSession.id, session: otherSession } as Agent
+    f.ctx.agents.enter(other, undefined)
+    expect((await f.invoke()).isError).toBe(false)
+    await f.settled()
+    const secondBatch = await f.ctx.agents.withInitiator(other, () => f.ctx.tools.execute({
+      calls: [{ type: 'tool-call', name: 'write', arguments: JSON.stringify({ file_path: 'product.txt', content: 'other written' }), id: ToolCallId('legacy-other-instructions') }],
+      agent: other, signal: new AbortController().signal,
+    }))
+    expect(secondBatch.results).toHaveLength(1)
+    const second = secondBatch.results[0]!.result
+    expect(second.isError).toBe(false)
+    await f.settled(2)
+    expect(f.requests).toHaveLength(2)
+    expect(f.requests[0]!.state.operation.cwd).toBe(f.root)
+    expect(f.requests[1]!.state.operation.cwd).toBe(otherCwd)
+    expect(f.requests[0]!.state.sources.map(source => source.origin)).not.toContain(join(otherCwd, 'TEAM.md') + ':1')
+    expect(f.requests[1]!.state.sources.map(source => source.origin)).toContain(await realpath(join(otherCwd, 'TEAM.md')) + ':1')
+    expect(await readFile(join(f.root, 'product.txt'), 'utf8')).toBe('written')
+    expect(await readFile(join(otherCwd, 'product.txt'), 'utf8')).toBe('other written')
+  })
+
+  it('uses the process directory for legacy instruction evidence when the Session directory is unset', async () => {
+    const f = await fixture(false, '', false, { service: false, sessionCwd: false })
+    expect((await f.invoke(join(f.root, 'product.txt'))).isError).toBe(false)
+    await f.settled()
+    expect(f.requests).toHaveLength(1)
+    expect(f.requests[0]!.state.operation.cwd).toBe(process.cwd())
+    expect(await readFile(join(f.root, 'product.txt'), 'utf8')).toBe('written')
+  })
+
+  it.each([new Error('Directory read refused'), new DOMException('Directory read cancelled', 'AbortError')])(
+    'retains a directory service error as a failed observation without legacy evidence: %s', async failure => {
+      const f = await fixture()
+      await f.rule('Write only in isolated workspace.')
+      vi.spyOn(f.ctx.workingDirectory, 'get').mockImplementation(() => { throw failure })
+      expect((await f.invoke()).isError).toBe(false)
+      await f.settled()
+      expect(f.requests).toHaveLength(0)
+      const record = await f.ctx.jev.getRecord((await f.ctx.jev.listRecords({})).items[0]!.id)
+      expect(record?.status).toBe('failed')
+      expect(record?.failure?.code).toBe('SERVICE_FAILURE')
+      expect(await f.step()).toHaveLength(0)
+      expect(f.writes()).toBe(1)
+    },
+  )
+
+  it('judges the native write in its changed working directory with that directory rules', async () => {
+    const f = await fixture(false, '', true)
+    await mkdir(join(f.root, 'changed'))
+    const changed = await realpath(join(f.root, 'changed'))
+    await f.rule('Original directory instructions.')
+    await f.rule('Changed directory instructions.', 'changed/TEAM.md')
+    await f.ctx.plugin(ToolWorkingDirectory)
+    f.enabled(false)
+    const movedBatch = await f.ctx.agents.withInitiator(f.agent, () => f.ctx.tools.execute({
+      calls: [{ type: 'tool-call', name: 'working_directory', arguments: JSON.stringify({ cd: 'changed' }), id: ToolCallId('change-instructions-directory') }],
+      agent: f.agent, signal: new AbortController().signal,
+    }))
+    expect(movedBatch.results).toHaveLength(1)
+    const moved = movedBatch.results[0]!.result
+    expect(moved.isError).toBe(false)
+    expect(moved.value).toEqual({ cwd: changed })
+    f.enabled(true)
+    expect((await f.invoke()).isError).toBe(false)
+    await f.settled()
+    expect(await readFile(join(changed, 'product.txt'), 'utf8')).toBe('written')
+    await expect(readFile(join(f.root, 'product.txt'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
+    expect(f.session.header.cwd).toBe(f.root)
+    expect(f.requests).toHaveLength(1)
+    expect(f.requests[0]!.state.operation).toMatchObject({ cwd: changed })
+    expect(f.requests[0]!.state.sources.map(source => source.origin)).toContain(join(changed, 'TEAM.md') + ':1')
+  })
+
   it('does not wait for a slow judge; the next existing model step receives exactly one original-backed reminder', async () => {
     const f = await fixture()
     const receipts = vi.spyOn(f.ctx.jev, 'writeReceipt')
@@ -328,7 +444,6 @@ describe('instruction guidance with original Native/PTC pipeline and localhost J
   })
   it('delivers once into a real AgentLoop model request without inventing a follow-up turn', async () => {
     const f = await fixture(); await f.rule('Write only in isolated workspace.')
-    await f.ctx.plugin(SessionProjectionRegistry)
     await f.ctx.plugin(AgentLoop, { agents: [] })
     const seen: GenerateOptions[] = []
     class MainModel extends LlmAdapter {

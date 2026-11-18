@@ -1,7 +1,7 @@
 import type { JevRequest } from './types.ts';
 import type { StageStep, StageTurn } from './stage-types.ts';
 export declare const STAGE_RULE_VERSION = "whole-step-v1";
-export declare const STAGE_REDACTION_VERSION = "credential-patterns-v2";
+export declare const STAGE_REDACTION_VERSION = "credential-patterns-v3";
 export interface StageInputLimits {
     previousSteps: number;
     previousChars: number;

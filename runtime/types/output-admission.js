@@ -2,6 +2,7 @@ import s from '@deepseek-ai/schemastery';
 import { trySaveFormattedResult } from '@deepseek-ai/dsh-tool-fs-search';
 import { codePoints, generalCandidates, groupCandidates, replaceSpans, testCandidates, testRunner } from "./output-admission-rules.js";
 import { retainedEvidenceFor } from "./output-admission-evidence.js";
+import { createSpillBudgetGuard } from "./output-admission-spill-budget.js";
 export const Config = s.object({
     generalMinChars: s.number().step(1).min(1).max(1_000_000).default(6000).volatile(),
     testMinChars: s.number().step(1).min(1).max(1_000_000).default(4000).volatile(),
@@ -11,7 +12,7 @@ export const Config = s.object({
     maxRequestChars: s.number().step(1).min(1).max(1_000_000).default(48000).volatile(),
     maxTaskChars: s.number().step(1).min(1).max(1_000_000).default(12000).volatile(),
     waitMs: s.number().step(1).min(1).max(300_000).default(4000).volatile(),
-    omitProbability: s.number().min(0).max(1).default(0.8).volatile(),
+    omitProbability: s.number().min(0).max(1).default(0.7).volatile(),
     minSavedChars: s.number().step(1).min(1).max(1_000_000).default(300).volatile(),
     minSavedRatio: s.number().min(0).max(1).default(0.1).volatile(),
     slowTestMs: s.number().step(1).min(1).max(1_000_000).default(300).volatile(),
@@ -30,12 +31,14 @@ function textOf(agent) {
     const directs = directHistory;
     const user = directs.map(text).filter(Boolean).join('\n');
     const intent = text(assistant);
-    const pending = [...agent.inbox.nextStep, ...agent.inbox.nextTurn]
-        .filter(message => message.source.kind === 'user')
-        .map(message => `${message.id}:${text(message)}`).join('\n');
-    return { user, text: [user, intent].filter(Boolean).join('\n'), version: `${directs.map(message => message.id).join(',')}:${user}:${assistant?.id ?? ''}:${intent}:${pending}`,
+    const nextStep = agent.inbox.nextStep.filter(message => message.source.kind === 'user');
+    const nextTurn = agent.inbox.nextTurn.filter(message => message.source.kind === 'user');
+    const pending = [nextStep, nextTurn].map(queue => queue.map(message => [message.id, text(message)]));
+    const outputRequest = [user, intent, ...nextStep.map(text)].join('\n');
+    return { user, text: [user, intent].filter(Boolean).join('\n'),
+        version: JSON.stringify([directs.map(message => message.id), user, assistant?.id, intent, pending]),
         hasGoal: directs.some(message => { const value = text(message).trim(); return value.length > 0 && !continuation(value); }),
-        complete: /\b(?:full|complete|entire|verbatim|raw|every|all)\b.{0,32}\b(?:log|output|line|pass(?:ed|ing)?|tim(?:e|ing))\b|\b(?:log|output|line|pass(?:ed|ing)?|tim(?:e|ing))\b.{0,32}\b(?:full|complete|entire|verbatim|raw|every|all)\b|完整.{0,12}(?:日志|输出|通过|时间)|逐字|全部.{0,12}(?:日志|输出|通过|时间)/i.test([user, intent].join('\n')),
+        complete: FULL_INTENT.test(outputRequest) || OUTPUT_FIRST_FULL_INTENT.test(outputRequest),
     };
 }
 function liveRoot(ctx, agent) {
@@ -49,6 +52,7 @@ function commandIntent(exec, result) {
 }
 const TEST_COMMAND = /\b(?:vitest|jest|pytest|py\.test|node\s+--test|(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?test|tap)\b/i;
 const FULL_INTENT = /\b(?:full|complete|entire|verbatim|raw|every|all)\b.{0,32}\b(?:log|output|line|pass(?:ed|ing)?|tim(?:e|ing))\b|完整.{0,12}(?:日志|输出|通过|时间)|逐字|全部.{0,12}(?:日志|输出|通过|时间)/i;
+const OUTPUT_FIRST_FULL_INTENT = /\b(?:log|output|line|pass(?:ed|ing)?|tim(?:e|ing))\b.{0,32}\b(?:full|complete|entire|verbatim|raw|every|all)\b/i;
 function badStatus(exec, result) {
     if (result.isError)
         return true;
@@ -180,6 +184,7 @@ function configValues(config) {
 export function apply(ctx, config) {
     const lifetime = new AbortController();
     ctx.effect(() => () => { lifetime.abort(); }, 'jev-output-admission.lifetime');
+    const spillBudget = createSpillBudgetGuard(ctx);
     const pending = new Map();
     ctx.on('tools/result', (exec, result) => {
         const record = pending.get(exec.token);
@@ -200,7 +205,8 @@ export function apply(ctx, config) {
         description: 'Protect failures and summaries while selecting unneeded passing lines from recognized test logs.',
         settingsDescription: 'Recognizes common Vitest/Jest, pytest, and Node TAP text; Jev failure lets the original result continue.' }));
     ctx.effect(() => ctx.settings.configure({ auto: false }, ctx.fiber), 'jev-output-admission.settings');
-    ctx.on('tools/post-execute', async (exec, result, next) => {
+    ctx.on('tools/post-execute', async function (exec, result, next) {
+        const receiver = this;
         const decision = await next();
         try {
             const agent = exec.agent;
@@ -212,6 +218,8 @@ export function apply(ctx, config) {
                 return decision;
             const current = target(exec, result, decision);
             if (current === undefined)
+                return decision;
+            if (!spillBudget.allows(exec, receiver, [{ type: 'text', text: current.original }]))
                 return decision;
             const settings = configValues(config);
             const task = textOf(agent);
@@ -276,7 +284,8 @@ export function apply(ctx, config) {
                             interpret: response => valid(response, candidates.length)
                                 ? { usable: true } : { usable: false, reason: 'Incomplete or invalid log admission answers' },
                             canAdopt: () => !signal.aborted && textOf(agent).version === task.version && liveRoot(ctx, agent)
-                                ? true : 'Tool result or task changed while judging',
+                                ? spillBudget.allows(exec, receiver) || 'Native Spill policy changed while judging'
+                                : 'Tool result or task changed while judging',
                         });
                         if (timeout.aborted && !exec.signal.aborted && !lifetime.signal.aborted
                             && (outcome.kind === 'cancelled' || outcome.kind === 'failed') && outcome.operationId !== undefined) {
@@ -293,7 +302,8 @@ export function apply(ctx, config) {
                     }
                 }
             }
-            if (exec.signal.aborted || lifetime.signal.aborted || !liveRoot(ctx, agent) || textOf(agent).version !== task.version)
+            if (exec.signal.aborted || lifetime.signal.aborted || !liveRoot(ctx, agent) || textOf(agent).version !== task.version
+                || !spillBudget.allows(exec, receiver))
                 return decision;
             const replacements = [...rules.map(span => ({ span, marker: marker(span, current.raw, span.reason === 'repeated-failure'
                         ? `exact duplicate of original lines ${span.originalFirstLine}-${span.originalFirstLine + span.lastLine - span.firstLine}`
@@ -314,10 +324,12 @@ export function apply(ctx, config) {
                 return decision;
             const saved = await trySaveFormattedResult(ctx, exec, 'jev-original-tool-log.txt', current.original);
             if (saved === undefined || exec.signal.aborted || lifetime.signal.aborted || !liveRoot(ctx, agent)
-                || textOf(agent).version !== task.version)
+                || textOf(agent).version !== task.version || !spillBudget.allows(exec, receiver))
                 return decision;
             filtered = withRecovery(filtered, `[Jev original log: ${saved.locator}. ${saved.retrievalHint}]`);
             const delivered = current.compose(filtered);
+            if (!spillBudget.allows(exec, receiver, [{ type: 'text', text: delivered }]))
+                return decision;
             if (codePoints(current.compose(current.raw)) - codePoints(delivered) < settings.minSavedChars
                 || (codePoints(current.compose(current.raw)) - codePoints(delivered)) / codePoints(current.compose(current.raw)) < settings.minSavedRatio)
                 return decision;
@@ -328,7 +340,7 @@ export function apply(ctx, config) {
                 operationId = observed.id;
             }
             if (exec.signal.aborted || lifetime.signal.aborted || !liveRoot(ctx, agent)
-                || textOf(agent).version !== task.version)
+                || textOf(agent).version !== task.version || !spillBudget.allows(exec, receiver))
                 return decision;
             pending.set(exec.token, { operationId, branch, inputChars: codePoints(current.original),
                 proposedChars: codePoints(delivered), rules: rules.length, jev: omitted.length, locator: saved.locator });

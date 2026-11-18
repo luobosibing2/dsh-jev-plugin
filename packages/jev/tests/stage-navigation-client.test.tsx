@@ -2,7 +2,7 @@
 /** Session source navigation with fixed Host replies; no model call runs here. */
 
 import React from 'react'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ButtonHTMLAttributes } from 'react'
 import { ToolCallId } from '@deepseek-ai/dsh-llm'
@@ -15,7 +15,7 @@ vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => ({
   StateDot: () => <span aria-hidden="true" />,
 }))
 
-afterEach(() => { document.body.innerHTML = '' })
+afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 function step(turn: number, number: number, label: 'implementation' | 'review_validation', text: string): StageStep {
   const assistant: NonNullable<StageStep['assistant']> = { seq: turn * 100 + number * 10 + 1, interrupted: false, content: [
@@ -225,5 +225,39 @@ describe('stage navigation view', () => {
 
     await act(async () => { resolveNew({ id: 'new-batch', sessionId: 'new', status: 'completed', total: 2, completed: 2, failed: 0, cancelled: 0 }) })
     expect(screen.getByRole('button', { name: 'Analyze this turn' }).hasAttribute('disabled')).toBe(false)
+  })
+})
+
+describe('recorded stage connection identity', () => {
+  it.each(['luna-openrouter', 'luna-openai'] as const)('shows the recorded %s channel, reported model and actual packets', async connectionId => {
+    const focused = step(1, 1, 'implementation', 'Recorded Luna step')
+    focused.analysis = { ...focused.analysis, connectionId, configuredModel: connectionId === 'luna-openai' ? 'gpt-6-luna' : 'openai/gpt-6-luna-decisions', model: 'actual-luna-model' }
+    const jev = remote({ sessionId: 'session', cursor: 199, featureEnabled: true, turns: [turn(1, [focused])] })
+    jev.getStageAnalysisRecord = vi.fn(async (_sessionId, stepId) => ({
+      id: 'luna-stage', sessionId: 'session', stepId, revision: 1, sourceFingerprint: 'source-hash', ruleVersion: 'v1',
+      status: 'succeeded', label: 'implementation', connectionId, model: 'actual-luna-model',
+      connection: { connectionId, baseUrl: 'https://recorded.invalid/decisions', model: 'configured-luna', credentialRef: 'RECORDED_REF' },
+      request: { state: { original: 'step' }, questions: [] }, rawResponse: { answers: [{ name: 'stage', type: 'choice', choice: 'implementation' }] },
+      response: { answers: [{ id: 'stage', kind: 'choice', optionId: 'implementation' }] }, usageComplete: false,
+      networkRecords: [{ id: 'stage-packet', questionIds: ['stage'], requestBody: { input: 'full recorded input' }, startedAt: '2026-10-07T00:00:00Z', status: 'succeeded', returnedModel: 'actual-luna-model', rawResponseText: '{"actual":"raw-provider-packet"}' }],
+    }))
+    render(view('session', jev))
+    expect(await screen.findByText(`${stageEn.connection}: ${connectionId === 'luna-openai' ? stageEn.connectionLunaOpenAI : stageEn.connectionLunaOpenRouter}`)).toBeTruthy()
+    expect(screen.getByText(`${stageEn.model}: actual-luna-model`)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: stageEn.details }))
+    await screen.findByText(stageEn.providerRequests)
+    expect(screen.getByText(stageEn.providerRequests).nextElementSibling?.textContent).toContain('raw-provider-packet')
+    expect(screen.getByText(stageEn.parsedResponse).nextElementSibling?.textContent).toContain('"kind": "choice"')
+    expect(screen.getByText(stageEn.usageIncomplete)).toBeTruthy()
+    expect(jev.startStageAnalysis).not.toHaveBeenCalled()
+  })
+
+  it('does not invent a channel for old stage records', async () => {
+    const jev = remote({ sessionId: 'session', cursor: 199, featureEnabled: true, turns: [turn(1, [step(1, 1, 'implementation', 'Old step')])] })
+    render(view('session', jev))
+    await screen.findByText('Old step')
+    expect(screen.queryByText(`${stageEn.connection}: ${stageEn.connectionJev}`)).toBeNull()
+    expect(screen.getByText(`${stageEn.model}: jev-1.13.0`)).toBeTruthy()
+    expect(jev.startStageAnalysis).not.toHaveBeenCalled()
   })
 })

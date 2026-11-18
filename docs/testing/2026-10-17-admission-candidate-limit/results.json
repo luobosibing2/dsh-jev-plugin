@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "executedLocalDate": "2026-10-17",
+  "timezone": "Asia/Shanghai",
+  "scope": "One eligible-candidate counting fix; one bounded real build-verification task, not a natural-task benchmark.",
+  "source": {
+    "baseCommit": "76b3a868ad7257e7f350b6a1079786d1b74ab531",
+    "state": "Candidate-count fix plus focused regressions and regenerated runtime, before the delivery commit."
+  },
+  "environment": {
+    "platform": "darwin",
+    "node": "v24.14.1",
+    "pnpm": "11.7.0",
+    "officialDshVersion": "0.2.1-alpha.3",
+    "browserVersion": "156.0.8078.4"
+  },
+  "package": {
+    "name": "@dsh-jev/plugin",
+    "version": "0.1.0",
+    "tarballSha256": "1487d2712bfb06fe4cf78729bc49738aff8135df5acb96e284f217e990b52862",
+    "sourceToTarballFilesMatched": 86,
+    "tarballToLiveInstalledFilesMatched": 85
+  },
+  "commands": {
+    "formalSmoke": "pnpm run test:compatibility --version 0.2.1-alpha.3 --artifacts .artifacts/admission-candidate-limit-compatibility-20261017",
+    "realTaskRunner": "node .artifacts/admission-candidate-limit-validation/admission-candidate-limit-live.mjs --smoke-results .artifacts/admission-candidate-limit-compatibility-20261017/smoke-results.json --artifacts .artifacts/admission-candidate-limit-live-20261017-run2",
+    "nativeTaskTool": "bash: node build.mjs",
+    "privateRunner": "The task-specific runner and original command logs remain local under ignored .artifacts; they are not part of the published package."
+  },
+  "automatedRegression": {
+    "focusedFiles": 4,
+    "passedTests": 46,
+    "typecheckPassed": true,
+    "buildPassed": true,
+    "runtimeHookSmokePassedTests": 3,
+    "artifactBoundaryProbe": {
+      "allowed48": true,
+      "skipped49": true
+    }
+  },
+  "formalSmoke": {
+    "passed": true,
+    "officialInstallExitCode": 0,
+    "hostComponentsRunning": 9,
+    "webSettingsVisible": true,
+    "webRecordsVisible": true,
+    "browserErrors": {
+      "page": 0,
+      "console": 0,
+      "import": 0
+    },
+    "realModelCalls": 0
+  },
+  "setupAttempt": {
+    "result": "validation-setup-failure",
+    "observedHttpReceipts": 0,
+    "cause": "The official headless template disables credentials. The first test overlay set a path without enabling the row.",
+    "correction": "Enable the native credentials row in the isolated overlay; use a new evidence directory.",
+    "productCodeChanged": false
+  },
+  "realTask": {
+    "passed": true,
+    "mainRequestLimit": 4,
+    "judgmentRequestLimit": 2,
+    "elapsedMs": 4601,
+    "exitCode": 0,
+    "turnEnd": "completed",
+    "nativeBashCalls": 1,
+    "mainRequests": {
+      "count": 2,
+      "http200": 2,
+      "returnedModel": "deepseek-flash",
+      "passiveSseCloneAbortErrors": 2
+    },
+    "judgmentRequests": {
+      "count": 1,
+      "http200": 1,
+      "returnedModel": "jev-1.13.0",
+      "completeResponseCaptured": true
+    },
+    "input": {
+      "count": 24,
+      "aggregate": 300,
+      "checksumsMatch": true,
+      "originalLogSha256": "723954b2557d8c897936e99ee9f2a073b31302f27e2004603b47b24666f44205",
+      "originalChars": 10111,
+      "totalGroups": 51
+    },
+    "admission": {
+      "candidates": 24,
+      "requestChars": 34360,
+      "retainedChunks": 25,
+      "byteMappedEvidence": true,
+      "durableToolResults": 1,
+      "protectedOutputPreserved": true,
+      "omission": false,
+      "deliveredChars": 10111,
+      "deliveredSha256": "723954b2557d8c897936e99ee9f2a073b31302f27e2004603b47b24666f44205",
+      "returnedJudgmentModel": "jev-1.13.0",
+      "actualWireInputMatchesLedger": true,
+      "actualWireQuestionCount": 24,
+      "answerCounts": {
+        "omit": 24
+      },
+      "omitProbabilityRange": [
+        0.58,
+        0.67
+      ]
+    },
+    "finalAnswerReportsBuildMarkerAndAggregate": true,
+    "agentErrors": 0,
+    "humanInteractions": 0,
+    "credentialSourceUnchanged": true
+  },
+  "limitations": [
+    "The build-verification fixture performs real module imports, file copies and checksum validation. It is a controlled single task, not a natural-task success-rate or performance benchmark.",
+    "All 24 choices selected omit with probabilities 0.58-0.67. The existing 0.8 threshold rejected every omission; the final persisted tool text equals the original. This live run does not demonstrate log reduction or original-log recovery after omission.",
+    "Both passive DeepSeek SSE clones ended with AbortError while observing response metadata. The native task completed with exit 0 and no agent errors; this is incomplete passive stream observation, not a product stream failure or a complete DeepSeek wire capture.",
+    "The Jev request body and complete response were retained privately and compared with the business ledger; HTTP 200 alone was not used as task success evidence.",
+    "Raw profiles, Session logs, provider packets, credentials and authenticated Web details are excluded from public files. The run did not change an existing user profile."
+  ]
+}

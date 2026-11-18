@@ -37,9 +37,11 @@ function fixture(options: {
   const page = vi.fn(async () => ({ records: [], hasMore: false }))
   const judgeOnce = vi.fn(options.judge ?? (async () => ({ kind: 'failed', failure: { code: 'SERVER', message: 'Jev server failed' } })))
   const getRecord = vi.fn(options.getRecord ?? (async () => null))
+  const connection = { connectionId: 'jev' as const, baseUrl: 'http://127.0.0.1/test', model: 'jev-fixture', credentialRef: 'JEV_KEY', timeoutMs: 1000 }
   const context = { sessionQuery: { observeSession }, sessionController: { page },
     credentials: { resolve: options.resolveCredential ?? (async () => undefined) },
     jev: { isFeatureEnabled: () => enabled, stageConnectionIdentity: () => ({ baseUrl: 'http://127.0.0.1/test', model: 'jev-fixture', credentialRef: 'JEV_KEY', timeoutMs: 1000 }),
+      stageConnections: () => [connection], judgmentConnectionIdentity: () => connection,
       judgeOnce, getRecord },
   } as never as Context
   const store = { forSession: (sessionId: string) => [...saved.values()].filter(record => record.sessionId === sessionId),
@@ -115,7 +117,7 @@ describe('stage batch ownership and cancellation', () => {
     await entered.promise
     f.disable()
     f.manager.cancelRunning()
-    held.resolve({ attemptRecords: [{ id: 'attempt-1', rawResponse: { model: 'jev-1.13.0' } }] })
+    held.resolve({ attemptRecords: [{ id: 'attempt-1', connection: { model: 'jev-fixture' }, rawResponse: { model: 'jev-1.13.0' } }] })
     await f.manager.cancel(batch.id)
     expect([...f.saved.values()].map(record => record.status)).not.toContain('succeeded')
     expect([...f.saved.values()].at(-1)?.status).toBe('cancelled')
@@ -169,7 +171,7 @@ describe('stage batch ownership and cancellation', () => {
           answers: [{ id: 'stage', kind: 'choice', optionId: 'implementation', confidence: 0.45 }],
         } }
         : { kind: 'failed', operationId: 'op-failure', failure: { code: 'INVALID_RESPONSE', message: 'Invalid Jev choice' } },
-      getRecord: async () => ({ attemptRecords: [{ id: 'attempt-1', request: { state: {}, questions: [] },
+      getRecord: async () => ({ attemptRecords: [{ id: 'attempt-1', connection: { model: 'jev-fixture' }, request: { state: {}, questions: [] },
         rawResponse: { model: 'jev-1.13.0', answers: { stage: { choice: 'implementation' } } } }] }),
     })
     const first = await f.manager.start(request)

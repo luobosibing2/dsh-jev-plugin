@@ -24,7 +24,7 @@ for (const key of ['DEEPSEEK_API_KEY', 'DEEPSEEK_BASE_URL', 'DEEPSEEK_SEARCH_BAS
 
 function dsh(parameters, capturePath) {
   return new Promise((resolveRun, rejectRun) => {
-    const command = ['--package', '@deepseek-ai/dsh@0.1.7-rc.2', 'dlx', 'dsh', ...parameters]
+    const command = ['--package', '@deepseek-ai/dsh@0.2.1-alpha.2', 'dlx', 'dsh', ...parameters]
     const child = spawn('pnpm', command, { cwd: workspace, env,
       stdio: capturePath === undefined ? 'inherit' : ['ignore', 'pipe', 'inherit'] })
     let output = ''

@@ -3,6 +3,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
+import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
+import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
+import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
 import { createVolatile } from '@deepseek-ai/cosmokit'
 import AgentRegistry, { type Agent } from '@deepseek-ai/dsh-agent'
 import { createUserMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
@@ -14,6 +17,7 @@ import {
   SEARCH_META_MAX_BYTES, SEARCH_STDERR_MAX_BYTES, SEARCH_TIMEOUT_MS,
 } from '@deepseek-ai/dsh-tool-fs-search'
 import ToolRuntime from '@deepseek-ai/dsh-tools'
+import * as PtcToolExecutor from '@deepseek-ai/dsh-tool-executor-ptc'
 import { apply } from '../src/selection.ts'
 import type { JevJudgeOptions, JevJudgeResult } from '../src/index.ts'
 import type { JevRequest } from '../src/types.ts'
@@ -44,11 +48,15 @@ describe('glob selection through the published DSH PTC bridge', () => {
     cleanups.push(() => rm(root, { recursive: true, force: true }))
     const ctx = new Context()
     cleanups.push(() => ctx.fiber.dispose())
+    await ctx.plugin(LocalFileSystem, { cwd: root })
+    await ctx.plugin(SessionProjectionRegistry)
+    await ctx.plugin(WorkingDirectory)
     await ctx.plugin(AgentRegistry)
     await ctx.plugin(SessionStore)
     await ctx.plugin(SystemPrompt)
-    await ctx.plugin(ToolRuntime, { mode: 'ptc' })
+    await ctx.plugin(ToolRuntime)
     await ctx.plugin(BindingRuntime)
+    await ctx.plugin(PtcToolExecutor)
     const runtime = ctx.ptcRuntime as BindingRuntime
 
     ctx.provide('subprocess', {
@@ -93,7 +101,7 @@ describe('glob selection through the published DSH PTC bridge', () => {
       timeoutMs: SEARCH_TIMEOUT_MS,
     })
     apply(ctx, {
-      skillLimit: createVolatile(5), fileCandidates: createVolatile(40), fileLimit: createVolatile(12),
+      skillLimit: createVolatile(5), skillMinProbability: createVolatile(0.5), fileCandidates: createVolatile(40), fileLimit: createVolatile(12),
     })
 
     const events: SessionEvent[] = []
@@ -104,14 +112,15 @@ describe('glob selection through the published DSH PTC bridge', () => {
       source: { kind: 'user' },
     }), { surfaceOp: 'append' })
     session.append('turn/start', { turn: 1 })
-    const agent = { id: 'jev-selection-ptc', session } as Agent
+    const agent = { ctx, id: 'jev-selection-ptc', session } as Agent
     ctx.agents.enter(agent, undefined)
 
-    const result = await ctx.agents.withInitiator(agent, () => ctx.tools.execute({
-      name: 'run_code',
-      arguments: { code: 'return await tools.glob({ pattern: "*.ts" })', description: 'Find files' },
-      agent, signal: new AbortController().signal, callId: ToolCallId('jev-selection-ptc-call'),
+    const batch = await ctx.agents.withInitiator(agent, () => ctx.tools.execute({
+      calls: [{ type: 'tool-call', name: 'run_code', arguments: JSON.stringify({ code: 'return await tools.glob({ pattern: "*.ts" })', description: 'Find files' }), id: ToolCallId('jev-selection-ptc-call') }],
+      agent, signal: new AbortController().signal,
     }))
+    expect(batch.results).toHaveLength(1)
+    const result = batch.results[0]!.result
 
     expect(result.isError).toBe(false)
     expect(requests).toHaveLength(1)

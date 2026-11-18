@@ -5,10 +5,11 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
+import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import AgentRegistry from '@deepseek-ai/dsh-agent'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import AgentPresets, { standingMountFor, livePresetMounts } from '@deepseek-ai/dsh-agent-preset-registry'
+import AgentPresets from '@deepseek-ai/dsh-agent-preset-registry'
 import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
 import LlmRuntime, { LlmAdapter, createUserMessage, ToolCallId, type GenerateOptions, type StreamChunk } from '@deepseek-ai/dsh-llm'
 import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
@@ -18,6 +19,7 @@ import { JsonStorageBackend } from '@deepseek-ai/dsh-storage-json'
 import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
+import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
 import UserQuestionService from '@deepseek-ai/dsh-user-questions'
 import JevService from '../src/index.ts'
 import * as instructions from '../src/instructions.ts'
@@ -58,7 +60,9 @@ async function fixture(mode: 'preset' | 'direct', label: string) {
   await ctx.plugin(SessionProjectionRegistry)
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(ToolRuntime)
+  await ctx.plugin(NativeToolExecutor)
   await ctx.plugin(LocalFileSystem, { cwd: root })
+  await ctx.plugin(WorkingDirectory)
   await ctx.plugin(UserQuestionService)
   const backend = new JsonStorageBackend(join(root, 'storage'))
   const unregister = ctx.storage.backend.register('json', backend)
@@ -131,14 +135,16 @@ describe('instruction configuration addresses the acting Agent scope', () => {
   it('reads distinct standing presets without mixing another root with the same preset ids', async () => {
     const a = await fixture('preset', 'root-A')
     const b = await fixture('preset', 'root-B')
-    expect(livePresetMounts().length).toBeGreaterThanOrEqual(4)
+    expect(a.ctx.agentPresets.inspectCompositions()).toHaveLength(2)
+    expect(b.ctx.agentPresets.inspectCompositions()).toHaveLength(2)
     expect([...a.ctx.loader.entries()].filter(entry => entry.options.name === '@deepseek-ai/dsh-agent-instructions')).toHaveLength(0)
     const first = await a.run('one', 'first')
     const second = await a.run('two', 'second')
     const other = await b.run('three', 'first')
-    expect(standingMountFor(first.agent.ctx)?.presetId).toBe('first')
-    expect(standingMountFor(second.agent.ctx)?.presetId).toBe('second')
-    expect(standingMountFor(first.agent.ctx)?.key).not.toBe(standingMountFor(other.agent.ctx)?.key)
+    expect(a.ctx.agentPresets.composedPreset(first.agent.ctx)).toBe('first')
+    expect(a.ctx.agentPresets.composedPreset(second.agent.ctx)).toBe('second')
+    expect(a.ctx.agentPresets.inspectCompositions(other.agent.ctx)).toEqual([])
+    expect(b.ctx.agentPresets.inspectCompositions(first.agent.ctx)).toEqual([])
     const workspace = (body: Body) => body.state.sources.filter(source => source.authority === 'workspace').map(source => source.text)
     expect(workspace(first.body)).toEqual(['root-A first-preset instructions'])
     expect(workspace(second.body)).toEqual(['root-A second-preset instructions'])
@@ -147,7 +153,7 @@ describe('instruction configuration addresses the acting Agent scope', () => {
   it('uses the actual direct Loader when the Agent has no preset', async () => {
     const h = await fixture('direct', 'direct-root')
     const result = await h.run('direct')
-    expect(standingMountFor(result.agent.ctx)).toBeUndefined()
+    expect(result.agent.ctx.get('agentPresets')).toBeUndefined()
     expect(result.body.state.sources.filter(source => source.authority === 'workspace').map(source => source.text))
       .toEqual(['direct-root direct-loader instructions'])
   })

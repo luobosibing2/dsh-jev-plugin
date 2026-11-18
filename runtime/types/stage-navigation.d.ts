@@ -26,7 +26,7 @@ export declare class StageNavigationManager {
     private stopping;
     constructor(ctx: Context, config: Config, store: StageStore);
     private settings;
-    private secrets;
+    private preparation;
     private identity;
     /** Probe the native history API's durable address checks before reading the same immutable cut. */
     private source;

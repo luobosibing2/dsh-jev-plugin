@@ -55,6 +55,57 @@ export interface JevRequest {
 export interface JevResponse {
     answers: readonly JevAnswer[];
 }
+export type JevJudgmentModel = 'jev' | 'luna';
+export type JevLunaApi = 'openrouter' | 'openai';
+export type JevConnectionId = 'jev' | 'luna-openrouter' | 'luna-openai';
+/** Profile settings contain credential references, never authentication values. */
+export interface JevConfigValues {
+    baseUrl: string;
+    model: string;
+    credentialRef: string;
+    timeoutMs: number;
+    features: Record<string, boolean>;
+    judgmentModel: JevJudgmentModel;
+    lunaApi: JevLunaApi;
+    lunaOpenRouterBaseUrl: string;
+    lunaOpenRouterCredentialRef: string;
+    lunaOpenAIBaseUrl: string;
+    lunaOpenAICredentialRef: string;
+}
+/** A saved connection identity used to associate asynchronous Remote results. */
+export interface JevConnectionIdentity {
+    connectionId: JevConnectionId;
+    baseUrl: string;
+    model: string;
+    credentialRef: string;
+    timeoutMs: number;
+}
+/** Resolve the explicitly selected protocol; custom URLs do not change its identity. */
+export declare function resolveConnectionIdentity(values: JevConfigValues, id?: JevConnectionId): JevConnectionIdentity;
+export interface JevUsage {
+    inputTokens?: number;
+    outputTokens?: number;
+}
+/** One prepared HTTP request and its outcome, without headers or authentication values. */
+export interface JevNetworkRecord {
+    id: string;
+    questionIds: readonly string[];
+    requestBody: Json;
+    startedAt: string;
+    dispatchedAt?: string;
+    settledAt?: string;
+    status: 'pending' | 'succeeded' | 'failed';
+    httpStatus?: number;
+    rawResponseText?: string;
+    rawResponse?: Json;
+    returnedModel?: string;
+    requestId?: string;
+    usage?: JevUsage;
+    failure?: {
+        code: string;
+        message: string;
+    };
+}
 export interface JevFeatureDefinition {
     id: string;
     name: string;
@@ -87,6 +138,7 @@ export interface JevAttemptRecord {
         baseUrl: string;
         model: string;
         credentialRef: string;
+        connectionId?: JevConnectionId;
     };
     request: JevRequest;
     status: JevRecordStatus;
@@ -100,10 +152,9 @@ export interface JevAttemptRecord {
         code: string;
         message: string;
     };
-    usage?: {
-        inputTokens?: number;
-        outputTokens?: number;
-    };
+    usage?: JevUsage;
+    networkRecords?: readonly JevNetworkRecord[];
+    usageComplete?: boolean;
 }
 export interface JevRecordSummary {
     id: string;
@@ -137,11 +188,13 @@ export interface JevRecordPage {
     nextCursor?: string;
 }
 export interface JevCredentialStatus {
+    connection: JevConnectionIdentity;
     configured: boolean;
     writable: boolean;
     source?: string;
 }
 export interface JevProbeResult {
+    connection: JevConnectionIdentity;
     ok: boolean;
     latencyMs: number;
     recordId: string;

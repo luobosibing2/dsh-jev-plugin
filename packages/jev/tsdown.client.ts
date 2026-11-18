@@ -1,7 +1,7 @@
 /** Standalone DSH Client bundle, using the Host module-loader factory handoff. */
 
 import { readFile } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
+import { dirname, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { transform } from 'lightningcss'
 import type { TsdownPlugin, UserConfig } from 'tsdown'
@@ -28,15 +28,18 @@ const styles: TsdownPlugin = {
   async load(id) {
     if (!id.startsWith(CSS_PREFIX)) return null
     const filename = id.slice(CSS_PREFIX.length, -CSS_SUFFIX.length)
+    const sourcePath = relative(ROOT, filename).split(sep).join('/')
     this.addWatchFile(filename)
     const { code, exports } = transform({
-      filename,
+      filename: sourcePath,
       code: await readFile(filename),
       cssModules: { pattern: '[hash]_[local]' },
       minify: true,
     })
-    const classes = Object.fromEntries(Object.entries(exports ?? {}).map(([key, value]) => [key, value.name]))
-    const tag = `${PACKAGE}/${filename.slice(ROOT.length + 1)}`
+    const classes = Object.fromEntries(Object.entries(exports ?? {})
+      .sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0)
+      .map(([key, value]) => [key, value.name]))
+    const tag = `${PACKAGE}/${sourcePath}`
     return [
       `const tag = ${JSON.stringify(tag)};`,
       `if (typeof document !== 'undefined' && document.querySelector('style[data-plugin-css=' + JSON.stringify(tag) + ']') === null) {`,

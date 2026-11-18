@@ -1,0 +1,111 @@
+{
+  "generatedAt": "2026-10-29",
+  "version": "0.2.1-rc.3",
+  "platform": "win32",
+  "experimentalManifest": false,
+  "browserCheckRequested": true,
+  "realModelCalls": 0,
+  "officialInstall": {
+    "exitCode": 0,
+    "observedVersion": "0.2.1-rc.3"
+  },
+  "host": {
+    "fixtureOk": true,
+    "hostRows": [
+      {
+        "id": "include:jev",
+        "name": "@dsh-jev/plugin",
+        "state": 2
+      },
+      {
+        "id": "include:jev-selection",
+        "name": "@dsh-jev/plugin/selection",
+        "state": 2
+      },
+      {
+        "id": "include:jev-supervision",
+        "name": "@dsh-jev/plugin/supervision",
+        "state": 2
+      },
+      {
+        "id": "include:jev-instructions",
+        "name": "@dsh-jev/plugin/instructions",
+        "state": 2
+      },
+      {
+        "id": "include:jev-shared-findings",
+        "name": "@dsh-jev/plugin/shared-findings",
+        "state": 2
+      },
+      {
+        "id": "include:jev-interjection-routing",
+        "name": "@dsh-jev/plugin/interjection",
+        "state": 2
+      },
+      {
+        "id": "include:jev-output-admission",
+        "name": "@dsh-jev/plugin/output-admission",
+        "state": 2
+      },
+      {
+        "id": "include:jev-workspace-approval",
+        "name": "@dsh-jev/plugin/workspace-approval",
+        "state": 2
+      },
+      {
+        "id": "include:jev-stage-navigation",
+        "name": "@dsh-jev/plugin/stage-navigation",
+        "state": 2
+      }
+    ],
+    "hostExports": [
+      ".",
+      "./selection",
+      "./types",
+      "./stage-types",
+      "./stage-navigation",
+      "./remote",
+      "./typert",
+      "./supervision",
+      "./instructions",
+      "./shared-findings",
+      "./interjection",
+      "./workspace-approval",
+      "./output-admission"
+    ],
+    "featureCount": 12,
+    "diagnosticOk": true,
+    "cases": [
+      "session-a",
+      "session-b",
+      "native-cwd-switch",
+      "native-goal",
+      "shared-reports",
+      "skill-no-relevant"
+    ],
+    "logOmissionsAdopted": true
+  },
+  "web": {
+    "ok": true,
+    "pageErrors": [],
+    "consoleErrors": [],
+    "importErrors": [],
+    "browserVersion": "156.0.8078.4",
+    "clientBootstrap": true,
+    "onboarding": {
+      "noticeAcknowledged": true,
+      "apiKeyDeferred": false
+    },
+    "entryVisible": true,
+    "settingsVisible": true,
+    "settings": {
+      "baseUrl": "http://127.0.0.1:56032/v1/systemone",
+      "model": "fixture",
+      "timeoutMs": 5000,
+      "featureCount": 12,
+      "enabledFeatureCount": 12
+    },
+    "recordsVisible": true
+  },
+  "httpPacketCount": 89
+}

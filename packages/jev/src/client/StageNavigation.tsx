@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { Button, StateDot } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { JevConnectionId } from '../types.ts'
 import type {
   StageAnalysisRecord, StageAnalysisRequest, StageBatchState, StageLabel,
   StageMessage, StageNavigationSnapshot, StageStep, StageToolCall, StageTurn,
@@ -36,6 +37,10 @@ const LABEL_KEYS: Record<StageLabel, StageLocaleKey> = {
   solution_planning: 'stageSolutionPlanning', implementation: 'stageImplementation',
   review_validation: 'stageReviewValidation', delivery_finalization: 'stageDeliveryFinalization',
   mixed: 'stageMixed', unknown: 'stageUnknown',
+}
+
+const CONNECTION_KEYS: Record<JevConnectionId, StageLocaleKey> = {
+  jev: 'connectionJev', 'luna-openrouter': 'connectionLunaOpenRouter', 'luna-openai': 'connectionLunaOpenAI',
 }
 
 function format(value: unknown): string {
@@ -122,6 +127,7 @@ function StepCard({ step, selected, inSegment, t, onDetails, detailsOpen, previo
     </header>
     <div className={css.statusLine}>
       <span>{t('analysisStatus')}: {t(analysis.status)}</span>
+      {analysis.connectionId !== undefined && <span>{t('connection')}: {t(CONNECTION_KEYS[analysis.connectionId])}</span>}
       {analysis.configuredModel && <span>{t('configuredModel')}: {analysis.configuredModel}</span>}
       <span>{t('model')}: {analysis.model ?? t('notProvided')}</span>
       {analysis.status === 'succeeded' && <span>{t('confidence')}: {analysis.confidence ?? t('notProvided')} · {t('uncalibrated')}</span>}
@@ -137,6 +143,7 @@ function StepCard({ step, selected, inSegment, t, onDetails, detailsOpen, previo
       <span>{t('confidence')}: {analysis.previousResult.confidence ?? t('notProvided')} · {t('uncalibrated')}</span>
       <span>{t('probabilities')}: {analysis.previousResult.probabilities === undefined ? t('notProvided') : format(analysis.previousResult.probabilities)}</span>
       {analysis.previousResult.configuredModel && <span>{t('configuredModel')}: {analysis.previousResult.configuredModel}</span>}
+      {analysis.previousResult.connectionId !== undefined && <span>{t('connection')}: {t(CONNECTION_KEYS[analysis.previousResult.connectionId])}</span>}
       <span>{t('model')}: {analysis.previousResult.model ?? t('notProvided')}</span>
       {analysis.previousResult.stale && <span>{t('stale')}</span>}
       <button className={css.textButton} type="button" onClick={() => { onDetails(analysis.previousResult!.recordId) }} aria-expanded={previousDetailsOpen}>{previousDetailsOpen ? t('closeDetails') : t('viewPreviousRecord')}</button>
@@ -166,9 +173,12 @@ function StepCard({ step, selected, inSegment, t, onDetails, detailsOpen, previo
         {detail && <>
           <p className={css.muted}>{t('redactionNote')}</p>
           <div className={css.muted}>{t('sourceStep')}: {detail.stepId} · {detail.ruleVersion}</div>
+          {detail.connection !== undefined && <><span className={css.blockLabel}>{t('connection')}</span><pre className={css.sourceText}>{format(detail.connection)}</pre></>}
           <span className={css.blockLabel}>{t('requestSent')}</span><pre className={css.sourceText}>{detail.request === undefined ? t('notProvided') : format(detail.request)}</pre>
           <span className={css.blockLabel}>{t('rawResponse')}</span><pre className={css.sourceText}>{detail.rawResponse === undefined ? t('notProvided') : format(detail.rawResponse)}</pre>
           <span className={css.blockLabel}>{t('parsedResponse')}</span><pre className={css.sourceText}>{detail.response === undefined ? t('notProvided') : format(detail.response)}</pre>
+          {detail.networkRecords !== undefined && <><span className={css.blockLabel}>{t('providerRequests')}</span><pre className={css.sourceText}>{format(detail.networkRecords)}</pre></>}
+          {detail.usageComplete === false && <span className={css.muted}>{t('usageIncomplete')}</span>}
         </>}
       </div>}
     </div>}

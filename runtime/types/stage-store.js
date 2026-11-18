@@ -11,6 +11,7 @@ const recordSchema = z.object({
     confidence: z.number().min(0).max(1).optional(),
     probabilities: z.record(z.string(), z.number().min(0).max(1)).optional(),
     model: z.string().optional(), configuredModel: z.string().optional(), operationId: z.string().optional(),
+    connectionId: z.enum(['jev', 'luna-openrouter', 'luna-openai']).optional(),
     recordId: z.string().optional(),
     failure: z.object({ code: z.string(), message: z.string() }).optional(),
     updatedAt: z.string().optional(),
