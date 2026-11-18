@@ -9,6 +9,7 @@ export const Config = s.object({
     messageChars: s.number().step(1).min(1).max(1_000_000).default(24_000),
 });
 const FEATURE = 'interjection-routing';
+const HOST_STOP_NOTICE = '宿主停止已取消分流 / Host stop cancelled routing';
 function fingerprint(message) { return createHash('sha256').update(JSON.stringify(message)).digest('hex'); }
 function text(message) { return message.content.filter(block => block.type === 'text').map(block => block.text).join('\n'); }
 function supportsInterruption(agent) {
@@ -127,8 +128,13 @@ export function apply(ctx, config) {
         const signal = AbortSignal.any([entry.controller.signal, lifetime.signal, ...state.signal === undefined ? [] : [state.signal]]);
         const task = (async () => {
             await state.contextReady;
-            if (signal.aborted || entry.removed || entry.generation !== generation)
+            if (entry.removed || entry.generation !== generation || stopping)
                 return;
+            if (signal.aborted) {
+                if (live(state.agent))
+                    remove(state, entry, 'cancelled', HOST_STOP_NOTICE);
+                return;
+            }
             let identity = '';
             let usable = false;
             const result = await ctx.jev.judge({ featureId: FEATURE, agent: state.agent, signal,
@@ -278,9 +284,11 @@ export function apply(ctx, config) {
         if (status === 'running')
             state.abortedActivity = false;
         if (status === 'idle') {
-            if (state.abortedActivity || state.signal?.aborted)
+            const wasStopped = state.abortedActivity || state.signal?.aborted;
+            state.signal = undefined;
+            if (wasStopped)
                 for (const entry of state.entries.values())
-                    remove(state, entry, 'cancelled', '宿主停止已取消分流 / Host stop cancelled routing');
+                    remove(state, entry, 'cancelled', HOST_STOP_NOTICE);
             if (state.retryAfterEdit && !stopping) {
                 state.retryAfterEdit = false;
                 const item = agent.inbox.nextStep[0] ?? agent.inbox.nextTurn[0];
