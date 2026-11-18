@@ -226,6 +226,34 @@ describe('interjection routing through published inbox hooks and a response-cont
     expect(visible(h.agent)).toContain(earlier)
   })
 
+  it('withholds recognizable tool-argument credentials from routing requests and records', async () => {
+    const started = Promise.withResolvers<void>()
+    const release = Promise.withResolvers<void>()
+    const fieldValue = 'dummy-field-value'
+    const shellValue = 'dummy\\shell-value'
+    const args = { path: 'repo/file.txt', nested: { api_key: fieldValue }, command: `API_KEY='${shellValue}' inspect` }
+    const h = await harness([call('inspect', 'probe', args), async () => {
+      started.resolve(); await release.promise; return text('Original task done')
+    }, text('Follow-up done')], [answer('follow-up')], { 'interjection-routing': true })
+    cleanups.push(async () => { release.resolve() })
+    h.send('Inspect the repository'); await started.promise
+    const later = input('After that, explain the findings')
+    h.agent.followup(later)
+    await vi.waitFor(() => expect(h.requests).toHaveLength(1))
+    const wireArgs = JSON.parse(h.requests[0].state.recentTool.arguments)
+    expect(wireArgs).toEqual({ path: args.path, nested: { api_key: '[REDACTED]' }, command: "API_KEY='[REDACTED]' inspect" })
+    release.resolve(); await h.agent.whenIdle()
+    expect(h.errors).toEqual([])
+    expect(deliveryTurn(h.agent, later.id)).toBe(2)
+    const records = await h.records()
+    const record = await h.ctx.jev.getRecord(records.items[0]!.id)
+    expect(record?.attemptRecords[0]?.request.state).toMatchObject({ recentTool: h.requests[0].state.recentTool })
+    expect(JSON.stringify(record)).not.toContain(fieldValue)
+    expect(JSON.stringify(record)).not.toContain('shell-value')
+    const original = h.agent.session.snapshotEvents().find(event => event.type === 'tool/call' && event.data.callId === 'inspect')
+    expect(original?.data).toMatchObject({ arguments: JSON.stringify(args) })
+  })
+
   it('keeps default-off and idle input on the original Host path', async () => {
     const h = await harness([text('idle answer')], [], {})
     expect((await h.ctx.jev.listFeatures()).find(feature => feature.id === 'interjection-routing')?.enabled).toBe(false)
@@ -446,6 +474,57 @@ describe('interjection routing through published inbox hooks and a response-cont
   })
 
 
+  it.each(['before claim', 'after claim'])('admits a late steer in the closing turn and queues a follow-up edited %s', async editTiming => {
+    const h = await harness(
+      [text('Original answer'), text('Current-turn answer'), text('Later answer')],
+      [answer('steer'), answer('steer'), answer('follow-up')], { 'interjection-routing': true },
+    )
+    const entered = Promise.withResolvers<void>()
+    const release = Promise.withResolvers<void>()
+    cleanups.push(async () => { release.resolve() })
+    h.ctx.on('agent/turn-stopping', async ({ turn }) => {
+      if (turn === 1) { entered.resolve(); await release.promise }
+    })
+    const waitForRoute = (id: string, phase: 'steer' | 'queued') => vi.waitFor(() => {
+      expect(h.agent.session.snapshotEvents().some(event => event.type === 'user/message' &&
+        event.data.source.kind === 'jev-interjection' && event.data.source.action === 'route' &&
+        event.data.source.messageId === id && event.data.source.phase === phase)).toBe(true)
+    })
+
+    h.send('Summarize this table.')
+    await entered.promise
+    const correction = input('Add a column for durability.')
+    const original = input('Also compare the failure modes.')
+    const edited = { ...original, content: input('Compare the failure modes in a separate task.').content }
+    let replacedAfterClaim = false
+    if (editTiming === 'after claim') {
+      h.ctx.on('agent/inbox/claimed', ({ message, turn }) => {
+        if (turn === 1 && message.id === original.id) replacedAfterClaim = h.agent.inbox.replace(original.id, edited)
+      })
+    }
+    try {
+      h.agent.followup(correction)
+      await waitForRoute(correction.id, 'steer')
+      h.agent.followup(original)
+      await waitForRoute(original.id, 'steer')
+      if (editTiming === 'before claim') {
+        expect(h.agent.inbox.replace(original.id, edited)).toBe(true)
+        await waitForRoute(original.id, 'queued')
+      }
+    } finally {
+      release.resolve()
+    }
+
+    await h.agent.whenIdle()
+    expect(h.errors).toEqual([])
+    expect(h.requests).toHaveLength(3)
+    if (editTiming === 'after claim') expect(replacedAfterClaim).toBe(true)
+    expect(deliveryTurn(h.agent, correction.id)).toBe(1)
+    expect(deliveryTurn(h.agent, original.id)).toBe(2)
+    expect(committed(h.agent, correction.id)).toEqual([correction])
+    expect(committed(h.agent, original.id)).toEqual([edited])
+  })
+
   it('waits for a late correction before the native goal driver can begin another round', async () => {
     const deferred = Promise.withResolvers<object>()
     const started = Promise.withResolvers<void>()
@@ -557,6 +636,36 @@ describe('interjection routing through published inbox hooks and a response-cont
     deferred.resolve(answer('steer'))
   })
 
+  it('classifies an early interjection in a new activity after Stop', async () => {
+    const h = await running([answer('steer')])
+    h.agent.cancel({ kind: 'user' })
+    h.release.resolve()
+    await h.agent.whenIdle()
+
+    const entered = Promise.withResolvers<void>()
+    const release = Promise.withResolvers<void>()
+    h.ctx.on('system-prompt/assemble', async (_presentation, _assembleContext, next) => {
+      entered.resolve()
+      await release.promise
+      return next()
+    })
+    const correction = input('Focus this comparison on durability.')
+    h.send('Compare the columns.')
+    await entered.promise
+    h.agent.followup(correction)
+    try {
+      await vi.waitFor(() => expect(h.requests).toHaveLength(1))
+    } catch (error) {
+      h.agent.cancel({ kind: 'user' })
+      throw error
+    } finally {
+      release.resolve()
+      await h.agent.whenIdle()
+    }
+    expect(h.errors).toEqual([])
+    expect(committed(h.agent, correction.id)).toHaveLength(1)
+    expect(deliveryTurn(h.agent, correction.id)).toBe(2)
+  })
 
   it('rechecks a correction arriving while another pre-step hook is still awaiting', async () => {
     const deferred = Promise.withResolvers<object>()

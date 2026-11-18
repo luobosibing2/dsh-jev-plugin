@@ -78,6 +78,32 @@ describe('bounded original routing context', () => {
     expect(admitted.taskMessages).toEqual(proposed.taskMessages)
   })
 
+  it('redacts before clipping a credential field to the projection and request budgets', async () => {
+    const h = await setup(20)
+    h.session.append('tool/call', { turn: 1, step: 1, callId: ToolCallId('run'), name: 'run',
+      arguments: JSON.stringify({ api_key: 'dummy-private-value', path: 'ordinary-path' }) })
+    const state = h.handle.stateOf(h.session)
+    expect(state.tool?.arguments).toBe('{"api_key":"[REDACTE')
+    const input = selectRoutingContext(state, [], undefined, 'tool-execution')
+    expect(input.recentTool?.arguments).toBe('{"api_key":"[REDA')
+    expect(input.recentTool?.excerpt).toBe(true)
+    expect(input.contextTruncated).toBe(true)
+    expect(textSize(input)).toBe(20)
+  })
+
+  it.each([
+    { args: '{"api_key":"dummy-incomplete', marker: '[REDACTED: invalid JSON tool arguments]' },
+    { args: JSON.stringify({ api_key: 'dummy-oversized'.repeat(80_000) }), marker: '[REDACTED: oversized tool arguments]' },
+  ])('withholds tool argument data with $marker', async ({ args, marker }) => {
+    const h = await setup(100)
+    h.session.append('tool/call', { turn: 1, step: 1, callId: ToolCallId('run'), name: 'run', arguments: args })
+    const state = h.handle.stateOf(h.session)
+    expect(state.tool?.arguments).toBe(marker)
+    const input = selectRoutingContext(state, [], undefined, 'tool-execution')
+    expect(input.recentTool).toMatchObject({ name: 'run', arguments: marker, excerpt: true })
+    expect(input.contextTruncated).toBe(true)
+  })
+
   it('retains only bounded recent amendments and marks omitted task material', async () => {
     const h = await setup(30)
     const original = user('Original task')
@@ -114,5 +140,19 @@ describe('bounded original routing context', () => {
     const replay = h.ctx.sessionProjections.restore(checkpoint, h.session.snapshotEvents(), SessionLogOffset(0), h.session.header, SessionLogOffset(0))
     expect(replay.checkpoint['jev-interjection-context']?.val).toEqual(larger.stateOf(h.session))
     expect(larger.stateOf(h.session).users[0]?.excerpt).toBe(false)
+  })
+
+  it('replays rather than reuses a pre-redaction checkpoint with raw arguments', async () => {
+    const budget = 100
+    const h = await setup(budget)
+    const args = '{"api_key":"dummy-checkpoint-value"}'
+    h.session.append('tool/call', { turn: 1, step: 1, callId: ToolCallId('run'), name: 'run', arguments: args })
+    const checkpoint = h.ctx.sessionProjections.checkpoint(h.session)
+    const key = 'jev-interjection-context'
+    checkpoint[key] = { ...checkpoint[key]!, ver: 1_000_001 + budget,
+      val: { ...h.handle.stateOf(h.session), tool: { ...h.handle.stateOf(h.session).tool!, arguments: args } } }
+    expect(h.ctx.sessionProjections.restoreFloor(checkpoint)).toBe(0)
+    const restored = h.ctx.sessionProjections.restore(checkpoint, h.session.snapshotEvents(), SessionLogOffset(0), h.session.header, SessionLogOffset(0))
+    expect(restored.checkpoint[key]?.val).toMatchObject({ tool: { arguments: '{"api_key":"[REDACTED]"}' } })
   })
 })

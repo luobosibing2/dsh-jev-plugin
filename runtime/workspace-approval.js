@@ -50,6 +50,12 @@ function directScript(command) {
 	const path = raw?.startsWith("\"") || raw?.startsWith("'") ? raw.slice(1, -1) : raw;
 	return path !== void 0 && /\.(?:py|mjs|cjs|js|sh|ps1)$/i.test(path) ? path : void 0;
 }
+function usesUnqualifiedPowerShellScript(entry) {
+	const command = entry.args.command;
+	if (entry.exec.name !== "pwsh" || typeof command !== "string" || !command.trimStart().startsWith("&")) return false;
+	const script = directScript(command);
+	return script !== void 0 && !/[\\/]/.test(script);
+}
 async function scriptEvidence(fs, entry, cwd, maxBytes, signal) {
 	const command = entry.args.command;
 	if (entry.exec.name !== "bash" && entry.exec.name !== "pwsh" || typeof command !== "string") return { status: "not-applicable" };
@@ -285,7 +291,7 @@ function apply(ctx, config) {
 			return next();
 		}
 		const entry = [...entries][0];
-		if (!matches(entry, req) || !eligible(req.agent, req.signal)) {
+		if (!matches(entry, req) || !eligible(req.agent, req.signal) || usesUnqualifiedPowerShellScript(entry)) {
 			leave();
 			return next();
 		}

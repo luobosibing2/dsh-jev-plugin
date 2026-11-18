@@ -1,5 +1,7 @@
 /** Bounded original facts used by running-user-message classification. */
 import { z } from 'zod';
+import { redactToolArguments } from "./credential-redaction.js";
+const MAX_TOOL_ARGUMENT_CHARS = 1_000_000;
 const materialSchema = z.object({ id: z.string(), text: z.string(), excerpt: z.boolean() });
 /** Extract original text without retaining reasoning or tool-output blocks. */
 function material(id, blocks, limit) {
@@ -51,8 +53,8 @@ export function routingContextProjection(limit) {
         missingUserText: z.boolean(), omittedUsers: z.boolean(),
     });
     return {
-        // The configured budget changes retained state; the version prevents old cropped checkpoints from surviving a budget change.
-        key: 'jev-interjection-context', stateVersion: 1_000_001 + limit, stateSchema,
+        // Separate versions for each budget and for checkpoints created before tool redaction.
+        key: 'jev-interjection-context', stateVersion: 2_000_001 + limit, stateSchema,
         init: () => ({
             budget: limit, turn: 0, step: 0, latestUserId: '',
             users: [], previous: [], assistant: null, tool: null, missingUserText: false, omittedUsers: false,
@@ -75,12 +77,17 @@ export function routingContextProjection(limit) {
                 }
                 case 'assistant/message':
                     return { ...state, assistant: material(event.data.message.id, event.data.message.content, limit) };
-                case 'tool/call':
+                case 'tool/call': {
+                    // Decode the whole argument value before clipping. A prefix can cut through a credential.
+                    const args = event.data.arguments.length > MAX_TOOL_ARGUMENT_CHARS
+                        ? { text: '[REDACTED: oversized tool arguments]', withheld: true }
+                        : redactToolArguments(event.data.arguments);
                     return { ...state, tool: {
                             callId: event.data.callId, name: event.data.name.slice(0, limit),
-                            arguments: event.data.arguments.slice(0, limit),
-                            excerpt: event.data.arguments.length > limit || event.data.name.length > limit, status: 'running',
+                            arguments: args.text.slice(0, limit),
+                            excerpt: args.withheld || args.text.length > limit || event.data.name.length > limit, status: 'running',
                         } };
+                }
                 case 'tool/result':
                     return state.tool?.callId === event.data.message.toolCallId
                         ? { ...state, tool: { ...state.tool, status: event.data.message.isError ? 'failed' : 'completed' } } : state;
