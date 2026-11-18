@@ -434,16 +434,28 @@ function textOf(agent) {
 	const directs = directHistory;
 	const user = directs.map(text).filter(Boolean).join("\n");
 	const intent = text(assistant);
-	const pending = [...agent.inbox.nextStep, ...agent.inbox.nextTurn].filter((message) => message.source.kind === "user").map((message) => `${message.id}:${text(message)}`).join("\n");
+	const nextStep = agent.inbox.nextStep.filter((message) => message.source.kind === "user");
+	const pending = [nextStep, agent.inbox.nextTurn.filter((message) => message.source.kind === "user")].map((queue) => queue.map((message) => [message.id, text(message)]));
+	const outputRequest = [
+		user,
+		intent,
+		...nextStep.map(text)
+	].join("\n");
 	return {
 		user,
 		text: [user, intent].filter(Boolean).join("\n"),
-		version: `${directs.map((message) => message.id).join(",")}:${user}:${assistant?.id ?? ""}:${intent}:${pending}`,
+		version: JSON.stringify([
+			directs.map((message) => message.id),
+			user,
+			assistant?.id,
+			intent,
+			pending
+		]),
 		hasGoal: directs.some((message) => {
 			const value = text(message).trim();
 			return value.length > 0 && !continuation(value);
 		}),
-		complete: /\b(?:full|complete|entire|verbatim|raw|every|all)\b.{0,32}\b(?:log|output|line|pass(?:ed|ing)?|tim(?:e|ing))\b|\b(?:log|output|line|pass(?:ed|ing)?|tim(?:e|ing))\b.{0,32}\b(?:full|complete|entire|verbatim|raw|every|all)\b|完整.{0,12}(?:日志|输出|通过|时间)|逐字|全部.{0,12}(?:日志|输出|通过|时间)/i.test([user, intent].join("\n"))
+		complete: FULL_INTENT.test(outputRequest) || OUTPUT_FIRST_FULL_INTENT.test(outputRequest)
 	};
 }
 function liveRoot(ctx, agent) {
@@ -462,6 +474,7 @@ function commandIntent(exec, result) {
 }
 const TEST_COMMAND = /\b(?:vitest|jest|pytest|py\.test|node\s+--test|(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?test|tap)\b/i;
 const FULL_INTENT = /\b(?:full|complete|entire|verbatim|raw|every|all)\b.{0,32}\b(?:log|output|line|pass(?:ed|ing)?|tim(?:e|ing))\b|完整.{0,12}(?:日志|输出|通过|时间)|逐字|全部.{0,12}(?:日志|输出|通过|时间)/i;
+const OUTPUT_FIRST_FULL_INTENT = /\b(?:log|output|line|pass(?:ed|ing)?|tim(?:e|ing))\b.{0,32}\b(?:full|complete|entire|verbatim|raw|every|all)\b/i;
 function badStatus(exec, result) {
 	if (result.isError) return true;
 	const value = object(result.value);
