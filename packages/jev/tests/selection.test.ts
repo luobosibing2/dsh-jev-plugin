@@ -1,4 +1,5 @@
 import { spawn as nodeSpawn } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { mkdtemp, mkdir, realpath, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -316,6 +317,36 @@ describe('selection hooks through host plugin paths', () => {
     expect(catalog?.source).toMatchObject({ entries: [{ name: 'changed-skill', description: 'Changed directory skill' }] })
     const full = await invoke(ctx, agent, 'skill_catalog', {})
     expect(full.value).toEqual({ skills: [{ name: 'changed-skill', description: 'Changed directory skill' }] })
+  })
+
+  it('reselects shared skills after a native working-directory change even when their summaries match', async () => {
+    const f = await fixture()
+    const { ctx, agent, root, requests } = f
+    await mkdir(join(root, 'docs'))
+    await ctx.plugin(toolWorkingDirectory)
+    registerSkills(ctx, ['build', 'docs'])
+    const task = 'Build the project and update its documentation'
+    const progress = 'The build is complete. I will update the documentation in docs.'
+    respond(f, [{ probability: 0.9 }, { probability: 0.1 }], ['build', 'docs'])
+    const first = catalogOf(await step(ctx, agent, [user(task)]))
+    expect(first?.source).toMatchObject({ entries: [{ name: 'build' }] })
+
+    agent.session.append('assistant/message', {
+      turn: 1, step: 1,
+      message: createAssistantMessage({ source: { provider: 'test', model: 'test' },
+        content: [{ type: 'text', text: progress }] }),
+      stream: [],
+    }, { surfaceOp: 'append' })
+    expect((await invoke(ctx, agent, 'working_directory', { cd: 'docs' })).isError).toBe(false)
+    respond(f, [{ probability: 0.1 }, { probability: 0.9 }], ['build', 'docs'])
+    const updated = catalogOf(await step(ctx, agent))
+    expect(requests).toHaveLength(2)
+    expect(requests[1]?.questions).toEqual(requests[0]?.questions)
+    expect(requests[1]?.state).toEqual({ context: [{ role: 'user', text: task }, { role: 'assistant', text: progress }] })
+    expect(updated?.source).toMatchObject({ entries: [{ name: 'docs' }] })
+
+    await step(ctx, agent)
+    expect(requests).toHaveLength(2)
   })
 
   it('publishes a selected skill when its current directory description changes', async () => {
@@ -759,7 +790,8 @@ describe('selection hooks through host plugin paths', () => {
     await step(ctx, agent, [user('alpha')], recorded)
     const legacy = recorded.map((event): SessionEvent => {
       if (event.type !== 'user/message' || event.data.source.kind !== 'jev-skill-catalog') return event
-      const { kind, form, entries, fullFingerprint } = event.data.source
+      const { kind, form, entries } = event.data.source
+      const fullFingerprint = createHash('sha256').update(JSON.stringify(entries)).digest('hex')
       return { ...event, data: { ...event.data, source: { kind, form, entries, fullFingerprint } } }
     })
     const replayId = SessionId('replay-' + root)
@@ -768,6 +800,8 @@ describe('selection hooks through host plugin paths', () => {
     })
     const replayAgent = { ...agent, id: replayId, session: replaySession } as Agent
     ctx.agents.enter(replayAgent, undefined)
+    expect(catalogOf(await step(ctx, replayAgent))).toBeUndefined()
+    expect(requests).toHaveLength(1)
     const replayDecision = await step(ctx, replayAgent, [user('alpha again')])
     expect(replayDecision.kind === 'enter'
       && replayDecision.messages.some(message => message.source.kind === 'jev-skill-catalog')).toBe(false)

@@ -38,7 +38,7 @@ interface SelectedCatalogSource {
   form: 'catalog'
   /** Exactly the entries rendered in this model-visible message. */
   entries: CatalogEntry[]
-  /** Identity of the complete model-invocable directory at publication. */
+  /** Identity of the working directory and its complete model-invocable summaries at publication. */
   fullFingerprint: string
   /** Effective settings for this judgment; absent in catalogs recorded before probability filtering. */
   selection?: Pick<SelectionConfigValues, 'skillMinProbability' | 'skillLimit'>
@@ -103,8 +103,9 @@ function taskContext(agent: Agent, pending: readonly UserMessage[] = []): { role
     .map(({ role, text }) => ({ role, text }))
 }
 
-function fingerprint(entries: readonly CatalogEntry[]): string {
-  return createHash('sha256').update(JSON.stringify(entries)).digest('hex')
+function fingerprint(cwd: string | undefined, skills: readonly SkillSummary[]): string {
+  const entries = skills.map(({ name, description }) => ({ name, description }))
+  return createHash('sha256').update(JSON.stringify(cwd === undefined ? entries : { cwd, entries })).digest('hex')
 }
 
 function latestSelectedCatalog(agent: Agent): SelectedCatalogSource | undefined {
@@ -264,14 +265,17 @@ export function apply(ctx: Context, config: Config): void {
     if (!snapshot.complete) return decision
     const skills = snapshot.skills.filter(isModelInvocable)
     if (skills.length === 0) return decision
-    const fullFingerprint = fingerprint(skills.map(({ name, description }) => ({ name, description })))
-    const prior = latestSelectedCatalog(agent)
+    const fullFingerprint = fingerprint(cwd, skills)
     const checked = checkedDirectories.get(agent)
+    const replaceGeneration = agent.session.surface.replaceGeneration
     const hasNewUser = messages.some(message => message.source.kind === 'user' && textOf(message))
-    const alreadyChecked = checked?.fingerprint === fullFingerprint
-      && checked.replaceGeneration === agent.session.surface.replaceGeneration
-    if (!hasNewUser && (alreadyChecked || (checked === undefined
-      && agent.session.surface.replaceGeneration === 0 && prior?.fullFingerprint === fullFingerprint))) {
+    const alreadyChecked = checked?.fingerprint === fullFingerprint && checked.replaceGeneration === replaceGeneration
+    const prior = checked === undefined && replaceGeneration === 0 ? latestSelectedCatalog(agent) : undefined
+    const matchesReplay = prior !== undefined && (prior.fullFingerprint === fullFingerprint
+      || prior.fullFingerprint === fingerprint(undefined, skills))
+    if (!hasNewUser && (alreadyChecked || matchesReplay)) {
+      // Associate old summary-only fingerprints with the first working directory seen after replay.
+      if (checked === undefined) checkedDirectories.set(agent, { fingerprint: fullFingerprint, replaceGeneration })
       return replaceCatalog(decision, original)
     }
     const context = taskContext(agent, messages)
@@ -294,7 +298,7 @@ export function apply(ctx: Context, config: Config): void {
         if (!refreshed.complete) throw new Error('Skill catalog is incomplete')
         current = refreshed.skills.filter(isModelInvocable)
         if (current.length === 0) throw new Error('No skills remain available')
-        currentFingerprint = fingerprint(current.map(({ name, description }) => ({ name, description })))
+        currentFingerprint = fingerprint(cwd, current)
         currentLimit = positive(config.skillLimit.get(), 'skillLimit')
         currentMinProbability = config.skillMinProbability.get()
         return makeRequest()
