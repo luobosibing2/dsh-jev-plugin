@@ -18057,6 +18057,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		//#endregion
 		//#region src/client/StageNavigation.tsx
 		/** Session-bound, read-only source viewer with explicit Jev stage analysis actions. */
+		function matchesDetailsTarget(open, target) {
+			return open?.stepId === target.stepId && open.kind === target.kind && open.recordId === target.recordId && open.operationId === target.operationId;
+		}
 		const LABEL_KEYS = {
 			input_parsing: "stageInputParsing",
 			problem_understanding: "stageProblemUnderstanding",
@@ -18196,8 +18199,21 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				})]
 			});
 		}
-		function StepCard({ step, selected, inSegment, t, onDetails, detailsOpen, previousDetailsOpen, detail, detailLoading, detailFailed }) {
+		function StepCard({ step, selected, inSegment, t, onDetails, detailsTarget, detail, detailLoading, detailFailed }) {
 			const analysis = step.analysis;
+			const current = {
+				stepId: step.id,
+				kind: "current",
+				recordId: analysis.recordId,
+				operationId: analysis.operationId
+			};
+			const previous = {
+				stepId: step.id,
+				kind: "previous",
+				recordId: analysis.previousResult?.recordId
+			};
+			const detailsOpen = matchesDetailsTarget(detailsTarget, current);
+			const previousDetailsOpen = matchesDetailsTarget(detailsTarget, previous);
 			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("article", {
 				"data-step-id": step.id,
 				className: [
@@ -18327,7 +18343,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 								className: StageNavigation_module_css_default.textButton,
 								type: "button",
 								onClick: () => {
-									onDetails(analysis.previousResult.recordId);
+									onDetails(previous);
 								},
 								"aria-expanded": previousDetailsOpen,
 								children: previousDetailsOpen ? t("closeDetails") : t("viewPreviousRecord")
@@ -18407,7 +18423,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 									className: StageNavigation_module_css_default.textButton,
 									type: "button",
 									onClick: () => {
-										onDetails();
+										onDetails(current);
 									},
 									"aria-expanded": detailsOpen,
 									children: detailsOpen ? t("closeDetails") : t("details")
@@ -18646,19 +18662,17 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 					if (activeSession.current === sessionId && sequence === actionSequence.current) setBusy(false);
 				}
 			};
-			const toggleDetails = async (stepId, recordId) => {
+			const toggleDetails = async (target) => {
 				const sequence = ++detailSequence.current;
-				if (detailsTarget?.stepId === stepId && detailsTarget.recordId === recordId) {
+				if (matchesDetailsTarget(detailsTarget, target)) {
 					setDetailsTarget(null);
 					return;
 				}
-				setDetailsTarget({
-					stepId,
-					...recordId === void 0 ? {} : { recordId }
-				});
+				setDetailsTarget(target);
 				setDetail(void 0);
 				setDetailLoading(true);
 				setDetailFailed(false);
+				const { stepId, recordId } = target;
 				try {
 					const result = recordId === void 0 ? await jev.getStageAnalysisRecord(sessionId, stepId) : await jev.getStageAnalysisRecord(sessionId, stepId, recordId);
 					if (activeSession.current === sessionId && sequence === detailSequence.current) setDetail(result);
@@ -18959,11 +18973,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 									t,
 									selected: selectedStepId === step.id,
 									inSegment: segmentStepIds.has(step.id),
-									onDetails: (recordId) => {
-										toggleDetails(step.id, recordId);
+									onDetails: (target) => {
+										toggleDetails(target);
 									},
-									detailsOpen: detailsTarget?.stepId === step.id && detailsTarget.recordId === void 0,
-									previousDetailsOpen: detailsTarget?.stepId === step.id && detailsTarget.recordId !== void 0,
+									detailsTarget,
 									detail: detailsTarget?.stepId === step.id ? detail : void 0,
 									detailLoading: detailsTarget?.stepId === step.id && detailLoading,
 									detailFailed: detailsTarget?.stepId === step.id && detailFailed

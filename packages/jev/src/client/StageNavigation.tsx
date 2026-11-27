@@ -15,6 +15,18 @@ import css from './StageNavigation.module.css'
 
 type Translate = (key: StageLocaleKey) => string
 
+interface DetailsTarget {
+  stepId: string
+  kind: 'current' | 'previous'
+  recordId: string | undefined
+  operationId?: string | undefined
+}
+
+function matchesDetailsTarget(open: DetailsTarget | null, target: DetailsTarget): boolean {
+  return open?.stepId === target.stepId && open.kind === target.kind
+    && open.recordId === target.recordId && open.operationId === target.operationId
+}
+
 /** Host commands available only for the active, authorized Session. */
 export interface StageNavigationRemote {
   getStageNavigation(sessionId: string, signal: AbortSignal): Promise<StageNavigationSnapshot>
@@ -113,12 +125,16 @@ function Tool({ tool, t }: { tool: StageToolCall; t: Translate }) {
   </details>
 }
 
-function StepCard({ step, selected, inSegment, t, onDetails, detailsOpen, previousDetailsOpen, detail, detailLoading, detailFailed }: {
+function StepCard({ step, selected, inSegment, t, onDetails, detailsTarget, detail, detailLoading, detailFailed }: {
   step: StageStep; selected: boolean; inSegment: boolean; t: Translate
-  onDetails: (recordId?: string) => void; detailsOpen: boolean; previousDetailsOpen: boolean; detail: StageAnalysisRecord | null | undefined
+  onDetails: (target: DetailsTarget) => void; detailsTarget: DetailsTarget | null; detail: StageAnalysisRecord | null | undefined
   detailLoading: boolean; detailFailed: boolean
 }) {
   const analysis = step.analysis
+  const current: DetailsTarget = { stepId: step.id, kind: 'current', recordId: analysis.recordId, operationId: analysis.operationId }
+  const previous: DetailsTarget = { stepId: step.id, kind: 'previous', recordId: analysis.previousResult?.recordId }
+  const detailsOpen = matchesDetailsTarget(detailsTarget, current)
+  const previousDetailsOpen = matchesDetailsTarget(detailsTarget, previous)
   return <article data-step-id={step.id} className={[css.stepCard, selected ? css.focused : '', inSegment ? css.inSegment : ''].join(' ')}>
     <header className={css.stepHead}>
       <span className={css.stepNumber}>{t('step')} {step.step}</span>
@@ -146,7 +162,7 @@ function StepCard({ step, selected, inSegment, t, onDetails, detailsOpen, previo
       {analysis.previousResult.connectionId !== undefined && <span>{t('connection')}: {t(CONNECTION_KEYS[analysis.previousResult.connectionId])}</span>}
       <span>{t('model')}: {analysis.previousResult.model ?? t('notProvided')}</span>
       {analysis.previousResult.stale && <span>{t('stale')}</span>}
-      <button className={css.textButton} type="button" onClick={() => { onDetails(analysis.previousResult!.recordId) }} aria-expanded={previousDetailsOpen}>{previousDetailsOpen ? t('closeDetails') : t('viewPreviousRecord')}</button>
+      <button className={css.textButton} type="button" onClick={() => { onDetails(previous) }} aria-expanded={previousDetailsOpen}>{previousDetailsOpen ? t('closeDetails') : t('viewPreviousRecord')}</button>
     </div>}
     {step.status === 'in-progress' && <p className={css.muted}>{t('notComplete')}</p>}
     {step.status === 'terminal-partial' && <p className={css.muted}>{t('terminalPartial')}</p>}
@@ -165,7 +181,7 @@ function StepCard({ step, selected, inSegment, t, onDetails, detailsOpen, previo
       <div className={css.statusLine}>
         <span>{t('analysis')}</span>
         <span>{t('probabilities')}: {analysis.probabilities === undefined ? t('notProvided') : format(analysis.probabilities)}</span>
-        <button className={css.textButton} type="button" onClick={() => { onDetails() }} aria-expanded={detailsOpen}>{detailsOpen ? t('closeDetails') : t('details')}</button>
+        <button className={css.textButton} type="button" onClick={() => { onDetails(current) }} aria-expanded={detailsOpen}>{detailsOpen ? t('closeDetails') : t('details')}</button>
       </div>
       {(detailsOpen || previousDetailsOpen) && <div className={css.detailPanel}>
         {detailLoading && <span role="status">{t('loading')}</span>}
@@ -197,7 +213,7 @@ export function StageNavigation({ sessionId, jev, t, openView }: StageNavigation
   const [focusVersion, setFocusVersion] = useState(0)
   const [query, setQuery] = useState('')
   const [navigationOpen, setNavigationOpen] = useState(true)
-  const [detailsTarget, setDetailsTarget] = useState<{ stepId: string; recordId?: string } | null>(null)
+  const [detailsTarget, setDetailsTarget] = useState<DetailsTarget | null>(null)
   const [detail, setDetail] = useState<StageAnalysisRecord | null | undefined>(undefined)
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailFailed, setDetailFailed] = useState(false)
@@ -324,13 +340,14 @@ export function StageNavigation({ sessionId, jev, t, openView }: StageNavigation
     finally { if (activeSession.current === sessionId && sequence === actionSequence.current) setBusy(false) }
   }
 
-  const toggleDetails = async (stepId: string, recordId?: string) => {
+  const toggleDetails = async (target: DetailsTarget) => {
     const sequence = ++detailSequence.current
-    if (detailsTarget?.stepId === stepId && detailsTarget.recordId === recordId) { setDetailsTarget(null); return }
-    setDetailsTarget({ stepId, ...recordId === undefined ? {} : { recordId } })
+    if (matchesDetailsTarget(detailsTarget, target)) { setDetailsTarget(null); return }
+    setDetailsTarget(target)
     setDetail(undefined)
     setDetailLoading(true)
     setDetailFailed(false)
+    const { stepId, recordId } = target
     try {
       const result = recordId === undefined
         ? await jev.getStageAnalysisRecord(sessionId, stepId)
@@ -395,8 +412,7 @@ export function StageNavigation({ sessionId, jev, t, openView }: StageNavigation
             </div>
             {selectedTurn.steps.length === 0 ? <p className={css.empty}>{t('emptyTurn')}</p> : visibleSteps.length === 0 ? <p className={css.empty}>{t('emptySearch')}</p> : visibleSteps.map(step => <StepCard key={step.id} step={step} t={t}
               selected={selectedStepId === step.id} inSegment={segmentStepIds.has(step.id)}
-              onDetails={recordId => { void toggleDetails(step.id, recordId) }} detailsOpen={detailsTarget?.stepId === step.id && detailsTarget.recordId === undefined}
-              previousDetailsOpen={detailsTarget?.stepId === step.id && detailsTarget.recordId !== undefined}
+              onDetails={target => { void toggleDetails(target) }} detailsTarget={detailsTarget}
               detail={detailsTarget?.stepId === step.id ? detail : undefined} detailLoading={detailsTarget?.stepId === step.id && detailLoading} detailFailed={detailsTarget?.stepId === step.id && detailFailed} />)}
           </div>}
         </div>
