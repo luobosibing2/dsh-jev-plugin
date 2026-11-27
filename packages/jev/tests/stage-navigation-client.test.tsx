@@ -182,6 +182,66 @@ describe('stage navigation view', () => {
     await waitFor(() => { expect(jev.getStageAnalysisRecord).toHaveBeenCalledWith('session', 'session-2:step-1', 'previous-1') })
   })
 
+  it('keeps classification details matched to the result after reanalysis', async () => {
+    const original: StageStep = { ...step(1, 1, 'implementation', 'Recorded step'),
+      analysis: { status: 'succeeded', label: 'implementation', recordId: 'original-record', model: 'original-model' },
+    }
+    const reanalyzed: StageStep = { ...original,
+      analysis: { status: 'succeeded', label: 'review_validation', recordId: 'new-record', model: 'new-model' },
+    }
+    let current: StageNavigationSnapshot = { ...snapshot(), turns: [turn(1, [original])] }
+    const jev = remote(current)
+    jev.getStageNavigation = vi.fn(async () => current)
+    jev.getStageAnalysisRecord = vi.fn(async (sessionId, stepId, recordId) => {
+      const analysis = recordId === 'original-record' ? original.analysis
+        : recordId === 'new-record' ? reanalyzed.analysis : current.turns[0]!.steps[0]!.analysis
+      return { ...analysis, id: analysis.recordId!, sessionId, stepId, revision: analysis === original.analysis ? 1 : 2,
+        sourceFingerprint: 'source-hash', ruleVersion: 'v1', rawResponse: `Response from ${analysis.model}` }
+    })
+    jev.startStageAnalysis = vi.fn(async request => {
+      const batch = { id: 'reanalysis', sessionId: request.sessionId, status: 'completed' as const, total: 1, completed: 1, failed: 0, cancelled: 0 }
+      current = { ...current, turns: [turn(1, [reanalyzed])], batch }
+      return batch
+    })
+    render(view('session', jev))
+    fireEvent.click(await screen.findByRole('button', { name: stageEn.details }))
+    await screen.findByText('Response from original-model')
+
+    fireEvent.click(screen.getByRole('button', { name: stageEn.reanalyzeTurn }))
+    await screen.findByText('Reported model: new-model')
+    expect(screen.queryByText('Response from original-model')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: stageEn.details }))
+    expect(await screen.findByText('Response from new-model')).toBeTruthy()
+    expect(jev.getStageAnalysisRecord).toHaveBeenNthCalledWith(1, 'session', original.id, 'original-record')
+    expect(jev.getStageAnalysisRecord).toHaveBeenNthCalledWith(2, 'session', original.id, 'new-record')
+  })
+
+  it('closes pending details when that attempt gains a recorded response', async () => {
+    const pending: StageStep = { ...step(1, 1, 'implementation', 'Recorded step'),
+      analysis: { status: 'pending', recordId: 'record' },
+    }
+    const completed: StageStep = { ...pending,
+      analysis: { status: 'succeeded', label: 'implementation', recordId: 'record', operationId: 'operation' },
+    }
+    let current: StageNavigationSnapshot = { ...snapshot(), turns: [turn(1, [pending])],
+      batch: { id: 'batch', sessionId: 'session', status: 'running', total: 1, completed: 0, failed: 0, cancelled: 0 },
+    }
+    const jev = remote(current)
+    jev.getStageNavigation = vi.fn(async () => current)
+    jev.getStageAnalysisRecord = vi.fn(async (sessionId, stepId) => ({
+      ...current.turns[0]!.steps[0]!.analysis, id: 'record', sessionId, stepId, revision: 1,
+      sourceFingerprint: 'source-hash', ruleVersion: 'v1',
+    }))
+    render(view('session', jev))
+    fireEvent.click(await screen.findByRole('button', { name: stageEn.details }))
+    await screen.findByText(stageEn.requestSent)
+
+    current = { ...current, turns: [turn(1, [completed])], batch: { ...current.batch!, status: 'completed', completed: 1 } }
+    fireEvent.click(screen.getByRole('button', { name: stageEn.refresh }))
+    await screen.findByText(`${stageEn.analysisStatus}: ${stageEn.succeeded}`)
+    expect(screen.queryByText(stageEn.requestSent)).toBeNull()
+  })
+
   it('ignores a late reply from the previous Session after a switch', async () => {
     let resolveOld: (value: StageNavigationSnapshot) => void = () => {}
     const oldReply = new Promise<StageNavigationSnapshot>(resolve => { resolveOld = resolve })
