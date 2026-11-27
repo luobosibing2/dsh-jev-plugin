@@ -17524,30 +17524,30 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			const [items, setItems] = (0, react.useState)([]);
 			const [nextCursor, setNextCursor] = (0, react.useState)();
 			const [loading, setLoading] = (0, react.useState)(false);
-			const [error, setError] = (0, react.useState)("");
+			const [failedQuery, setFailedQuery] = (0, react.useState)(null);
 			const [selected, setSelected] = (0, react.useState)("");
 			const [detail, setDetail] = (0, react.useState)(null);
 			const [detailLoading, setDetailLoading] = (0, react.useState)(false);
 			const [detailError, setDetailError] = (0, react.useState)("");
 			const queryGeneration = (0, react.useRef)(0);
 			const detailGeneration = (0, react.useRef)(0);
-			const query = (0, react.useCallback)(async (nextFilter, append) => {
+			const query = (0, react.useCallback)(async (nextFilter) => {
 				const generation = ++queryGeneration.current;
 				setLoading(true);
-				setError("");
+				setFailedQuery(null);
 				try {
 					const page = await jev.listRecords(nextFilter);
 					if (generation !== queryGeneration.current) return;
-					setItems((previous) => append ? [...previous, ...page.items] : page.items);
+					setItems((previous) => nextFilter.cursor === void 0 ? page.items : [...previous, ...page.items]);
 					setNextCursor(page.nextCursor);
 				} catch {
-					if (generation === queryGeneration.current) setError(t("recordsFailed"));
+					if (generation === queryGeneration.current) setFailedQuery(nextFilter);
 				} finally {
 					if (generation === queryGeneration.current) setLoading(false);
 				}
-			}, [jev, t]);
+			}, [jev]);
 			(0, react.useEffect)(() => {
-				query({ limit: PAGE_SIZE }, false);
+				query({ limit: PAGE_SIZE });
 				jev.listFeatures().then(setFeatures, () => {});
 				return () => {
 					queryGeneration.current++;
@@ -17560,10 +17560,14 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				if (featureId) next.featureId = featureId;
 				if (status) next.status = status;
 				if (sessionId.trim()) next.sessionId = sessionId.trim();
+				if (next.featureId !== filter.featureId || next.status !== filter.status || next.sessionId !== filter.sessionId) {
+					setItems([]);
+					setNextCursor(void 0);
+				}
 				setFilter(next);
 				setSelected("");
 				setDetail(null);
-				query(next, false);
+				query(next);
 			};
 			const openDetail = async (id) => {
 				const generation = ++detailGeneration.current;
@@ -17653,29 +17657,29 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 								children: t("applyFilters")
 							}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
 								onClick: () => {
-									query(filter, false);
+									query(filter);
 								},
 								disabled: loading,
 								children: t("refresh")
 							})]
 						}),
-						error && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("p", {
+						failedQuery && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("p", {
 							role: "alert",
 							className: JevPage_module_css_default.notice,
 							children: [
-								error,
+								t("recordsFailed"),
 								" ",
 								/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
 									size: "sm",
 									onClick: () => {
-										query(filter, false);
+										query(failedQuery);
 									},
 									children: t("retry")
 								})
 							]
 						}),
 						loading && items.length === 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Loading, { label: t("loading") }),
-						!loading && !error && items.length === 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+						!loading && !failedQuery && items.length === 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
 							className: JevPage_module_css_default.empty,
 							children: t("noRecords")
 						}),
@@ -17725,7 +17729,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 									query({
 										...filter,
 										cursor: nextCursor
-									}, true);
+									});
 								},
 								children: loading ? t("loading") : t("loadMore")
 							})
@@ -19325,7 +19329,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			applyFilters: "Apply filters",
 			refresh: "Refresh",
 			noRecords: "No decision records match these filters.",
-			recordsFailed: "Could not refresh records. Existing records are still shown.",
+			recordsFailed: "Could not load decision records.",
 			loadMore: "Load more",
 			details: "Details",
 			closeDetails: "Close details",
@@ -19475,7 +19479,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			applyFilters: "应用筛选",
 			refresh: "刷新",
 			noRecords: "没有符合条件的判断记录",
-			recordsFailed: "无法刷新记录，已保留现有内容",
+			recordsFailed: "无法加载判断记录",
 			loadMore: "加载更多",
 			details: "详情",
 			closeDetails: "关闭详情",

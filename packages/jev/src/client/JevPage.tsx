@@ -724,7 +724,7 @@ function RecordsPanel({ jev, t }: RecordsProps) {
   const [items, setItems] = useState<readonly JevRecordSummary[]>([])
   const [nextCursor, setNextCursor] = useState<string | undefined>()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [failedQuery, setFailedQuery] = useState<JevRecordFilter | null>(null)
   const [selected, setSelected] = useState('')
   const [detail, setDetail] = useState<JevRecordDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
@@ -732,21 +732,21 @@ function RecordsPanel({ jev, t }: RecordsProps) {
   const queryGeneration = useRef(0)
   const detailGeneration = useRef(0)
 
-  const query = useCallback(async (nextFilter: JevRecordFilter, append: boolean) => {
+  const query = useCallback(async (nextFilter: JevRecordFilter) => {
     const generation = ++queryGeneration.current
     setLoading(true)
-    setError('')
+    setFailedQuery(null)
     try {
       const page = await jev.listRecords(nextFilter)
       if (generation !== queryGeneration.current) return
-      setItems(previous => append ? [...previous, ...page.items] : page.items)
+      setItems(previous => nextFilter.cursor === undefined ? page.items : [...previous, ...page.items])
       setNextCursor(page.nextCursor)
-    } catch { if (generation === queryGeneration.current) setError(t('recordsFailed')) }
+    } catch { if (generation === queryGeneration.current) setFailedQuery(nextFilter) }
     finally { if (generation === queryGeneration.current) setLoading(false) }
-  }, [jev, t])
+  }, [jev])
 
   useEffect(() => {
-    void query({ limit: PAGE_SIZE }, false)
+    void query({ limit: PAGE_SIZE })
     void jev.listFeatures().then(setFeatures, () => {})
     return () => { queryGeneration.current++; detailGeneration.current++ }
   }, [jev, query])
@@ -757,10 +757,14 @@ function RecordsPanel({ jev, t }: RecordsProps) {
     if (featureId) next.featureId = featureId
     if (status) next.status = status as JevRecordStatus
     if (sessionId.trim()) next.sessionId = sessionId.trim()
+    if (next.featureId !== filter.featureId || next.status !== filter.status || next.sessionId !== filter.sessionId) {
+      setItems([])
+      setNextCursor(undefined)
+    }
     setFilter(next)
     setSelected('')
     setDetail(null)
-    void query(next, false)
+    void query(next)
   }
 
   const openDetail = async (id: string) => {
@@ -785,16 +789,16 @@ function RecordsPanel({ jev, t }: RecordsProps) {
         <label className={css.field}><span>{t('status')}</span><select value={status} onChange={event => { setStatus(event.target.value) }}><option value="">{t('allStatuses')}</option>{STATUSES.map(value => <option value={value} key={value}>{statusLabel(value, t)}</option>)}</select></label>
         <label className={css.field}><span>{t('sessionId')}</span><input value={sessionId} onChange={event => { setSessionId(event.target.value) }} /></label>
       </div>
-      <div className={css.actions}><Button variant="primary" onClick={applyFilters} disabled={loading}>{t('applyFilters')}</Button><Button onClick={() => { void query(filter, false) }} disabled={loading}>{t('refresh')}</Button></div>
-      {error && <p role="alert" className={css.notice}>{error} <Button size="sm" onClick={() => { void query(filter, false) }}>{t('retry')}</Button></p>}
+      <div className={css.actions}><Button variant="primary" onClick={applyFilters} disabled={loading}>{t('applyFilters')}</Button><Button onClick={() => { void query(filter) }} disabled={loading}>{t('refresh')}</Button></div>
+      {failedQuery && <p role="alert" className={css.notice}>{t('recordsFailed')} <Button size="sm" onClick={() => { void query(failedQuery) }}>{t('retry')}</Button></p>}
       {loading && items.length === 0 && <Loading label={t('loading')} />}
-      {!loading && !error && items.length === 0 && <p className={css.empty}>{t('noRecords')}</p>}
+      {!loading && !failedQuery && items.length === 0 && <p className={css.empty}>{t('noRecords')}</p>}
       <div className={css.list}>{items.map(item => <article className={css.record} key={item.id}>
         <div className={css.recordHead}><span className={css.featureTitle}>{item.diagnostic ? t('diagnostic') : recordFeatureName(features, item.featureId, t)}</span><span className={css.meta}>{statusLabel(item.status, t)}</span></div>
         <span className={css.meta}>{t('time')}: {dateText(item.startedAt)} · {t('attempts')}: {item.attempts}{item.sessionId ? ` · ${t('sessionId')}: ${item.sessionId}` : ''}</span>
         <div><Button size="sm" onClick={() => { void openDetail(item.id) }}>{t('details')}</Button></div>
       </article>)}</div>
-      {nextCursor && <div className={css.actions}><Button disabled={loading} onClick={() => { void query({ ...filter, cursor: nextCursor }, true) }}>{loading ? t('loading') : t('loadMore')}</Button></div>}
+      {nextCursor && <div className={css.actions}><Button disabled={loading} onClick={() => { void query({ ...filter, cursor: nextCursor }) }}>{loading ? t('loading') : t('loadMore')}</Button></div>}
     </section>
     {selected && <section className={css.section} aria-label={t('details')}><div className={css.recordHead}><h3 className={css.heading}>{t('details')}</h3><Button size="sm" onClick={closeDetail}>{t('closeDetails')}</Button></div>
       {detailError && <p role="alert" className={css.notice}>{detailError} <Button size="sm" onClick={() => { void openDetail(selected) }}>{t('retry')}</Button></p>}
