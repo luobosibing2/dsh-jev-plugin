@@ -78,8 +78,15 @@ function taskContext(agent, pending = []) {
 		text
 	}));
 }
-function fingerprint(entries) {
-	return createHash("sha256").update(JSON.stringify(entries)).digest("hex");
+function fingerprint(cwd, skills) {
+	const entries = skills.map(({ name, description }) => ({
+		name,
+		description
+	}));
+	return createHash("sha256").update(JSON.stringify(cwd === void 0 ? entries : {
+		cwd,
+		entries
+	})).digest("hex");
 }
 function latestSelectedCatalog(agent) {
 	for (const message of agent.session.deriveMessages().reverse()) {
@@ -271,15 +278,20 @@ function apply(ctx, config) {
 		if (!snapshot.complete) return decision;
 		const skills = snapshot.skills.filter(isModelInvocable);
 		if (skills.length === 0) return decision;
-		const fullFingerprint = fingerprint(skills.map(({ name, description }) => ({
-			name,
-			description
-		})));
-		const prior = latestSelectedCatalog(agent);
+		const fullFingerprint = fingerprint(cwd, skills);
 		const checked = checkedDirectories.get(agent);
+		const replaceGeneration = agent.session.surface.replaceGeneration;
 		const hasNewUser = messages.some((message) => message.source.kind === "user" && textOf(message));
-		const alreadyChecked = checked?.fingerprint === fullFingerprint && checked.replaceGeneration === agent.session.surface.replaceGeneration;
-		if (!hasNewUser && (alreadyChecked || checked === void 0 && agent.session.surface.replaceGeneration === 0 && prior?.fullFingerprint === fullFingerprint)) return replaceCatalog(decision, original);
+		const alreadyChecked = checked?.fingerprint === fullFingerprint && checked.replaceGeneration === replaceGeneration;
+		const prior = checked === void 0 && replaceGeneration === 0 ? latestSelectedCatalog(agent) : void 0;
+		const matchesReplay = prior !== void 0 && (prior.fullFingerprint === fullFingerprint || prior.fullFingerprint === fingerprint(void 0, skills));
+		if (!hasNewUser && (alreadyChecked || matchesReplay)) {
+			if (checked === void 0) checkedDirectories.set(agent, {
+				fingerprint: fullFingerprint,
+				replaceGeneration
+			});
+			return replaceCatalog(decision, original);
+		}
 		if (taskContext(agent, messages).length === 0) return decision;
 		let current = skills;
 		let currentFingerprint = fullFingerprint;
@@ -310,10 +322,7 @@ function apply(ctx, config) {
 				if (!refreshed.complete) throw new Error("Skill catalog is incomplete");
 				current = refreshed.skills.filter(isModelInvocable);
 				if (current.length === 0) throw new Error("No skills remain available");
-				currentFingerprint = fingerprint(current.map(({ name, description }) => ({
-					name,
-					description
-				})));
+				currentFingerprint = fingerprint(cwd, current);
 				currentLimit = positive(config.skillLimit.get(), "skillLimit");
 				currentMinProbability = config.skillMinProbability.get();
 				return makeRequest();

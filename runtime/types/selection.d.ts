@@ -18,7 +18,7 @@ interface SelectedCatalogSource {
     form: 'catalog';
     /** Exactly the entries rendered in this model-visible message. */
     entries: CatalogEntry[];
-    /** Identity of the complete model-invocable directory at publication. */
+    /** Identity of the working directory and its complete model-invocable summaries at publication. */
     fullFingerprint: string;
     /** Effective settings for this judgment; absent in catalogs recorded before probability filtering. */
     selection?: Pick<SelectionConfigValues, 'skillMinProbability' | 'skillLimit'>;
