@@ -268,6 +268,67 @@ describe('Jev bundle page', () => {
     expect(screen.getByText(/receipt-1/)).toBeTruthy()
   })
 
+  it('retries a failed next page without discarding records already loaded', async () => {
+    const { form } = formStub()
+    const jev = remoteStub()
+    const summaries: JevRecordSummary[] = [1, 2, 3].map(number => ({
+      id: `record-${number}`, featureId: `feature-${number}`, status: 'succeeded',
+      startedAt: '2026-09-26T00:00:00.000Z', updatedAt: '2026-09-26T00:00:01.000Z',
+      attempts: 1, diagnostic: false,
+    }))
+    jev.listRecords = vi.fn()
+      .mockResolvedValueOnce({ items: [summaries[0]], nextCursor: 'record-1' })
+      .mockResolvedValueOnce({ items: [summaries[1]], nextCursor: 'record-2' })
+      .mockRejectedValueOnce(new Error('temporary outage'))
+      .mockResolvedValueOnce({ items: [summaries[2]] })
+
+    renderPage(form, jev)
+    fireEvent.click(screen.getByRole('tab', { name: en.records }))
+    expect(await screen.findByText('feature-1')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: en.loadMore }))
+    expect(await screen.findByText('feature-2')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: en.loadMore }))
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(screen.getByText('feature-1')).toBeTruthy()
+    expect(screen.getByText('feature-2')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: en.retry }))
+    expect(jev.listRecords).toHaveBeenLastCalledWith({ limit: 25, cursor: 'record-2' })
+    expect(await screen.findByText('feature-3')).toBeTruthy()
+    expect(screen.getByText('feature-1')).toBeTruthy()
+    expect(screen.getByText('feature-2')).toBeTruthy()
+  })
+
+  it('discards previous rows and pagination when loading a different filter fails', async () => {
+    const { form } = formStub()
+    const jev = remoteStub()
+    const previousRecord: JevRecordSummary = {
+      id: 'old-record', featureId: 'old-feature', status: 'succeeded',
+      startedAt: '2026-09-26T00:00:00.000Z', updatedAt: '2026-09-26T00:00:01.000Z',
+      attempts: 1, diagnostic: false,
+    }
+    const matchingRecord: JevRecordSummary = { ...previousRecord, id: 'new-record', featureId: 'new-feature' }
+    jev.listRecords = vi.fn<JevPageRemote['listRecords']>()
+      .mockResolvedValueOnce({ items: [previousRecord], nextCursor: previousRecord.id })
+      .mockRejectedValueOnce(new Error('temporary outage'))
+      .mockResolvedValueOnce({ items: [matchingRecord] })
+
+    renderPage(form, jev)
+    fireEvent.click(screen.getByRole('tab', { name: en.records }))
+    expect(await screen.findByText('old-feature')).toBeTruthy()
+    expect(screen.getByRole('button', { name: en.loadMore })).toBeTruthy()
+
+    fireEvent.change(screen.getByLabelText(en.feature), { target: { value: 'new-feature' } })
+    fireEvent.click(screen.getByRole('button', { name: en.applyFilters }))
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: en.loadMore })).toBeNull()
+    expect(screen.queryByText('old-feature')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: en.retry }))
+    expect(jev.listRecords).toHaveBeenLastCalledWith({ limit: 25, featureId: 'new-feature' })
+    expect(await screen.findByText('new-feature')).toBeTruthy()
+  })
+
   it('drops a late detail response after changing record filters', async () => {
     const { form } = formStub()
     const jev = remoteStub()
